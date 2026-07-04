@@ -1,0 +1,19 @@
+{
+  "folders": [
+    {
+      "name": "HR_IN (root)",
+      "path": "."
+    },
+    {
+      "name": "web",
+      "path": "web"
+    },
+    {
+      "name": "irt-engine",
+      "path": "services/irt-engine"
+    }
+  ],
+  "settings": {
+    "terminal.integrated.cwd": "D:\\HR_IN_Solution"
+  }
+}

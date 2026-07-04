@@ -1,0 +1,330 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ──
+
+enum CompanySize {
+  LARGE       // 대기업
+  MID         // 중견
+  SMALL       // 중소
+  STARTUP     // 스타트업
+  PUBLIC      // 공기업/공사
+}
+
+enum SessionStatus {
+  SETUP
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum PlanStatus {
+  IN_PROGRESS
+  COMPLETED
+  PAUSED
+}
+
+enum CompetencyProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum SessionMode {
+  COMPETENCY
+  FULL
+}
+
+enum ChipType {
+  PASS
+  ATTEMPT
+  DOWNGRADE
+}
+
+enum JobRole {
+  MARKETING
+  DEVELOPMENT
+  BUSINESS_SUPPORT
+  SALES
+  DESIGN
+  HR
+  FINANCE
+  OTHER
+}
+
+enum OAuthProvider {
+  KAKAO
+  NAVER
+}
+
+// ── User ──
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String
+  phone           String?
+  passwordHash    String?
+  /** 역량 인증서 공개 공유 링크용 토큰 (/c/[slug]). 요청 시 생성되는 opaque 토큰 */
+  certificateSlug String?  @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  profile         UserProfile?
+  targetCompanies TargetCompany[]
+  resumes         Resume[]
+  sessions        InterviewSession[]
+  competencyLogs  CompetencySnapshot[]
+  interviewPlans  InterviewPlan[]
+  competencyProgress CompetencyProgress[]
+  oauthAccounts   OAuthAccount[]
+}
+
+// ── Social login (카카오/네이버) ──
+// 이메일/비밀번호 없이도 가입 가능하도록 User.passwordHash는 nullable 유지.
+// 향후 다른 provider 추가 시 enum만 확장하면 됨.
+model OAuthAccount {
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          OAuthProvider
+  providerAccountId String
+  providerEmail     String?
+  createdAt         DateTime      @default(now())
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model UserProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  careerYears     Int      @default(0)
+  education       String?
+  desiredJobRole  JobRole  @default(OTHER)
+  bio             String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ── Company context ──
+
+model TargetCompany {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  industry     String?
+  size         CompanySize @default(LARGE)
+  interviewStyle Json?     // { tone, rounds, focus[] }
+  enrichedAt   DateTime?
+  createdAt    DateTime    @default(now())
+
+  sessions InterviewSession[]
+  plans    InterviewPlan[]
+
+  @@index([userId])
+}
+
+// ── Resume ──
+
+model Resume {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName    String
+  fileUrl     String?
+  rawText     String   @db.Text
+  parsedTags  Json?    // { skills[], experiences[], keywords[] }
+  createdAt   DateTime @default(now())
+
+  sessions InterviewSession[]
+  plans    InterviewPlan[]
+
+  @@index([userId])
+}
+
+// ── Interview plan (역량별 진행 트랙) ──
+
+model InterviewPlan {
+  id              String     @id @default(cuid())
+  userId          String
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetCompanyId String?
+  targetCompany   TargetCompany? @relation(fields: [targetCompanyId], references: [id])
+  resumeId        String?
+  resume          Resume?    @relation(fields: [resumeId], references: [id])
+  jobRole         JobRole    @default(OTHER)
+  status          PlanStatus @default(IN_PROGRESS)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  competencyProgress CompetencyProgress[]
+  sessions           InterviewSession[]
+
+  @@index([userId, status])
+}
+
+model CompetencyProgress {
+  id            String                   @id @default(cuid())
+  planId        String
+  plan          InterviewPlan            @relation(fields: [planId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  competency    String
+  status        CompetencyProgressStatus @default(NOT_STARTED)
+  latestTheta   Float?
+  levelEst      Int?
+  percentile    Float?
+  lastSessionId String?
+  completedAt   DateTime?
+  updatedAt     DateTime                 @updatedAt
+
+  feedback CompetencyFeedback?
+
+  @@unique([planId, competency])
+  @@index([userId, competency])
+}
+
+model CompetencyFeedback {
+  id           String             @id @default(cuid())
+  progressId   String             @unique
+  progress     CompetencyProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
+  sessionId    String
+  summary      String             @db.Text
+  strengths    Json
+  improvements Json
+  dimensions     Json?
+  suggestions    Json
+  highlights     Json?
+  rewriteExample String?  @db.Text
+  generatedAt    DateTime @default(now())
+}
+
+// ── Question bank ──
+
+model Competency {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  nameKo      String
+  description String?
+  questions   Question[]
+}
+
+model Question {
+  id             String     @id @default(cuid())
+  externalId     String     @unique
+  competencyId   String
+  competency     Competency @relation(fields: [competencyId], references: [id])
+  level          Int        // 1-5 UX level
+  difficulty     Float      // IRT b parameter
+  discrimination Float      @default(1.0)
+  template       String     @db.Text
+  followUpHints  Json?
+  isActive       Boolean    @default(true)
+
+  responses ResponseRecord[]
+
+  @@index([competencyId, level])
+}
+
+// ── Interview session ──
+
+model InterviewSession {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId          String?
+  plan            InterviewPlan? @relation(fields: [planId], references: [id])
+  targetCompanyId String?
+  targetCompany   TargetCompany? @relation(fields: [targetCompanyId], references: [id])
+  resumeId        String?
+  resume          Resume?       @relation(fields: [resumeId], references: [id])
+  jobRole         JobRole       @default(OTHER)
+  focusCompetency String?
+  mode            SessionMode   @default(COMPETENCY)
+  status          SessionStatus @default(SETUP)
+  sessionNumber   Int
+  startedAt       DateTime?
+  completedAt     DateTime?
+  overallTheta    Float?
+  irtState        Json?
+  createdAt       DateTime      @default(now())
+
+  responses ResponseRecord[]
+  chipEvents ChipEvent[]
+  report    SessionReport?
+
+  @@index([userId, sessionNumber])
+  @@index([planId])
+  @@index([status])
+}
+
+model ResponseRecord {
+  id          String           @id @default(cuid())
+  sessionId   String
+  session     InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionId  String
+  question    Question         @relation(fields: [questionId], references: [id])
+  competency  String
+  level       Int
+  transcript  String           @db.Text
+  correctedTranscript String?  @db.Text
+  audioUrl    String?
+  rubricScore Float            // 0.0 - 1.0
+  durationSec Int?
+  createdAt   DateTime         @default(now())
+
+  @@index([sessionId])
+}
+
+model ChipEvent {
+  id            String           @id @default(cuid())
+  sessionId     String
+  session       InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  competency    String
+  level         Int
+  chipType      ChipType
+  rubricScore   Float
+  briefFeedback String?
+  sequence      Int
+  createdAt     DateTime         @default(now())
+
+  @@index([sessionId])
+}
+
+// ── Longitudinal tracking ──
+
+model CompetencySnapshot {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId   String
+  competency  String
+  theta       Float
+  se          Float
+  levelEst    Int
+  percentile  Float
+  recordedAt  DateTime @default(now())
+
+  @@index([userId, competency])
+  @@index([userId, recordedAt])
+}
+
+// ── Report (Claude-generated) ──
+
+model SessionReport {
+  id          String           @id @default(cuid())
+  sessionId   String           @unique
+  session     InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  summaryHtml String           @db.Text
+  summaryJson Json             // structured sections for charts
+  generatedAt DateTime         @default(now())
+}

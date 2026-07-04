@@ -1,0 +1,224 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { IconLoader, IconVolume } from "@/components/ui/icons";
+import { LevelChip } from "./LevelChip";
+import { CompetencyBar } from "./CompetencyBar";
+import { VoiceRecorder } from "./VoiceRecorder";
+import { competencyLabel } from "@/lib/labels";
+import { displayQuestionText } from "@/lib/interview/build-question";
+import type {
+  ChipEvent,
+  CompetencyState,
+  InterviewQuestion,
+  InterviewSessionState,
+} from "@/types";
+
+interface InterviewSessionProps {
+  sessionId: string;
+  initialState: InterviewSessionState;
+  focusCompetency?: string;
+  maxItems?: number;
+}
+
+export function InterviewSession({
+  sessionId,
+  initialState,
+  focusCompetency,
+  maxItems = 3,
+}: InterviewSessionProps) {
+  const router = useRouter();
+  const [state, setState] = useState(initialState);
+  const [processing, setProcessing] = useState(false);
+  // Gemini TTS는 합성 자체에 시간이 걸릴 수 있어 "합성 중"과 "재생 중"을 구분해서 보여준다.
+  // 구분 없이 재생 중 배지만 있으면 그 사이에는 아무 피드백이 없어 멈춘 것처럼 보인다.
+  const [ttsStatus, setTtsStatus] = useState<"idle" | "synthesizing" | "playing">("idle");
+
+  const playQuestionTts = useCallback(async (text: string) => {
+    setTtsStatus("synthesizing");
+    try {
+      const res = await fetch("/api/interview/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        setTtsStatus("playing");
+        await audio.play();
+        await new Promise<void>((resolve) => {
+          audio.onended = () => resolve();
+        });
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      // TTS 없으면 텍스트만 표시
+    } finally {
+      setTtsStatus("idle");
+    }
+  }, []);
+
+  useEffect(() => {
+    const text = displayQuestionText(state.currentQuestion);
+    if (text) playQuestionTts(text);
+  }, [state.currentQuestion?.id, playQuestionTts, state.currentQuestion]);
+
+  const handleAnswer = async (transcript: string, durationSec?: number) => {
+    if (!state.currentQuestion || processing) return;
+    setProcessing(true);
+
+    try {
+      const res = await fetch("/api/interview/respond", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          questionId: state.currentQuestion.id,
+          transcript,
+          durationSec,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(
+          (err as { error?: string }).error ?? `서버 오류 (${res.status})`
+        );
+      }
+
+      const data = await res.json();
+
+      setState((prev) => ({
+        ...prev,
+        competencyStates: data.competencyStates,
+        chipHistory: [...prev.chipHistory, data.chipEvent as ChipEvent],
+        administeredIds: data.administeredIds,
+        totalItems: data.totalItems,
+        shouldTerminate: data.shouldTerminate,
+        currentQuestion: data.nextQuestion as InterviewQuestion | null,
+        status: data.shouldTerminate ? "completed" : "in_progress",
+      }));
+
+      if (data.shouldTerminate) {
+        router.push(
+          data.redirectUrl ??
+            `/interview/${sessionId}/report`
+        );
+      }
+    } catch (e) {
+      console.error(e);
+      alert(
+        e instanceof Error ? e.message : "답변 처리 중 오류가 발생했습니다."
+      );
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const q = state.currentQuestion;
+  const isPersonalized = q?.personalizedText && q.personalizedText !== q.text;
+
+  return (
+    <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+      <div className="space-y-6">
+        <div className="card-luxe p-6">
+          <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted">
+            {ttsStatus === "synthesizing" && (
+              <span className="flex items-center gap-1 text-accent">
+                <IconVolume className="h-3 w-3 animate-pulse" /> 음성 준비 중…
+              </span>
+            )}
+            {ttsStatus === "playing" && (
+              <span className="flex items-center gap-1 text-accent">
+                <IconVolume className="h-3 w-3 animate-pulse" /> 질문 재생 중
+              </span>
+            )}
+            {isPersonalized && (
+              <span className="rounded-full bg-gold/15 px-2 py-0.5 text-gold">
+                자소서 맞춤 질문
+              </span>
+            )}
+            {q && (
+              <>
+                <span>L{q.level}</span>
+                <span>·</span>
+                <span>{competencyLabel(q.competency)}</span>
+              </>
+            )}
+          </div>
+          <h2 className="text-xl font-semibold leading-relaxed text-foreground">
+            {q ? displayQuestionText(q) : "질문을 불러오는 중…"}
+          </h2>
+          {q?.rationale && (
+            <details className="mt-3 text-xs text-muted">
+              <summary className="cursor-pointer select-none text-accent hover:underline">
+                왜 이 질문인가요?
+              </summary>
+              <p className="mt-1 leading-relaxed">{q.rationale}</p>
+            </details>
+          )}
+        </div>
+
+        {/* Chip history — musical notes */}
+        {state.chipHistory.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {state.chipHistory.map((chip, i) => (
+              <LevelChip
+                key={`${chip.competency}-${i}`}
+                competency={chip.competency}
+                level={chip.level}
+                chipType={chip.chip_type}
+                feedback={chip.brief_feedback}
+                index={i}
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="card-luxe p-8">
+          {processing ? (
+            <div className="flex flex-col items-center gap-3 py-8 text-muted">
+              <IconLoader className="h-8 w-8 text-accent" />
+              <p>답변을 평가하고 다음 문항을 준비 중…</p>
+            </div>
+          ) : (
+            <VoiceRecorder onTranscript={handleAnswer} disabled={!q} />
+          )}
+        </div>
+
+        <p className="text-center text-xs text-muted">
+          문항 {state.totalItems + 1}/{maxItems}
+          {focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}
+          {" · "}역량별 적응형 IRT
+        </p>
+      </div>
+
+      <aside className="space-y-6">
+        <div className="card-luxe p-5">
+          <CompetencyBar
+            states={state.competencyStates as Record<string, CompetencyState>}
+            activeCompetency={q?.competency}
+          />
+        </div>
+
+        <div className="card-luxe p-5 text-sm text-muted">
+          <p className="mb-2 font-medium text-foreground">레벨 안내</p>
+          <ul className="space-y-1 text-xs">
+            <li>
+              <span className="text-success">♩</span> 레벨 통과 → 상승
+            </li>
+            <li>
+              <span className="text-accent">♪</span> 부분 통과 → 유지
+            </li>
+            <li>
+              <span className="text-warning">♭</span> 미달 → 하향
+            </li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  );
+}

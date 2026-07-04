@@ -1,0 +1,191 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { CheckCircle2 } from "lucide-react";
+import { IconLoader } from "@/components/ui/icons";
+import { buildAuthRedirect, parseApiResponse } from "@/lib/auth/client";
+
+type Mode = "login" | "register";
+
+export function AuthForm({ mode }: { mode: Mode }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? "/dashboard";
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    const oauthError = searchParams.get("error");
+    if (oauthError) setError(oauthError);
+  }, [searchParams]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    const url = mode === "login" ? "/api/auth/login" : "/api/auth/register";
+    const body =
+      mode === "login"
+        ? { email, password }
+        : { email, password, name };
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const { ok, data, message: apiError } = await parseApiResponse(res);
+      if (!ok) throw new Error(apiError);
+
+      const displayName =
+        (typeof data.name === "string" ? data.name : "").trim() || name.trim();
+      let successMessage: string;
+      if (mode === "register") {
+        successMessage = data.upgraded
+          ? `${displayName}님, 비밀번호 설정이 완료되었습니다.`
+          : `${displayName}님, 회원가입이 완료되었습니다!`;
+      } else {
+        successMessage = `${displayName}님, 로그인되었습니다.`;
+      }
+
+      setSuccess(successMessage);
+      setLoading(false);
+
+      const target = buildAuthRedirect(next, mode, displayName);
+
+      window.setTimeout(() => {
+        router.push(target);
+        router.refresh();
+      }, 1600);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="card-luxe mx-auto max-w-md p-8">
+      <h1 className="text-2xl font-semibold text-foreground">
+        {mode === "login" ? "로그인" : "회원가입"}
+      </h1>
+      <p className="mt-2 text-sm text-muted">
+        {mode === "login"
+          ? "역량 트래킹과 면접 기록을 이어서 확인하세요."
+          : "가입 후 역량별 면접 기록이 자동 저장됩니다."}
+      </p>
+
+      {!success && (
+        <div className="mt-6 grid gap-3">
+          <a
+            href="/api/auth/oauth/kakao/start"
+            className="flex w-full items-center justify-center rounded-lg bg-[#FEE500] px-4 py-2.5 text-sm font-medium text-[#191919] transition hover:brightness-95"
+          >
+            카카오로 {mode === "login" ? "로그인" : "시작하기"}
+          </a>
+          <a
+            href="/api/auth/oauth/naver/start"
+            className="flex w-full items-center justify-center rounded-lg bg-[#03C75A] px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-95"
+          >
+            네이버로 {mode === "login" ? "로그인" : "시작하기"}
+          </a>
+          <div className="flex items-center gap-3 py-1 text-xs text-muted">
+            <div className="h-px flex-1 bg-white/10" />
+            또는 이메일로 {mode === "login" ? "로그인" : "가입"}
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
+        </div>
+      )}
+
+      {success ? (
+        <div
+          className="mt-8 flex flex-col items-center gap-3 rounded-xl border border-success/30 bg-success/10 px-6 py-8 text-center"
+          role="status"
+          aria-live="polite"
+        >
+          <CheckCircle2 className="h-10 w-10 text-success" />
+          <p className="font-medium text-foreground">{success}</p>
+          <p className="text-sm text-muted">잠시 후 이동합니다…</p>
+          <IconLoader className="h-5 w-5 text-accent" />
+        </div>
+      ) : (
+        <form onSubmit={submit} className="mt-8 space-y-4">
+          {mode === "register" && (
+            <input
+              type="text"
+              placeholder="이름"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="input-luxe w-full"
+            />
+          )}
+          <input
+            type="email"
+            placeholder="이메일"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="input-luxe w-full"
+          />
+          <input
+            type="password"
+            placeholder="비밀번호 (8자 이상)"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={8}
+            className="input-luxe w-full"
+          />
+
+          {error && (
+            <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">
+              {error}
+            </p>
+          )}
+
+          <button type="submit" disabled={loading} className="btn-primary w-full">
+            {loading ? (
+              <>
+                <IconLoader />
+                {mode === "login" ? "로그인 중…" : "가입 처리 중…"}
+              </>
+            ) : mode === "login" ? (
+              "로그인"
+            ) : (
+              "가입하기"
+            )}
+          </button>
+        </form>
+      )}
+
+      {!success && (
+        <p className="mt-6 text-center text-sm text-muted">
+          {mode === "login" ? (
+            <>
+              계정이 없으신가요?{" "}
+              <Link href="/auth/register" className="text-primary font-medium hover:underline">
+                회원가입
+              </Link>
+            </>
+          ) : (
+            <>
+              이미 가입하셨나요?{" "}
+              <Link href="/auth/login" className="text-primary font-medium hover:underline">
+                로그인
+              </Link>
+            </>
+          )}
+        </p>
+      )}
+    </div>
+  );
+}

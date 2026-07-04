@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #f8f6f2;
+  --color-foreground: #1a1f36;
+  --color-muted: #64748b;
+  --color-card: #ffffff;
+  --color-card-border: #e8e4dc;
+  --color-primary: #1e3a5f;
+  --color-primary-light: #2d4a73;
+  --color-gold: #b8956a;
+  --color-gold-light: #d4bc94;
+  --color-accent: #3d7ea6;
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --font-sans: "Pretendard", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --shadow-luxe: 0 4px 24px -4px rgb(26 31 54 / 0.08), 0 2px 8px -2px rgb(26 31 54 / 0.04);
+}
+
+body {
+  font-family: var(--font-sans);
+  background: linear-gradient(165deg, #fdfcfb 0%, #f5f1ea 45%, #eef2f7 100%);
+  color: var(--color-foreground);
+  min-height: 100vh;
+}
+
+.card-luxe {
+  background: var(--color-card);
+  border: 1px solid var(--color-card-border);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-luxe);
+}
+
+.input-luxe {
+  border: 1px solid var(--color-card-border);
+  border-radius: 0.75rem;
+  background: #fafafa;
+  padding: 0.75rem 1rem;
+  color: var(--color-foreground);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input-luxe:focus {
+  outline: none;
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 3px rgb(184 149 106 / 0.15);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  padding: 0.875rem 1.5rem;
+  font-weight: 600;
+  color: white;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-card-border);
+  background: white;
+  padding: 0.875rem 1.5rem;
+  font-weight: 500;
+  color: var(--color-foreground);
+}
+
+@keyframes note-pop {
+  0% {
+    transform: scale(0) translateY(10px);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15) translateY(-4px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-note-pop {
+  animation: note-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
