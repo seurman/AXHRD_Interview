@@ -51,24 +51,56 @@ export async function POST(req: Request) {
 
   const companyContext = await enrichCompany(companyName ?? "");
 
-  const targetCompany = await prisma.targetCompany.create({
-    data: {
-      userId: user.id,
-      name: companyContext.name,
-      industry: companyContext.industry,
-      size: companyContext.size,
-      interviewStyle: companyContext.interviewStyle,
-      enrichedAt: new Date(),
-    },
-  });
+  const existingPlan = planId
+    ? await prisma.interviewPlan.findFirst({
+        where: { id: planId, userId: user.id },
+        include: { targetCompany: true, resume: true },
+      })
+    : null;
 
-  const resume = await prisma.resume.create({
-    data: {
-      userId: user.id,
-      fileName: resumeFileName?.trim() || "paste.txt",
-      rawText: resumeText.trim(),
-    },
-  });
+  let targetCompany;
+  if (existingPlan?.targetCompanyId && existingPlan.targetCompany) {
+    targetCompany = await prisma.targetCompany.update({
+      where: { id: existingPlan.targetCompanyId },
+      data: {
+        name: companyContext.name,
+        industry: companyContext.industry,
+        size: companyContext.size,
+        interviewStyle: companyContext.interviewStyle,
+        enrichedAt: new Date(),
+      },
+    });
+  } else {
+    targetCompany = await prisma.targetCompany.create({
+      data: {
+        userId: user.id,
+        name: companyContext.name,
+        industry: companyContext.industry,
+        size: companyContext.size,
+        interviewStyle: companyContext.interviewStyle,
+        enrichedAt: new Date(),
+      },
+    });
+  }
+
+  let resume;
+  if (existingPlan?.resumeId) {
+    resume = await prisma.resume.update({
+      where: { id: existingPlan.resumeId },
+      data: {
+        fileName: resumeFileName?.trim() || "paste.txt",
+        rawText: resumeText.trim(),
+      },
+    });
+  } else {
+    resume = await prisma.resume.create({
+      data: {
+        userId: user.id,
+        fileName: resumeFileName?.trim() || "paste.txt",
+        rawText: resumeText.trim(),
+      },
+    });
+  }
 
   const plan = await getOrCreateActivePlan({
     userId: user.id,

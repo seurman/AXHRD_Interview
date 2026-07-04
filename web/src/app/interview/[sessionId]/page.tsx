@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
 import { InterviewSession } from "@/components/interview/InterviewSession";
 import { parseIrtState, defaultCompetencyStates } from "@/lib/irt-state";
 import { buildPersonalizedQuestion } from "@/lib/interview/build-question";
@@ -16,6 +17,7 @@ interface PageProps {
 
 export default async function InterviewPage({ params }: PageProps) {
   const { sessionId } = await params;
+  const user = await requirePageUser(`/interview/${sessionId}`);
 
   const session = await prisma.interviewSession.findUnique({
     where: { id: sessionId },
@@ -27,6 +29,7 @@ export default async function InterviewPage({ params }: PageProps) {
   });
 
   if (!session) notFound();
+  assertResourceOwner(session.userId, user.id);
 
   const stored = parseIrtState(session.irtState);
   const competencyStates =

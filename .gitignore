@@ -13,22 +13,26 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+services/irt-engine/.venv/
 
-# Env
+# Env & secrets
 .env
 .env.local
 .env.*.local
+web/.env
+web/.env.local
 
 # IDE
 .idea/
 .vscode/
 *.swp
+.cursor/
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Prisma
+# Prisma local db
 web/prisma/*.db
 web/prisma/*.db-journal
 
@@ -36,7 +40,7 @@ web/prisma/*.db-journal
 *.log
 npm-debug.log*
 
-# TypeScript build cache
+# TypeScript
 *.tsbuildinfo
 
 # Test / coverage
@@ -46,3 +50,6 @@ htmlcov/
 
 # Uploads (local dev)
 uploads/
+
+# Python
+services/irt-engine/**/__pycache__/

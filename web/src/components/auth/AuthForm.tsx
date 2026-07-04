@@ -86,13 +86,13 @@ export function AuthForm({ mode }: { mode: Mode }) {
       {!success && (
         <div className="mt-6 grid gap-3">
           <a
-            href="/api/auth/oauth/kakao/start"
+            href={`/api/auth/oauth/kakao/start?next=${encodeURIComponent(next)}`}
             className="flex w-full items-center justify-center rounded-lg bg-[#FEE500] px-4 py-2.5 text-sm font-medium text-[#191919] transition hover:brightness-95"
           >
             카카오로 {mode === "login" ? "로그인" : "시작하기"}
           </a>
           <a
-            href="/api/auth/oauth/naver/start"
+            href={`/api/auth/oauth/naver/start?next=${encodeURIComponent(next)}`}
             className="flex w-full items-center justify-center rounded-lg bg-[#03C75A] px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-95"
           >
             네이버로 {mode === "login" ? "로그인" : "시작하기"}

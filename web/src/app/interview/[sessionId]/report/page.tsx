@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
 import { competencyLabel } from "@/lib/utils";
 import { ScoreGauge } from "@/components/report/ScoreGauge";
 import { computeDeliveryStats } from "@/lib/interview/feedback-helpers";
@@ -14,6 +15,7 @@ interface PageProps {
 
 export default async function ReportPage({ params }: PageProps) {
   const { sessionId } = await params;
+  const user = await requirePageUser(`/interview/${sessionId}/report`);
 
   const session = await prisma.interviewSession.findUnique({
     where: { id: sessionId },
@@ -26,6 +28,7 @@ export default async function ReportPage({ params }: PageProps) {
   });
 
   if (!session) notFound();
+  assertResourceOwner(session.userId, user.id);
 
   const report = session.report?.summaryJson as SessionReportData | undefined;
   const avgScore = report

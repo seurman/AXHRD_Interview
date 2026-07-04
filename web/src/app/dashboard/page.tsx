@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { CompetencyDashboard } from "@/components/dashboard/CompetencyDashboard";
 import { WelcomeBanner } from "@/components/auth/WelcomeBanner";
 import { thetaToLevel } from "@/lib/utils";
+import { COMPETENCY_CODES } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -54,16 +55,7 @@ export default async function DashboardPage() {
     }
   }
 
-  // Default empty competencies
-  const codes = [
-    "COMMUNICATION",
-    "PROBLEM_SOLVING",
-    "JOB_FIT",
-    "ORG_FIT",
-    "LEADERSHIP",
-    "GROWTH",
-  ];
-  for (const code of codes) {
+  for (const code of COMPETENCY_CODES) {
     if (!latestByCompetency[code]) {
       latestByCompetency[code] = {
         theta: 0,

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
 import { competencyLabel, dimensionLabel, formatPercentile } from "@/lib/labels";
 import { COMPETENCY_CODES } from "@/types";
 import { ScoreGauge } from "@/components/report/ScoreGauge";
@@ -19,6 +20,9 @@ export default async function CompetencyFeedbackPage({
 }: PageProps) {
   const { planId, code } = await params;
   const { sessionId } = await searchParams;
+  const user = await requirePageUser(
+    `/interview/plan/${planId}/competency/${code}/feedback`
+  );
 
   const progress = await prisma.competencyProgress.findUnique({
     where: { planId_competency: { planId, competency: code } },
@@ -34,6 +38,7 @@ export default async function CompetencyFeedbackPage({
   });
 
   if (!progress?.feedback) notFound();
+  assertResourceOwner(progress.plan.userId, user.id);
 
   const fb = progress.feedback;
   const dimensions = fb.dimensions as Record<string, number> | null;
@@ -69,7 +74,7 @@ export default async function CompetencyFeedbackPage({
     <div className="mx-auto max-w-2xl space-y-8 pb-16">
       <div>
         <p className="text-sm font-medium text-accent">
-          {progress.plan.user.name} · {doneCount}/{COMPETENCY_CODES.length} 역량 완료
+          {user.name} · {doneCount}/{COMPETENCY_CODES.length} 역량 완료
         </p>
         <h1 className="mt-2 text-2xl font-bold text-foreground">
           {competencyLabel(code)} 피드백
@@ -187,7 +192,7 @@ export default async function CompetencyFeedbackPage({
       <div className="flex flex-wrap gap-3">
         {next ? (
           <Link
-            href={`/interview/setup?planId=${planId}&competency=${next}&email=${encodeURIComponent(progress.plan.user.email)}`}
+            href={`/interview/setup?planId=${planId}&competency=${next}`}
             className="btn-primary"
           >
             다음 역량: {competencyLabel(next)} →

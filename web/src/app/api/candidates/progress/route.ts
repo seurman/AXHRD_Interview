@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth/session";
 import { COMPETENCY_CODES } from "@/types";
 import { competencyLabel } from "@/lib/labels";
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const email = searchParams.get("email")?.trim().toLowerCase();
-  const planId = searchParams.get("planId");
-
-  if (!email) {
-    return NextResponse.json({ error: "email required" }, { status: 400 });
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email },
+  const { searchParams } = new URL(req.url);
+  const planId = searchParams.get("planId");
+
+  const userWithPlans = await prisma.user.findUnique({
+    where: { id: user.id },
     include: {
       interviewPlans: {
         where: planId ? { id: planId } : { status: "IN_PROGRESS" },
@@ -27,25 +28,17 @@ export async function GET(req: Request) {
     },
   });
 
-  if (!user) {
-    return NextResponse.json({
-      found: false,
-      competencies: COMPETENCY_CODES.map((code) => ({
-        code,
-        label: competencyLabel(code),
-        status: "NOT_STARTED",
-      })),
-    });
+  if (!userWithPlans) {
+    return NextResponse.json({ error: "사용자를 찾을 수 없습니다." }, { status: 404 });
   }
 
-  const plan = user.interviewPlans[0];
+  const plan = userWithPlans.interviewPlans[0];
 
   if (!plan) {
     return NextResponse.json({
       found: true,
       userId: user.id,
       name: user.name,
-      email: user.email,
       plan: null,
       competencies: COMPETENCY_CODES.map((code) => ({
         code,
@@ -63,7 +56,6 @@ export async function GET(req: Request) {
     found: true,
     userId: user.id,
     name: user.name,
-    email: user.email,
     plan: {
       id: plan.id,
       status: plan.status,
@@ -83,22 +75,5 @@ export async function GET(req: Request) {
         completedAt: p?.completedAt,
       };
     }),
-  });
-}
-
-export async function POST(req: Request) {
-  const { email, name, phone } = await req.json();
-
-  if (!email?.trim() || !name?.trim()) {
-    return NextResponse.json({ error: "이름과 이메일 필수" }, { status: 400 });
-  }
-
-  const { upsertCandidate } = await import("@/lib/candidate/service");
-  const user = await upsertCandidate({ email, name, phone });
-
-  return NextResponse.json({
-    userId: user.id,
-    email: user.email,
-    name: user.name,
   });
 }

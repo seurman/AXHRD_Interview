@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getOAuthAdapter } from "@/lib/oauth";
 import { setSessionCookie } from "@/lib/auth/session";
+import { OAUTH_NEXT_COOKIE } from "@/lib/auth/jwt";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import type { OAuthProvider as PrismaOAuthProvider } from "@prisma/client";
 
@@ -61,7 +62,14 @@ export async function GET(
 
     await setSessionCookie(user.id);
 
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    const nextRaw = jar.get(OAUTH_NEXT_COOKIE)?.value;
+    jar.delete(OAUTH_NEXT_COOKIE);
+    const next =
+      nextRaw && nextRaw.startsWith("/") && !nextRaw.startsWith("//")
+        ? nextRaw
+        : "/dashboard";
+
+    return NextResponse.redirect(new URL(next, req.url));
   } catch (e) {
     console.error(`[oauth/${provider}/callback]`, e);
     loginUrl.searchParams.set("error", "로그인 처리 중 오류가 발생했습니다.");

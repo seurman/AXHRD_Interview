@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
 import { competencyLabel, formatPercentile } from "@/lib/labels";
 import { COMPETENCY_CODES } from "@/types";
 
@@ -12,11 +13,11 @@ interface PageProps {
 
 export default async function PlanOverviewPage({ params }: PageProps) {
   const { planId } = await params;
+  const user = await requirePageUser(`/interview/plan/${planId}`);
 
   const plan = await prisma.interviewPlan.findUnique({
     where: { id: planId },
     include: {
-      user: true,
       targetCompany: true,
       competencyProgress: {
         include: { feedback: true },
@@ -26,15 +27,16 @@ export default async function PlanOverviewPage({ params }: PageProps) {
   });
 
   if (!plan) notFound();
+  assertResourceOwner(plan.userId, user.id);
 
   const done = plan.competencyProgress.filter((p) => p.status === "COMPLETED");
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-white">면접 플랜 진행 현황</h1>
-        <p className="mt-2 text-slate-400">
-          {plan.user.name} · {plan.targetCompany?.name ?? "회사 미지정"} ·{" "}
+        <h1 className="text-2xl font-bold text-foreground">면접 플랜 진행 현황</h1>
+        <p className="mt-2 text-muted">
+          {user.name} · {plan.targetCompany?.name ?? "회사 미지정"} ·{" "}
           {done.length}/{COMPETENCY_CODES.length} 역량 완료
         </p>
       </div>
@@ -46,11 +48,11 @@ export default async function PlanOverviewPage({ params }: PageProps) {
           return (
             <div
               key={code}
-              className="flex items-center justify-between rounded-xl border border-white/10 bg-surface-light/50 p-4"
+              className="card-luxe flex items-center justify-between p-4"
             >
               <div>
-                <p className="font-medium text-white">{competencyLabel(code)}</p>
-                <p className="text-xs text-slate-500">
+                <p className="font-medium text-foreground">{competencyLabel(code)}</p>
+                <p className="text-xs text-muted">
                   {status === "COMPLETED"
                     ? `L${row?.levelEst} · ${row?.percentile != null ? formatPercentile(row.percentile) : ""}`
                     : status === "IN_PROGRESS"
@@ -61,14 +63,14 @@ export default async function PlanOverviewPage({ params }: PageProps) {
               {status === "COMPLETED" && row?.feedback ? (
                 <Link
                   href={`/interview/plan/${planId}/competency/${code}/feedback`}
-                  className="text-sm text-accent hover:underline"
+                  className="text-sm text-primary hover:underline"
                 >
                   피드백 →
                 </Link>
               ) : status !== "COMPLETED" ? (
                 <Link
-                  href={`/interview/setup?planId=${planId}&competency=${code}&email=${encodeURIComponent(plan.user.email)}`}
-                  className="text-sm text-brand-400 hover:underline"
+                  href={`/interview/setup?planId=${planId}&competency=${code}`}
+                  className="text-sm text-accent hover:underline"
                 >
                   시작 →
                 </Link>
@@ -78,10 +80,7 @@ export default async function PlanOverviewPage({ params }: PageProps) {
         })}
       </div>
 
-      <Link
-        href="/interview/setup"
-        className="inline-block rounded-xl bg-brand-600 px-6 py-3 text-sm font-medium text-white hover:bg-brand-700"
-      >
+      <Link href="/interview/setup" className="btn-primary inline-block text-sm">
         새 역량 면접 시작
       </Link>
     </div>

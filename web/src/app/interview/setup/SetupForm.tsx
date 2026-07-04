@@ -57,32 +57,34 @@ export function SetupForm({
     tone: string;
   } | null>(null);
 
-  const loadProgress = useCallback(async (email: string) => {
-    if (!email.includes("@")) return;
-    const res = await fetch(
-      `/api/candidates/progress?email=${encodeURIComponent(email)}`
-    );
-    if (!res.ok) return;
-    const data = await res.json();
-    if (data.name) void 0;
-    if (data.plan?.id) setPlanId(data.plan.id);
-    if (data.competencies) {
-      setCompetencies(data.competencies);
-      const next = data.competencies.find(
-        (c: CompetencyRow) =>
-          c.status === "IN_PROGRESS" || c.status === "NOT_STARTED"
-      );
-      if (next) setFocusCompetency(next.code);
-    }
-  }, []);
+  const loadProgress = useCallback(
+    async (pid?: string | null, skipAutoFocus = false) => {
+      const qs = pid ? `?planId=${encodeURIComponent(pid)}` : "";
+      const res = await fetch(`/api/candidates/progress${qs}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.plan?.id) setPlanId(data.plan.id);
+      if (data.competencies) {
+        setCompetencies(data.competencies);
+        if (!skipAutoFocus) {
+          const next = data.competencies.find(
+            (c: CompetencyRow) =>
+              c.status === "IN_PROGRESS" || c.status === "NOT_STARTED"
+          );
+          if (next) setFocusCompetency(next.code);
+        }
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     const pid = searchParams.get("planId");
     const comp = searchParams.get("competency");
     if (pid) setPlanId(pid);
     if (comp) setFocusCompetency(comp);
-    loadProgress(user.email);
-  }, [searchParams, user.email, loadProgress]);
+    loadProgress(pid, Boolean(comp));
+  }, [searchParams, loadProgress]);
 
   const previewCompany = async () => {
     if (!companyName.trim()) return;

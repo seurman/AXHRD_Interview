@@ -2,11 +2,17 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
 import { getOAuthAdapter } from "@/lib/oauth";
+import { OAUTH_NEXT_COOKIE } from "@/lib/auth/jwt";
 
 const STATE_COOKIE = "hr_in_oauth_state";
 
+function safeNextPath(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
+  return raw;
+}
+
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ provider: string }> }
 ) {
   const { provider } = await params;
@@ -16,6 +22,9 @@ export async function GET(
     return NextResponse.json({ error: "지원하지 않는 로그인 방식입니다." }, { status: 400 });
   }
 
+  const url = new URL(req.url);
+  const next = safeNextPath(url.searchParams.get("next"));
+
   const state = randomUUID();
   const jar = await cookies();
   jar.set(STATE_COOKIE, state, {
@@ -23,7 +32,14 @@ export async function GET(
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 10, // 10분 — 인가 화면에서 오래 머물러도 실패하지 않도록
+    maxAge: 60 * 10,
+  });
+  jar.set(OAUTH_NEXT_COOKIE, next, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 10,
   });
 
   return NextResponse.redirect(adapter.getAuthUrl(state));
