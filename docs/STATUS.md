@@ -43,6 +43,7 @@
 
 ## 알려진 이슈 / 트레이드오프
 
+- **[해결됨 2026-07-05] Vercel 빌드가 스키마 변경 후 실패하는 문제**: Vercel이 이전 빌드의 `node_modules` 캐시를 재사용하면 `@prisma/client`의 postinstall(`prisma generate`)이 다시 실행되지 않아, `schema.prisma`에 새로 추가한 모델/필드가 타입에 반영되지 않은 채로 빌드됨 → `next build` 타입체크 단계에서 "Property 'xxx' does not exist" 에러로 실패. `web/package.json`의 `build` 스크립트를 `"prisma generate && next build"`로 고쳐서 캐시 여부와 무관하게 항상 최신 스키마로 재생성하도록 해결. **앞으로 스키마를 바꾼 커밋을 배포할 때 Vercel 빌드가 실패하면 이 문제부터 의심할 것.**
 - **TTS 응답 속도**: MiniMax→Gemini 전환 후 질문 음성 합성이 느려짐. "합성 중/재생 중" 상태 구분으로 체감은 개선했으나 근본 해결은 아님. 사용자 테스트 후 벤더 재검토 필요할 수 있음.
 - **Render 무료 티어 콜드스타트**: IRT 엔진이 15분 미사용 시 슬립, 재요청 시 30~60초 지연.
 - 이 개발 환경(Cowork 샌드박스)의 `.git` 등 일부 파일을 마운트된 드라이브에서 직접 읽으면 간헐적으로 깨진 값이 나오는 현상이 있음 — 코드 수정은 문제없이 되지만, 로컬 `npm run build`/`prisma migrate` 등 컴파일·DB 관련 검증은 항상 박사님 본인 PC 터미널에서 최종 확인 필요.
