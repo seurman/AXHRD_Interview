@@ -17,15 +17,6 @@ const JOB_ROLES = [
   "OTHER",
 ] as const;
 
-type RealQuestionPreview = {
-  id: string;
-  text: string;
-  competency: string | null;
-  sourceName: string | null;
-  sourceUrl: string | null;
-  isAiExample: boolean;
-};
-
 const ACCEPT =
   ".pdf,.doc,.docx,.txt,.md,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain";
 
@@ -49,9 +40,9 @@ export function SetupForm({
   const [industry, setIndustry] = useState<string>("");
   const [companyName, setCompanyName] = useState("");
   const [jobRole, setJobRole] = useState<string>("MARKETING");
-  const [realQuestions, setRealQuestions] = useState<RealQuestionPreview[]>([]);
-  const [loadingRealQuestions, setLoadingRealQuestions] = useState(false);
-  const [resumeText, setResumeText] = useState("");
+  const [fileResumeText, setFileResumeText] = useState("");
+  const [manualText, setManualText] = useState("");
+  const [showManualInput, setShowManualInput] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [focusCompetency, setFocusCompetency] = useState<string>("");
@@ -92,33 +83,6 @@ export function SetupForm({
     loadProgress(pid, Boolean(comp));
   }, [searchParams, loadProgress]);
 
-  useEffect(() => {
-    if (!industry) {
-      setRealQuestions([]);
-      return;
-    }
-    let cancelled = false;
-    setLoadingRealQuestions(true);
-    fetch(
-      `/api/interview/real-questions?industry=${encodeURIComponent(
-        industry
-      )}&jobRole=${encodeURIComponent(jobRole)}`
-    )
-      .then((res) => (res.ok ? res.json() : { questions: [] }))
-      .then((data) => {
-        if (!cancelled) setRealQuestions(data.questions ?? []);
-      })
-      .catch(() => {
-        if (!cancelled) setRealQuestions([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingRealQuestions(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [industry, jobRole]);
-
   const handleFile = async (file: File) => {
     setFileError(null);
     setParsingFile(true);
@@ -129,7 +93,7 @@ export function SetupForm({
       if (isPlainText) {
         const text = await file.text();
         if (!text.trim()) throw new Error("파일이 비어 있습니다.");
-        setResumeText(text.trim());
+        setFileResumeText(text.trim());
         setUploadedFileName(file.name);
         return;
       }
@@ -139,7 +103,7 @@ export function SetupForm({
       const res = await fetch("/api/resume/parse", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "파일을 읽지 못했습니다.");
-      setResumeText(data.text);
+      setFileResumeText(data.text);
       setUploadedFileName(data.fileName ?? file.name);
     } catch (e) {
       setFileError(e instanceof Error ? e.message : "파일 업로드 실패");
@@ -167,7 +131,7 @@ export function SetupForm({
           industry,
           companyName,
           jobRole,
-          resumeText,
+          resumeText: manualText.trim() || fileResumeText,
           resumeFileName: uploadedFileName,
           planId,
           focusCompetency,
@@ -287,41 +251,13 @@ export function SetupForm({
             </option>
           ))}
         </select>
-
-        {industry && (
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-muted">
-              {industryLabel(industry)} · {jobRoleLabel(jobRole)} 실제 기출 질문 참고
-            </p>
-            {loadingRealQuestions ? (
-              <p className="text-xs text-muted">불러오는 중…</p>
-            ) : realQuestions.length === 0 ? (
-              <p className="text-xs text-muted">아직 등록된 참고 질문이 없습니다.</p>
-            ) : (
-              <ul className="space-y-2">
-                {realQuestions.map((q) => (
-                  <li
-                    key={q.id}
-                    className="rounded-lg bg-background p-3 text-xs text-muted"
-                  >
-                    <p className="text-foreground">{q.text}</p>
-                    <p className="mt-1 opacity-70">
-                      {q.isAiExample
-                        ? "AI 생성 예시 질문"
-                        : `출처: ${q.sourceName ?? "공개 커뮤니티"}`}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
       </section>
 
       <section className="card-luxe space-y-4 p-6">
         <h2 className="font-semibold text-foreground">4. 자기소개서 (선택)</h2>
         <p className="text-xs text-muted">
-          업로드하면 첫 질문에 내용이 반영됩니다. 없어도 일반 질문으로 면접을 진행할 수 있습니다.
+          업로드하면 첫 질문에 내용이 반영됩니다. 내용은 화면에 표시되지 않고 질문 생성에만
+          쓰입니다. 없어도 일반 질문으로 면접을 진행할 수 있습니다.
         </p>
         <label
           className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed p-6 transition ${
@@ -354,24 +290,31 @@ export function SetupForm({
           />
         </label>
         {uploadedFileName && !fileError && (
-          <p className="text-sm text-success">✓ {uploadedFileName}</p>
+          <p className="text-sm text-success">✓ {uploadedFileName} 업로드됨</p>
         )}
         {fileError && (
           <p className="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
             {fileError}
           </p>
         )}
-        <textarea
-          value={resumeText}
-          onChange={(e) => {
-            setResumeText(e.target.value);
-            setUploadedFileName(null);
-            setFileError(null);
-          }}
-          rows={6}
-          placeholder="자기소개서 내용을 붙여넣거나 위에서 파일을 업로드하세요 (선택 사항)…"
-          className="input-luxe w-full text-sm"
-        />
+
+        {showManualInput ? (
+          <textarea
+            value={manualText}
+            onChange={(e) => setManualText(e.target.value)}
+            rows={6}
+            placeholder="자기소개서 내용을 붙여넣으세요…"
+            className="input-luxe w-full text-sm"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowManualInput(true)}
+            className="text-xs text-muted underline hover:text-foreground"
+          >
+            파일 대신 텍스트로 직접 입력
+          </button>
+        )}
       </section>
 
       <button

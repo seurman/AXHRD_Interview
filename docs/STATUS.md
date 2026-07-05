@@ -54,6 +54,9 @@
   - `interview/setup/SetupForm.tsx`: 제출 전 `!resumeText.trim()` 시 alert로 막던 클라이언트 검증과 버튼 `disabled` 조건에서 제거, 섹션 제목을 "4. 자기소개서 (선택)"으로 변경, 안내 문구를 "없어도 일반 질문으로 면접을 진행할 수 있습니다"로 수정
   - `api/interview/start/route.ts`: 서버 400 에러 블록(`!resumeText?.trim()`) 제거. `Resume` 레코드는 `resumeText`가 있을 때만 생성/갱신하고, 없으면 `existingPlan.resume`(같은 플랜에 이전에 저장된 자소서가 있으면 재사용)을 쓰거나 그마저 없으면 `resume = null`로 진행 — `InterviewSession.resumeId`/`InterviewPlan.resumeId`는 원래 스키마상 nullable이라 문제 없음
   - 다운스트림(`build-question.ts`, `personalize-question.ts`, `respond/route.ts`)은 이미 `session.resume?.rawText` optional chaining + `personalizeQuestion()`의 "자소서 없으면 일반 질문 반환" 폴백이 있어 추가 수정 불필요 — 자소서 없는 세션은 모든 문항이 일반 질문으로 나감
+- **설정 화면 정리** (스키마 변경 없음, 코드만 수정 — 마이그레이션 불필요): 위 자소서 선택 사항 전환 직후 UI 피드백 반영
+  - "3. 지원 직무" 아래 실제 기출 질문 미리보기 목록(`/api/interview/real-questions` 호출 + 렌더링) 제거 — 불필요한 정보로 판단, 직무 선택 셀렉트박스만 남김. 백엔드 엔드포인트 자체는 그대로 둠(추후 재사용 가능)
+  - "4. 자기소개서" 텍스트 영역이 파일에서 추출한 원문을 그대로 화면에 노출하던 것을 제거 — 업로드 시 "✓ 파일명 업로드됨" 확인 문구만 표시하고 추출된 본문은 화면에 그리지 않음(내부 상태 `fileResumeText`로만 보관해 제출에 사용). 직접 타이핑하고 싶을 때만 "파일 대신 텍스트로 직접 입력" 버튼으로 별도 `textarea`(`manualText`)를 펼칠 수 있음 — 제출 시 `manualText.trim() || fileResumeText` 우선순위로 전송
 
 ## 알려진 이슈 / 트레이드오프
 
