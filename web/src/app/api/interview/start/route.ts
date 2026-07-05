@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { enrichCompany } from "@/lib/company/enrich";
+import { resolveCompanyContext } from "@/lib/company/enrich";
 import { initIrtSession } from "@/lib/irt-client";
 import { serializeIrtState } from "@/lib/irt-state";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -10,8 +10,8 @@ import {
   syncInterviewPlan,
 } from "@/lib/candidate/service";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { COMPETENCY_CODES } from "@/types";
-import type { CompetencyCode, ItemParams } from "@/types";
+import { COMPETENCY_CODES, INDUSTRY_CODES } from "@/types";
+import type { CompetencyCode, IndustryCode, ItemParams } from "@/types";
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -35,6 +35,7 @@ export async function POST(req: Request) {
   const body = await req.json();
   const {
     companyName,
+    industry,
     jobRole,
     resumeText,
     resumeFileName,
@@ -49,7 +50,14 @@ export async function POST(req: Request) {
     );
   }
 
-  const companyContext = await enrichCompany(companyName ?? "");
+  const industryCode: IndustryCode = INDUSTRY_CODES.includes(industry)
+    ? industry
+    : "OTHER";
+
+  const companyContext = resolveCompanyContext({
+    companyName,
+    industry: industryCode,
+  });
 
   const existingPlan = planId
     ? await prisma.interviewPlan.findFirst({
@@ -65,6 +73,7 @@ export async function POST(req: Request) {
       data: {
         name: companyContext.name,
         industry: companyContext.industry,
+        industryCode,
         size: companyContext.size,
         interviewStyle: companyContext.interviewStyle,
         enrichedAt: new Date(),
@@ -76,6 +85,7 @@ export async function POST(req: Request) {
         userId: user.id,
         name: companyContext.name,
         industry: companyContext.industry,
+        industryCode,
         size: companyContext.size,
         interviewStyle: companyContext.interviewStyle,
         enrichedAt: new Date(),

@@ -11,6 +11,18 @@ export const COMPETENCY_CODES = [
 
 export type CompetencyCode = (typeof COMPETENCY_CODES)[number];
 
+// ── Industry (기업명 대신 선택하는 산업군) ──
+
+export const INDUSTRY_CODES = [
+  "IT_SW",
+  "FINANCE",
+  "MANUFACTURING",
+  "PUBLIC",
+  "OTHER",
+] as const;
+
+export type IndustryCode = (typeof INDUSTRY_CODES)[number];
+
 // ── IRT Engine types (mirrors Python schemas) ──
 
 export type ChipType = "pass" | "attempt" | "downgrade";

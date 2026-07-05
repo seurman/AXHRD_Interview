@@ -62,6 +62,16 @@ enum JobRole {
   OTHER
 }
 
+/** 특정 기업명 대신 선택하는 산업군 — 회사명 추측(휴리스틱)보다 신뢰도 높은
+ *  질문 톤/실제 기출 질문 매칭의 기준이 된다. 소규모로 시작, 추후 마이그레이션으로 확장 가능. */
+enum Industry {
+  IT_SW
+  FINANCE
+  MANUFACTURING
+  PUBLIC
+  OTHER
+}
+
 enum OAuthProvider {
   KAKAO
   NAVER
@@ -161,6 +171,8 @@ model TargetCompany {
   user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   name         String
   industry     String?
+  /** 사용자가 직접 선택한 산업군 — industry(문자열 라벨)는 이 값을 기반으로 채워짐 */
+  industryCode Industry?
   size         CompanySize @default(LARGE)
   interviewStyle Json?     // { tone, rounds, focus[] }
   enrichedAt   DateTime?
@@ -375,4 +387,23 @@ model SessionReport {
   summaryHtml String           @db.Text
   summaryJson Json             // structured sections for charts
   generatedAt DateTime         @default(now())
+}
+
+// ── 실제 기출 질문 참고 (IRT 채점 문항 뱅크와는 별개 — 난이도/판별력 파라미터 없음) ──
+// 공개 검색으로 수집한 실제 인터뷰 후기·커뮤니티 글에서 정리한 질문 + 근거가 부족한
+// 산업군/직무 조합은 isAiExample=true로 표시해 AI가 만든 예시임을 투명하게 구분한다.
+model RealInterviewQuestion {
+  id           String   @id @default(cuid())
+  industry     Industry
+  jobRole      JobRole
+  /** 역량 코드(느슨한 태그, COMPETENCY_CODES와 매칭 시도 — 필수 아님) */
+  competency   String?
+  questionText String   @db.Text
+  /** 실제 출처 사이트명(예: "링커리어 커뮤니티"). AI 생성 예시면 null */
+  sourceName   String?
+  sourceUrl    String?
+  isAiExample  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([industry, jobRole])
 }

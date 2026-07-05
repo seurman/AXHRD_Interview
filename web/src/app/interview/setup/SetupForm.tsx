@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconLoader, IconUpload } from "@/components/ui/icons";
-import { jobRoleLabel, competencyLabel } from "@/lib/labels";
-import { COMPETENCY_CODES } from "@/types";
+import { jobRoleLabel, competencyLabel, industryLabel } from "@/lib/labels";
+import { COMPETENCY_CODES, INDUSTRY_CODES } from "@/types";
 
 const JOB_ROLES = [
   "MARKETING",
@@ -16,6 +16,15 @@ const JOB_ROLES = [
   "FINANCE",
   "OTHER",
 ] as const;
+
+type RealQuestionPreview = {
+  id: string;
+  text: string;
+  competency: string | null;
+  sourceName: string | null;
+  sourceUrl: string | null;
+  isAiExample: boolean;
+};
 
 const ACCEPT =
   ".pdf,.doc,.docx,.txt,.md,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain";
@@ -37,8 +46,11 @@ export function SetupForm({
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [parsingFile, setParsingFile] = useState(false);
+  const [industry, setIndustry] = useState<string>("");
   const [companyName, setCompanyName] = useState("");
   const [jobRole, setJobRole] = useState<string>("MARKETING");
+  const [realQuestions, setRealQuestions] = useState<RealQuestionPreview[]>([]);
+  const [loadingRealQuestions, setLoadingRealQuestions] = useState(false);
   const [resumeText, setResumeText] = useState("");
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -51,12 +63,6 @@ export function SetupForm({
       status: "NOT_STARTED",
     }))
   );
-  const [companyPreview, setCompanyPreview] = useState<{
-    industry: string;
-    size: string;
-    tone: string;
-  } | null>(null);
-
   const loadProgress = useCallback(
     async (pid?: string | null, skipAutoFocus = false) => {
       const qs = pid ? `?planId=${encodeURIComponent(pid)}` : "";
@@ -86,22 +92,32 @@ export function SetupForm({
     loadProgress(pid, Boolean(comp));
   }, [searchParams, loadProgress]);
 
-  const previewCompany = async () => {
-    if (!companyName.trim()) return;
-    const res = await fetch("/api/companies/enrich", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: companyName }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setCompanyPreview({
-        industry: data.industry,
-        size: data.sizeLabel,
-        tone: data.interviewStyle?.tone ?? "",
-      });
+  useEffect(() => {
+    if (!industry) {
+      setRealQuestions([]);
+      return;
     }
-  };
+    let cancelled = false;
+    setLoadingRealQuestions(true);
+    fetch(
+      `/api/interview/real-questions?industry=${encodeURIComponent(
+        industry
+      )}&jobRole=${encodeURIComponent(jobRole)}`
+    )
+      .then((res) => (res.ok ? res.json() : { questions: [] }))
+      .then((data) => {
+        if (!cancelled) setRealQuestions(data.questions ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setRealQuestions([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingRealQuestions(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [industry, jobRole]);
 
   const handleFile = async (file: File) => {
     setFileError(null);
@@ -134,6 +150,10 @@ export function SetupForm({
   };
 
   const startInterview = async () => {
+    if (!industry) {
+      alert("산업군을 선택해 주세요.");
+      return;
+    }
     if (!focusCompetency) {
       alert("면접할 역량을 선택해 주세요.");
       return;
@@ -148,6 +168,7 @@ export function SetupForm({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          industry,
           companyName,
           jobRole,
           resumeText,
@@ -230,24 +251,31 @@ export function SetupForm({
       </section>
 
       <section className="card-luxe space-y-4 p-6">
-        <h2 className="font-semibold text-foreground">2. 지원 회사</h2>
+        <h2 className="font-semibold text-foreground">2. 산업군</h2>
+        <p className="text-xs text-muted">
+          특정 회사보다 산업군 기준이 질문 톤을 더 안정적으로 맞춰줍니다.
+        </p>
+        <select
+          value={industry}
+          onChange={(e) => setIndustry(e.target.value)}
+          className="input-luxe w-full"
+        >
+          <option value="" disabled>
+            선택해 주세요
+          </option>
+          {INDUSTRY_CODES.map((code) => (
+            <option key={code} value={code}>
+              {industryLabel(code)}
+            </option>
+          ))}
+        </select>
         <input
           type="text"
           value={companyName}
           onChange={(e) => setCompanyName(e.target.value)}
-          onBlur={previewCompany}
-          placeholder="예: 삼성전자, 카카오, 토스"
-          className="input-luxe w-full"
+          placeholder="지원 회사명 (선택 — 있으면 질문 문구에 반영)"
+          className="input-luxe w-full text-sm"
         />
-        {companyPreview && (
-          <div className="rounded-lg bg-primary/5 p-3 text-sm text-muted">
-            <span className="font-medium text-primary">{companyPreview.industry}</span>
-            {" · "}
-            {companyPreview.size}
-            {" · "}
-            {companyPreview.tone}
-          </div>
-        )}
       </section>
 
       <section className="card-luxe space-y-4 p-6">
@@ -263,6 +291,35 @@ export function SetupForm({
             </option>
           ))}
         </select>
+
+        {industry && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted">
+              {industryLabel(industry)} · {jobRoleLabel(jobRole)} 실제 기출 질문 참고
+            </p>
+            {loadingRealQuestions ? (
+              <p className="text-xs text-muted">불러오는 중…</p>
+            ) : realQuestions.length === 0 ? (
+              <p className="text-xs text-muted">아직 등록된 참고 질문이 없습니다.</p>
+            ) : (
+              <ul className="space-y-2">
+                {realQuestions.map((q) => (
+                  <li
+                    key={q.id}
+                    className="rounded-lg bg-background p-3 text-xs text-muted"
+                  >
+                    <p className="text-foreground">{q.text}</p>
+                    <p className="mt-1 opacity-70">
+                      {q.isAiExample
+                        ? "AI 생성 예시 질문"
+                        : `출처: ${q.sourceName ?? "공개 커뮤니티"}`}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </section>
 
       <section className="card-luxe space-y-4 p-6">
@@ -327,7 +384,7 @@ export function SetupForm({
         disabled={
           loading ||
           parsingFile ||
-          !companyName.trim() ||
+          !industry ||
           !resumeText.trim() ||
           !focusCompetency
         }

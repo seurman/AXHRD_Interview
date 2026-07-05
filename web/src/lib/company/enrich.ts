@@ -1,4 +1,5 @@
-import type { CompanyContext } from "@/types";
+import type { CompanyContext, IndustryCode } from "@/types";
+import { getIndustryPreset } from "@/lib/company/industry-presets";
 
 /** 상장사/유명 기업 프리셋 (MVP). Phase 2: DART API 연동 */
 const COMPANY_PRESETS: Record<string, Partial<CompanyContext>> = {
@@ -79,6 +80,33 @@ function defaultStyle(): CompanyContext["interviewStyle"] {
     tone: "균형형 (인성+직무)",
     rounds: ["1차 실무", "2차 임원"],
     focus: ["의사소통", "문제해결", "조직적합"],
+  };
+}
+
+/**
+ * 회사명 대신 산업군 선택을 기준으로 삼는다 — 다만 알려진 회사명(COMPANY_PRESETS)이
+ * 정확히 일치하면 더 구체적인 그 프리셋을 우선한다. 회사명은 선택 입력이라 없어도 된다.
+ */
+export function resolveCompanyContext(params: {
+  companyName?: string;
+  industry: IndustryCode;
+}): CompanyContext {
+  const normalized = params.companyName?.trim() ?? "";
+  const preset = normalized ? COMPANY_PRESETS[normalized] : undefined;
+
+  if (preset) {
+    return {
+      name: normalized,
+      industry: preset.industry ?? "미분류",
+      size: preset.size ?? "LARGE",
+      interviewStyle: preset.interviewStyle ?? defaultStyle(),
+    };
+  }
+
+  const industryPreset = getIndustryPreset(params.industry);
+  return {
+    name: normalized || `${industryPreset.industry} 업계`,
+    ...industryPreset,
   };
 }
 

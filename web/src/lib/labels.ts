@@ -26,6 +26,17 @@ export function jobRoleLabel(role: string): string {
   return map[role] ?? role;
 }
 
+export function industryLabel(code: string): string {
+  const map: Record<string, string> = {
+    IT_SW: "IT/SW",
+    FINANCE: "금융",
+    MANUFACTURING: "제조",
+    PUBLIC: "공기업/공공",
+    OTHER: "기타",
+  };
+  return map[code] ?? code;
+}
+
 export function companySizeLabel(size: string): string {
   const map: Record<string, string> = {
     LARGE: "대기업",

@@ -12,6 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:real": "tsx prisma/seed-real-questions.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {
