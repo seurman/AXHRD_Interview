@@ -45,6 +45,9 @@ export async function AppHeader() {
                   <Link href="/admin/organizations/benchmark" className="hover:text-primary">
                     기관 비교
                   </Link>
+                  <Link href="/admin/users" className="hover:text-primary">
+                    사용자 관리
+                  </Link>
                 </>
               )}
               <LogoutButton />

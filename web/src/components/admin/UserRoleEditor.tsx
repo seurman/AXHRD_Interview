@@ -1,0 +1,92 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+const ROLE_LABEL: Record<string, string> = {
+  STUDENT: "학생",
+  STAFF: "담당자",
+  ADMIN: "기관 관리자",
+};
+
+export function UserRoleEditor({
+  userId,
+  currentRole,
+  currentOrgId,
+  organizations,
+}: {
+  userId: string;
+  currentRole: string;
+  currentOrgId: string | null;
+  organizations: { id: string; name: string }[];
+}) {
+  const router = useRouter();
+  const [role, setRole] = useState(currentRole);
+  const [orgId, setOrgId] = useState(currentOrgId ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const dirty = role !== currentRole || orgId !== (currentOrgId ?? "");
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orgRole: role, organizationId: orgId || null }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "변경에 실패했습니다.");
+      }
+      router.refresh();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "변경에 실패했습니다.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <select
+        value={orgId}
+        onChange={(e) => {
+          const next = e.target.value;
+          setOrgId(next);
+          if (!next) setRole("STUDENT"); // 소속 해제 시 자동으로 학생으로
+        }}
+        className="input-luxe px-2 py-1 text-xs"
+      >
+        <option value="">소속 없음</option>
+        {organizations.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.name}
+          </option>
+        ))}
+      </select>
+      <select
+        value={role}
+        onChange={(e) => setRole(e.target.value)}
+        disabled={!orgId}
+        className="input-luxe px-2 py-1 text-xs disabled:opacity-50"
+      >
+        {Object.entries(ROLE_LABEL).map(([value, label]) => (
+          <option key={value} value={value}>
+            {label}
+          </option>
+        ))}
+      </select>
+      {dirty && (
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving}
+          className="btn-primary px-3 py-1 text-xs"
+        >
+          {saving ? "저장 중…" : "저장"}
+        </button>
+      )}
+    </div>
+  );
+}

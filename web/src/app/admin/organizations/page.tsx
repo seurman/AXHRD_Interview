@@ -37,12 +37,17 @@ export default async function AdminOrganizationsPage() {
           신규 기관은 승인 전까지 가입 코드로 학생을 받을 수 없고 코호트 대시보드도
           열리지 않습니다.
         </p>
-        <Link
-          href="/admin/organizations/benchmark"
-          className="mt-2 inline-block text-sm text-accent hover:underline"
-        >
-          기관 간 퍼포먼스 비교 보기 →
-        </Link>
+        <div className="mt-2 flex flex-wrap gap-x-4">
+          <Link
+            href="/admin/organizations/benchmark"
+            className="inline-block text-sm text-accent hover:underline"
+          >
+            기관 간 퍼포먼스 비교 보기 →
+          </Link>
+          <Link href="/admin/users" className="inline-block text-sm text-accent hover:underline">
+            전체 사용자 · 권한 관리 →
+          </Link>
+        </div>
       </div>
 
       <section className="space-y-3">
