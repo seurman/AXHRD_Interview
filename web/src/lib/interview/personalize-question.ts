@@ -141,6 +141,24 @@ const SENTENCE_SPLIT = /(?<=[.!?])\s+|。+/g;
 // 실제 경험 서술이 아닌 안내문/메타 문구(테스트용 더미 자소서 등)는 인용 대상에서 제외
 const META_LINE = /^[※*]|테스트\s*목적|샘플\s*자기소개서|가상\s*인물|더미\s*(데이터|자소서)/;
 
+// 이메일·전화번호가 포함된 줄은 100% 인적사항 — 경험 서술일 수 없다.
+const CONTACT_INFO = /[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}|01[016789][-\s]?\d{3,4}[-\s]?\d{4}/;
+// "성명 OOO 지원 부문 OOO 학력 OOO 연락처 OOO" 처럼 이력서 상단 인적사항 블록이
+// 문장 구분자(마침표 등) 없이 한 줄로 붙어버리는 경우가 있다 — 헤더 라벨이 2개
+// 이상 한 줄에 나오면 서술문이 아니라 인적사항 블록으로 보고 제외한다.
+const HEADER_LABEL = /성명|이름|지원\s*(부문|분야)|학력|연락처|생년월일|전화번호|이메일/g;
+
+function isHeaderMetaLine(line: string): boolean {
+  if (CONTACT_INFO.test(line)) return true;
+  const labelMatches = line.match(HEADER_LABEL);
+  return !!labelMatches && labelMatches.length >= 2;
+}
+
+// 실제 "성과"로 인용할 만한 수치인지 판단 — 단순히 숫자가 있다고 다 성과는 아니다
+// (졸업연도 "2026.2", 이메일 속 숫자 등은 성과 지표가 아니다). 단위가 붙은 경우만 인정.
+const METRIC_PATTERN =
+  /\d+(\.\d+)?\s*(%|퍼센트|명|건|억|만\s?원|천만\s?원|배|시간|일|개월|주년?|회)/;
+
 /** PDF/DOCX에서 추출한 텍스트는 단어 중간에도 줄바꿈이 생길 수 있어(자간 조정용),
  *  단일 개행은 실제 문장 구분이 아니라 그냥 공백으로 합친다. 이걸 문장 경계로 오인하면
  *  "를 작성하는 것을 넘어…" 처럼 조사로 시작하는 잘린 문장이 인용문으로 뽑히는 버그가 생긴다. */
@@ -155,7 +173,7 @@ function splitResumeSentences(resume: string): string[] {
   return normalizeResumeText(resume)
     .split(SENTENCE_SPLIT)
     .map((s) => s.trim())
-    .filter((s) => s.length >= 8 && !META_LINE.test(s));
+    .filter((s) => s.length >= 8 && !META_LINE.test(s) && !isHeaderMetaLine(s));
 }
 
 function extractResumeHighlights(resume: string, competency: string): string[] {
@@ -163,7 +181,7 @@ function extractResumeHighlights(resume: string, competency: string): string[] {
 
   const hint = COMPETENCY_HINTS[competency] ?? /./;
   const matched = lines.filter((s) => hint.test(s));
-  const withMetrics = lines.filter((s) => /\d+%?|\d+명|\d+억|\d+건/.test(s));
+  const withMetrics = lines.filter((s) => METRIC_PATTERN.test(s));
 
   return [...new Set([...matched, ...withMetrics, ...lines])]
     .slice(0, 3)
@@ -177,7 +195,7 @@ function heuristicPersonalize(
   jobRole?: string
 ): string {
   const anchor = highlights[0];
-  const metric = highlights.find((h) => /\d/.test(h) && h !== anchor);
+  const metric = highlights.find((h) => METRIC_PATTERN.test(h) && h !== anchor);
   const companyBit = companyName ? `${companyName} ` : "";
   const roleBit = jobRole ? `${jobRoleLabel(jobRole)} 직무 관점에서 ` : "";
 
