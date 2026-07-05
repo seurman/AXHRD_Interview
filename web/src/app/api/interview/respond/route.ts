@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { submitIrtResponse, getIrtSessionSummary } from "@/lib/irt-client";
-import { evaluateAnswer, type RubricResult } from "@/lib/gemini/evaluate";
-import { correctTranscript } from "@/lib/gemini/correct-transcript";
+import { correctAndEvaluateAnswer, type RubricResult } from "@/lib/gemini/evaluate";
 import { parseIrtState, serializeIrtState, type StoredIrtState } from "@/lib/irt-state";
 import { shouldTriggerFollowUp, pickFollowUpQuestion } from "@/lib/interview/follow-up";
 import { buildPersonalizedQuestion } from "@/lib/interview/build-question";
@@ -91,42 +90,48 @@ async function handleRespond(req: Request, userId: string) {
   const pending = stored.pendingFollowUp;
   const isFollowUpAnswer = !!pending && pending.questionId === questionId;
 
-  // Web Speech API STT 오인식(예: "병목"→"병 먹고") 교정 — 원문(transcript)은 그대로 DB에 남기고
-  // 채점·이후 인용에는 교정본을 쓴다.
-  const correctedAnswer = await correctTranscript(transcript);
-
+  // Web Speech API STT 오인식(예: "병목"→"병 먹고") 교정 + 채점을 한 번의 Gemini 호출로
+  // 합쳐서 처리한다(왕복 1회 절감) — 원문(transcript)은 그대로 DB에 남기고 채점·이후
+  // 인용에는 교정본을 쓴다.
   let rubric: RubricResult;
+  let correctedAnswer: string;
   let finalTranscript: string;
   let finalCorrectedTranscript: string | null;
   let finalDurationSec: number | null;
 
   if (isFollowUpAnswer && pending) {
-    // 꼬리질문 답변 — 원 답변 + 꼬리질문 답변을 함께 최종 평가한다 (추가 API 호출 1회,
-    // 원 답변 채점 시 이미 낸 판단을 뒤집는 게 아니라 보완하는 개념).
-    const combinedQuestion = `${displayedQuestion}\n\n[꼬리질문] ${pending.followUpQuestion}`;
-    const combinedAnswer = `[최초 답변]\n${
-      pending.originalCorrectedTranscript ?? pending.originalTranscript
-    }\n\n[꼬리질문에 대한 답변]\n${correctedAnswer}`;
+    // 꼬리질문 답변 — 원 답변 맥락과 함께 이번 답변만 교정하고, 둘을 종합해 최종 평가한다.
+    const combinedQuestion = `${displayedQuestion}
 
-    rubric = await evaluateAnswer({
+[최초 답변] ${pending.originalCorrectedTranscript ?? pending.originalTranscript}
+
+[꼬리질문] ${pending.followUpQuestion}
+(아래 "원문 답변"은 이 꼬리질문에 대한 후속 답변입니다 — 위 최초 답변과 함께 종합적으로 평가하세요.)`;
+
+    const combined = await correctAndEvaluateAnswer({
       question: combinedQuestion,
-      answer: combinedAnswer,
+      rawAnswer: transcript,
       competency: question.competency.code,
       resumeContext: session.resume?.rawText,
       rubricCriteria,
     });
 
+    rubric = combined;
+    correctedAnswer = combined.correctedAnswer;
     finalTranscript = pending.originalTranscript;
     finalCorrectedTranscript = pending.originalCorrectedTranscript;
     finalDurationSec = pending.originalDurationSec;
   } else {
-    rubric = await evaluateAnswer({
+    const combined = await correctAndEvaluateAnswer({
       question: displayedQuestion,
-      answer: correctedAnswer,
+      rawAnswer: transcript,
       competency: question.competency.code,
       resumeContext: session.resume?.rawText,
       rubricCriteria,
     });
+
+    rubric = combined;
+    correctedAnswer = combined.correctedAnswer;
 
     if (shouldTriggerFollowUp(rubric)) {
       const followUpQuestion = pickFollowUpQuestion(question.followUpHints, correctedAnswer);
@@ -230,38 +235,6 @@ async function handleRespond(req: Request, userId: string) {
     downgrade: "DOWNGRADE",
   };
 
-  await prisma.responseRecord.create({
-    data: {
-      sessionId,
-      questionId,
-      competency: question.competency.code,
-      level: question.level,
-      transcript: finalTranscript,
-      correctedTranscript: finalCorrectedTranscript,
-      rubricScore: rubric.score,
-      durationSec: finalDurationSec,
-      initialRubricScore: isFollowUpAnswer && pending ? pending.originalScore : null,
-      followUpQuestion: isFollowUpAnswer && pending ? pending.followUpQuestion : null,
-      followUpTranscript: isFollowUpAnswer ? transcript : null,
-      followUpCorrectedTranscript:
-        isFollowUpAnswer && correctedAnswer !== transcript ? correctedAnswer : null,
-    },
-  });
-
-  await prisma.chipEvent.create({
-    data: {
-      sessionId,
-      competency: irtResult.chip_event.competency,
-      level: irtResult.chip_event.level,
-      chipType: chipTypeMap[irtResult.chip_event.chip_type],
-      rubricScore: irtResult.chip_event.rubric_score,
-      briefFeedback:
-        rubric.briefFeedback || irtResult.chip_event.brief_feedback,
-      hadFollowUp: isFollowUpAnswer,
-      sequence: session.responses.length,
-    },
-  });
-
   const updatedAdministered = [...administeredIds, question.externalId];
   const planId = stored.planId ?? session.planId ?? undefined;
 
@@ -275,31 +248,74 @@ async function handleRespond(req: Request, userId: string) {
     usedHighlights: stored.usedHighlights,
   };
 
-  await prisma.interviewSession.update({
-    where: { id: sessionId },
-    data: {
-      irtState: serializeIrtState(updatedState),
-    },
-  });
+  // 응답 기록(ResponseRecord/ChipEvent)은 다음 질문 준비(세션 상태 저장 → 개인화)와
+  // 서로 의존 관계가 없으므로 병렬로 처리해 왕복 대기 시간을 겹쳐 줄인다. 단, 세션
+  // irtState에 대한 두 번의 쓰기(아래 명시적 업데이트 → buildPersonalizedQuestion 내부
+  // 업데이트)는 순서가 바뀌면 방금 캐시한 개인화 질문이 덮어써질 수 있어 순서를 유지한다.
+  const [, nextQuestion] = await Promise.all([
+    Promise.all([
+      prisma.responseRecord.create({
+        data: {
+          sessionId,
+          questionId,
+          competency: question.competency.code,
+          level: question.level,
+          transcript: finalTranscript,
+          correctedTranscript: finalCorrectedTranscript,
+          rubricScore: rubric.score,
+          durationSec: finalDurationSec,
+          initialRubricScore: isFollowUpAnswer && pending ? pending.originalScore : null,
+          followUpQuestion: isFollowUpAnswer && pending ? pending.followUpQuestion : null,
+          followUpTranscript: isFollowUpAnswer ? transcript : null,
+          followUpCorrectedTranscript:
+            isFollowUpAnswer && correctedAnswer !== transcript ? correctedAnswer : null,
+        },
+      }),
+      prisma.chipEvent.create({
+        data: {
+          sessionId,
+          competency: irtResult.chip_event.competency,
+          level: irtResult.chip_event.level,
+          chipType: chipTypeMap[irtResult.chip_event.chip_type],
+          rubricScore: irtResult.chip_event.rubric_score,
+          briefFeedback:
+            rubric.briefFeedback || irtResult.chip_event.brief_feedback,
+          hadFollowUp: isFollowUpAnswer,
+          sequence: session.responses.length,
+        },
+      }),
+    ]),
+    (async () => {
+      await prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: {
+          irtState: serializeIrtState(updatedState),
+        },
+      });
 
-  let nextQuestion = null;
-  if (irtResult.next_item) {
-    const next = await prisma.question.findUnique({
-      where: { externalId: irtResult.next_item.item_id },
-      include: { competency: true },
-    });
-    if (next) {
+      if (!irtResult.next_item) return null;
+
+      const next = await prisma.question.findUnique({
+        where: { externalId: irtResult.next_item.item_id },
+        include: { competency: true },
+      });
+      if (!next) return null;
+
       const rationale = buildQuestionRationale({
         level: irtResult.next_item.target_level,
         expectedInformation: irtResult.next_item.expected_information,
       });
-      nextQuestion = await buildPersonalizedQuestion(
+      // 이 시점의 next 문항은 이미 이번 턴에 문항 하나를 답한 뒤라(updatedAdministered에
+      // 최소 1개 포함) 해당 역량의 2번째 이상 문항이다 — 첫 문항만 자소서로 맞춤화한다는
+      // 정책에 따라 여기서는 항상 일반 질문(Gemini 미호출)으로 처리한다.
+      return buildPersonalizedQuestion(
         { ...session, irtState: serializeIrtState(updatedState) },
         next,
-        rationale
+        rationale,
+        { skipPersonalization: true }
       );
-    }
-  }
+    })(),
+  ]);
 
   let redirectUrl: string | null = null;
   let nextCompetency: string | null = null;

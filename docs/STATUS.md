@@ -40,6 +40,16 @@
   - **`RealInterviewQuestion` 신규 테이블** — IRT 채점 문항 뱅크와 별개로, 산업군×직무별 "실제 기출 질문 참고"만 보여주는 조회 전용 데이터. 공개 검색(잡코리아·링커리어·사람인·브런치 등)으로 수집한 질문 + 근거 부족한 조합은 `isAiExample=true`로 투명하게 표시한 AI 예시로 보강. 1차로 IT/SW·금융·제조·공기업 4개 산업군 × 각 3~4개 직무, 총 44문항 시드 (`seed/real-questions.json`, `prisma/seed-real-questions.ts`) — 로그인 필요한 블라인드·잡플래닛 등은 이용약관상 크롤링 제외
   - `/interview/setup`에서 산업군+직무를 고르면 `/api/interview/real-questions`로 참고 질문 6개까지 미리보기 (출처 표시)
   - 나중에 산업군·직무 확장 시: `prisma/schema.prisma`의 `Industry` enum에 값 추가 + 마이그레이션, `seed/real-questions.json`에 데이터만 추가하고 `npm run db:seed:real` 재실행하면 됨 (재실행해도 안전 — 조합 단위로 지우고 다시 넣음)
+- **답변 처리 지연(랙) 개선** (스키마 변경 없음, 코드만 수정 — 마이그레이션 불필요):
+  - `correctTranscript()`(STT 교정) + `evaluateAnswer()`(채점)를 순차 호출하던 것을 `correctAndEvaluateAnswer()` 한 번의 Gemini 호출로 합침 — 매 턴 왕복 1회 절감, 특히 꼬리질문이 트리거되는 턴(질문만 반환하고 바로 끝나는 짧은 턴)에서 체감 지연이 크게 줄어듦
+  - `ResponseRecord`/`ChipEvent` 기록을 세션 상태 저장+다음 문항 개인화와 병렬로 처리(`Promise.all`)하도록 `respond/route.ts` 재구성 — 단, 세션 `irtState`에 대한 두 번의 쓰기 순서(명시적 업데이트 → `buildPersonalizedQuestion` 내부 업데이트)는 캐시 유실 방지를 위해 그대로 유지
+  - 여전히 남아있는 지연 원인: (1) IRT 엔진(Render 무료 티어) 콜드스타트 30~60초 — 알려진 이슈, 유료 전환 전까진 근본 해결 어려움, (2) 다음 문항 자소서 맞춤화(Gemini) 자체가 여전히 매 문항 1회 호출됨 — 프리페치나 "일부 문항만 맞춤화" 같은 추가 개선은 논의 후 진행 예정
+- **첫 문항만 자소서 맞춤화** (스키마 변경 없음, 코드만 수정 — 마이그레이션 불필요): 위 지연 개선 논의 후 "역량당 첫 문항만 자소서 인용, 나머지는 일반 질문" 방식 채택
+  - `buildPersonalizedQuestion()`(`lib/interview/build-question.ts`)에 `options.skipPersonalization` 추가 — true면 Gemini 호출 없이 `question.template` 그대로 쓰고, 채점 루브릭은 일반 기준(`buildGenericRubric`, 새로 export)으로 캐싱
+  - 판단 기준은 "이 문항이 해당 역량에서 몇 번째인가"이며, `stored.administeredIds.length === 0`(아직 답변한 문항 없음)일 때만 맞춤화, 그 외에는 스킵
+    - `interview/[sessionId]/page.tsx`(세션 진입/새로고침 시 문항 렌더링): `administeredIds.length === 0`이면 맞춤화, 아니면(새로고침 등으로 2번째 이상 문항을 다시 그리는 경우) 스킵
+    - `respond/route.ts`의 다음 문항 준비 블록: 이 시점엔 방금 답한 문항이 이미 `administeredIds`에 들어간 뒤라 항상 2번째 이상 문항 — 무조건 스킵
+  - 효과: 역량당 문항 1회만 자소서 관련 Gemini 호출(질문 개인화) 발생 — 이전엔 문항마다 호출. 2번째 이후 문항은 일반 질문이라 답변 자체와 무관하게 즉시 표시 가능
 
 ## 알려진 이슈 / 트레이드오프
 

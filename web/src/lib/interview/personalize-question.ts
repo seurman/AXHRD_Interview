@@ -223,7 +223,7 @@ function heuristicRubric(competency: string, highlights: string[]): string[] {
   return rubric;
 }
 
-function buildGenericRubric(competency: string): string[] {
+export function buildGenericRubric(competency: string): string[] {
   const label = competencyLabel(competency);
   return [
     `${label}과 관련된 구체적 사례(상황·과제)를 제시했는가`,

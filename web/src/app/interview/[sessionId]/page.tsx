@@ -46,10 +46,14 @@ export default async function InterviewPage({ params }: PageProps) {
       include: { competency: true },
     });
     if (q) {
+      // 역량당 첫 문항만 자소서 인용으로 맞춤화한다 — 이미 답변한 문항이 있으면
+      // (새로고침 등으로 이 페이지가 다시 렌더링된 경우) 일반 질문으로 처리한다.
+      const isFirstItem = stored.administeredIds.length === 0;
       currentQuestion = await buildPersonalizedQuestion(
         session,
         q,
-        buildQuestionRationale({ level: q.level })
+        buildQuestionRationale({ level: q.level }),
+        { skipPersonalization: !isFirstItem }
       );
     }
   }

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { parseIrtState, serializeIrtState } from "@/lib/irt-state";
-import { personalizeQuestion } from "@/lib/interview/personalize-question";
+import { personalizeQuestion, buildGenericRubric } from "@/lib/interview/personalize-question";
 import type { InterviewQuestion } from "@/types";
 
 type QuestionRow = {
@@ -22,7 +22,8 @@ type SessionContext = {
 export async function buildPersonalizedQuestion(
   session: SessionContext,
   question: QuestionRow,
-  rationale?: string
+  rationale?: string,
+  options?: { skipPersonalization?: boolean }
 ): Promise<InterviewQuestion> {
   const stored = parseIrtState(session.irtState);
   const cached = stored.personalizedQuestions?.[question.externalId];
@@ -35,6 +36,32 @@ export async function buildPersonalizedQuestion(
       level: question.level,
       text: question.template,
       personalizedText: cached.text,
+      rationale,
+    };
+  }
+
+  // 역량당 첫 문항만 자소서 인용(Gemini 호출)으로 맞춤화하고, 나머지 문항은 일반
+  // 질문으로 처리해 턴당 지연을 줄인다. 채점 루브릭은 일반 기준으로 캐싱해 둔다.
+  if (options?.skipPersonalization) {
+    const rubric = buildGenericRubric(question.competency.code);
+    const personalizedQuestions = {
+      ...stored.personalizedQuestions,
+      [question.externalId]: { text: question.template, rubric },
+    };
+
+    await prisma.interviewSession.update({
+      where: { id: session.id },
+      data: {
+        irtState: serializeIrtState({ ...stored, personalizedQuestions }),
+      },
+    });
+
+    return {
+      id: question.id,
+      externalId: question.externalId,
+      competency: question.competency.code,
+      level: question.level,
+      text: question.template,
       rationale,
     };
   }
