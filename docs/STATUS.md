@@ -28,6 +28,12 @@
   - `/admin/organizations` — `SUPERADMIN_EMAILS` 환경변수에 등록된 이메일(현재 `seurman@gmail.com`)만 접근, 대기 중인 기관 승인/반려
   - 마이그레이션 시 기존에 이미 만들어져 있던 기관은 자동으로 `APPROVED`로 백필됨 (신규 생성 기관부터만 승인 절차 적용)
   - 로컬 `prisma migrate deploy` + Vercel 재배포 완료 확인됨
+- **학교(기관) 간 퍼포먼스 비교** (스키마 변경 없음, 코드만 추가 — 마이그레이션 불필요): NACE/PDP 등 대학 취업센터 벤치마킹 대시보드 관행 참고(동료 기관 대비 완료율·성과 비교, 소규모 표본 특정 방지)
+  - `lib/org/benchmark.ts` 신규 — `computeOrgAggregate()`(기관 1개의 학생 수/활동 학생 수/완료율/역량별 평균 백분위 집계), `getOrgBenchmark()`(기관 담당자용 — 다른 기관 이름은 노출하지 않고 익명 평균·순위만 반환), `getAllOrgBenchmarks()`(슈퍼어드민용 — 실명 전체 랭킹)
+  - 완료율 정의: 학생별 `CompetencyProgress`(역량 6개) 중 `COMPLETED` 비율의 평균(%)
+  - 프라이버시: 익명 평균(비교 평균)에는 학생 수 3명 이상인 기관만 포함 — 소규모 기관 한 곳이 평균으로 특정되는 것을 방지 (`MIN_PEER_MEMBERS`)
+  - `/org/dashboard`에 "다른 학교와 비교" 카드 추가 — 전체 승인 기관 중 순위(상위 N%), 완료율/평균 백분위를 비교 평균과 나란히 표시, 역량별로는 우리 학교 막대 + 비교 평균 위치를 세로선으로 표시. 비교 가능한 기관이 없으면 안내 문구만 표시
+  - `/admin/organizations/benchmark` 신규 페이지(슈퍼어드민 전용) — 승인된 기관 전체를 평균 백분위 내림차순으로 실명 랭킹 표시(학생 수·활동 학생 수·완료율·평균 백분위). `/admin/organizations`에 링크 추가
 - **AI 꼬리질문(follow-up question)** (로컬 `prisma generate` / `migrate deploy` / `npm run build` 성공 확인됨 — git push는 진행 중이었는데 이후 대화에서 확인 안 됨, 안 하셨으면 아래 "진행 시 참고" 커밋 필요):
   - 답변 채점 시 `score < 0.65` 그리고 `dimensions.specificity < 0.5`이면 "추상적인 답변"으로 판단해 같은 문항 안에서 꼬리질문을 한 번 더 낸다 (`web/src/lib/interview/follow-up.ts`의 `shouldTriggerFollowUp`)
   - 꼬리질문 텍스트는 Gemini를 다시 호출하지 않고 `Question.followUpHints`(시딩된 주제 키워드) 중 아직 답변에서 다루지 않은 것을 템플릿에 꽂아 생성 — 추가 API 비용 없음

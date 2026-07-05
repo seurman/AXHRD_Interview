@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireOrgStaff } from "@/lib/auth/guards";
 import { getCohortData } from "@/lib/org/cohort";
+import { getOrgBenchmark, MIN_PEER_MEMBERS } from "@/lib/org/benchmark";
 import { competencyLabel, formatPercentile } from "@/lib/labels";
 import { CopyCodeButton } from "@/components/org/CopyCodeButton";
 import { RegenerateCodeButton } from "@/components/org/RegenerateCodeButton";
@@ -14,6 +15,8 @@ export default async function OrgDashboardPage() {
   if (!data) {
     return <p className="text-muted">기관 정보를 찾을 수 없습니다.</p>;
   }
+
+  const benchmark = data.status === "APPROVED" ? await getOrgBenchmark(user.organizationId) : null;
 
   if (data.status !== "APPROVED") {
     const pending = data.status === "PENDING";
@@ -111,6 +114,91 @@ export default async function OrgDashboardPage() {
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      <div className="card-luxe p-6">
+        <h2 className="mb-1 font-semibold text-foreground">다른 학교와 비교</h2>
+        <p className="mb-4 text-xs text-muted">
+          다른 기관의 이름은 표시되지 않으며, 학생 수 {MIN_PEER_MEMBERS}명 이상인 기관만 비교
+          평균에 포함됩니다.
+        </p>
+        {!benchmark || benchmark.insufficientPeerData ? (
+          <p className="text-sm text-muted">
+            아직 비교할 수 있는 다른 기관 데이터가 충분하지 않습니다.
+          </p>
+        ) : (
+          <>
+            <div className="mb-6 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-xl bg-background p-4 text-center">
+                <p className="text-2xl font-bold text-foreground">
+                  {benchmark.rankPercentile != null
+                    ? `상위 ${Math.max(0, 100 - benchmark.rankPercentile)}%`
+                    : "—"}
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  전체 {benchmark.peerOrgCount + 1}개 기관 중 순위
+                </p>
+              </div>
+              <div className="rounded-xl bg-background p-4 text-center">
+                <p className="text-2xl font-bold text-foreground">
+                  {benchmark.ownCompletionRate != null ? `${benchmark.ownCompletionRate}%` : "—"}
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  완료율 · 비교 평균{" "}
+                  {benchmark.peerAvgCompletionRate != null
+                    ? `${Math.round(benchmark.peerAvgCompletionRate)}%`
+                    : "—"}
+                </p>
+              </div>
+              <div className="rounded-xl bg-background p-4 text-center">
+                <p className="text-2xl font-bold text-foreground">
+                  {benchmark.ownOverallAvgPercentile ?? "—"}
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  평균 백분위 · 비교 평균{" "}
+                  {benchmark.peerAvgOverallPercentile != null
+                    ? Math.round(benchmark.peerAvgOverallPercentile)
+                    : "—"}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {benchmark.competencies.map((c) => (
+                <div key={c.competency}>
+                  <div className="mb-1 flex items-center justify-between text-sm">
+                    <span className="font-medium text-foreground">
+                      {competencyLabel(c.competency)}
+                    </span>
+                    <span className="text-muted">
+                      우리 학교{" "}
+                      {c.ownAvgPercentile != null ? Math.round(c.ownAvgPercentile) : "—"} · 비교
+                      평균{" "}
+                      {c.peerAvgPercentile != null ? Math.round(c.peerAvgPercentile) : "—"}
+                    </span>
+                  </div>
+                  <div className="relative h-2 overflow-hidden rounded-full bg-background">
+                    <div
+                      className="h-full rounded-full bg-gold"
+                      style={{
+                        width: `${Math.max(4, Math.min(100, c.ownAvgPercentile ?? 0))}%`,
+                      }}
+                    />
+                    {c.peerAvgPercentile != null && (
+                      <div
+                        className="absolute top-0 h-2 w-0.5 bg-foreground/50"
+                        style={{ left: `${Math.max(0, Math.min(100, c.peerAvgPercentile))}%` }}
+                      />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-xs text-muted">
+              막대는 우리 학교 평균 백분위, 세로선은 비교 대상 기관들의 평균 위치입니다.
+            </p>
+          </>
         )}
       </div>
 
