@@ -34,6 +34,7 @@
   - 프라이버시: 익명 평균(비교 평균)에는 학생 수 3명 이상인 기관만 포함 — 소규모 기관 한 곳이 평균으로 특정되는 것을 방지 (`MIN_PEER_MEMBERS`)
   - `/org/dashboard`에 "다른 학교와 비교" 카드 추가 — 전체 승인 기관 중 순위(상위 N%), 완료율/평균 백분위를 비교 평균과 나란히 표시, 역량별로는 우리 학교 막대 + 비교 평균 위치를 세로선으로 표시. 비교 가능한 기관이 없으면 안내 문구만 표시
   - `/admin/organizations/benchmark` 신규 페이지(슈퍼어드민 전용) — 승인된 기관 전체를 평균 백분위 내림차순으로 실명 랭킹 표시(학생 수·활동 학생 수·완료율·평균 백분위). `/admin/organizations`에 링크 추가
+  - `components/layout/AppHeader.tsx`(전 페이지 공통 헤더)에 역할별 메뉴 추가 — `orgRole`이 STAFF/ADMIN이면 "코호트 대시보드"(`/org/dashboard`), `SUPERADMIN_EMAILS`에 등록된 계정이면 "기관 승인 관리"(`/admin/organizations`)와 "기관 비교"(`/admin/organizations/benchmark`) 링크가 상단 네비게이션에 표시됨(그전까지는 URL을 직접 입력해야만 접근 가능했음)
 - **AI 꼬리질문(follow-up question)** (로컬 `prisma generate` / `migrate deploy` / `npm run build` 성공 확인됨 — git push는 진행 중이었는데 이후 대화에서 확인 안 됨, 안 하셨으면 아래 "진행 시 참고" 커밋 필요):
   - 답변 채점 시 `score < 0.65` 그리고 `dimensions.specificity < 0.5`이면 "추상적인 답변"으로 판단해 같은 문항 안에서 꼬리질문을 한 번 더 낸다 (`web/src/lib/interview/follow-up.ts`의 `shouldTriggerFollowUp`)
   - 꼬리질문 텍스트는 Gemini를 다시 호출하지 않고 `Question.followUpHints`(시딩된 주제 키워드) 중 아직 답변에서 다루지 않은 것을 템플릿에 꽂아 생성 — 추가 API 비용 없음

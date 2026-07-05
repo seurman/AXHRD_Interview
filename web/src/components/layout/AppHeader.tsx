@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { Mic2 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
+import { isSuperadmin } from "@/lib/auth/guards";
 import { LogoutButton } from "./LogoutButton";
 
 export async function AppHeader() {
   const user = await getCurrentUser();
+  const isOrgStaff = !!user && (user.orgRole === "STAFF" || user.orgRole === "ADMIN");
+  const isAdmin = !!user && isSuperadmin(user.email);
 
   return (
     <header className="border-b border-card-border bg-card/90 backdrop-blur-md shadow-sm">
@@ -29,6 +32,21 @@ export async function AppHeader() {
               <Link href="/profile" className="hover:text-primary">
                 프로필
               </Link>
+              {isOrgStaff && (
+                <Link href="/org/dashboard" className="hover:text-primary">
+                  코호트 대시보드
+                </Link>
+              )}
+              {isAdmin && (
+                <>
+                  <Link href="/admin/organizations" className="hover:text-primary">
+                    기관 승인 관리
+                  </Link>
+                  <Link href="/admin/organizations/benchmark" className="hover:text-primary">
+                    기관 비교
+                  </Link>
+                </>
+              )}
               <LogoutButton />
             </>
           ) : (
