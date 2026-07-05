@@ -50,6 +50,10 @@
     - `interview/[sessionId]/page.tsx`(세션 진입/새로고침 시 문항 렌더링): `administeredIds.length === 0`이면 맞춤화, 아니면(새로고침 등으로 2번째 이상 문항을 다시 그리는 경우) 스킵
     - `respond/route.ts`의 다음 문항 준비 블록: 이 시점엔 방금 답한 문항이 이미 `administeredIds`에 들어간 뒤라 항상 2번째 이상 문항 — 무조건 스킵
   - 효과: 역량당 문항 1회만 자소서 관련 Gemini 호출(질문 개인화) 발생 — 이전엔 문항마다 호출. 2번째 이후 문항은 일반 질문이라 답변 자체와 무관하게 즉시 표시 가능
+- **자소서 없이도 모의 면접 가능** (스키마 변경 없음, 코드만 수정 — 마이그레이션 불필요): 자소서를 필수로 요구하던 하드 블록 두 곳 제거
+  - `interview/setup/SetupForm.tsx`: 제출 전 `!resumeText.trim()` 시 alert로 막던 클라이언트 검증과 버튼 `disabled` 조건에서 제거, 섹션 제목을 "4. 자기소개서 (선택)"으로 변경, 안내 문구를 "없어도 일반 질문으로 면접을 진행할 수 있습니다"로 수정
+  - `api/interview/start/route.ts`: 서버 400 에러 블록(`!resumeText?.trim()`) 제거. `Resume` 레코드는 `resumeText`가 있을 때만 생성/갱신하고, 없으면 `existingPlan.resume`(같은 플랜에 이전에 저장된 자소서가 있으면 재사용)을 쓰거나 그마저 없으면 `resume = null`로 진행 — `InterviewSession.resumeId`/`InterviewPlan.resumeId`는 원래 스키마상 nullable이라 문제 없음
+  - 다운스트림(`build-question.ts`, `personalize-question.ts`, `respond/route.ts`)은 이미 `session.resume?.rawText` optional chaining + `personalizeQuestion()`의 "자소서 없으면 일반 질문 반환" 폴백이 있어 추가 수정 불필요 — 자소서 없는 세션은 모든 문항이 일반 질문으로 나감
 
 ## 알려진 이슈 / 트레이드오프
 

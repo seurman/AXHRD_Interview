@@ -158,10 +158,6 @@ export function SetupForm({
       alert("면접할 역량을 선택해 주세요.");
       return;
     }
-    if (!resumeText.trim()) {
-      alert("자기소개서를 입력하거나 업로드해 주세요. 질문 개인화에 사용됩니다.");
-      return;
-    }
     setLoading(true);
     try {
       const res = await fetch("/api/interview/start", {
@@ -206,7 +202,7 @@ export function SetupForm({
       <div>
         <h1 className="text-2xl font-bold text-foreground">모의 면접 설정</h1>
         <p className="mt-2 text-muted">
-          {user.name}님 · 역량별 2~3문항 · 피드백 저장 · 자소서 기반 질문
+          {user.name}님 · 역량별 2~3문항 · 피드백 저장 · 자소서는 선택 사항
         </p>
       </div>
 
@@ -323,9 +319,9 @@ export function SetupForm({
       </section>
 
       <section className="card-luxe space-y-4 p-6">
-        <h2 className="font-semibold text-foreground">4. 자기소개서</h2>
+        <h2 className="font-semibold text-foreground">4. 자기소개서 (선택)</h2>
         <p className="text-xs text-muted">
-          업로드한 내용이 면접 질문에 직접 반영됩니다
+          업로드하면 첫 질문에 내용이 반영됩니다. 없어도 일반 질문으로 면접을 진행할 수 있습니다.
         </p>
         <label
           className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed p-6 transition ${
@@ -373,7 +369,7 @@ export function SetupForm({
             setFileError(null);
           }}
           rows={6}
-          placeholder="자기소개서 내용을 붙여넣거나 위에서 파일을 업로드하세요…"
+          placeholder="자기소개서 내용을 붙여넣거나 위에서 파일을 업로드하세요 (선택 사항)…"
           className="input-luxe w-full text-sm"
         />
       </section>
@@ -381,13 +377,7 @@ export function SetupForm({
       <button
         type="button"
         onClick={startInterview}
-        disabled={
-          loading ||
-          parsingFile ||
-          !industry ||
-          !resumeText.trim() ||
-          !focusCompetency
-        }
+        disabled={loading || parsingFile || !industry || !focusCompetency}
         className="btn-primary w-full py-3.5"
       >
         {loading ? (

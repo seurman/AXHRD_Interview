@@ -43,13 +43,6 @@ export async function POST(req: Request) {
     focusCompetency,
   } = body;
 
-  if (!resumeText?.trim()) {
-    return NextResponse.json(
-      { error: "자기소개서를 입력하거나 업로드해 주세요. 질문 개인화에 사용됩니다." },
-      { status: 400 }
-    );
-  }
-
   const industryCode: IndustryCode = INDUSTRY_CODES.includes(industry)
     ? industry
     : "OTHER";
@@ -93,29 +86,36 @@ export async function POST(req: Request) {
     });
   }
 
-  let resume;
-  if (existingPlan?.resumeId) {
-    resume = await prisma.resume.update({
-      where: { id: existingPlan.resumeId },
-      data: {
-        fileName: resumeFileName?.trim() || "paste.txt",
-        rawText: resumeText.trim(),
-      },
-    });
-  } else {
-    resume = await prisma.resume.create({
-      data: {
-        userId: user.id,
-        fileName: resumeFileName?.trim() || "paste.txt",
-        rawText: resumeText.trim(),
-      },
-    });
+  // 자소서는 선택 사항 — 입력하지 않으면 일반 질문으로 면접을 진행한다.
+  // 같은 플랜에 이미 저장된 자소서가 있는데 이번엔 새로 입력하지 않았다면 기존 것을 재사용한다.
+  const trimmedResumeText: string | undefined = resumeText?.trim() || undefined;
+  let resume: { id: string } | null = null;
+  if (trimmedResumeText) {
+    if (existingPlan?.resumeId) {
+      resume = await prisma.resume.update({
+        where: { id: existingPlan.resumeId },
+        data: {
+          fileName: resumeFileName?.trim() || "paste.txt",
+          rawText: trimmedResumeText,
+        },
+      });
+    } else {
+      resume = await prisma.resume.create({
+        data: {
+          userId: user.id,
+          fileName: resumeFileName?.trim() || "paste.txt",
+          rawText: trimmedResumeText,
+        },
+      });
+    }
+  } else if (existingPlan?.resume) {
+    resume = existingPlan.resume;
   }
 
   const plan = await getOrCreateActivePlan({
     userId: user.id,
     targetCompanyId: targetCompany.id,
-    resumeId: resume.id,
+    resumeId: resume?.id,
     jobRole: jobRole ?? "OTHER",
     planId,
   });
@@ -160,7 +160,7 @@ export async function POST(req: Request) {
       userId: user.id,
       planId: plan.id,
       targetCompanyId: targetCompany.id,
-      resumeId: resume.id,
+      resumeId: resume?.id,
       jobRole: jobRole ?? "OTHER",
       focusCompetency: competency,
       mode: "COMPETENCY",
