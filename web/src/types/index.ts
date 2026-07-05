@@ -37,6 +37,8 @@ export interface ChipEvent {
   chip_type: ChipType;
   rubric_score: number;
   brief_feedback: string;
+  /** 이 문항에 AI 꼬리질문이 있었는지 (있었다면 rubric_score는 원 답변+꼬리질문 답변 종합 점수) */
+  had_follow_up?: boolean;
 }
 
 export interface NextItem {
@@ -81,6 +83,8 @@ export interface InterviewQuestion {
   personalizedText?: string;
   /** "왜 이 질문인가요?" — IRT 문항 선택 근거를 후보자에게 설명하는 문구 */
   rationale?: string;
+  /** true면 같은 문항에 대한 AI 꼬리질문 — 답변이 추상적일 때 한 번 더 파고드는 질문 */
+  isFollowUp?: boolean;
 }
 
 export interface InterviewSessionState {

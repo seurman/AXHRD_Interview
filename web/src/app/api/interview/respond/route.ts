@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { submitIrtResponse, getIrtSessionSummary } from "@/lib/irt-client";
-import { evaluateAnswer } from "@/lib/gemini/evaluate";
+import { evaluateAnswer, type RubricResult } from "@/lib/gemini/evaluate";
 import { correctTranscript } from "@/lib/gemini/correct-transcript";
-import { parseIrtState, serializeIrtState } from "@/lib/irt-state";
+import { parseIrtState, serializeIrtState, type StoredIrtState } from "@/lib/irt-state";
+import { shouldTriggerFollowUp, pickFollowUpQuestion } from "@/lib/interview/follow-up";
 import { buildPersonalizedQuestion } from "@/lib/interview/build-question";
 import { buildQuestionRationale } from "@/lib/interview/rationale";
 import { generateCompetencyFeedback } from "@/lib/claude/competency-feedback";
@@ -80,21 +81,106 @@ async function handleRespond(req: Request, userId: string) {
     stored.personalizedQuestions?.[question.externalId]?.text ?? question.template;
   const rubricCriteria = stored.personalizedQuestions?.[question.externalId]?.rubric;
 
+  const focusCompetency =
+    session.focusCompetency ?? question.competency.code;
+  const isCompetencyMode = session.mode === "COMPETENCY";
+  const maxItemsPerCompetency = isCompetencyMode ? 3 : 18;
+
+  // 진행 중인 꼬리질문에 대한 답변인지 확인 — 서버 상태(irtState.pendingFollowUp)가
+  // 기준이며 클라이언트는 별도 플래그를 보낼 필요가 없다.
+  const pending = stored.pendingFollowUp;
+  const isFollowUpAnswer = !!pending && pending.questionId === questionId;
+
   // Web Speech API STT 오인식(예: "병목"→"병 먹고") 교정 — 원문(transcript)은 그대로 DB에 남기고
   // 채점·이후 인용에는 교정본을 쓴다.
   const correctedAnswer = await correctTranscript(transcript);
 
-  const rubric = await evaluateAnswer({
-    question: displayedQuestion,
-    answer: correctedAnswer,
-    competency: question.competency.code,
-    resumeContext: session.resume?.rawText,
-    rubricCriteria,
-  });
+  let rubric: RubricResult;
+  let finalTranscript: string;
+  let finalCorrectedTranscript: string | null;
+  let finalDurationSec: number | null;
 
-  const focusCompetency =
-    session.focusCompetency ?? question.competency.code;
-  const isCompetencyMode = session.mode === "COMPETENCY";
+  if (isFollowUpAnswer && pending) {
+    // 꼬리질문 답변 — 원 답변 + 꼬리질문 답변을 함께 최종 평가한다 (추가 API 호출 1회,
+    // 원 답변 채점 시 이미 낸 판단을 뒤집는 게 아니라 보완하는 개념).
+    const combinedQuestion = `${displayedQuestion}\n\n[꼬리질문] ${pending.followUpQuestion}`;
+    const combinedAnswer = `[최초 답변]\n${
+      pending.originalCorrectedTranscript ?? pending.originalTranscript
+    }\n\n[꼬리질문에 대한 답변]\n${correctedAnswer}`;
+
+    rubric = await evaluateAnswer({
+      question: combinedQuestion,
+      answer: combinedAnswer,
+      competency: question.competency.code,
+      resumeContext: session.resume?.rawText,
+      rubricCriteria,
+    });
+
+    finalTranscript = pending.originalTranscript;
+    finalCorrectedTranscript = pending.originalCorrectedTranscript;
+    finalDurationSec = pending.originalDurationSec;
+  } else {
+    rubric = await evaluateAnswer({
+      question: displayedQuestion,
+      answer: correctedAnswer,
+      competency: question.competency.code,
+      resumeContext: session.resume?.rawText,
+      rubricCriteria,
+    });
+
+    if (shouldTriggerFollowUp(rubric)) {
+      const followUpQuestion = pickFollowUpQuestion(question.followUpHints, correctedAnswer);
+
+      const updatedState: StoredIrtState = {
+        ...stored,
+        pendingFollowUp: {
+          questionId,
+          followUpQuestion,
+          originalTranscript: transcript,
+          originalCorrectedTranscript: correctedAnswer !== transcript ? correctedAnswer : null,
+          originalScore: rubric.score,
+          originalDimensions: rubric.dimensions,
+          originalBriefFeedback: rubric.briefFeedback,
+          originalDurationSec: typeof durationSec === "number" ? Math.round(durationSec) : null,
+        },
+      };
+
+      await prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: { irtState: serializeIrtState(updatedState) },
+      });
+
+      // IRT 엔진 호출도, ResponseRecord/ChipEvent 기록도 아직 하지 않는다 —
+      // 이 문항은 꼬리질문 답변까지 받은 뒤 한 번에 확정한다.
+      return NextResponse.json({
+        isFollowUp: true,
+        competencyStates: stored.competencies,
+        chipEvent: null,
+        nextQuestion: {
+          id: question.id,
+          externalId: question.externalId,
+          competency: question.competency.code,
+          level: question.level,
+          text: question.template,
+          personalizedText: followUpQuestion,
+          rationale: "답변을 조금 더 구체화하기 위한 후속 질문입니다.",
+          isFollowUp: true,
+        },
+        shouldTerminate: false,
+        totalItems: stored.administeredIds.length,
+        administeredIds: stored.administeredIds,
+        redirectUrl: null,
+        planId: stored.planId,
+        focusCompetency,
+        nextCompetency: null,
+        maxItemsPerCompetency,
+      });
+    }
+
+    finalTranscript = transcript;
+    finalCorrectedTranscript = correctedAnswer !== transcript ? correctedAnswer : null;
+    finalDurationSec = typeof durationSec === "number" ? Math.round(durationSec) : null;
+  }
 
   const questions = await prisma.question.findMany({
     where: {
@@ -150,10 +236,15 @@ async function handleRespond(req: Request, userId: string) {
       questionId,
       competency: question.competency.code,
       level: question.level,
-      transcript,
-      correctedTranscript: correctedAnswer !== transcript ? correctedAnswer : null,
+      transcript: finalTranscript,
+      correctedTranscript: finalCorrectedTranscript,
       rubricScore: rubric.score,
-      durationSec: typeof durationSec === "number" ? Math.round(durationSec) : null,
+      durationSec: finalDurationSec,
+      initialRubricScore: isFollowUpAnswer && pending ? pending.originalScore : null,
+      followUpQuestion: isFollowUpAnswer && pending ? pending.followUpQuestion : null,
+      followUpTranscript: isFollowUpAnswer ? transcript : null,
+      followUpCorrectedTranscript:
+        isFollowUpAnswer && correctedAnswer !== transcript ? correctedAnswer : null,
     },
   });
 
@@ -166,6 +257,7 @@ async function handleRespond(req: Request, userId: string) {
       rubricScore: irtResult.chip_event.rubric_score,
       briefFeedback:
         rubric.briefFeedback || irtResult.chip_event.brief_feedback,
+      hadFollowUp: isFollowUpAnswer,
       sequence: session.responses.length,
     },
   });
@@ -233,14 +325,15 @@ async function handleRespond(req: Request, userId: string) {
     const progress = await prisma.competencyProgress.findMany({
       where: { planId },
     });
-    const pending = progress.find((p) => p.status !== "COMPLETED");
-    nextCompetency = pending?.competency ?? null;
+    const pendingProgress = progress.find((p) => p.status !== "COMPLETED");
+    nextCompetency = pendingProgress?.competency ?? null;
   }
 
   return NextResponse.json({
     competencyStates: irtResult.competency_states,
     chipEvent: {
       ...irtResult.chip_event,
+      had_follow_up: isFollowUpAnswer,
       brief_feedback: rubric.briefFeedback,
     },
     nextQuestion,

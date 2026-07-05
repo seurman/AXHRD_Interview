@@ -75,12 +75,24 @@ enum OrgRole {
   ADMIN   // 기관 생성자 — STAFF 권한 + 가입 코드 재발급 등 관리
 }
 
+/** 기관 생성 승인 절차. 아무나 로그인해서 기관을 만들고 ADMIN이 되는 것을
+ *  막기 위해, 신규 생성 기관은 PENDING 상태로 시작해 슈퍼어드민 승인 전까지
+ *  가입 코드로 학생을 받을 수 없고 대시보드도 열리지 않는다. */
+enum OrgStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Organization {
-  id        String   @id @default(cuid())
-  name      String
+  id         String    @id @default(cuid())
+  name       String
   /** 학생/직원이 소속을 연결할 때 입력하는 코드. 재발급 가능하도록 unique만 보장 */
-  joinCode  String   @unique
-  createdAt DateTime @default(now())
+  joinCode   String    @unique
+  status     OrgStatus @default(PENDING)
+  approvedAt DateTime?
+  rejectedAt DateTime?
+  createdAt  DateTime  @default(now())
 
   members User[]
 }
@@ -305,9 +317,16 @@ model ResponseRecord {
   transcript  String           @db.Text
   correctedTranscript String?  @db.Text
   audioUrl    String?
-  rubricScore Float            // 0.0 - 1.0
+  rubricScore Float            // 0.0 - 1.0 (꼬리질문이 있었다면 최종 결합 평가 점수)
   durationSec Int?
   createdAt   DateTime         @default(now())
+
+  // ── AI 꼬리질문(follow-up) — 답변이 추상적/모호할 때 같은 문항 안에서 한 번 더 파고든 기록 ──
+  /** 꼬리질문이 없었다면 null. 있었다면 rubricScore는 원 답변+꼬리질문 답변을 함께 본 최종 점수 */
+  initialRubricScore   Float?
+  followUpQuestion     String? @db.Text
+  followUpTranscript   String? @db.Text
+  followUpCorrectedTranscript String? @db.Text
 
   @@index([sessionId])
 }
@@ -321,6 +340,8 @@ model ChipEvent {
   chipType      ChipType
   rubricScore   Float
   briefFeedback String?
+  /** 이 문항에 꼬리질문이 있었는지 — 리포트/투명성 표시용 */
+  hadFollowUp   Boolean          @default(false)
   sequence      Int
   createdAt     DateTime         @default(now())
 

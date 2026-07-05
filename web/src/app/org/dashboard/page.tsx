@@ -15,6 +15,31 @@ export default async function OrgDashboardPage() {
     return <p className="text-muted">기관 정보를 찾을 수 없습니다.</p>;
   }
 
+  if (data.status !== "APPROVED") {
+    const pending = data.status === "PENDING";
+    return (
+      <div className="mx-auto max-w-lg space-y-6">
+        <h1 className="text-2xl font-bold text-foreground">{data.organizationName}</h1>
+        <div className="card-luxe space-y-3 p-6">
+          <p className="font-medium text-foreground">
+            {pending ? "승인 대기 중입니다" : "승인이 거절되었습니다"}
+          </p>
+          <p className="text-sm text-muted">
+            {pending
+              ? "기관 생성 요청을 검토하고 있습니다. 승인되면 가입 코드로 학생을 받고 코호트 대시보드를 이용하실 수 있습니다."
+              : "이 기관 생성 요청은 승인되지 않았습니다. 문의사항이 있으시면 운영팀에 연락해 주세요."}
+          </p>
+          {pending && (
+            <p className="text-xs text-muted">
+              학생 가입 코드: <span className="font-mono">{data.joinCode}</span> (승인 전까지는
+              이 코드로 가입할 수 없습니다)
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <div>

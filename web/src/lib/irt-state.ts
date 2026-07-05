@@ -1,9 +1,24 @@
 import type { CompetencyState } from "@/types";
+import type { RubricResult } from "@/lib/gemini/evaluate";
 
 export interface PersonalizedQuestionEntry {
   text: string;
   /** 이 질문을 채점할 때 사용할 맞춤 루브릭(3~4개 기준). 클라이언트에는 노출하지 않는다. */
   rubric?: string[];
+}
+
+/** 현재 문항에 대해 꼬리질문을 낸 뒤, 그 답변을 기다리는 동안의 임시 상태.
+ *  꼬리질문 답변이 제출되면 이 값을 사용해 원 답변 + 꼬리질문 답변을 함께
+ *  최종 평가하고, IRT 엔진 호출 및 기록을 남긴 뒤 비운다. */
+export interface PendingFollowUp {
+  questionId: string;
+  followUpQuestion: string;
+  originalTranscript: string;
+  originalCorrectedTranscript: string | null;
+  originalScore: number;
+  originalDimensions: RubricResult["dimensions"];
+  originalBriefFeedback: string;
+  originalDurationSec: number | null;
 }
 
 export interface StoredIrtState {
@@ -15,6 +30,8 @@ export interface StoredIrtState {
   personalizedQuestions?: Record<string, PersonalizedQuestionEntry>;
   /** 세션 전체에서 이미 질문에 인용된 자소서 문장 — 동일 사례 반복 인용을 막기 위해 추적 */
   usedHighlights?: string[];
+  /** 진행 중인 꼬리질문이 있으면 채워짐, 없으면 undefined */
+  pendingFollowUp?: PendingFollowUp;
 }
 
 function normalizePersonalizedQuestions(
@@ -51,6 +68,7 @@ export function parseIrtState(raw: unknown): StoredIrtState {
       planId: obj.planId as string | undefined,
       personalizedQuestions: normalizePersonalizedQuestions(obj.personalizedQuestions),
       usedHighlights: (obj.usedHighlights as string[]) ?? [],
+      pendingFollowUp: obj.pendingFollowUp as PendingFollowUp | undefined,
     };
   }
 
@@ -68,6 +86,7 @@ export function serializeIrtState(state: StoredIrtState): object {
     planId: state.planId,
     personalizedQuestions: state.personalizedQuestions,
     usedHighlights: state.usedHighlights,
+    pendingFollowUp: state.pendingFollowUp,
   };
 }
 

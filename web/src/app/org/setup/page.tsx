@@ -11,8 +11,10 @@ export default async function OrgSetupPage() {
   if (user.organizationId) {
     const org = await prisma.organization.findUnique({
       where: { id: user.organizationId },
-      select: { name: true },
+      select: { name: true, status: true },
     });
+
+    const isStaff = user.orgRole === "ADMIN" || user.orgRole === "STAFF";
 
     return (
       <div className="mx-auto max-w-lg space-y-6">
@@ -22,7 +24,17 @@ export default async function OrgSetupPage() {
             이미 <span className="font-semibold">{org?.name ?? "알 수 없는 기관"}</span>에
             소속되어 있습니다.
           </p>
-          {(user.orgRole === "ADMIN" || user.orgRole === "STAFF") && (
+          {isStaff && org?.status === "PENDING" && (
+            <p className="mt-2 text-sm text-muted">
+              기관 생성 요청이 승인 대기 중입니다. 승인 후 코호트 대시보드를 이용하실 수 있습니다.
+            </p>
+          )}
+          {isStaff && org?.status === "REJECTED" && (
+            <p className="mt-2 text-sm text-muted">
+              기관 생성 요청이 승인되지 않았습니다. 문의사항이 있으시면 운영팀에 연락해 주세요.
+            </p>
+          )}
+          {isStaff && (
             <Link href="/org/dashboard" className="btn-primary mt-4 inline-block">
               코호트 대시보드 보기 →
             </Link>

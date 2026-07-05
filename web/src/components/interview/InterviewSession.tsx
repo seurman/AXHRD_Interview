@@ -94,7 +94,11 @@ export function InterviewSession({
       setState((prev) => ({
         ...prev,
         competencyStates: data.competencyStates,
-        chipHistory: [...prev.chipHistory, data.chipEvent as ChipEvent],
+        // 꼬리질문을 내는 턴에는 아직 채점이 확정되지 않아 chipEvent가 없다 —
+        // 꼬리질문 답변까지 받아 최종 확정된 턴에만 칩을 추가한다.
+        chipHistory: data.chipEvent
+          ? [...prev.chipHistory, data.chipEvent as ChipEvent]
+          : prev.chipHistory,
         administeredIds: data.administeredIds,
         totalItems: data.totalItems,
         shouldTerminate: data.shouldTerminate,
@@ -139,6 +143,11 @@ export function InterviewSession({
             {isPersonalized && (
               <span className="rounded-full bg-gold/15 px-2 py-0.5 text-gold">
                 자소서 맞춤 질문
+              </span>
+            )}
+            {q?.isFollowUp && (
+              <span className="rounded-full bg-accent/15 px-2 py-0.5 text-accent">
+                꼬리질문
               </span>
             )}
             {q && (

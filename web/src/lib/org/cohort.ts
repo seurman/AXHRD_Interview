@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { OrgStatus } from "@prisma/client";
 
 export interface CohortMemberRow {
   id: string;
@@ -20,6 +21,7 @@ export interface CohortCompetencyRow {
 export interface CohortData {
   organizationName: string;
   joinCode: string;
+  status: OrgStatus;
   memberCount: number;
   totalCompletedSessions: number;
   overallAvgPercentile: number | null;
@@ -44,6 +46,7 @@ export async function getCohortData(organizationId: string): Promise<CohortData 
     return {
       organizationName: org.name,
       joinCode: org.joinCode,
+      status: org.status,
       memberCount: 0,
       totalCompletedSessions: 0,
       overallAvgPercentile: null,
@@ -135,6 +138,7 @@ export async function getCohortData(organizationId: string): Promise<CohortData 
   return {
     organizationName: org.name,
     joinCode: org.joinCode,
+    status: org.status,
     memberCount: students.length,
     totalCompletedSessions: sessions.length,
     overallAvgPercentile,
