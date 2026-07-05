@@ -5,6 +5,9 @@ export interface PersonalizedQuestionEntry {
   text: string;
   /** 이 질문을 채점할 때 사용할 맞춤 루브릭(3~4개 기준). 클라이언트에는 노출하지 않는다. */
   rubric?: string[];
+  /** 자소서 인용으로 실제 개인화된 문항인지(true) — 일반 질문(스킵)이면 false/undefined.
+   *  "자소서 맞춤 질문" 배지 표시 여부를 텍스트 비교가 아니라 이 값으로 판단한다. */
+  resumePersonalized?: boolean;
 }
 
 /** 현재 문항에 대해 꼬리질문을 낸 뒤, 그 답변을 기다리는 동안의 임시 상태.

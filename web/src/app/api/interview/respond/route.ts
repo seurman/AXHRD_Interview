@@ -7,6 +7,7 @@ import { parseIrtState, serializeIrtState, type StoredIrtState } from "@/lib/irt
 import { shouldTriggerFollowUp, pickFollowUpQuestion } from "@/lib/interview/follow-up";
 import { buildPersonalizedQuestion } from "@/lib/interview/build-question";
 import { buildQuestionRationale } from "@/lib/interview/rationale";
+import { pressureTierFromLevel, pressureTierLabel } from "@/lib/interview/persona";
 import { generateCompetencyFeedback } from "@/lib/claude/competency-feedback";
 import {
   markPlanCompleteIfNeeded,
@@ -85,6 +86,12 @@ async function handleRespond(req: Request, userId: string) {
   const isCompetencyMode = session.mode === "COMPETENCY";
   const maxItemsPerCompetency = isCompetencyMode ? 3 : 18;
 
+  // 압박 강도 적응형 조절 — 이 문항이 출제된 시점의 추정 레벨을 그대로 면접관 톤에
+  // 재사용한다(이번 턴에 대한 꼬리질문 판단/문구에 적용, 채점 자체에는 영향 없음).
+  const currentTier = pressureTierFromLevel(
+    stored.competencies[question.competency.code]?.current_level ?? 2
+  );
+
   // 진행 중인 꼬리질문에 대한 답변인지 확인 — 서버 상태(irtState.pendingFollowUp)가
   // 기준이며 클라이언트는 별도 플래그를 보낼 필요가 없다.
   const pending = stored.pendingFollowUp;
@@ -133,8 +140,12 @@ async function handleRespond(req: Request, userId: string) {
     rubric = combined;
     correctedAnswer = combined.correctedAnswer;
 
-    if (shouldTriggerFollowUp(rubric)) {
-      const followUpQuestion = pickFollowUpQuestion(question.followUpHints, correctedAnswer);
+    if (shouldTriggerFollowUp(rubric, currentTier)) {
+      const followUpQuestion = pickFollowUpQuestion(
+        question.followUpHints,
+        correctedAnswer,
+        currentTier
+      );
 
       const updatedState: StoredIrtState = {
         ...stored,
@@ -170,6 +181,9 @@ async function handleRespond(req: Request, userId: string) {
           personalizedText: followUpQuestion,
           rationale: "답변을 조금 더 구체화하기 위한 후속 질문입니다.",
           isFollowUp: true,
+          pressureTier: currentTier,
+          personaLabel: pressureTierLabel(currentTier),
+          resumePersonalized: false,
         },
         shouldTerminate: false,
         totalItems: stored.administeredIds.length,
@@ -305,6 +319,11 @@ async function handleRespond(req: Request, userId: string) {
         level: irtResult.next_item.target_level,
         expectedInformation: irtResult.next_item.expected_information,
       });
+      // 다음 문항의 압박 강도는 이번 답변까지 반영된 최신 추정 레벨(irtResult.competency_states)
+      // 기준으로 정한다 — 잘 버티면 다음 문항은 더 깐깐하게, 흔들리면 더 부드럽게.
+      const nextTier = pressureTierFromLevel(
+        irtResult.competency_states[next.competency.code]?.current_level ?? 2
+      );
       // 이 시점의 next 문항은 이미 이번 턴에 문항 하나를 답한 뒤라(updatedAdministered에
       // 최소 1개 포함) 해당 역량의 2번째 이상 문항이다 — 첫 문항만 자소서로 맞춤화한다는
       // 정책에 따라 여기서는 항상 일반 질문(Gemini 미호출)으로 처리한다.
@@ -312,7 +331,7 @@ async function handleRespond(req: Request, userId: string) {
         { ...session, irtState: serializeIrtState(updatedState) },
         next,
         rationale,
-        { skipPersonalization: true }
+        { skipPersonalization: true, pressureTier: nextTier }
       );
     })(),
   ]);

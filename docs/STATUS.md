@@ -40,6 +40,13 @@
   - `PATCH /api/admin/users/[id]` 신규 — 소속 기관이 없으면 역할은 자동으로 "학생"으로 강제(담당자/관리자 역할은 소속 기관이 있어야만 의미가 있음)
   - `SUPERADMIN_EMAILS` 자체는 여전히 환경변수 — DB화하지 않기로 함(이번 스코프 아님)
   - `/admin/organizations`, 헤더 메뉴에 "전체 사용자 관리" 링크 추가
+- **압박 강도 적응형 조절** (스키마 변경 없음, 코드만 추가 — 마이그레이션 불필요): ROADMAP의 "면접관 페르소나 3종"을 사용자가 고르는 정적 방식이 아니라, IRT가 이미 추정하고 있는 역량 레벨(`current_level`, 1~5)을 그대로 재사용해 자동으로 조절하는 방식으로 구현 — 브레인스토밍에서 나온 "독창적 아이디어" 중 첫 번째로 착수
+  - `lib/interview/persona.ts` 신규 — `pressureTierFromLevel(level)`: 레벨 1~2 GENTLE(실무진·우호적), 3 NEUTRAL, 4~5 TOUGH(임원·압박)로 매핑. `applyPressureTone()`: 사전 정의된 문구 풀에서 골라 질문 앞에 붙임(추가 LLM 호출 없음, 세션 내 반복 방지용 seed 회전)
+  - **채점은 절대 이 값의 영향을 받지 않는다** — 톤은 화면 표시용 텍스트에만 적용되고, 채점에 쓰이는 `personalizedQuestions[...].text` 캐시는 원문 그대로 유지. 규준참조 점수처럼 세션 간 비교 가능한 지표를 만들려면 채점 기준이 페르소나에 따라 흔들리면 안 되기 때문
+  - `lib/interview/follow-up.ts` — `shouldTriggerFollowUp()`/`pickFollowUpQuestion()`에 tier 파라미터 추가: TOUGH는 문턱을 낮춰(점수<0.75 & 구체성<0.6) 더 쉽게 꼬리질문을 걸고 문구도 더 직설적으로, GENTLE은 반대로 너그럽게(점수<0.55 & 구체성<0.4)
+  - 다음 문항의 압박 강도는 이번 답변까지 반영된 최신 추정 레벨(`irtResult.competency_states`) 기준으로 정함 — 잘 버티면 다음 질문은 더 깐깐하게, 흔들리면 더 부드럽게
+  - `InterviewQuestion`에 `resumePersonalized` 필드를 명시적으로 추가해 "자소서 맞춤 질문" 배지 판단 기준을 텍스트 비교(`personalizedText !== text`)에서 이 값으로 교체 — 압박 톤 프리픽스나 꼬리질문 때문에 텍스트가 달라져도 배지가 잘못 뜨지 않도록 수정(기존에 꼬리질문에도 "자소서 맞춤 질문" 배지가 같이 뜨던 부수적 버그도 함께 해결됨)
+  - `InterviewSession.tsx`에 GENTLE(🙂)/TOUGH(🔥) 배지 표시, NEUTRAL은 배지 미표시
 - **AI 꼬리질문(follow-up question)** (로컬 `prisma generate` / `migrate deploy` / `npm run build` 성공 확인됨 — git push는 진행 중이었는데 이후 대화에서 확인 안 됨, 안 하셨으면 아래 "진행 시 참고" 커밋 필요):
   - 답변 채점 시 `score < 0.65` 그리고 `dimensions.specificity < 0.5`이면 "추상적인 답변"으로 판단해 같은 문항 안에서 꼬리질문을 한 번 더 낸다 (`web/src/lib/interview/follow-up.ts`의 `shouldTriggerFollowUp`)
   - 꼬리질문 텍스트는 Gemini를 다시 호출하지 않고 `Question.followUpHints`(시딩된 주제 키워드) 중 아직 답변에서 다루지 않은 것을 템플릿에 꽂아 생성 — 추가 API 비용 없음

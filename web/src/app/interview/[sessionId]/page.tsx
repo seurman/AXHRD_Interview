@@ -5,6 +5,7 @@ import { InterviewSession } from "@/components/interview/InterviewSession";
 import { parseIrtState, defaultCompetencyStates } from "@/lib/irt-state";
 import { buildPersonalizedQuestion } from "@/lib/interview/build-question";
 import { buildQuestionRationale } from "@/lib/interview/rationale";
+import { pressureTierFromLevel } from "@/lib/interview/persona";
 import { competencyLabel } from "@/lib/labels";
 import type { InterviewSessionState } from "@/types";
 import { COMPETENCY_CODES } from "@/types";
@@ -49,11 +50,14 @@ export default async function InterviewPage({ params }: PageProps) {
       // 역량당 첫 문항만 자소서 인용으로 맞춤화한다 — 이미 답변한 문항이 있으면
       // (새로고침 등으로 이 페이지가 다시 렌더링된 경우) 일반 질문으로 처리한다.
       const isFirstItem = stored.administeredIds.length === 0;
+      // 압박 강도 적응형 조절 — 현재까지 추정된 역량 레벨(current_level)을 그대로
+      // 면접관 톤에도 재사용한다. 세션 시작 직후는 기본값(레벨 2, NEUTRAL)이다.
+      const currentLevel = stored.competencies[q.competency.code]?.current_level ?? 2;
       currentQuestion = await buildPersonalizedQuestion(
         session,
         q,
         buildQuestionRationale({ level: q.level }),
-        { skipPersonalization: !isFirstItem }
+        { skipPersonalization: !isFirstItem, pressureTier: pressureTierFromLevel(currentLevel) }
       );
     }
   }

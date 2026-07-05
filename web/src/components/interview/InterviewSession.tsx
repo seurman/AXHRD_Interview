@@ -123,7 +123,7 @@ export function InterviewSession({
   };
 
   const q = state.currentQuestion;
-  const isPersonalized = q?.personalizedText && q.personalizedText !== q.text;
+  const isPersonalized = !!q?.resumePersonalized;
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
@@ -148,6 +148,16 @@ export function InterviewSession({
             {q?.isFollowUp && (
               <span className="rounded-full bg-accent/15 px-2 py-0.5 text-accent">
                 꼬리질문
+              </span>
+            )}
+            {q?.pressureTier === "TOUGH" && (
+              <span className="rounded-full bg-danger/15 px-2 py-0.5 text-danger">
+                🔥 {q.personaLabel ?? "임원 압박면접 모드"}
+              </span>
+            )}
+            {q?.pressureTier === "GENTLE" && (
+              <span className="rounded-full bg-success/15 px-2 py-0.5 text-success">
+                🙂 {q.personaLabel ?? "편안한 분위기"}
               </span>
             )}
             {q && (

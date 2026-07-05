@@ -97,6 +97,13 @@ export interface InterviewQuestion {
   rationale?: string;
   /** true면 같은 문항에 대한 AI 꼬리질문 — 답변이 추상적일 때 한 번 더 파고드는 질문 */
   isFollowUp?: boolean;
+  /** 압박 강도 적응형 조절 — 현재 역량 추정 레벨에 따라 면접관 톤이 달라짐 (NEUTRAL이면 UI에 배지 미표시) */
+  pressureTier?: "GENTLE" | "NEUTRAL" | "TOUGH";
+  personaLabel?: string;
+  /** 자소서 인용으로 실제 개인화된 문항인지 — "자소서 맞춤 질문" 배지 표시 기준.
+   *  (personalizedText가 text와 다르다고 해서 자소서 인용이라는 뜻은 아님 — 압박 톤 프리픽스나
+   *  꼬리질문도 다르게 나오므로 이 필드로 명시적으로 구분한다) */
+  resumePersonalized?: boolean;
 }
 
 export interface InterviewSessionState {

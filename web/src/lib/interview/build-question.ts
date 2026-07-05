@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { parseIrtState, serializeIrtState } from "@/lib/irt-state";
 import { personalizeQuestion, buildGenericRubric } from "@/lib/interview/personalize-question";
+import {
+  applyPressureTone,
+  pressureTierLabel,
+  type PressureTier,
+} from "@/lib/interview/persona";
 import type { InterviewQuestion } from "@/types";
 
 type QuestionRow = {
@@ -19,25 +24,48 @@ type SessionContext = {
   targetCompany?: { name: string } | null;
 };
 
+/** 압박 강도(pressureTier)가 주어지면 화면에 보여줄 텍스트에만 톤을 입힌다.
+ *  채점에 쓰이는 캐시(personalizedQuestions[...].text)는 건드리지 않는다. */
+function withPersona(
+  q: InterviewQuestion,
+  tier: PressureTier | undefined,
+  seed: number
+): InterviewQuestion {
+  if (!tier) return q;
+  const displayed = q.personalizedText ?? q.text;
+  return {
+    ...q,
+    personalizedText: applyPressureTone(displayed, tier, seed),
+    pressureTier: tier,
+    personaLabel: pressureTierLabel(tier),
+  };
+}
+
 export async function buildPersonalizedQuestion(
   session: SessionContext,
   question: QuestionRow,
   rationale?: string,
-  options?: { skipPersonalization?: boolean }
+  options?: { skipPersonalization?: boolean; pressureTier?: PressureTier }
 ): Promise<InterviewQuestion> {
   const stored = parseIrtState(session.irtState);
   const cached = stored.personalizedQuestions?.[question.externalId];
+  const seed = stored.administeredIds.length;
 
   if (cached) {
-    return {
-      id: question.id,
-      externalId: question.externalId,
-      competency: question.competency.code,
-      level: question.level,
-      text: question.template,
-      personalizedText: cached.text,
-      rationale,
-    };
+    return withPersona(
+      {
+        id: question.id,
+        externalId: question.externalId,
+        competency: question.competency.code,
+        level: question.level,
+        text: question.template,
+        personalizedText: cached.text,
+        rationale,
+        resumePersonalized: !!cached.resumePersonalized,
+      },
+      options?.pressureTier,
+      seed
+    );
   }
 
   // 역량당 첫 문항만 자소서 인용(Gemini 호출)으로 맞춤화하고, 나머지 문항은 일반
@@ -46,7 +74,7 @@ export async function buildPersonalizedQuestion(
     const rubric = buildGenericRubric(question.competency.code);
     const personalizedQuestions = {
       ...stored.personalizedQuestions,
-      [question.externalId]: { text: question.template, rubric },
+      [question.externalId]: { text: question.template, rubric, resumePersonalized: false },
     };
 
     await prisma.interviewSession.update({
@@ -56,14 +84,19 @@ export async function buildPersonalizedQuestion(
       },
     });
 
-    return {
-      id: question.id,
-      externalId: question.externalId,
-      competency: question.competency.code,
-      level: question.level,
-      text: question.template,
-      rationale,
-    };
+    return withPersona(
+      {
+        id: question.id,
+        externalId: question.externalId,
+        competency: question.competency.code,
+        level: question.level,
+        text: question.template,
+        rationale,
+        resumePersonalized: false,
+      },
+      options?.pressureTier,
+      seed
+    );
   }
 
   const result = await personalizeQuestion({
@@ -77,7 +110,11 @@ export async function buildPersonalizedQuestion(
 
   const personalizedQuestions = {
     ...stored.personalizedQuestions,
-    [question.externalId]: { text: result.text, rubric: result.rubric },
+    [question.externalId]: {
+      text: result.text,
+      rubric: result.rubric,
+      resumePersonalized: result.text !== question.template,
+    },
   };
 
   const usedHighlights = result.usedHighlight
@@ -95,15 +132,20 @@ export async function buildPersonalizedQuestion(
     },
   });
 
-  return {
-    id: question.id,
-    externalId: question.externalId,
-    competency: question.competency.code,
-    level: question.level,
-    text: question.template,
-    personalizedText: result.text,
-    rationale,
-  };
+  return withPersona(
+    {
+      id: question.id,
+      externalId: question.externalId,
+      competency: question.competency.code,
+      level: question.level,
+      text: question.template,
+      personalizedText: result.text,
+      rationale,
+      resumePersonalized: result.text !== question.template,
+    },
+    options?.pressureTier,
+    seed
+  );
 }
 
 /** 채점 시 사용할 질문 전용 루브릭 조회 (클라이언트에는 절대 노출하지 않음) */

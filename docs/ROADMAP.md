@@ -19,7 +19,7 @@
 - [x] Gemini TTS/실시간 채점/질문 개인화 실연동 (MiniMax 대체, 비중국 벤더)
 - [ ] DART API 회사 enrichment
 - [ ] 토스페이먼츠 구독/회당 결제
-- [ ] 면접관 페르소나 3종
+- [x] 면접관 페르소나 — 사용자가 고르는 정적 3종 대신, IRT 추정 레벨 기반 적응형 압박 강도(GENTLE/NEUTRAL/TOUGH)로 구현 (`docs/STATUS.md` 참고)
 
 ## Phase 2 — B2B (8주)
 
