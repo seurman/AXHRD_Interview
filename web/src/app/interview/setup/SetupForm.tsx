@@ -161,15 +161,19 @@ export function SetupForm({
       if (!res.ok) {
         if (data.allDone && data.planId) {
           router.push(`/interview/plan/${data.planId}`);
-          return;
+          return; // 다음 화면으로 이동 중 — 버튼 상태를 되돌리지 않는다
         }
         throw new Error(data.error ?? "Failed to start");
       }
 
       router.push(`/interview/${data.sessionId}`);
+      // 성공 시에는 setLoading(false)를 호출하지 않는다.
+      // router.push() 후에도 다음 페이지가 서버에서 렌더링을 마칠 때까지
+      // 이 컴포넌트가 잠시 화면에 남아있는데, 여기서 loading을 풀면
+      // "준비 중…" 버튼이 원래 상태로 돌아왔다가 화면이 넘어가는 것처럼
+      // 깜빡이는 문제가 있었다. 실패했을 때만 버튼을 원상복구한다.
     } catch (e) {
       alert(e instanceof Error ? e.message : "면접 시작에 실패했습니다.");
-    } finally {
       setLoading(false);
     }
   };

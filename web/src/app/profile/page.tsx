@@ -16,6 +16,7 @@ export default async function ProfilePage() {
       profile: true,
       targetCompanies: { take: 5, orderBy: { createdAt: "desc" } },
       resumes: { take: 3, orderBy: { createdAt: "desc" } },
+      organization: { select: { name: true } },
     },
   });
 
@@ -39,6 +40,32 @@ export default async function ProfilePage() {
           </p>
         </div>
         <span className="text-2xl text-gold">→</span>
+      </Link>
+
+      <Link
+        href={user.organizationId ? "/org/dashboard" : "/org/setup"}
+        className="flex items-center justify-between rounded-2xl border border-card-border bg-background p-6 transition hover:border-gold/40"
+      >
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
+            Organization
+          </p>
+          <p className="mt-1 font-semibold text-foreground">
+            {user.organizationId
+              ? `${user.organization?.name ?? "소속 기관"} · ${
+                  user.orgRole === "STUDENT" ? "학생" : "코호트 대시보드"
+                }`
+              : "기관 연결하기"}
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            {user.organizationId
+              ? user.orgRole === "STUDENT"
+                ? "소속 기관에 연결되어 있습니다"
+                : "소속 학생들의 진행 현황을 확인하세요"
+              : "대학 취업센터 등 소속 기관이 있다면 코드로 연결하세요"}
+          </p>
+        </div>
+        <span className="text-2xl text-accent">→</span>
       </Link>
 
       <section className="card-luxe p-6">

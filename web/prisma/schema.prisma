@@ -3,8 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Supabase 커넥션 풀러(6543, pgbouncer)는 prepared statement를 지원하지
+  // 않아 prisma migrate가 실패한다. 마이그레이션 전용으로 direct 연결(5432)을
+  // 별도로 지정한다 — 평소 앱 쿼리는 DATABASE_URL(풀링)을 그대로 사용.
+  directUrl = env("DIRECT_URL")
 }
 
 // ── Enums ──
@@ -63,6 +67,24 @@ enum OAuthProvider {
   NAVER
 }
 
+// ── Organization (대학 취업센터 등 B2B2C 코호트) ──
+
+enum OrgRole {
+  STUDENT // 소속 학생/구직자 — 본인 결과만 조회
+  STAFF   // 취업센터 담당자 — 소속 기관 코호트 집계 조회
+  ADMIN   // 기관 생성자 — STAFF 권한 + 가입 코드 재발급 등 관리
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  /** 학생/직원이 소속을 연결할 때 입력하는 코드. 재발급 가능하도록 unique만 보장 */
+  joinCode  String   @unique
+  createdAt DateTime @default(now())
+
+  members User[]
+}
+
 // ── User ──
 
 model User {
@@ -73,6 +95,9 @@ model User {
   passwordHash    String?
   /** 역량 인증서 공개 공유 링크용 토큰 (/c/[slug]). 요청 시 생성되는 opaque 토큰 */
   certificateSlug String?  @unique
+  organizationId  String?
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+  orgRole         OrgRole  @default(STUDENT)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -84,6 +109,8 @@ model User {
   interviewPlans  InterviewPlan[]
   competencyProgress CompetencyProgress[]
   oauthAccounts   OAuthAccount[]
+
+  @@index([organizationId])
 }
 
 // ── Social login (카카오/네이버) ──

@@ -20,6 +20,8 @@ function requiresAuth(pathname: string) {
   if (pathname.startsWith("/api/profile")) return true;
   if (pathname.startsWith("/api/companies")) return true;
   if (pathname.startsWith("/api/resume")) return true;
+  if (pathname.startsWith("/api/org")) return true;
+  if (pathname.startsWith("/org")) return true;
   return false;
 }
 
@@ -55,5 +57,7 @@ export const config = {
     "/api/profile/:path*",
     "/api/companies/:path*",
     "/api/resume/:path*",
+    "/api/org/:path*",
+    "/org/:path*",
   ],
 };
