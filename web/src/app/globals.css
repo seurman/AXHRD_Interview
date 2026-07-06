@@ -1,16 +1,19 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #f5f7fb;
-  --color-foreground: #101a33;
+  --color-background: #f7f8fc;
+  --color-foreground: #131a33;
   --color-muted: #5b6b8c;
   --color-card: #ffffff;
-  --color-card-border: #dde3f0;
-  --color-primary: #1d3fae;
-  --color-primary-light: #3457d1;
+  --color-card-border: #e5e9f6;
+  --color-primary: #2f5fee;
+  --color-primary-light: #4c79ff;
   --color-gold: #c79a5a;
   --color-gold-light: #ddb87d;
-  --color-accent: #2f7de0;
+  --color-accent: #6a7bf2;
+  /** aptifit.co.kr 참고 — 페리윙클/인디고 톤의 전체 폭 강조 밴드 전용 색(만족도 통계 등) */
+  --color-band: #7c8cf5;
+  --color-band-light: #98a5f7;
   --color-success: #059669;
   --color-warning: #d97706;
   --color-danger: #dc2626;
@@ -20,7 +23,7 @@
 
 body {
   font-family: var(--font-sans);
-  background: linear-gradient(165deg, #f8fafd 0%, #eef2fb 45%, #e6ecfa 100%);
+  background: linear-gradient(165deg, #fbfcfe 0%, #f2f4fc 45%, #eaeefb 100%);
   color: var(--color-foreground);
   min-height: 100vh;
 }
@@ -28,8 +31,28 @@ body {
 .card-luxe {
   background: var(--color-card);
   border: 1px solid var(--color-card-border);
-  border-radius: 1rem;
+  border-radius: 1.25rem;
   box-shadow: var(--shadow-luxe);
+}
+
+.band-periwinkle {
+  background: linear-gradient(135deg, var(--color-band) 0%, var(--color-band-light) 100%);
+  border-radius: 1.5rem;
+  color: white;
+}
+
+.badge-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  width: 2rem;
+  border-radius: 9999px;
+  background: var(--color-primary);
+  color: white;
+  font-weight: 700;
+  font-size: 0.875rem;
+  flex-shrink: 0;
 }
 
 .input-luxe {
@@ -44,7 +67,7 @@ body {
 .input-luxe:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgb(29 63 174 / 0.15);
+  box-shadow: 0 0 0 3px rgb(47 95 238 / 0.15);
 }
 
 .btn-primary {
@@ -58,7 +81,7 @@ body {
   font-weight: 600;
   color: white;
   transition: opacity 0.15s, transform 0.1s;
-  box-shadow: 0 6px 16px -4px rgb(29 63 174 / 0.35);
+  box-shadow: 0 6px 16px -4px rgb(47 95 238 / 0.35);
 }
 
 .btn-primary:hover:not(:disabled) {

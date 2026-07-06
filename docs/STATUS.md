@@ -84,6 +84,10 @@
   - "3. 지원 직무" 아래 실제 기출 질문 미리보기 목록(`/api/interview/real-questions` 호출 + 렌더링) 제거 — 불필요한 정보로 판단, 직무 선택 셀렉트박스만 남김. 백엔드 엔드포인트 자체는 그대로 둠(추후 재사용 가능)
   - "4. 자기소개서" 텍스트 영역이 파일에서 추출한 원문을 그대로 화면에 노출하던 것을 제거 — 업로드 시 "✓ 파일명 업로드됨" 확인 문구만 표시하고 추출된 본문은 화면에 그리지 않음(내부 상태 `fileResumeText`로만 보관해 제출에 사용). 직접 타이핑하고 싶을 때만 "파일 대신 텍스트로 직접 입력" 버튼으로 별도 `textarea`(`manualText`)를 펼칠 수 있음 — 제출 시 `manualText.trim() || fileResumeText` 우선순위로 전송
 - **JD 업로드 UI 버그 수정 + Vercel 빌드 에러 수정**: JD/인재상 섹션이 붙여넣기 토글만 있고 실제 파일 업로드가 없던 문제를 자소서 섹션과 동일한 드롭존 UX(업로드 → "✓ 파일명 업로드됨", 파일 대신 직접 입력 토글)로 교체, `handleJdFile()` 추가(`/api/resume/parse` 재사용). 동시에 Vercel 빌드를 막던 `lib/company/jd-mapper.ts`의 타입 에러(`filter` 콜백이 `string`을 반환해 `boolean` 타입가드와 불일치) 수정
+- **UI 톤 조정 — aptifit.co.kr 참고** (스키마 변경 없음): 사용자가 스크린샷으로 공유해준 aptifit.co.kr(서울대 기술지주 자회사 앱티마이저의 진로적성 서비스) 디자인을 참고해 색상 톤을 조정
+  - `globals.css`: `--color-primary`를 더 채도 높은 선명한 블루(#2f5fee)로, `--color-accent`도 그쪽으로 살짝 이동. 페리윙클(연보라빛 블루) 전용 색 `--color-band`(#7c8cf5) 신규 추가 — aptifit의 "만족도 95%" 같은 전체 폭 강조 밴드 섹션용. 카드 모서리를 1rem→1.25rem으로 더 둥글게, 번호 원형 배지 유틸(`badge-step`) 추가(aptifit의 ❶❷❸ 스타일)
+  - `page.tsx`(랜딩): 기능 카드 3개에 번호 배지 추가, 하단에 페리윙클 밴드 섹션 신규 추가 — 단, aptifit처럼 실명 후기를 넣는 대신(허위 후기 조작 방지) 실제 차별화 포인트(감정·표정 AI 미구현, 특허 리스크 회피, 페르소나 무관 채점)를 담음
+  - Chrome 확장 연결이 안 돼서 직접 브라우징 대신 사용자가 첨부한 스크린샷을 보고 색상을 추출함
 - **모바일 메뉴가 배경과 겹치는 버그 수정** (스키마 변경 없음): 우측 상단 햄버거 메뉴를 열면 드로어가 화면 전체가 아니라 헤더 높이 안에서만 뜨면서 배경 콘텐츠와 겹쳐 보이는 문제. 원인은 CSS 스펙상 `backdrop-filter`(헤더의 `backdrop-blur-md`)가 걸린 요소는 그 안의 `position: fixed` 자손들의 기준(containing block)이 스스로가 돼 버리는 것 — 드로어가 헤더 안에 있다 보니 뷰포트 기준이 아니라 헤더 높이 기준으로 "고정"돼 버렸음. `MobileNav.tsx`를 `createPortal`로 `document.body`에 직접 그리도록 고쳐서 헤더의 containing block 밖으로 빼냄. 열려 있는 동안 배경 스크롤도 잠금 처리 추가
 - **스와이프 카드 "저장" = 답변 연습으로 연결** (스키마 변경 있음 — 로컬 `prisma migrate dev` 필요): "저장이 무슨 의미가 있냐, 고르면 바로 녹음해서 답변할 수 있어야 한다"는 피드백 반영 — 지금까지 Save는 그냥 북마크만 하고 끝이었음
   - `SwipeAction`에 `answerTranscript`/`answeredAt` 필드 추가. `POST /api/questions/swipe`가 `answerTranscript`를 같이 받으면 저장

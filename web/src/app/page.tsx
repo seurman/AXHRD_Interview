@@ -76,13 +76,46 @@ export default async function HomePage() {
             title: "역량 트래킹",
             desc: "6개 역량 θ를 차수별로 기록. 성장 곡선을 한눈에",
           },
-        ].map(({ icon: Icon, title, desc }) => (
+        ].map(({ icon: Icon, title, desc }, i) => (
           <div key={title} className="card-luxe p-6">
-            <Icon className="mb-4 h-8 w-8 text-primary" />
+            <div className="mb-4 flex items-center gap-3">
+              <span className="badge-step">{i + 1}</span>
+              <Icon className="h-6 w-6 text-primary" />
+            </div>
             <h3 className="mb-2 font-semibold text-foreground">{title}</h3>
             <p className="text-sm text-muted">{desc}</p>
           </div>
         ))}
+      </section>
+
+      <section className="band-periwinkle px-6 py-12 text-center sm:px-10">
+        <p className="text-sm font-medium uppercase tracking-widest text-white/80">
+          왜 AXHRD Interview인가
+        </p>
+        <h2 className="mt-2 text-2xl font-bold sm:text-3xl">
+          채용 AI 규제 시대에 맞는 정직한 면접 연습
+        </h2>
+        <div className="mt-8 grid gap-4 text-left sm:grid-cols-3">
+          {[
+            {
+              title: "감정·표정 AI 미구현",
+              desc: "영상·음성으로 감정을 추론하지 않습니다. 텍스트·음성 STT와 루브릭 채점만 사용해요.",
+            },
+            {
+              title: "자체 문항 · 특허 리스크 회피",
+              desc: "타사 문항 DB를 쓰지 않는 자체 개발 문항 + LLM 개인화로 법적 리스크를 피했어요.",
+            },
+            {
+              title: "채점은 페르소나 영향 없음",
+              desc: "압박 강도·말투가 달라져도 채점 기준은 절대 흔들리지 않아 세션 간 비교가 가능해요.",
+            },
+          ].map((item) => (
+            <div key={item.title} className="rounded-2xl bg-white/95 p-5 text-foreground shadow-luxe">
+              <p className="font-semibold">{item.title}</p>
+              <p className="mt-2 text-sm text-muted">{item.desc}</p>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   );
