@@ -47,6 +47,7 @@ export default async function CompetencyFeedbackPage({
   const suggestions = fb.suggestions as string[];
   const highlights = (fb.highlights as Array<{ quote: string; note: string }> | null) ?? [];
   const rewriteExample = fb.rewriteExample;
+  const personaAlignmentNote = fb.personaAlignmentNote;
 
   const session = await prisma.interviewSession.findUnique({
     where: { id: fb.sessionId },
@@ -158,6 +159,14 @@ export default async function CompetencyFeedbackPage({
         <section className="rounded-2xl border border-gold-light/60 bg-gold-light/10 p-6">
           <h2 className="mb-2 font-semibold text-foreground">이렇게 답변해보면 어떨까요?</h2>
           <p className="leading-relaxed text-foreground">{rewriteExample}</p>
+        </section>
+      )}
+
+      {personaAlignmentNote && (
+        <section className="band-periwinkle rounded-2xl p-6">
+          <h2 className="mb-2 font-semibold">🎭 페르소나답게 답변했나요?</h2>
+          <p className="leading-relaxed">{personaAlignmentNote}</p>
+          <p className="mt-2 text-xs opacity-80">참고용 코칭이며 점수에는 반영되지 않아요.</p>
         </section>
       )}
 

@@ -1,4 +1,4 @@
-# 현재 상태 (2026-07-05 기준)
+# 현재 상태 (2026-07-06 기준)
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
@@ -84,6 +84,7 @@
   - "3. 지원 직무" 아래 실제 기출 질문 미리보기 목록(`/api/interview/real-questions` 호출 + 렌더링) 제거 — 불필요한 정보로 판단, 직무 선택 셀렉트박스만 남김. 백엔드 엔드포인트 자체는 그대로 둠(추후 재사용 가능)
   - "4. 자기소개서" 텍스트 영역이 파일에서 추출한 원문을 그대로 화면에 노출하던 것을 제거 — 업로드 시 "✓ 파일명 업로드됨" 확인 문구만 표시하고 추출된 본문은 화면에 그리지 않음(내부 상태 `fileResumeText`로만 보관해 제출에 사용). 직접 타이핑하고 싶을 때만 "파일 대신 텍스트로 직접 입력" 버튼으로 별도 `textarea`(`manualText`)를 펼칠 수 있음 — 제출 시 `manualText.trim() || fileResumeText` 우선순위로 전송
 - **JD 업로드 UI 버그 수정 + Vercel 빌드 에러 수정**: JD/인재상 섹션이 붙여넣기 토글만 있고 실제 파일 업로드가 없던 문제를 자소서 섹션과 동일한 드롭존 UX(업로드 → "✓ 파일명 업로드됨", 파일 대신 직접 입력 토글)로 교체, `handleJdFile()` 추가(`/api/resume/parse` 재사용). 동시에 Vercel 빌드를 막던 `lib/company/jd-mapper.ts`의 타입 에러(`filter` 콜백이 `string`을 반환해 `boolean` 타입가드와 불일치) 수정
+- **스와이프 카드 z-index 버그 수정**: "Save를 눌러도 다른 문제가 저장/녹음된다"는 리포트 — 카드 3장을 쌓아 보여줄 때(`absolute inset-0`) z-index를 명시하지 않아서, 실제 상호작용(드래그, 하단 Pass/Save 버튼)은 `deck[0]`(맨 앞 카드)에 묶여 있는데 화면에는 DOM 순서상 마지막 카드(`depth=2`, 원래 맨 뒤여야 함)가 위에 그려지고 있었음 — 즉 화면에 보이는 카드와 실제로 저장되는 카드가 서로 달랐던 것. `SwipeCard`에 `zIndex: 10 - depth`를 명시해서 depth가 낮을수록(앞 카드) 위에 그려지도록 수정
 - **UI 톤 조정 — aptifit.co.kr 참고** (스키마 변경 없음): 사용자가 스크린샷으로 공유해준 aptifit.co.kr(서울대 기술지주 자회사 앱티마이저의 진로적성 서비스) 디자인을 참고해 색상 톤을 조정
   - `globals.css`: `--color-primary`를 더 채도 높은 선명한 블루(#2f5fee)로, `--color-accent`도 그쪽으로 살짝 이동. 페리윙클(연보라빛 블루) 전용 색 `--color-band`(#7c8cf5) 신규 추가 — aptifit의 "만족도 95%" 같은 전체 폭 강조 밴드 섹션용. 카드 모서리를 1rem→1.25rem으로 더 둥글게, 번호 원형 배지 유틸(`badge-step`) 추가(aptifit의 ❶❷❸ 스타일)
   - `page.tsx`(랜딩): 기능 카드 3개에 번호 배지 추가, 하단에 페리윙클 밴드 섹션 신규 추가 — 단, aptifit처럼 실명 후기를 넣는 대신(허위 후기 조작 방지) 실제 차별화 포인트(감정·표정 AI 미구현, 특허 리스크 회피, 페르소나 무관 채점)를 담음
@@ -110,6 +111,14 @@
   - 로그인/회원가입(`components/auth/AuthLayout.tsx` 신규): 데스크톱에서만 좌측에 인물 사진 패널 표시(모바일은 폼만 표시해 스크롤 최소화)
   - `next.config.ts`에 `images.remotePatterns`로 `images.unsplash.com` 허용 추가 (Next.js Image Optimization 사용을 위해 필요)
   - 사용한 사진은 모두 Unsplash 자체 공개 API(napi)로 실존 여부와 무료(비-프리미엄) 라이선스를 확인 후 선정함
+- **지원자 페르소나(롤모델) 시스템** (스키마 변경 있음 — 로컬 `prisma migrate dev` 필요): "산업+직무를 종합해서 어떤 롤모델처럼 보이고 싶은지 정하는 재미"를 넣어달라는 상세 설계 요청 반영. 채점에는 절대 영향 없음(기존 압박 톤 원칙과 동일)
+  - `lib/interview/persona-archetype.ts`(신규) — 산업군별/직무별 특성 태그 사전(`INDUSTRY_TRAITS`/`JOBROLE_TRAITS`)을 합쳐, 큐레이션한 8개 페르소나 원형(`PERSONA_ARCHETYPES`, 예: "원칙있는 문제해결사", "데이터로 말하는 전략가" 등)과 태그 겹침 개수(`overlapScore`)로 매칭하는 순수 함수 `matchPersona(industry, jobRole)`. LLM 호출 없음(추가 비용 0) — 트리 구조 대신 태그 겹침으로 "유사성" 아이디어 구현. 공공기관+개발 조합 → "원칙있는 문제해결사"(사용자 예시와 일치) 확인함
+  - `TargetCompany.persona`(Json, 신규) — `api/interview/start/route.ts`에서 산업군+직무 확정 시 `matchPersona()` 결과를 저장
+  - `interview/setup/SetupForm.tsx` — 산업/직무를 고르는 즉시 클라이언트에서 `matchPersona()`로 페르소나 이름·설명을 계산해 "당신의 페르소나는 OOO입니다" 리빌 카드를 보여줌(요청하신 "재미" 요소, 네트워크 호출 없이 즉시 표시)
+  - `interview/[sessionId]/page.tsx` — 면접 진행 중 화면 상단에 페르소나 배지(🎭)를 계속 표시(면접 끝날 때까지 배지로 계속 보여달라는 요청 반영)
+  - `CompetencyFeedback.personaAlignmentNote`(String?, 신규) — 역량 리포트에 "이 페르소나답게 답변했는가" 1문장 코칭 추가. **새 API 호출을 만들지 않고** 기존 역량 피드백 생성 호출(`lib/claude/competency-feedback.ts`, DeepSeek)의 프롬프트/스키마에 얹어서 같이 받아옴 — 비용 증가 없음. API 키 미설정 시 폴백(`mockCompetencyFeedback`)에서는 페르소나 이름을 넣은 결정론적 템플릿 문구로 대체. 프롬프트에 "이 코칭은 점수에 전혀 영향을 주지 않는다"를 명시해 채점 로직과 완전히 분리
+  - `interview/plan/[planId]/competency/[code]/feedback/page.tsx` — 페르소나 코칭 문구가 있으면 "🎭 페르소나답게 답변했나요?" 섹션으로 표시(참고용이며 점수 무관이라는 안내 문구 포함)
+- **스와이프 카드 z-index 버그 재확인**: 이전에 이미 수정 완료된 건으로, 이번 요청에서 다시 리포트된 것과 동일한 증상이라 기존 수정(`zIndex: 10 - depth`)이 적용돼 있는지 재확인함 — 코드상 정상 반영되어 있음
 
 ## 알려진 이슈 / 트레이드오프
 

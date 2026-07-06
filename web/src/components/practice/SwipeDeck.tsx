@@ -322,7 +322,7 @@ function SwipeCard({
 
   return (
     <motion.div
-      style={isTop ? { x, rotate } : undefined}
+      style={{ zIndex: 10 - depth, ...(isTop ? { x, rotate } : {}) }}
       drag={isTop ? "x" : false}
       dragElastic={0.6}
       onDragEnd={isTop ? handleDragEnd : undefined}

@@ -179,6 +179,9 @@ model TargetCompany {
   industryCode Industry?
   size         CompanySize @default(LARGE)
   interviewStyle Json?     // { tone, rounds, focus[] }
+  /** 산업군+직무를 합쳐 결정한 지원자 페르소나 { id, name, description, toneHint, focusCompetencies }
+   *  — 채점에는 영향 없음, 화면 뱃지·리포트 코칭 문구 전용 (lib/interview/persona-archetype.ts) */
+  persona      Json?
   enrichedAt   DateTime?
   createdAt    DateTime    @default(now())
 
@@ -260,6 +263,8 @@ model CompetencyFeedback {
   suggestions    Json
   highlights     Json?
   rewriteExample String?  @db.Text
+  /** "이 페르소나답게 답변했는가" 1문장 코칭 — TargetCompany.persona가 있을 때만 채워짐 */
+  personaAlignmentNote String? @db.Text
   generatedAt    DateTime @default(now())
 }
 

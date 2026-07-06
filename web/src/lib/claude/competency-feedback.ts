@@ -31,6 +31,8 @@ export interface CompetencyFeedbackData {
   highlights: Array<{ quote: string; note: string }>;
   /** STAR 구조로 다시 써보는 예시 문장 뼈대 */
   rewriteExample: string;
+  /** "이 페르소나답게 답변했는가" 1문장 코칭 — persona가 주어졌을 때만 채워짐(채점 무관) */
+  personaAlignmentNote: string | null;
 }
 
 const SYSTEM = `당신은 한국 취업 면접 코치입니다.
@@ -40,6 +42,9 @@ const SYSTEM = `당신은 한국 취업 면접 코치입니다.
 - "highlights"의 quote는 지원자가 실제로 한 말을 그대로 인용해야 합니다(지어내지 마세요).
 - note는 그 인용문에 대한 1문장 코칭(잘한 점 또는 보완점).
 - rewriteExample은 가장 약한 답변 하나를 상황-과제-행동-결과(STAR) 구조로 다시 쓴 예시 문장입니다.
+- "지원자 페르소나"가 주어지면, 답변들이 그 페르소나(가치관·태도)답게 일관됐는지 1문장으로
+  코칭하세요(personaAlignmentNote). 페르소나가 없으면 null로 두세요. 이 코칭은 점수(score)에
+  전혀 영향을 주지 않습니다 — 참고용 코칭 문구일 뿐입니다.
 
 반드시 JSON만:
 {
@@ -50,7 +55,8 @@ const SYSTEM = `당신은 한국 취업 면접 코치입니다.
   "dimensions": {"structure":0-100,"specificity":0-100,"relevance":0-100,"clarity":0-100},
   "score": 0-100,
   "highlights": [{"quote": "실제 답변 인용", "note": "1문장 코칭"}],
-  "rewriteExample": "STAR로 다시 쓴 예시 문장"
+  "rewriteExample": "STAR로 다시 쓴 예시 문장",
+  "personaAlignmentNote": "페르소나답게 답변했는지 1문장 코칭 또는 null"
 }`;
 
 export async function generateCompetencyFeedback(params: {
@@ -63,6 +69,7 @@ export async function generateCompetencyFeedback(params: {
   }>;
   companyName?: string;
   jobRole?: string;
+  persona?: { name: string; description: string } | null;
 }): Promise<CompetencyFeedbackData> {
   const apiKey = process.env.DEEPSEEK_API_KEY;
 
@@ -78,6 +85,9 @@ export async function generateCompetencyFeedback(params: {
       competencyCode: params.competency,
       company: params.companyName,
       jobRole: params.jobRole,
+      "지원자 페르소나": params.persona
+        ? { "이름": params.persona.name, "설명": params.persona.description }
+        : null,
       irt: params.summary,
       responses: params.responses,
     },
@@ -114,7 +124,11 @@ export async function generateCompetencyFeedback(params: {
     const text = data?.choices?.[0]?.message?.content ?? "";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]) as CompetencyFeedbackData;
+      const parsed = JSON.parse(jsonMatch[0]) as CompetencyFeedbackData;
+      return {
+        ...parsed,
+        personaAlignmentNote: parsed.personaAlignmentNote?.trim() || null,
+      };
     }
   } catch (e) {
     console.error("[DeepSeek competency-feedback]", e);
@@ -127,6 +141,7 @@ function mockCompetencyFeedback(params: {
   competency: string;
   summary: CompetencySummary;
   responses: Array<{ question: string; answer: string; score: number }>;
+  persona?: { name: string; description: string } | null;
 }): CompetencyFeedbackData {
   const responses = params.responses.filter((r) => r.answer?.trim());
   const avg =
@@ -183,5 +198,10 @@ function mockCompetencyFeedback(params: {
         ? highlights
         : [{ quote: "제출된 답변이 없습니다.", note: "다음 세션에서는 각 질문에 답변을 완료해 주세요." }],
     rewriteExample: starRewriteTemplate(label),
+    // API 키 미설정/오류 시 폴백 경로 — LLM 호출 없이 페르소나 이름만으로 만드는
+    // 결정론적 코칭 문구(채점 무관, 참고용). persona가 없으면 null.
+    personaAlignmentNote: params.persona
+      ? `${params.persona.name}답게 답변하려면 ${label} 사례에서도 그 페르소나의 태도가 드러나는 표현을 더 넣어보세요.`
+      : null,
   };
 }

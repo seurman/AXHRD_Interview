@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconLoader, IconUpload } from "@/components/ui/icons";
 import { jobRoleLabel, competencyLabel, industryLabel } from "@/lib/labels";
 import { COMPETENCY_CODES, INDUSTRY_CODES } from "@/types";
+import type { IndustryCode, JobRoleCode } from "@/types";
+import { matchPersona } from "@/lib/interview/persona-archetype";
 
 const JOB_ROLES = [
   "MARKETING",
@@ -51,6 +53,14 @@ export function SetupForm({
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [focusCompetency, setFocusCompetency] = useState<string>("");
+
+  // 산업군+직무를 둘 다 고르면 곧바로 매칭되는 지원자 페르소나 — 채점과 무관, 재미 요소.
+  // 순수 함수라 서버 호출 없이 즉시 계산된다(추후 /api/interview/start가 동일한
+  // 값을 다시 계산해 TargetCompany.persona로 저장 — 항상 같은 조합이면 같은 결과).
+  const persona = useMemo(() => {
+    if (!industry) return null;
+    return matchPersona(industry as IndustryCode, jobRole as JobRoleCode);
+  }, [industry, jobRole]);
   const [planId, setPlanId] = useState<string | null>(null);
   const [competencies, setCompetencies] = useState<CompetencyRow[]>(
     COMPETENCY_CODES.map((code) => ({
@@ -351,6 +361,16 @@ export function SetupForm({
           ))}
         </select>
       </section>
+
+      {persona && (
+        <section className="band-periwinkle animate-note-pop space-y-2 p-6 text-center">
+          <p className="text-xs font-medium uppercase tracking-widest text-white/80">
+            당신의 면접 페르소나
+          </p>
+          <h3 className="text-xl font-bold">{persona.name}</h3>
+          <p className="mx-auto max-w-md text-sm text-white/90">{persona.description}</p>
+        </section>
+      )}
 
       <section className="card-luxe space-y-4 p-6">
         <h2 className="font-semibold text-foreground">4. 자기소개서 (선택)</h2>

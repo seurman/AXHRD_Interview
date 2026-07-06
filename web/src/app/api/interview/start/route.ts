@@ -11,8 +11,9 @@ import {
   syncInterviewPlan,
 } from "@/lib/candidate/service";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { COMPETENCY_CODES, INDUSTRY_CODES } from "@/types";
-import type { CompanyContext, CompetencyCode, IndustryCode, ItemParams } from "@/types";
+import { matchPersona } from "@/lib/interview/persona-archetype";
+import { COMPETENCY_CODES, INDUSTRY_CODES, JOB_ROLES } from "@/types";
+import type { CompanyContext, CompetencyCode, IndustryCode, JobRoleCode, ItemParams } from "@/types";
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -48,11 +49,18 @@ export async function POST(req: Request) {
   const industryCode: IndustryCode = INDUSTRY_CODES.includes(industry)
     ? industry
     : "OTHER";
+  const jobRoleCode: JobRoleCode = (JOB_ROLES as readonly string[]).includes(jobRole)
+    ? jobRole
+    : "OTHER";
 
   const companyContext = resolveCompanyContext({
     companyName,
     industry: industryCode,
   });
+
+  // 지원자 페르소나 — 산업군+직무 조합만으로 결정되는 순수 함수라 매번 새로 계산해도
+  // 비용이 들지 않는다(추가 LLM 호출 없음). 채점에는 영향 없음, 화면 뱃지·리포트 코칭용.
+  const persona = matchPersona(industryCode, jobRoleCode);
 
   const existingPlan = planId
     ? await prisma.interviewPlan.findFirst({
@@ -87,6 +95,7 @@ export async function POST(req: Request) {
         industryCode,
         size: companyContext.size,
         interviewStyle,
+        persona,
         enrichedAt: new Date(),
       },
     });
@@ -99,6 +108,7 @@ export async function POST(req: Request) {
         industryCode,
         size: companyContext.size,
         interviewStyle,
+        persona,
         enrichedAt: new Date(),
       },
     });

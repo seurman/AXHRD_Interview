@@ -364,6 +364,10 @@ async function handleRespond(req: Request, userId: string) {
         userId: session.userId,
         companyName: session.targetCompany?.name,
         jobRole: session.jobRole,
+        persona: session.targetCompany?.persona as
+          | { name: string; description: string }
+          | null
+          | undefined,
       });
     } else {
       await finalizeFullSession(sessionId, irtResult.competency_states);
@@ -406,6 +410,7 @@ async function finalizeCompetencySession(params: {
   userId: string;
   companyName?: string;
   jobRole?: string;
+  persona?: { name: string; description: string } | null;
 }) {
   const summary = await getIrtSessionSummary({
     sessionId: params.sessionId,
@@ -477,6 +482,7 @@ async function finalizeCompetencySession(params: {
     })),
     companyName: params.companyName,
     jobRole: params.jobRole,
+    persona: params.persona ?? undefined,
   });
 
   await prisma.competencyFeedback.create({
@@ -490,6 +496,7 @@ async function finalizeCompetencySession(params: {
       suggestions: feedbackData.suggestions,
       highlights: feedbackData.highlights,
       rewriteExample: feedbackData.rewriteExample,
+      personaAlignmentNote: feedbackData.personaAlignmentNote,
     },
   });
 
