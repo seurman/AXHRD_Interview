@@ -94,6 +94,14 @@ enum OrgStatus {
   REJECTED
 }
 
+/** 플랫폼(콘텐츠·운영) 권한 — OrgRole(기관 소속)과 별개.
+ *  SUPERADMIN_EMAILS 환경변수도 슈퍼어드민으로 인정(부트스트랩용). */
+enum PlatformRole {
+  NONE
+  CONTENT_ADMIN
+  SUPERADMIN
+}
+
 model Organization {
   id         String    @id @default(cuid())
   name       String
@@ -120,6 +128,8 @@ model User {
   organizationId  String?
   organization    Organization? @relation(fields: [organizationId], references: [id])
   orgRole         OrgRole  @default(STUDENT)
+  /** 문항·역량·루브릭 CMS 및 플랫폼 권한 관리 */
+  platformRole    PlatformRole @default(NONE)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -275,6 +285,8 @@ model Competency {
   code        String   @unique
   nameKo      String
   description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
   questions   Question[]
 }
 
@@ -288,6 +300,9 @@ model Question {
   discrimination Float      @default(1.0)
   template       String     @db.Text
   followUpHints  Json?
+  /** 관리자가 미리 정의한 채점 루브릭(문자열 배열). 없으면 세션 시 일반/LLM 루브릭 사용 */
+  rubricCriteria Json?
+  sortOrder      Int        @default(0)
   isActive       Boolean    @default(true)
 
   responses ResponseRecord[]

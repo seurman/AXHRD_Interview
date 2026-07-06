@@ -129,43 +129,43 @@ export function InterviewSession({
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
       <div className="space-y-6">
         <div className="card-luxe p-6">
-          <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted">
+          <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted">
             {ttsStatus === "synthesizing" && (
-              <span className="flex items-center gap-1 text-accent">
+              <span className="keep-one-line flex items-center gap-1 text-accent">
                 <IconVolume className="h-3 w-3 animate-pulse" /> 음성 준비 중…
               </span>
             )}
             {ttsStatus === "playing" && (
-              <span className="flex items-center gap-1 text-accent">
+              <span className="keep-one-line flex items-center gap-1 text-accent">
                 <IconVolume className="h-3 w-3 animate-pulse" /> 질문 재생 중
               </span>
             )}
             {isPersonalized && (
-              <span className="rounded-full bg-gold/15 px-2 py-0.5 text-gold">
+              <span className="keep-one-line rounded-full bg-gold/15 px-2 py-0.5 text-gold">
                 자소서 맞춤 질문
               </span>
             )}
             {q?.isFollowUp && (
-              <span className="rounded-full bg-accent/15 px-2 py-0.5 text-accent">
+              <span className="keep-one-line rounded-full bg-accent/15 px-2 py-0.5 text-accent">
                 꼬리질문
               </span>
             )}
             {q?.pressureTier === "TOUGH" && (
-              <span className="rounded-full bg-danger/15 px-2 py-0.5 text-danger">
+              <span className="keep-one-line rounded-full bg-danger/15 px-2 py-0.5 text-danger">
                 🔥 {q.personaLabel ?? "임원 압박면접 모드"}
               </span>
             )}
             {q?.pressureTier === "GENTLE" && (
-              <span className="rounded-full bg-success/15 px-2 py-0.5 text-success">
+              <span className="keep-one-line rounded-full bg-success/15 px-2 py-0.5 text-success">
                 🙂 {q.personaLabel ?? "편안한 분위기"}
               </span>
             )}
             {q && (
-              <>
+              <span className="keep-one-line text-muted">
                 <span>L{q.level}</span>
-                <span>·</span>
+                <span className="mx-1">·</span>
                 <span>{competencyLabel(q.competency)}</span>
-              </>
+              </span>
             )}
           </div>
           <h2 className="text-xl font-semibold leading-relaxed text-foreground">

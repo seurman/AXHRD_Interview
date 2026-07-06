@@ -26,12 +26,17 @@ body {
   background: linear-gradient(165deg, #fbfcfe 0%, #f2f4fc 45%, #eaeefb 100%);
   color: var(--color-foreground);
   min-height: 100vh;
-  /* Pretendard은 기본(400) 굵기가 다소 가늘어 보여 가독성이 떨어진다는 피드백 반영 —
-     제목은 기존처럼 font-bold/extrabold로 더 굵게, 본문도 이 기본값 위에서 살짝 더
-     또렷하게 보이도록 살짝 올림 */
   font-weight: 480;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* 한국어 모바일 — 단어 중간 끊김 방지, 긴 영문/ID만 필요 시 줄바꿈 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* 네비·버튼·짧은 라벨은 한 줄 유지 */
+.keep-one-line {
+  white-space: nowrap;
 }
 
 .card-luxe {
@@ -81,6 +86,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  white-space: nowrap;
   border-radius: 0.75rem;
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
   padding: 0.875rem 1.5rem;
@@ -104,6 +110,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  white-space: nowrap;
   border-radius: 0.75rem;
   border: 1px solid var(--color-card-border);
   background: white;

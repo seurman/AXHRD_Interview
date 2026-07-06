@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { COMPETENCY_CODES } from "@/types";
 import type { CompetencyCode } from "@/types";
+import { getActiveCompetencyCodes } from "@/lib/competency/bank";
 import {
   ensureOntologySchema,
   syncCandidate,
@@ -70,6 +71,8 @@ export async function getOrCreateActivePlan(params: {
     return active;
   }
 
+  const codes = await getActiveCompetencyCodes();
+
   const plan = await prisma.interviewPlan.create({
     data: {
       userId: params.userId,
@@ -77,7 +80,7 @@ export async function getOrCreateActivePlan(params: {
       resumeId: params.resumeId,
       jobRole: params.jobRole as never,
       competencyProgress: {
-        create: COMPETENCY_CODES.map((code) => ({
+        create: codes.map((code) => ({
           userId: params.userId,
           competency: code,
           status: "NOT_STARTED",
@@ -91,11 +94,11 @@ export async function getOrCreateActivePlan(params: {
 }
 
 export function nextRecommendedCompetency(
-  progress: Array<{ competency: string; status: string }>
-): CompetencyCode | null {
-  const order = [...COMPETENCY_CODES];
+  progress: Array<{ competency: string; status: string }>,
+  order: readonly string[] = COMPETENCY_CODES
+): string | null {
   const inProgress = progress.find((p) => p.status === "IN_PROGRESS");
-  if (inProgress) return inProgress.competency as CompetencyCode;
+  if (inProgress) return inProgress.competency;
 
   for (const code of order) {
     const row = progress.find((p) => p.competency === code);

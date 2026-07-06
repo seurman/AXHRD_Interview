@@ -9,23 +9,35 @@ const ROLE_LABEL: Record<string, string> = {
   ADMIN: "기관 관리자",
 };
 
+const PLATFORM_LABEL: Record<string, string> = {
+  NONE: "일반",
+  CONTENT_ADMIN: "콘텐츠 관리자",
+  SUPERADMIN: "슈퍼어드민",
+};
+
 export function UserRoleEditor({
   userId,
   currentRole,
   currentOrgId,
+  currentPlatformRole,
   organizations,
 }: {
   userId: string;
   currentRole: string;
   currentOrgId: string | null;
+  currentPlatformRole: string;
   organizations: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const [role, setRole] = useState(currentRole);
   const [orgId, setOrgId] = useState(currentOrgId ?? "");
+  const [platformRole, setPlatformRole] = useState(currentPlatformRole);
   const [saving, setSaving] = useState(false);
 
-  const dirty = role !== currentRole || orgId !== (currentOrgId ?? "");
+  const dirty =
+    role !== currentRole ||
+    orgId !== (currentOrgId ?? "") ||
+    platformRole !== currentPlatformRole;
 
   const save = async () => {
     setSaving(true);
@@ -33,7 +45,11 @@ export function UserRoleEditor({
       const res = await fetch(`/api/admin/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orgRole: role, organizationId: orgId || null }),
+        body: JSON.stringify({
+          orgRole: role,
+          organizationId: orgId || null,
+          platformRole,
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -54,7 +70,7 @@ export function UserRoleEditor({
         onChange={(e) => {
           const next = e.target.value;
           setOrgId(next);
-          if (!next) setRole("STUDENT"); // 소속 해제 시 자동으로 학생으로
+          if (!next) setRole("STUDENT");
         }}
         className="input-luxe px-2 py-1 text-xs"
       >
@@ -72,6 +88,18 @@ export function UserRoleEditor({
         className="input-luxe px-2 py-1 text-xs disabled:opacity-50"
       >
         {Object.entries(ROLE_LABEL).map(([value, label]) => (
+          <option key={value} value={value}>
+            {label}
+          </option>
+        ))}
+      </select>
+      <select
+        value={platformRole}
+        onChange={(e) => setPlatformRole(e.target.value)}
+        className="input-luxe px-2 py-1 text-xs"
+        title="플랫폼 권한"
+      >
+        {Object.entries(PLATFORM_LABEL).map(([value, label]) => (
           <option key={value} value={value}>
             {label}
           </option>

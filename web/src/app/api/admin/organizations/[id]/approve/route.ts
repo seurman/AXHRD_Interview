@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
-import { isSuperadmin } from "@/lib/auth/guards";
+import { hasSuperadminAccess } from "@/lib/auth/guards";
 
 /** 슈퍼어드민이 대기 중인 기관 생성 요청을 승인한다. */
 export async function POST(
@@ -9,7 +9,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getCurrentUser();
-  if (!user || !isSuperadmin(user.email)) {
+  if (!user || !hasSuperadminAccess(user)) {
     return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
   }
 

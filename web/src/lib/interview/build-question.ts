@@ -6,6 +6,7 @@ import {
   type InterviewStyleHint,
 } from "@/lib/interview/personalize-question";
 import type { ResumeSummary } from "@/lib/interview/resume-summary";
+import { parseRubricCriteria } from "@/lib/competency/bank";
 import {
   applyPressureTone,
   pressureTierLabel,
@@ -18,8 +19,15 @@ type QuestionRow = {
   externalId: string;
   template: string;
   level: number;
+  rubricCriteria?: unknown;
   competency: { code: string };
 };
+
+function rubricForQuestion(question: QuestionRow): string[] {
+  const stored = parseRubricCriteria(question.rubricCriteria);
+  if (stored.length > 0) return stored;
+  return buildGenericRubric(question.competency.code);
+}
 
 type SessionContext = {
   id: string;
@@ -103,7 +111,7 @@ export async function buildPersonalizedQuestion(
   // 역량당 첫 문항만 자소서 인용(Gemini 호출)으로 맞춤화하고, 나머지 문항은 일반
   // 질문으로 처리해 턴당 지연을 줄인다. 채점 루브릭은 일반 기준으로 캐싱해 둔다.
   if (options?.skipPersonalization) {
-    const rubric = buildGenericRubric(question.competency.code);
+    const rubric = rubricForQuestion(question);
     const personalizedQuestions = {
       ...stored.personalizedQuestions,
       [question.externalId]: { text: question.template, rubric, resumePersonalized: false },
@@ -142,11 +150,14 @@ export async function buildPersonalizedQuestion(
     interviewStyle: parseInterviewStyle(session.targetCompany?.interviewStyle),
   });
 
+  const adminRubric = parseRubricCriteria(question.rubricCriteria);
+  const rubric = adminRubric.length > 0 ? adminRubric : result.rubric;
+
   const personalizedQuestions = {
     ...stored.personalizedQuestions,
     [question.externalId]: {
       text: result.text,
-      rubric: result.rubric,
+      rubric,
       resumePersonalized: result.text !== question.template,
     },
   };

@@ -213,7 +213,7 @@ export async function POST(req: Request) {
   });
 
   const questions = await prisma.question.findMany({
-    where: { isActive: true, competency: { code: competency } },
+    where: { isActive: true, competency: { code: competency, isActive: true } },
     include: { competency: true },
   });
 

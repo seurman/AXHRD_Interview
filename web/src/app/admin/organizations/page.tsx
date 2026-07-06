@@ -38,6 +38,9 @@ export default async function AdminOrganizationsPage() {
           열리지 않습니다.
         </p>
         <div className="mt-2 flex flex-wrap gap-x-4">
+          <Link href="/admin/content" className="inline-block text-sm text-accent hover:underline">
+            문항 뱅크 · 역량 관리 →
+          </Link>
           <Link
             href="/admin/organizations/benchmark"
             className="inline-block text-sm text-accent hover:underline"

@@ -47,12 +47,17 @@ export default async function AdminUsersPage({
         <p className="text-xs font-medium uppercase tracking-widest text-gold">Admin</p>
         <h1 className="mt-1 text-2xl font-bold text-foreground">전체 사용자 · 권한 관리</h1>
         <p className="mt-1 text-sm text-muted">
-          사용자의 소속 기관과 역할(학생/담당자/기관 관리자)을 여기서 직접 변경할 수 있습니다.
-          최대 200명까지 표시됩니다 — 이름/이메일로 검색해 좁혀 보세요.
+          사용자의 소속 기관·기관 역할과 플랫폼 권한(콘텐츠 관리자/슈퍼어드민)을 변경할 수 있습니다.
+          콘텐츠 관리자는 문항 뱅크 CMS에, 슈퍼어드민은 기관 승인·사용자 권한까지 접근합니다.
         </p>
-        <Link href="/admin/organizations" className="mt-2 inline-block text-sm text-accent hover:underline">
-          ← 기관 승인 관리로 돌아가기
-        </Link>
+        <div className="mt-2 flex flex-wrap gap-3 text-sm">
+          <Link href="/admin/content" className="text-accent hover:underline">
+            문항 뱅크 관리 →
+          </Link>
+          <Link href="/admin/organizations" className="text-accent hover:underline">
+            ← 기관 승인 관리
+          </Link>
+        </div>
       </div>
 
       <form className="flex gap-2">
@@ -79,6 +84,7 @@ export default async function AdminUsersPage({
                   <th className="py-2 pr-4 font-medium">이름</th>
                   <th className="py-2 pr-4 font-medium">이메일</th>
                   <th className="py-2 pr-4 font-medium">현재 소속 · 역할</th>
+                  <th className="py-2 pr-4 font-medium">플랫폼 권한</th>
                   <th className="py-2 pr-4 font-medium">변경</th>
                 </tr>
               </thead>
@@ -92,11 +98,19 @@ export default async function AdminUsersPage({
                         ? `${u.organization.name} · ${ROLE_LABEL[u.orgRole]}`
                         : "소속 없음"}
                     </td>
+                    <td className="py-2 pr-4 text-muted text-xs">
+                      {u.platformRole === "SUPERADMIN"
+                        ? "슈퍼어드민"
+                        : u.platformRole === "CONTENT_ADMIN"
+                          ? "콘텐츠 관리자"
+                          : "—"}
+                    </td>
                     <td className="py-2 pr-4">
                       <UserRoleEditor
                         userId={u.id}
                         currentRole={u.orgRole}
                         currentOrgId={u.organizationId}
+                        currentPlatformRole={u.platformRole}
                         organizations={organizations}
                       />
                     </td>

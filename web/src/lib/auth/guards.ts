@@ -36,9 +36,26 @@ export function isSuperadmin(email: string) {
   return superadminEmails().includes(email.toLowerCase());
 }
 
-/** 기관 승인/반려 등 플랫폼 운영 화면 접근 제어. SUPERADMIN_EMAILS에 없으면 404. */
+/** 환경변수 SUPERADMIN_EMAILS 또는 DB platformRole=SUPERADMIN */
+export function hasSuperadminAccess(user: { email: string; platformRole?: string }) {
+  return isSuperadmin(user.email) || user.platformRole === "SUPERADMIN";
+}
+
+/** 역량·문항·루브릭 CMS 접근 — CONTENT_ADMIN 이상 */
+export function canManageContent(user: { email: string; platformRole?: string }) {
+  return hasSuperadminAccess(user) || user.platformRole === "CONTENT_ADMIN";
+}
+
+/** 기관 승인/반려 등 플랫폼 운영 화면 접근 제어. 슈퍼어드민만. */
 export async function requireSuperadmin(nextPath?: string) {
   const user = await requirePageUser(nextPath);
-  if (!isSuperadmin(user.email)) notFound();
+  if (!hasSuperadminAccess(user)) notFound();
+  return user;
+}
+
+/** 문항 뱅크 CMS — 콘텐츠 관리자 이상 */
+export async function requireContentAdmin(nextPath?: string) {
+  const user = await requirePageUser(nextPath);
+  if (!canManageContent(user)) notFound();
   return user;
 }

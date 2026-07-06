@@ -25,19 +25,25 @@ async function main() {
   const seedPath = join(__dirname, "../../seed/questions.json");
   const data: SeedData = JSON.parse(readFileSync(seedPath, "utf-8"));
 
-  for (const comp of data.competencies) {
+  for (let i = 0; i < data.competencies.length; i++) {
+    const comp = data.competencies[i];
     await prisma.competency.upsert({
       where: { code: comp.code },
-      update: { nameKo: comp.nameKo, description: comp.description },
-      create: comp,
+      update: { nameKo: comp.nameKo, description: comp.description, sortOrder: i, isActive: true },
+      create: { ...comp, sortOrder: i, isActive: true },
     });
   }
 
+  const sortCounters: Record<string, number> = {};
   for (const q of data.questions) {
     const competency = await prisma.competency.findUnique({
       where: { code: q.competency },
     });
     if (!competency) continue;
+
+    const sortKey = `${q.competency}-L${q.level}`;
+    const sortOrder = sortCounters[sortKey] ?? 0;
+    sortCounters[sortKey] = sortOrder + 1;
 
     await prisma.question.upsert({
       where: { externalId: q.externalId },
@@ -47,6 +53,7 @@ async function main() {
         discrimination: q.discrimination,
         template: q.template,
         followUpHints: q.followUpHints ?? [],
+        sortOrder,
       },
       create: {
         externalId: q.externalId,
@@ -56,6 +63,7 @@ async function main() {
         discrimination: q.discrimination,
         template: q.template,
         followUpHints: q.followUpHints ?? [],
+        sortOrder,
       },
     });
   }
