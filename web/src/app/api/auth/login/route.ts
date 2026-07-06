@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizeEmail, verifyPassword } from "@/lib/auth/password";
 import { setSessionCookie } from "@/lib/auth/session";
+import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
 
 export async function POST(req: Request) {
   try {
@@ -42,6 +43,7 @@ export async function POST(req: Request) {
       );
     }
 
+    await syncSuperadminPlatformRole(user.id, user.email);
     await setSessionCookie(user.id);
 
     return NextResponse.json({

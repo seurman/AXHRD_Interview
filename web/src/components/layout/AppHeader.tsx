@@ -1,13 +1,22 @@
 import Link from "next/link";
 import { Mic2 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
-import { canManageContent, hasSuperadminAccess } from "@/lib/auth/guards";
+import { canManageContent, hasSuperadminAccess, isSuperadmin } from "@/lib/auth/guards";
+import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
 import { LogoutButton } from "./LogoutButton";
 import { MobileNav } from "./MobileNav";
 import { AdminNavMenu } from "./AdminNavMenu";
 
 export async function AppHeader() {
-  const user = await getCurrentUser();
+  const sessionUser = await getCurrentUser();
+  // SUPERADMIN_EMAILS에 등록된 계정은 로그인 세션 중에도 DB 역할을 맞춰 둔다
+  if (sessionUser && isSuperadmin(sessionUser.email)) {
+    await syncSuperadminPlatformRole(sessionUser.id, sessionUser.email);
+  }
+  const user =
+    sessionUser && isSuperadmin(sessionUser.email)
+      ? { ...sessionUser, platformRole: "SUPERADMIN" as const }
+      : sessionUser;
   const isOrgStaff = !!user && (user.orgRole === "STAFF" || user.orgRole === "ADMIN");
   const isSuperAdmin = !!user && hasSuperadminAccess(user);
   const isContentAdmin = !!user && canManageContent(user);
@@ -15,6 +24,7 @@ export async function AppHeader() {
   const mainLinks = user
     ? [
         { href: "/dashboard", label: "역량 트래킹" },
+        { href: "/discover", label: "나를 발견하기" },
         { href: "/interview/setup", label: "면접 시작" },
         { href: "/practice/swipe", label: "질문 카드" },
         { href: "/profile", label: "프로필" },

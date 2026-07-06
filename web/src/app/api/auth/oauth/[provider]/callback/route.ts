@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getOAuthAdapter } from "@/lib/oauth";
 import { setSessionCookie } from "@/lib/auth/session";
+import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
 import { OAUTH_NEXT_COOKIE } from "@/lib/auth/jwt";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import type { OAuthProvider as PrismaOAuthProvider } from "@prisma/client";
@@ -60,6 +61,7 @@ export async function GET(
 
     const user = await linkOrCreateUser(prismaProvider, profile);
 
+    await syncSuperadminPlatformRole(user.id, user.email);
     await setSessionCookie(user.id);
 
     const nextRaw = jar.get(OAUTH_NEXT_COOKIE)?.value;

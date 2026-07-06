@@ -102,6 +102,12 @@ enum PlatformRole {
   SUPERADMIN
 }
 
+/** 자기발견 인터뷰 세션 상태 — 채점 없는 성찰형 대화 */
+enum SelfDiscoveryStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
 model Organization {
   id         String    @id @default(cuid())
   name       String
@@ -142,6 +148,7 @@ model User {
   competencyProgress CompetencyProgress[]
   oauthAccounts   OAuthAccount[]
   swipeActions    SwipeAction[]
+  selfDiscoverySessions SelfDiscoverySession[]
 
   @@index([organizationId])
 }
@@ -458,4 +465,49 @@ model SwipeAction {
 
   @@unique([userId, questionId])
   @@index([userId, action])
+}
+
+// ── 자기발견 인터뷰 (IRT/채점과 완전 분리된 성찰형 대화) ──
+
+model SelfDiscoverySession {
+  id          String              @id @default(cuid())
+  userId      String
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      SelfDiscoveryStatus @default(IN_PROGRESS)
+  startedAt   DateTime            @default(now())
+  completedAt DateTime?
+  responses   SelfDiscoveryResponse[]
+  profile     SelfDiscoveryProfile?
+
+  @@index([userId])
+}
+
+model SelfDiscoveryResponse {
+  id           String               @id @default(cuid())
+  sessionId    String
+  session      SelfDiscoverySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionCode String
+  questionText String               @db.Text
+  answerText   String               @db.Text
+  order        Int
+  createdAt    DateTime             @default(now())
+
+  @@index([sessionId])
+}
+
+model SelfDiscoveryProfile {
+  id                String               @id @default(cuid())
+  sessionId         String               @unique
+  session           SelfDiscoverySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  /** VIA 강점 상위 5 + 근거 인용 */
+  strengths         Json
+  /** 개선 여지 2~3개 */
+  weaknesses        Json
+  /** Schwartz 가치관 상위 3 + 근거 */
+  values            Json
+  /** NCS 6역량 연결 신호 */
+  competencySignals Json
+  /** McAdams 스타일 서사 주제 요약 */
+  narrativeSummary  String               @db.Text
+  generatedAt       DateTime             @default(now())
 }

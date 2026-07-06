@@ -1,4 +1,4 @@
-# 현재 상태 (2026-07-06 기준)
+# 현재 상태 (2026-07-07 기준)
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
@@ -13,6 +13,15 @@
 
 ## 완료된 주요 기능
 
+- **자기발견 인터뷰(Self-Discovery Interview)** (신규 모드 — IRT/채점과 완전 분리):
+  - 벤치마킹: BEI(McClelland 1973)의 "구체적 사건 서술" 철학을 평가가 아닌 자기이해 목적으로 적용, McAdams Life Story Interview(인생 챕터·전환점), Reflected Best Self Exercise(가장 나다웠던 순간). 리포트 태깅은 VIA 24강점(6덕목) + Schwartz 10가치 + NCS 6역량 연결 신호, Holland RIASEC는 보조 힌트
+  - 워크넷 직업가치관검사는 공식 자료(work.go.kr) 기준 **9개** 가치요인(사회적 공헌·변화지향·성취·경제적 보상·자기개발·일과 삶의 균형·사회적 인정·자율성·직업안정)으로 확인 — 이번 스코프에서는 VIA/Schwartz만 필수 사용, 워크넷은 참고용
+  - **스키마**: `SelfDiscoverySession`(status: IN_PROGRESS/COMPLETED), `SelfDiscoveryResponse`(채점 필드 없음), `SelfDiscoveryProfile`(strengths/weaknesses/values/competencySignals Json + narrativeSummary). 마이그레이션 `20260706160348_add_self_discovery_interview`
+  - **고정 질문 9개** (`lib/discover/questions.ts`) — life-chapter, high-point, low-point, best-self, turning-point, values-conflict, meaningful-work, energy-moment, future-theme. 질문 진행 중 LLM 호출 없음
+  - **API**: `POST /api/discover/start`(세션 생성), `POST /api/discover/respond`(답변 저장 → 마지막 답변 후 리포트 생성 LLM **1회만**). `lib/discover/profile-generator.ts` — DeepSeek(JSON only) 또는 `mockDiscoverProfile`(키워드 기반 결정론적 폴백)
+  - **UI**: `/discover`(소개·디스클레이머), `/discover/[sessionId]`(음성+텍스트 답변, `VoiceRecorder` 재사용), `/discover/[sessionId]/report`(강점·가치관·역량 신호 레이더·서사 요약). 헤더에 "나를 발견하기" 링크
+  - **원칙**: 점수·등급·진단 용어 없음, 심리검사·채용결정 도구 아님을 화면에 명시, 민감정보 분석 제외 지침을 리포트 프롬프트에 포함
+  - 로컬 검증: `cd web && npx prisma migrate dev` + `npm run build` 성공 확인됨. 운영 반영 시 `npx prisma migrate deploy`(Supabase `DATABASE_URL`/`DIRECT_URL` 필요)
 - IRT(2PL) 기반 적응형 모의 면접 (역량별 2~3문항, 실시간 난이도 조정)
 - 자소서 맞춤 질문 생성 (Gemini) — 같은 일화 반복 방지, 문항별 채점 루브릭 자동 생성
 - 음성 답변 → STT 오타 교정(Gemini) → 채점
