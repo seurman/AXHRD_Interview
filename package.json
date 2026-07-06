@@ -12,6 +12,8 @@
     "web:dev": "npm run dev --prefix web",
     "web:build": "npm run build --prefix web",
     "web:seed": "npm run db:seed --prefix web",
+    "db:seed": "npm run db:seed --prefix web",
+    "db:seed:real": "npm run db:seed:real --prefix web",
     "db:migrate": "npm run db:migrate --prefix web"
   }
 }

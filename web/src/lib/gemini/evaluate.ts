@@ -213,7 +213,7 @@ ${params.pressureTier ? `면접관 태도: ${pressureTierPromptHint(params.press
  * 기반으로 채점·피드백을 만든다(feedback-helpers.ts의 결정론적 텍스트 분석 재사용 —
  * 추가 LLM 호출 없음, 특허 회피 원칙 유지).
  */
-function mockEvaluate(answer: string): RubricResult {
+export function mockEvaluate(answer: string): RubricResult {
   const len = answer.trim().length;
   const coverage = detectStarCoverage(answer);
   const starHits = Object.values(coverage).filter(Boolean).length; // 0~4
