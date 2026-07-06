@@ -87,9 +87,7 @@ export default async function DemoPage() {
           <h1 className="mb-6 text-4xl font-bold leading-tight text-foreground md:text-5xl">
             역량별로 성장하는
             <br />
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              AI 모의 면접
-            </span>
+            <span className="text-primary">AI 모의 면접</span>
           </h1>
           <p className="mb-8 max-w-2xl text-lg text-muted">
             문항 반응 이론(IRT) 기반 적응형 난이도 · 자소서 맞춤 질문 ·
@@ -103,7 +101,7 @@ export default async function DemoPage() {
               </Link>
             ) : (
               <Link href="/auth/register" className="btn-primary">
-                무료로 시작하기
+                지금 시작하기
                 <ArrowRight className="h-4 w-4" />
               </Link>
             )}
@@ -246,7 +244,7 @@ export default async function DemoPage() {
                 href="/auth/register"
                 className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-primary transition hover:bg-white/90"
               >
-                무료로 시작하기
+                지금 시작하기
                 <ArrowRight className="h-4 w-4" />
               </Link>
             )}

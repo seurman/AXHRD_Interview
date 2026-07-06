@@ -141,6 +141,16 @@
   - **홈페이지**: 사진 제거하고 오버사이즈(최대 7xl) 그라디언트 타이포 히어로 + `.mesh-bg` 배경 + 하단 플로팅 태그 칩(IRT 적응형 난이도 등)으로 교체. "하나의 플랫폼" 섹션은 6개 카드를 벤토 그리드(2x2 큰 카드 1개 + 1x1 작은 카드 4개 + 2x1 넓은 카드 1개)로 재배치. 전 섹션에 `Reveal`로 스크롤 등장 모션 적용
   - **데모 페이지**: 기존 3개 동일 크기 기능카드 섹션 제거(홈의 벤토 그리드와 중복이라 삭제), 히어로 사진은 `.window-chrome`(●●● 탭 버튼 + 가짜 주소창 "app.axhrd.com/interview")으로 감싸 실제 제품 스크린샷처럼 보이게 함. "이용 방법" 3단계를 카드 3개 나열 대신 세로 타임라인(연결선 + 번호 배지)으로, 역량 6개 그리드를 카드 대신 알약(pill) 칩 나열로 교체해 홈페이지와 톤이 겹치지 않게 함
   - 참고: [SaaS landing page trends 2026 (bento grid stats)](https://www.saasframe.io/blog/10-saas-landing-page-trends-for-2026-with-real-examples), [Awwwards bento inspiration](https://www.awwwards.com/inspiration/bento-linearity), [2026 typography/motion trends](https://www.moburst.com/blog/landing-page-design-trends-2026/)
+- **유료 전환 카피 정리 + 폰트 가독성 + 자소서 요약 기반 질문 개인화 + 문항 보강 + 반복출제 방지 + BEI/STAR 상세 피드백** (스키마 변경 없음, `Resume.parsedTags` 죽은 필드 재활용 — **로컬 마이그레이션 불필요, 시드 재실행만 필요**): "돈 받고 팔 솔루션"이라는 방향 확정에 따른 카피 정리 + 면접 품질 4종 개선을 한 배치로 진행
+  - **무료 문구 제거**: `app/page.tsx` FAQ에서 "무료인가요?" 항목 삭제, 양쪽 페이지(`page.tsx`/`demo/page.tsx`)의 "무료로 시작하기" 버튼 라벨을 "지금 시작하기"로 변경
+  - **폰트 가독성**: `globals.css`의 `--color-muted`를 더 어두운 톤(#47536e)으로, `body`에 `font-weight: 480`/`antialiased`/`optimizeLegibility` 추가. 그라디언트로 흐릿하게 보이던 히어로 강조 문구(홈/데모 공통)를 단색 `text-primary`로 교체해 대비 확보
+  - **자소서 요약 후 질문 활용** (`lib/interview/resume-summary.ts` 신규): 자소서 원문을 문항 생성 프롬프트에 그대로 반복 사용하면 OCR/음성 추출 오류가 매번 재생산되는 문제 — 세션 시작 시 **1회만** Gemini로 구조화 요약(`{summary, skills, experiences, keywords}`)을 만들어 기존에 있었지만 아무도 안 쓰던 `Resume.parsedTags`(Json)에 저장. 이후 질문 개인화(`personalize-question.ts`)·연관도 랭킹(`question-pool.ts`)·답변 채점 시 자소서 맥락(`respond/route.ts`)은 전부 이 요약만 읽음(추가 API 호출 없음). API 키 없거나 요약 실패 시 문장 분리+수치 패턴 기반 휴리스틱(`heuristicSummary`)으로 폴백, 자소서 자체가 없던 기존 세션과의 하위호환을 위해 `legacyResumeText` 경로도 유지
+  - **역량별 문항 30개 추가** (`seed/questions.json`, 60→90문항, 역량당 10→15개): NCS 직업기초능력 세부 하위요소(문서이해·경청·문서작성 등, 역량별 5개 요소×6역량)에 근거해 자체 저작 — 특정 상용 면접 문제 DB를 그대로 베끼지 않는다는 기존 원칙(특허·법무 리스크 회피, docs/COMMERCIAL.md) 유지. 난이도(L1~L5)별 discrimination/difficulty는 기존 60문항과 동일 컨벤션
+  - **연관도 우선순위 + 반복출제 방지** (`lib/interview/question-pool.ts` 신규, `filterAndRankQuestionPool()`): IRT 엔진의 2PL 통계적 문항 선택 로직(`services/irt-engine`)은 그대로 두고, Next.js 쪽에서 IRT에 넘기기 전 문항 풀을 두 단계로 정리
+    1. **반복출제 방지**: 이 사용자가 이미 답한 문항은 기본 제외. 단, 이전에 점수가 낮았던(<0.5) 문항은 3세션 이상 지난 뒤 복습 목적으로 재출제 허용(`InterviewSession.sessionNumber`를 "몇 세션 지났는지"의 깔끔한 대리 지표로 재사용 — 신규 시간 계산 로직 불필요)
+    2. **연관도 랭킹**: 같은 난이도(level) 안에 후보가 여럿이면 자소서 요약 skills/keywords + 직무 라벨 + JD 매핑 중점 역량(`interviewStyle.focus`)과 문항 템플릿 텍스트가 겹치는 정도로 정렬해 상위만 남김(난이도별 최소 후보 수는 유지해 적응형 검사 폭이 깨지지 않게 함)
+  - **BEI/STAR 기반 상세 피드백** (`lib/gemini/evaluate.ts`): `RUBRIC_SYSTEM`/`CORRECT_AND_EVALUATE_SYSTEM` 프롬프트에 "BEI(행동사건면접) 기법에 능숙한 평가관" 역할과 "STAR 구조 중 드러난/부족한 요소를 짚고 보강 코칭까지 담은 2~3문장" 지침 추가. API 키 없을 때 폴백인 `mockEvaluate()`도 기존의 단순 정규식 불리언 대신 `feedback-helpers.ts`의 `detectStarCoverage()`/`starCoachingNote()`(이미 세션 리포트에서 쓰던 결정론적 STAR 분석 함수)를 그대로 재사용하도록 교체해, API 유무와 무관하게 동일한 BEI/STAR 분석 품질 유지. `maxOutputTokens` 하한을 320→400으로 상향(피드백 문장이 길어진 만큼 응답 잘림 방지)
+  - **마이그레이션 불필요한 이유**: `Resume.parsedTags`는 스키마에 이미 있던 필드(지금까지 미사용)라 `prisma migrate`가 필요 없음. 단, `seed/questions.json`에 추가한 30개 신규 문항은 DB에 아직 안 들어가 있으므로 **`npm run db:seed` 재실행 필요**(upsert 방식이라 기존 90문항 포함 안전하게 재실행 가능)
 
 ## 알려진 이슈 / 트레이드오프
 
@@ -193,3 +203,22 @@ npm run build
 모두 성공 확인. 실제 면접에서 짧고 막연한 답변으로 꼬리질문이 뜨는지 테스트는 아직
 안 하셨다면 한 세션 해보시는 걸 권합니다 (임계값은 `web/src/lib/interview/follow-up.ts`
 상단 상수에서 조정 가능).
+
+### 유료 전환/폰트/자소서 요약/문항 보강/반복방지/BEI·STAR 피드백 로컬 검증 (이번 배치, 새 마이그레이션 없음)
+
+스키마 변경이 없어 `prisma migrate`는 필요 없습니다. 아래만 실행해 주세요.
+
+```powershell
+cd D:\HR_IN_Solution\web
+npm run db:seed
+npm run build
+```
+
+`npm run db:seed`는 upsert 방식이라 기존 90문항(신규 30개 포함)을 안전하게
+다시 넣습니다. 빌드 통과 후 git 커밋/푸시 → Vercel 재배포되면 확인해 주실 것:
+
+- 홈페이지 FAQ에 "무료인가요?" 항목이 없는지, 버튼이 "지금 시작하기"로 바뀌었는지
+- 본문 글자(특히 회색 보조 텍스트)가 이전보다 또렷하게 보이는지
+- 자소서를 입력하고 면접을 시작하면 이후 질문이 자소서 요약 기반으로 자연스럽게 연계되는지(원문 오탈자를 그대로 되풀이하지 않는지)
+- 답변 채점 후 피드백에 상황·과제·행동·결과 중 무엇이 있었고 무엇이 부족한지 짚어주는 문장이 나오는지
+- 같은 역량을 여러 세션 반복해도 직전에 나왔던 문항이 바로 또 나오지 않는지(단, 예전에 점수가 낮았던 문항은 몇 세션 뒤 다시 나올 수 있음 — 의도된 동작)

@@ -12,6 +12,9 @@ import {
 } from "@/lib/candidate/service";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { matchPersona } from "@/lib/interview/persona-archetype";
+import { summarizeResume } from "@/lib/interview/resume-summary";
+import { parseResumeSummary } from "@/lib/interview/build-question";
+import { filterAndRankQuestionPool } from "@/lib/interview/question-pool";
 import { COMPETENCY_CODES, INDUSTRY_CODES, JOB_ROLES } from "@/types";
 import type { CompanyContext, CompetencyCode, IndustryCode, JobRoleCode, ItemParams } from "@/types";
 
@@ -120,14 +123,21 @@ export async function POST(req: Request) {
   // 자소서는 선택 사항 — 입력하지 않으면 일반 질문으로 면접을 진행한다.
   // 같은 플랜에 이미 저장된 자소서가 있는데 이번엔 새로 입력하지 않았다면 기존 것을 재사용한다.
   const trimmedResumeText: string | undefined = resumeText?.trim() || undefined;
-  let resume: { id: string } | null = null;
+  let resume: { id: string; parsedTags?: unknown } | null = null;
   if (trimmedResumeText) {
+    // 원문을 문항 생성 프롬프트에 그대로 반복 전달하면 OCR/추출 오류가 매번 재사용되므로,
+    // 저장 시점에 딱 1번만 구조화된 요약을 만들어 parsedTags(기존에 있었지만 안 쓰이던
+    // 필드)에 저장해둔다 — 이후 질문 개인화·연관도 매칭은 이 요약만 읽는다(추가 호출 없음).
+    // Prisma Json 필드는 인덱스 시그니처 없는 커스텀 타입을 그대로 받지 않으므로(persona
+    // 필드에서 이미 겪은 빌드 에러와 동일한 원인) JSON 왕복으로 순수 JSON 값으로 변환한다.
+    const summary = JSON.parse(JSON.stringify(await summarizeResume(trimmedResumeText)));
     if (existingPlan?.resumeId) {
       resume = await prisma.resume.update({
         where: { id: existingPlan.resumeId },
         data: {
           fileName: resumeFileName?.trim() || "paste.txt",
           rawText: trimmedResumeText,
+          parsedTags: summary,
         },
       });
     } else {
@@ -136,6 +146,7 @@ export async function POST(req: Request) {
           userId: user.id,
           fileName: resumeFileName?.trim() || "paste.txt",
           rawText: trimmedResumeText,
+          parsedTags: summary,
         },
       });
     }
@@ -213,7 +224,19 @@ export async function POST(req: Request) {
     );
   }
 
-  const itemPool: ItemParams[] = questions.map((q) => ({
+  // 이 사용자가 이 역량에서 이미 답했던 문항은 기본적으로 제외하고(반복 출제 방지),
+  // 남은 후보 중에서는 자소서 요약·직무·JD 중점 역량과 더 관련 있어 보이는 문항을
+  // 우선 남긴다. IRT 엔진 자체의 통계적 선택 로직(2PL 정보량 기반)은 그대로 둔다.
+  const rankedQuestions = await filterAndRankQuestionPool({
+    userId: user.id,
+    competency,
+    questions,
+    resumeSummary: parseResumeSummary(resume?.parsedTags),
+    jobRole,
+    interviewStyleFocus: interviewStyle.focus,
+  });
+
+  const itemPool: ItemParams[] = rankedQuestions.map((q) => ({
     item_id: q.externalId,
     competency: q.competency.code,
     difficulty: q.difficulty,

@@ -5,6 +5,7 @@ import {
   buildGenericRubric,
   type InterviewStyleHint,
 } from "@/lib/interview/personalize-question";
+import type { ResumeSummary } from "@/lib/interview/resume-summary";
 import {
   applyPressureTone,
   pressureTierLabel,
@@ -24,9 +25,25 @@ type SessionContext = {
   id: string;
   irtState: unknown;
   jobRole: string;
-  resume?: { rawText: string } | null;
+  resume?: { rawText: string; parsedTags?: unknown } | null;
   targetCompany?: { name: string; interviewStyle?: unknown } | null;
 };
+
+/** Resume.parsedTags(Json)를 안전하게 ResumeSummary로 파싱한다 — 아직 요약이 없는
+ *  옛날 레코드(null)나 예상 못한 형태면 undefined를 반환해 레거시 원문 폴백을 타게 한다. */
+export function parseResumeSummary(raw: unknown): ResumeSummary | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const o = raw as Record<string, unknown>;
+  if (
+    typeof o.summary === "string" &&
+    Array.isArray(o.skills) &&
+    Array.isArray(o.experiences) &&
+    Array.isArray(o.keywords)
+  ) {
+    return o as unknown as ResumeSummary;
+  }
+  return undefined;
+}
 
 /** TargetCompany.interviewStyle(Json)을 안전하게 파싱한다 — JD 매핑이나 프리셋에서
  *  { tone, rounds, focus } 형태로 저장되지만 형식이 다르면 조용히 무시한다. */
@@ -119,7 +136,8 @@ export async function buildPersonalizedQuestion(
     competency: question.competency.code,
     companyName: session.targetCompany?.name,
     jobRole: session.jobRole,
-    resumeText: session.resume?.rawText,
+    resumeSummary: parseResumeSummary(session.resume?.parsedTags),
+    legacyResumeText: session.resume?.rawText,
     excludeHighlights: stored.usedHighlights ?? [],
     interviewStyle: parseInterviewStyle(session.targetCompany?.interviewStyle),
   });

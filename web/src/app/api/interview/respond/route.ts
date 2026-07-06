@@ -5,7 +5,7 @@ import { submitIrtResponse, getIrtSessionSummary } from "@/lib/irt-client";
 import { correctAndEvaluateAnswer, type CorrectedRubricResult } from "@/lib/gemini/evaluate";
 import { parseIrtState, serializeIrtState, type StoredIrtState } from "@/lib/irt-state";
 import { shouldTriggerFollowUp, pickFollowUpQuestion } from "@/lib/interview/follow-up";
-import { buildPersonalizedQuestion } from "@/lib/interview/build-question";
+import { buildPersonalizedQuestion, parseResumeSummary } from "@/lib/interview/build-question";
 import { buildQuestionRationale } from "@/lib/interview/rationale";
 import { pressureTierFromLevel, pressureTierLabel } from "@/lib/interview/persona";
 import { generateCompetencyFeedback } from "@/lib/claude/competency-feedback";
@@ -81,6 +81,14 @@ async function handleRespond(req: Request, userId: string) {
     stored.personalizedQuestions?.[question.externalId]?.text ?? question.template;
   const rubricCriteria = stored.personalizedQuestions?.[question.externalId]?.rubric;
 
+  // 자소서 원문을 채점 프롬프트에 그대로 넣지 않고 정리된 요약을 우선 사용한다(오탈자·
+  // 인적사항 등 원문 노이즈가 일관성 체크에 잘못 반영되는 걸 막기 위함). 요약이 아직
+  // 없는 레거시 자소서만 원문(500자 이내)으로 폴백한다.
+  const resumeSummary = parseResumeSummary(session.resume?.parsedTags);
+  const resumeContext = resumeSummary
+    ? [resumeSummary.summary, ...resumeSummary.experiences].filter(Boolean).join(" ")
+    : session.resume?.rawText;
+
   const focusCompetency =
     session.focusCompetency ?? question.competency.code;
   const isCompetencyMode = session.mode === "COMPETENCY";
@@ -123,7 +131,7 @@ async function handleRespond(req: Request, userId: string) {
       question: combinedQuestion,
       rawAnswer: transcript,
       competency: question.competency.code,
-      resumeContext: session.resume?.rawText,
+      resumeContext,
       rubricCriteria,
       pressureTier: currentTier,
     });
@@ -138,7 +146,7 @@ async function handleRespond(req: Request, userId: string) {
       question: displayedQuestion,
       rawAnswer: transcript,
       competency: question.competency.code,
-      resumeContext: session.resume?.rawText,
+      resumeContext,
       rubricCriteria,
       pressureTier: currentTier,
     });

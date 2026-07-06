@@ -21,10 +21,6 @@ const FAQS = [
     a: "기관 담당자가 가입 코드를 발급하면 학생들이 그 코드로 소속을 연결해요. 담당자는 개인 답변 원문 없이 완료 현황·역량별 평균만 볼 수 있어 프라이버시가 보장됩니다.",
   },
   {
-    q: "무료인가요?",
-    a: "네, 별도 유료 결제 없이 이용할 수 있습니다.",
-  },
-  {
     q: "제 답변이나 개인정보는 어떻게 쓰이나요?",
     a: "자기소개서·답변 내용은 질문 생성과 채점에만 사용되고, 기관 대시보드에는 개인 답변 원문 없이 점수·완료 현황만 집계됩니다.",
   },
@@ -43,9 +39,7 @@ export default async function HomePage() {
           <h1 className="mx-auto max-w-4xl text-5xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
             채용 AI 시대,
             <br />
-            <span className="bg-gradient-to-r from-primary via-accent to-band bg-clip-text text-transparent">
-              정직하게 준비하는 면접
-            </span>
+            <span className="text-primary">정직하게 준비하는 면접</span>
           </h1>
           <p className="mx-auto mt-8 max-w-xl text-lg text-muted">
             모의면접부터 역량 성장 트래킹, 대학·기관 코호트 관리까지 — NCS
@@ -62,7 +56,7 @@ export default async function HomePage() {
               </Link>
             ) : (
               <Link href="/auth/register" className="btn-secondary px-8 py-4 text-base">
-                무료로 시작하기
+                지금 시작하기
               </Link>
             )}
           </div>
@@ -237,7 +231,7 @@ export default async function HomePage() {
             </Link>
             {!user && (
               <Link href="/auth/register" className="btn-secondary px-8 py-4 text-base">
-                무료로 시작하기
+                지금 시작하기
               </Link>
             )}
           </div>
