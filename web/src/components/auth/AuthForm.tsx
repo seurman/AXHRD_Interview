@@ -73,7 +73,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   };
 
   return (
-    <div className="card-luxe mx-auto max-w-md p-8">
+    <div className="card-luxe mx-auto max-w-md p-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-foreground">
         {mode === "login" ? "로그인" : "회원가입"}
       </h1>

@@ -1,26 +1,26 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #f8f6f2;
-  --color-foreground: #1a1f36;
-  --color-muted: #64748b;
+  --color-background: #f5f7fb;
+  --color-foreground: #101a33;
+  --color-muted: #5b6b8c;
   --color-card: #ffffff;
-  --color-card-border: #e8e4dc;
-  --color-primary: #1e3a5f;
-  --color-primary-light: #2d4a73;
-  --color-gold: #b8956a;
-  --color-gold-light: #d4bc94;
-  --color-accent: #3d7ea6;
+  --color-card-border: #dde3f0;
+  --color-primary: #1d3fae;
+  --color-primary-light: #3457d1;
+  --color-gold: #c79a5a;
+  --color-gold-light: #ddb87d;
+  --color-accent: #2f7de0;
   --color-success: #059669;
   --color-warning: #d97706;
   --color-danger: #dc2626;
   --font-sans: "Pretendard", "Apple SD Gothic Neo", system-ui, sans-serif;
-  --shadow-luxe: 0 4px 24px -4px rgb(26 31 54 / 0.08), 0 2px 8px -2px rgb(26 31 54 / 0.04);
+  --shadow-luxe: 0 4px 24px -4px rgb(16 26 51 / 0.1), 0 2px 8px -2px rgb(16 26 51 / 0.05);
 }
 
 body {
   font-family: var(--font-sans);
-  background: linear-gradient(165deg, #fdfcfb 0%, #f5f1ea 45%, #eef2f7 100%);
+  background: linear-gradient(165deg, #f8fafd 0%, #eef2fb 45%, #e6ecfa 100%);
   color: var(--color-foreground);
   min-height: 100vh;
 }
@@ -35,7 +35,7 @@ body {
 .input-luxe {
   border: 1px solid var(--color-card-border);
   border-radius: 0.75rem;
-  background: #fafafa;
+  background: #fafbfe;
   padding: 0.75rem 1rem;
   color: var(--color-foreground);
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -43,8 +43,8 @@ body {
 
 .input-luxe:focus {
   outline: none;
-  border-color: var(--color-gold);
-  box-shadow: 0 0 0 3px rgb(184 149 106 / 0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgb(29 63 174 / 0.15);
 }
 
 .btn-primary {
@@ -58,6 +58,7 @@ body {
   font-weight: 600;
   color: white;
   transition: opacity 0.15s, transform 0.1s;
+  box-shadow: 0 6px 16px -4px rgb(29 63 174 / 0.35);
 }
 
 .btn-primary:hover:not(:disabled) {

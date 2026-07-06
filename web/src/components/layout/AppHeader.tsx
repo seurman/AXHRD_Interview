@@ -3,14 +3,31 @@ import { Mic2 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isSuperadmin } from "@/lib/auth/guards";
 import { LogoutButton } from "./LogoutButton";
+import { MobileNav } from "./MobileNav";
 
 export async function AppHeader() {
   const user = await getCurrentUser();
   const isOrgStaff = !!user && (user.orgRole === "STAFF" || user.orgRole === "ADMIN");
   const isAdmin = !!user && isSuperadmin(user.email);
 
+  const links = user
+    ? [
+        { href: "/dashboard", label: "역량 트래킹" },
+        { href: "/interview/setup", label: "면접 시작" },
+        { href: "/profile", label: "프로필" },
+        ...(isOrgStaff ? [{ href: "/org/dashboard", label: "코호트 대시보드" }] : []),
+        ...(isAdmin
+          ? [
+              { href: "/admin/organizations", label: "기관 승인 관리" },
+              { href: "/admin/organizations/benchmark", label: "기관 비교" },
+              { href: "/admin/users", label: "사용자 관리" },
+            ]
+          : []),
+      ]
+    : [];
+
   return (
-    <header className="border-b border-card-border bg-card/90 backdrop-blur-md shadow-sm">
+    <header className="sticky top-0 z-40 border-b border-card-border bg-card/90 backdrop-blur-md shadow-sm">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
         <Link href="/" className="flex items-center gap-2 font-semibold text-primary">
           <Mic2 className="h-6 w-6 text-gold" />
@@ -19,37 +36,16 @@ export async function AppHeader() {
             Premium
           </span>
         </Link>
-        <nav className="flex items-center gap-5 text-sm text-muted">
+
+        <nav className="hidden items-center gap-5 text-sm text-muted sm:flex">
           {user ? (
             <>
-              <span className="hidden text-foreground sm:inline">{user.name}님</span>
-              <Link href="/dashboard" className="hover:text-primary">
-                역량 트래킹
-              </Link>
-              <Link href="/interview/setup" className="hover:text-primary">
-                면접 시작
-              </Link>
-              <Link href="/profile" className="hover:text-primary">
-                프로필
-              </Link>
-              {isOrgStaff && (
-                <Link href="/org/dashboard" className="hover:text-primary">
-                  코호트 대시보드
+              <span className="hidden text-foreground lg:inline">{user.name}님</span>
+              {links.map((l) => (
+                <Link key={l.href} href={l.href} className="hover:text-primary">
+                  {l.label}
                 </Link>
-              )}
-              {isAdmin && (
-                <>
-                  <Link href="/admin/organizations" className="hover:text-primary">
-                    기관 승인 관리
-                  </Link>
-                  <Link href="/admin/organizations/benchmark" className="hover:text-primary">
-                    기관 비교
-                  </Link>
-                  <Link href="/admin/users" className="hover:text-primary">
-                    사용자 관리
-                  </Link>
-                </>
-              )}
+              ))}
               <LogoutButton />
             </>
           ) : (
@@ -66,6 +62,8 @@ export async function AppHeader() {
             </>
           )}
         </nav>
+
+        <MobileNav links={links} userName={user?.name} loggedIn={!!user} />
       </div>
     </header>
   );

@@ -83,6 +83,14 @@
 - **설정 화면 정리** (스키마 변경 없음, 코드만 수정 — 마이그레이션 불필요): 위 자소서 선택 사항 전환 직후 UI 피드백 반영
   - "3. 지원 직무" 아래 실제 기출 질문 미리보기 목록(`/api/interview/real-questions` 호출 + 렌더링) 제거 — 불필요한 정보로 판단, 직무 선택 셀렉트박스만 남김. 백엔드 엔드포인트 자체는 그대로 둠(추후 재사용 가능)
   - "4. 자기소개서" 텍스트 영역이 파일에서 추출한 원문을 그대로 화면에 노출하던 것을 제거 — 업로드 시 "✓ 파일명 업로드됨" 확인 문구만 표시하고 추출된 본문은 화면에 그리지 않음(내부 상태 `fileResumeText`로만 보관해 제출에 사용). 직접 타이핑하고 싶을 때만 "파일 대신 텍스트로 직접 입력" 버튼으로 별도 `textarea`(`manualText`)를 펼칠 수 있음 — 제출 시 `manualText.trim() || fileResumeText` 우선순위로 전송
+- **JD 업로드 UI 버그 수정 + Vercel 빌드 에러 수정**: JD/인재상 섹션이 붙여넣기 토글만 있고 실제 파일 업로드가 없던 문제를 자소서 섹션과 동일한 드롭존 UX(업로드 → "✓ 파일명 업로드됨", 파일 대신 직접 입력 토글)로 교체, `handleJdFile()` 추가(`/api/resume/parse` 재사용). 동시에 Vercel 빌드를 막던 `lib/company/jd-mapper.ts`의 타입 에러(`filter` 콜백이 `string`을 반환해 `boolean` 타입가드와 불일치) 수정
+- **UI 리뉴얼 — 코발트 블루 테마 + 모바일 대응 + 스톡 사진**: "더 세련되고 모바일에서도 잘 보이면 좋겠다"는 요청으로 전체 색상 톤과 랜딩/로그인 화면을 손봄
+  - `globals.css`: 기존 크림·네이비·골드 톤에서 `--color-primary`/`--color-primary-light`/`--color-accent`/`--color-background`/`--color-card-border`를 코발트 블루 계열로 교체(`--color-gold`는 보조 프리미엄 포인트 색으로 유지, 톤만 코발트와 어울리게 미세 조정). 클래스명(`text-gold`, `card-luxe` 등)은 그대로라 13개 파일의 기존 사용처를 건드리지 않고 전체 배색만 바뀜
+  - `components/layout/AppHeader.tsx` + `MobileNav.tsx`(신규): 로그인 시 메뉴가 7개까지 늘어나는데 모바일 대응(햄버거/드로어 메뉴)이 전혀 없었던 문제 발견 — `sm:` 이상에서는 기존 가로 네비게이션, 그 이하에서는 우측 슬라이드 드로어 메뉴로 전환. 헤더에 `sticky top-0` 추가
+  - 랜딩 페이지(`app/page.tsx`)에 히어로 사진 추가 — 무료 스톡 사진(Unsplash, 상업적 이용 무료/저작자 표시 불필요)을 코발트 그라데이션 오버레이와 함께 배치, 모바일에서는 텍스트 아래로 쌓이고 데스크톱에서는 2단 레이아웃
+  - 로그인/회원가입(`components/auth/AuthLayout.tsx` 신규): 데스크톱에서만 좌측에 인물 사진 패널 표시(모바일은 폼만 표시해 스크롤 최소화)
+  - `next.config.ts`에 `images.remotePatterns`로 `images.unsplash.com` 허용 추가 (Next.js Image Optimization 사용을 위해 필요)
+  - 사용한 사진은 모두 Unsplash 자체 공개 API(napi)로 실존 여부와 무료(비-프리미엄) 라이선스를 확인 후 선정함
 
 ## 알려진 이슈 / 트레이드오프
 
