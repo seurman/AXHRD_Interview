@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { parseIrtState, serializeIrtState } from "@/lib/irt-state";
-import { personalizeQuestion, buildGenericRubric } from "@/lib/interview/personalize-question";
+import {
+  personalizeQuestion,
+  buildGenericRubric,
+  type InterviewStyleHint,
+} from "@/lib/interview/personalize-question";
 import {
   applyPressureTone,
   pressureTierLabel,
@@ -21,8 +25,19 @@ type SessionContext = {
   irtState: unknown;
   jobRole: string;
   resume?: { rawText: string } | null;
-  targetCompany?: { name: string } | null;
+  targetCompany?: { name: string; interviewStyle?: unknown } | null;
 };
+
+/** TargetCompany.interviewStyle(Json)을 안전하게 파싱한다 — JD 매핑이나 프리셋에서
+ *  { tone, rounds, focus } 형태로 저장되지만 형식이 다르면 조용히 무시한다. */
+function parseInterviewStyle(raw: unknown): InterviewStyleHint | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const obj = raw as Record<string, unknown>;
+  if (typeof obj.tone !== "string" || !Array.isArray(obj.focus)) return undefined;
+  const focus = obj.focus.filter((f): f is string => typeof f === "string");
+  if (focus.length === 0) return undefined;
+  return { tone: obj.tone, focus };
+}
 
 /** 압박 강도(pressureTier)가 주어지면 화면에 보여줄 텍스트에만 톤을 입힌다.
  *  채점에 쓰이는 캐시(personalizedQuestions[...].text)는 건드리지 않는다. */
@@ -106,6 +121,7 @@ export async function buildPersonalizedQuestion(
     jobRole: session.jobRole,
     resumeText: session.resume?.rawText,
     excludeHighlights: stored.usedHighlights ?? [],
+    interviewStyle: parseInterviewStyle(session.targetCompany?.interviewStyle),
   });
 
   const personalizedQuestions = {

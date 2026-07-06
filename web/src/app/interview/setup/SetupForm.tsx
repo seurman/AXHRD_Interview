@@ -39,6 +39,8 @@ export function SetupForm({
   const [parsingFile, setParsingFile] = useState(false);
   const [industry, setIndustry] = useState<string>("");
   const [companyName, setCompanyName] = useState("");
+  const [jdText, setJdText] = useState("");
+  const [showJdInput, setShowJdInput] = useState(false);
   const [jobRole, setJobRole] = useState<string>("MARKETING");
   const [fileResumeText, setFileResumeText] = useState("");
   const [manualText, setManualText] = useState("");
@@ -135,6 +137,7 @@ export function SetupForm({
           resumeFileName: uploadedFileName,
           planId,
           focusCompetency,
+          jdText,
         }),
       });
 
@@ -236,6 +239,29 @@ export function SetupForm({
           placeholder="지원 회사명 (선택 — 있으면 질문 문구에 반영)"
           className="input-luxe w-full text-sm"
         />
+
+        {showJdInput ? (
+          <div className="space-y-1">
+            <textarea
+              value={jdText}
+              onChange={(e) => setJdText(e.target.value)}
+              rows={5}
+              placeholder="채용공고(JD) 원문이나 인재상 키워드를 붙여넣으세요…"
+              className="input-luxe w-full text-sm"
+            />
+            <p className="text-xs text-muted">
+              이 회사·직무에 맞는 면접 톤과 중점 역량을 분석해 질문에 반영합니다.
+            </p>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowJdInput(true)}
+            className="text-xs text-muted underline hover:text-foreground"
+          >
+            채용공고(JD)·인재상 붙여넣기 (선택 — 이 회사 면접 스타일에 맞춰 질문 조정)
+          </button>
+        )}
       </section>
 
       <section className="card-luxe space-y-4 p-6">

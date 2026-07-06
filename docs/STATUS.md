@@ -47,6 +47,13 @@
   - 다음 문항의 압박 강도는 이번 답변까지 반영된 최신 추정 레벨(`irtResult.competency_states`) 기준으로 정함 — 잘 버티면 다음 질문은 더 깐깐하게, 흔들리면 더 부드럽게
   - `InterviewQuestion`에 `resumePersonalized` 필드를 명시적으로 추가해 "자소서 맞춤 질문" 배지 판단 기준을 텍스트 비교(`personalizedText !== text`)에서 이 값으로 교체 — 압박 톤 프리픽스나 꼬리질문 때문에 텍스트가 달라져도 배지가 잘못 뜨지 않도록 수정(기존에 꼬리질문에도 "자소서 맞춤 질문" 배지가 같이 뜨던 부수적 버그도 함께 해결됨)
   - `InterviewSession.tsx`에 GENTLE(🙂)/TOUGH(🔥) 배지 표시, NEUTRAL은 배지 미표시
+- **경쟁사 벤치마킹 아이디어 3종 채택 구현** (스키마 변경 없음, 코드만 추가 — 마이그레이션 불필요): "실시간 압박 꼬리질문/멀티모달 감정분석/할루시네이션 탐지/JD 매핑/평판 예측/대안 답변 제시/기술면접" 등 외부 아이디어 검토 후, 우리 아키텍처·비용 원칙·차별화 포지셔닝(HireVue식 감정분석·근거없는 예측 점수는 명확히 반대)과 맞는 3가지만 선별 구현
+  - **JD/인재상 매핑**: `interview/setup` 2번 섹션에 "채용공고(JD)·인재상 붙여넣기" 선택 입력(토글) 추가 → `jdText` 전송 → `lib/company/jd-mapper.ts`(신규) `deriveInterviewStyleFromJD()`가 세션 시작 시 1회만 Gemini 호출해 `{tone, rounds, focus}` 추출 → `TargetCompany.interviewStyle`에 저장(스키마 필드는 기존에 있었으나 지금까지 아무 곳에서도 읽지 않던 죽은 데이터였음 — 이번에 처음으로 실제 소비하도록 연결). 같은 플랜의 후속 역량 세션에서 JD를 다시 입력하지 않으면 이전 값을 유지(덮어쓰지 않음)
+    - `lib/interview/personalize-question.ts`: `personalizeQuestion()`/`personalizeWithGemini()`에 `interviewStyle` 파라미터 추가, 첫 문항 개인화 프롬프트에 "면접 스타일: {tone} (중점 평가 역량: {focus})" 반영 — 질문 어투와 루브릭에 실제로 영향
+    - `lib/interview/build-question.ts`: `session.targetCompany.interviewStyle`(Json)을 안전 파싱해 전달
+  - **압박 꼬리질문 고도화(첫 문항만)**: `correctAndEvaluateAnswer()`(`lib/gemini/evaluate.ts`) 응답에 `suggestedFollowUp` 필드 추가 — 답변의 논리적 비약·구체성 부족을 근거로 LLM이 즉석 후속 질문을 제안(압박 강도 톤에 맞춰). 추가 API 호출 없이 기존 채점 호출에 얹음. `respond/route.ts`에서 역량당 첫 문항(`isFirstItem`)일 때만 이 제안을 쓰고, 2번째 이상 문항은 기존 무료 키워드 기반(`pickFollowUpQuestion`)을 그대로 사용 — 비용 원칙 유지
+  - **자소서 일관성 체크(순화된 버전)**: 같은 응답에 `consistencyNote` 필드 추가 — 자소서와 명백히 모순되는 사실(기간·숫자·역할 등)이 있을 때만 부드러운 코칭 톤 1문장 생성("거짓말 탐지"가 아니라 정보 정리 제안으로 표현). **채점 점수에는 전혀 영향 없음** — `ChipEvent.briefFeedback`에만 덧붙여 표시
+  - 반대로 명확히 채택 안 한 것: 멀티모달 감정/표정/음성 분석(HireVue가 편향 논란으로 폐지한 방식, COMMERCIAL.md의 특허·법무 리스크 회피 전략과 정면 충돌), 지원자 평판/퇴사확률 예측 점수(검증 데이터 없는 사이비 지표, EU AI Act류 고위험 채용 AI 규제 대상이 될 위험) — 근거는 대화 기록 참고
 - **AI 꼬리질문(follow-up question)** (로컬 `prisma generate` / `migrate deploy` / `npm run build` 성공 확인됨 — git push는 진행 중이었는데 이후 대화에서 확인 안 됨, 안 하셨으면 아래 "진행 시 참고" 커밋 필요):
   - 답변 채점 시 `score < 0.65` 그리고 `dimensions.specificity < 0.5`이면 "추상적인 답변"으로 판단해 같은 문항 안에서 꼬리질문을 한 번 더 낸다 (`web/src/lib/interview/follow-up.ts`의 `shouldTriggerFollowUp`)
   - 꼬리질문 텍스트는 Gemini를 다시 호출하지 않고 `Question.followUpHints`(시딩된 주제 키워드) 중 아직 답변에서 다루지 않은 것을 템플릿에 꽂아 생성 — 추가 API 비용 없음

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { submitIrtResponse, getIrtSessionSummary } from "@/lib/irt-client";
-import { correctAndEvaluateAnswer, type RubricResult } from "@/lib/gemini/evaluate";
+import { correctAndEvaluateAnswer, type CorrectedRubricResult } from "@/lib/gemini/evaluate";
 import { parseIrtState, serializeIrtState, type StoredIrtState } from "@/lib/irt-state";
 import { shouldTriggerFollowUp, pickFollowUpQuestion } from "@/lib/interview/follow-up";
 import { buildPersonalizedQuestion } from "@/lib/interview/build-question";
@@ -92,6 +92,10 @@ async function handleRespond(req: Request, userId: string) {
     stored.competencies[question.competency.code]?.current_level ?? 2
   );
 
+  // 역량당 첫 문항인지 — 압박 꼬리질문 고도화(LLM 기반 즉석 후속 질문)는 비용 원칙상
+  // 첫 문항(자소서 개인화 대상)에만 적용하고, 나머지는 무료 키워드 기반으로 유지한다.
+  const isFirstItem = stored.administeredIds.length === 0;
+
   // 진행 중인 꼬리질문에 대한 답변인지 확인 — 서버 상태(irtState.pendingFollowUp)가
   // 기준이며 클라이언트는 별도 플래그를 보낼 필요가 없다.
   const pending = stored.pendingFollowUp;
@@ -100,7 +104,7 @@ async function handleRespond(req: Request, userId: string) {
   // Web Speech API STT 오인식(예: "병목"→"병 먹고") 교정 + 채점을 한 번의 Gemini 호출로
   // 합쳐서 처리한다(왕복 1회 절감) — 원문(transcript)은 그대로 DB에 남기고 채점·이후
   // 인용에는 교정본을 쓴다.
-  let rubric: RubricResult;
+  let rubric: CorrectedRubricResult;
   let correctedAnswer: string;
   let finalTranscript: string;
   let finalCorrectedTranscript: string | null;
@@ -121,6 +125,7 @@ async function handleRespond(req: Request, userId: string) {
       competency: question.competency.code,
       resumeContext: session.resume?.rawText,
       rubricCriteria,
+      pressureTier: currentTier,
     });
 
     rubric = combined;
@@ -135,17 +140,19 @@ async function handleRespond(req: Request, userId: string) {
       competency: question.competency.code,
       resumeContext: session.resume?.rawText,
       rubricCriteria,
+      pressureTier: currentTier,
     });
 
     rubric = combined;
     correctedAnswer = combined.correctedAnswer;
 
     if (shouldTriggerFollowUp(rubric, currentTier)) {
-      const followUpQuestion = pickFollowUpQuestion(
-        question.followUpHints,
-        correctedAnswer,
-        currentTier
-      );
+      // 첫 문항이고 LLM이 답변 내용을 근거로 만든 압박 꼬리질문이 있으면 그걸 쓰고,
+      // 아니면(2번째 이상 문항, 또는 mock/API 실패로 제안이 없을 때) 무료 키워드 기반으로 대체한다.
+      const followUpQuestion =
+        isFirstItem && rubric.suggestedFollowUp
+          ? rubric.suggestedFollowUp
+          : pickFollowUpQuestion(question.followUpHints, correctedAnswer, currentTier);
 
       const updatedState: StoredIrtState = {
         ...stored,
@@ -249,6 +256,15 @@ async function handleRespond(req: Request, userId: string) {
     downgrade: "DOWNGRADE",
   };
 
+  // 자소서 일관성 체크(순화된 버전) — 채점(rubric.score)에는 영향을 주지 않고, 명백한
+  // 모순이 있을 때만 부드러운 코칭 톤 한 줄을 기존 피드백 뒤에 덧붙인다.
+  const briefFeedbackWithConsistency = [
+    rubric.briefFeedback || irtResult.chip_event.brief_feedback,
+    rubric.consistencyNote,
+  ]
+    .filter((s): s is string => !!s && s.trim().length > 0)
+    .join(" ");
+
   const updatedAdministered = [...administeredIds, question.externalId];
   const planId = stored.planId ?? session.planId ?? undefined;
 
@@ -292,8 +308,7 @@ async function handleRespond(req: Request, userId: string) {
           level: irtResult.chip_event.level,
           chipType: chipTypeMap[irtResult.chip_event.chip_type],
           rubricScore: irtResult.chip_event.rubric_score,
-          briefFeedback:
-            rubric.briefFeedback || irtResult.chip_event.brief_feedback,
+          briefFeedback: briefFeedbackWithConsistency,
           hadFollowUp: isFollowUpAnswer,
           sequence: session.responses.length,
         },
@@ -369,7 +384,7 @@ async function handleRespond(req: Request, userId: string) {
     chipEvent: {
       ...irtResult.chip_event,
       had_follow_up: isFollowUpAnswer,
-      brief_feedback: rubric.briefFeedback,
+      brief_feedback: briefFeedbackWithConsistency,
     },
     nextQuestion,
     shouldTerminate: irtResult.should_terminate,

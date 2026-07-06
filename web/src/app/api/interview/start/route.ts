@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resolveCompanyContext } from "@/lib/company/enrich";
+import { deriveInterviewStyleFromJD } from "@/lib/company/jd-mapper";
 import { initIrtSession } from "@/lib/irt-client";
 import { serializeIrtState } from "@/lib/irt-state";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -11,7 +12,7 @@ import {
 } from "@/lib/candidate/service";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { COMPETENCY_CODES, INDUSTRY_CODES } from "@/types";
-import type { CompetencyCode, IndustryCode, ItemParams } from "@/types";
+import type { CompanyContext, CompetencyCode, IndustryCode, ItemParams } from "@/types";
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -41,6 +42,7 @@ export async function POST(req: Request) {
     resumeFileName,
     planId,
     focusCompetency,
+    jdText,
   } = body;
 
   const industryCode: IndustryCode = INDUSTRY_CODES.includes(industry)
@@ -59,6 +61,22 @@ export async function POST(req: Request) {
       })
     : null;
 
+  // JD/인재상 매핑 — 입력하면 세션 시작 시 1회만 Gemini를 호출해 이 회사·직무 전용
+  // 면접 스타일(톤·라운드·중점 역량)을 뽑는다. 실패/미입력 시 산업군·회사명 프리셋으로 폴백.
+  // 같은 플랜에서 이미 JD 기반으로 설정해둔 스타일이 있는데 이번엔 새로 입력하지 않았다면
+  // (역량 2, 3번째 세션 등) 이전 값을 그대로 유지하고, 새 프리셋으로 덮어쓰지 않는다.
+  const trimmedJdText: string = typeof jdText === "string" ? jdText.trim() : "";
+  let interviewStyle: CompanyContext["interviewStyle"] = companyContext.interviewStyle;
+  if (trimmedJdText) {
+    const derived = await deriveInterviewStyleFromJD({
+      jdText: trimmedJdText,
+      industryLabel: companyContext.industry,
+    });
+    if (derived) interviewStyle = derived;
+  } else if (existingPlan?.targetCompany?.interviewStyle) {
+    interviewStyle = existingPlan.targetCompany.interviewStyle as CompanyContext["interviewStyle"];
+  }
+
   let targetCompany;
   if (existingPlan?.targetCompanyId && existingPlan.targetCompany) {
     targetCompany = await prisma.targetCompany.update({
@@ -68,7 +86,7 @@ export async function POST(req: Request) {
         industry: companyContext.industry,
         industryCode,
         size: companyContext.size,
-        interviewStyle: companyContext.interviewStyle,
+        interviewStyle,
         enrichedAt: new Date(),
       },
     });
@@ -80,7 +98,7 @@ export async function POST(req: Request) {
         industry: companyContext.industry,
         industryCode,
         size: companyContext.size,
-        interviewStyle: companyContext.interviewStyle,
+        interviewStyle,
         enrichedAt: new Date(),
       },
     });

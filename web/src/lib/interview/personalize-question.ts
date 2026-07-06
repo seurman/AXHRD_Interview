@@ -17,7 +17,9 @@ const PERSONALIZE_SYSTEM = `당신은 한국 기업 면접관입니다.
 
 규칙:
 - 질문: 자소서에 나온 프로젝트·회사·역할·성과·숫자 중 **최소 2가지를 구체적으로 인용**, 지원 회사/직무와 연결, 존댓말, 90자 내외
-- 루브릭: 이 질문에 대한 좋은 답변이 갖춰야 할 기준 3~4개(지원자에게는 보여주지 않고 채점에만 사용)
+- "면접 스타일"이 주어지면 그 톤에 맞게 질문 어투를 조정하고, 중점 평가 역량과 관련된 자소서
+  내용을 우선 인용하세요.
+- 루브릭: 이 질문에 대한 좋은 답변이 갖춰야 할 기준 3~4개(지원자에게는 보여주지 않고 채점에만 사용). "면접 스타일"의 중점 평가 역량이 있으면 루브릭에 반영하세요.
 - JSON만: {"question":"...", "rubric":["기준1","기준2","기준3"]}`;
 
 export interface PersonalizeResult {
@@ -25,6 +27,12 @@ export interface PersonalizeResult {
   rubric: string[];
   /** 이번에 실제로 인용에 사용한 자소서 문장 — 세션의 used-highlight 목록에 누적시켜야 함 */
   usedHighlight?: string;
+}
+
+/** JD/인재상 매핑으로 뽑힌(또는 프리셋의) 면접 스타일 — 질문 톤·루브릭에 반영 */
+export interface InterviewStyleHint {
+  tone: string;
+  focus: string[];
 }
 
 const COMPETENCY_HINTS: Record<string, RegExp> = {
@@ -43,6 +51,7 @@ export async function personalizeQuestion(params: {
   jobRole?: string;
   resumeText?: string;
   excludeHighlights?: string[];
+  interviewStyle?: InterviewStyleHint;
 }): Promise<PersonalizeResult> {
   const resume = params.resumeText?.trim() ?? "";
   const genericRubric = buildGenericRubric(params.competency);
@@ -92,6 +101,7 @@ async function personalizeWithGemini(
     companyName?: string;
     jobRole?: string;
     resumeText: string;
+    interviewStyle?: InterviewStyleHint;
   },
   highlights: string[]
 ): Promise<{ question: string; rubric: string[] } | null> {
@@ -99,6 +109,7 @@ async function personalizeWithGemini(
 역량: ${competencyLabel(params.competency)}
 지원 회사: ${params.companyName ?? "미정"}
 지원 직무: ${params.jobRole ? jobRoleLabel(params.jobRole) : "미정"}
+${params.interviewStyle ? `면접 스타일: ${params.interviewStyle.tone} (중점 평가 역량: ${params.interviewStyle.focus.join(", ")})` : ""}
 기본 질문: ${params.template}
 자소서 핵심 문장(이번에 인용 가능한 것만): ${highlights.join(" / ")}
 

@@ -51,3 +51,14 @@ export function applyPressureTone(text: string, tier: PressureTier, seed: number
   const prefix = pool[Math.abs(seed) % pool.length];
   return `${prefix}${text}`;
 }
+
+/** Gemini 프롬프트에 넣을 짧은 태도 힌트 — LLM이 생성하는 압박 꼬리질문의 어투를
+ *  현재 압박 강도에 맞추기 위함(추가 호출 없이 같은 채점 호출의 프롬프트에 한 줄 추가). */
+export function pressureTierPromptHint(tier: PressureTier): string {
+  const map: Record<PressureTier, string> = {
+    GENTLE: "우호적인 실무진 — 부드럽고 편안한 어투로",
+    NEUTRAL: "일반 면접관 — 중립적인 어투로",
+    TOUGH: "깐깐한 임원 — 직설적이고 압박하는 어투로",
+  };
+  return map[tier];
+}
