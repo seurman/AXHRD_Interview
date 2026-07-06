@@ -40,7 +40,10 @@ export function SetupForm({
   const [industry, setIndustry] = useState<string>("");
   const [companyName, setCompanyName] = useState("");
   const [jdText, setJdText] = useState("");
-  const [showJdInput, setShowJdInput] = useState(false);
+  const [jdFileName, setJdFileName] = useState<string | null>(null);
+  const [jdFileError, setJdFileError] = useState<string | null>(null);
+  const [parsingJdFile, setParsingJdFile] = useState(false);
+  const [showJdManualInput, setShowJdManualInput] = useState(false);
   const [jobRole, setJobRole] = useState<string>("MARKETING");
   const [fileResumeText, setFileResumeText] = useState("");
   const [manualText, setManualText] = useState("");
@@ -112,6 +115,36 @@ export function SetupForm({
       setUploadedFileName(null);
     } finally {
       setParsingFile(false);
+    }
+  };
+
+  const handleJdFile = async (file: File) => {
+    setJdFileError(null);
+    setParsingJdFile(true);
+    const ext = file.name.toLowerCase().split(".").pop() ?? "";
+    const isPlainText = ext === "txt" || ext === "md";
+
+    try {
+      if (isPlainText) {
+        const text = await file.text();
+        if (!text.trim()) throw new Error("파일이 비어 있습니다.");
+        setJdText(text.trim());
+        setJdFileName(file.name);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/resume/parse", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "파일을 읽지 못했습니다.");
+      setJdText(data.text);
+      setJdFileName(data.fileName ?? file.name);
+    } catch (e) {
+      setJdFileError(e instanceof Error ? e.message : "파일 업로드 실패");
+      setJdFileName(null);
+    } finally {
+      setParsingJdFile(false);
     }
   };
 
@@ -240,8 +273,51 @@ export function SetupForm({
           className="input-luxe w-full text-sm"
         />
 
-        {showJdInput ? (
-          <div className="space-y-1">
+        <div className="space-y-2">
+          <p className="text-xs text-muted">
+            채용공고(JD)·인재상을 업로드하면 이 회사·직무에 맞는 면접 톤과 중점 역량을
+            분석해 질문에 반영합니다. (선택)
+          </p>
+          <label
+            className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed p-5 transition ${
+              parsingJdFile
+                ? "border-accent/50 bg-accent/5"
+                : "border-card-border hover:border-gold/50 hover:bg-gold/5"
+            }`}
+          >
+            {parsingJdFile ? (
+              <>
+                <IconLoader className="h-7 w-7 text-accent" />
+                <span className="text-sm text-accent">파일에서 텍스트 추출 중…</span>
+              </>
+            ) : (
+              <>
+                <IconUpload className="h-7 w-7 text-muted" />
+                <span className="text-sm text-muted">PDF · Word · TXT 업로드</span>
+              </>
+            )}
+            <input
+              type="file"
+              accept={ACCEPT}
+              className="hidden"
+              disabled={parsingJdFile}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleJdFile(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {jdFileName && !jdFileError && (
+            <p className="text-sm text-success">✓ {jdFileName} 업로드됨</p>
+          )}
+          {jdFileError && (
+            <p className="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+              {jdFileError}
+            </p>
+          )}
+
+          {showJdManualInput ? (
             <textarea
               value={jdText}
               onChange={(e) => setJdText(e.target.value)}
@@ -249,19 +325,16 @@ export function SetupForm({
               placeholder="채용공고(JD) 원문이나 인재상 키워드를 붙여넣으세요…"
               className="input-luxe w-full text-sm"
             />
-            <p className="text-xs text-muted">
-              이 회사·직무에 맞는 면접 톤과 중점 역량을 분석해 질문에 반영합니다.
-            </p>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setShowJdInput(true)}
-            className="text-xs text-muted underline hover:text-foreground"
-          >
-            채용공고(JD)·인재상 붙여넣기 (선택 — 이 회사 면접 스타일에 맞춰 질문 조정)
-          </button>
-        )}
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowJdManualInput(true)}
+              className="text-xs text-muted underline hover:text-foreground"
+            >
+              파일 대신 텍스트로 직접 입력
+            </button>
+          )}
+        </div>
       </section>
 
       <section className="card-luxe space-y-4 p-6">
@@ -346,7 +419,7 @@ export function SetupForm({
       <button
         type="button"
         onClick={startInterview}
-        disabled={loading || parsingFile || !industry || !focusCompetency}
+        disabled={loading || parsingFile || parsingJdFile || !industry || !focusCompetency}
         className="btn-primary w-full py-3.5"
       >
         {loading ? (

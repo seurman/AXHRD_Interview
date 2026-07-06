@@ -55,10 +55,14 @@ ${jd.slice(0, 2000)}
 
     const tone = typeof parsed.tone === "string" ? parsed.tone.trim().slice(0, 40) : "";
     const rounds = Array.isArray(parsed.rounds)
-      ? parsed.rounds.filter((r): r is string => typeof r === "string" && r.trim()).slice(0, 4)
+      ? parsed.rounds
+          .filter((r): r is string => typeof r === "string" && r.trim().length > 0)
+          .slice(0, 4)
       : [];
     const focus = Array.isArray(parsed.focus)
-      ? parsed.focus.filter((f): f is string => typeof f === "string" && f.trim()).slice(0, 5)
+      ? parsed.focus
+          .filter((f): f is string => typeof f === "string" && f.trim().length > 0)
+          .slice(0, 5)
       : [];
 
     if (!tone || rounds.length === 0 || focus.length === 0) return null;
