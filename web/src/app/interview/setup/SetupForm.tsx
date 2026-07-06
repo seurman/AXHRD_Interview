@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconLoader, IconUpload } from "@/components/ui/icons";
 import { jobRoleLabel, competencyLabel, industryLabel } from "@/lib/labels";
@@ -53,6 +53,9 @@ export function SetupForm({
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [focusCompetency, setFocusCompetency] = useState<string>("");
+  // 역량 카드를 직접 클릭했는지 여부 — 산업/직무를 고를 때 자동으로 역량을 바꿔주되,
+  // 사용자가 이미 직접 골랐다면(또는 URL의 ?competency=로 왔다면) 덮어쓰지 않기 위한 플래그.
+  const competencyManuallyChanged = useRef(false);
 
   // 산업군+직무를 둘 다 고르면 곧바로 매칭되는 지원자 페르소나 — 채점과 무관, 재미 요소.
   // 순수 함수라 서버 호출 없이 즉시 계산된다(추후 /api/interview/start가 동일한
@@ -94,9 +97,26 @@ export function SetupForm({
     const pid = searchParams.get("planId");
     const comp = searchParams.get("competency");
     if (pid) setPlanId(pid);
-    if (comp) setFocusCompetency(comp);
+    if (comp) {
+      setFocusCompetency(comp);
+      competencyManuallyChanged.current = true;
+    }
     loadProgress(pid, Boolean(comp));
   }, [searchParams, loadProgress]);
+
+  // 산업+직무를 다 고르면(페르소나가 계산되면) 그 페르소나가 특히 중요하게 보는 역량
+  // (focusCompetencies) 중 아직 완료하지 않은 첫 번째 역량을 기본 선택으로 추천한다.
+  // NCS "직업기초능력"은 모든 직무 공통이라 역량 선택 자체를 막지는 않되(자유롭게
+  // 다른 역량도 고를 수 있음), 실제 채용에서 직무별로 중점 역량이 다르다는 관행을
+  // 반영한 추천일 뿐이다 — 사용자가 이미 직접 역량을 고른 뒤라면 덮어쓰지 않는다.
+  useEffect(() => {
+    if (!persona || competencyManuallyChanged.current) return;
+    const recommended = persona.focusCompetencies.find((code) => {
+      const row = competencies.find((c) => c.code === code);
+      return row && row.status !== "COMPLETED";
+    });
+    if (recommended) setFocusCompetency(recommended);
+  }, [persona, competencies]);
 
   const handleFile = async (file: File) => {
     setFileError(null);
@@ -217,47 +237,7 @@ export function SetupForm({
       </div>
 
       <section className="card-luxe space-y-4 p-6">
-        <h2 className="font-semibold text-foreground">1. 역량 선택</h2>
-        <p className="text-xs text-muted">한 번에 하나의 역량 · 문항 2~3개</p>
-        {planId && (
-          <p className="text-sm text-accent">
-            진행 중인 플랜 · {completedCount}/{COMPETENCY_CODES.length} 역량 완료
-          </p>
-        )}
-        <div className="grid gap-2 sm:grid-cols-2">
-          {competencies.map((c) => {
-            const done = c.status === "COMPLETED";
-            const active = focusCompetency === c.code;
-            return (
-              <button
-                key={c.code}
-                type="button"
-                disabled={done}
-                onClick={() => setFocusCompetency(c.code)}
-                className={`rounded-xl border p-3 text-left text-sm transition ${
-                  done
-                    ? "border-success/30 bg-success/5 text-muted"
-                    : active
-                      ? "border-gold bg-gold/10 text-foreground ring-1 ring-gold/30"
-                      : "border-card-border text-foreground hover:border-gold/40"
-                }`}
-              >
-                <span className="font-medium">{c.label}</span>
-                <span className="mt-1 block text-xs opacity-70">
-                  {done
-                    ? `완료 · L${c.levelEst ?? "-"}`
-                    : c.status === "IN_PROGRESS"
-                      ? "진행 중"
-                      : "미시작"}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="card-luxe space-y-4 p-6">
-        <h2 className="font-semibold text-foreground">2. 산업군</h2>
+        <h2 className="font-semibold text-foreground">1. 산업군</h2>
         <p className="text-xs text-muted">
           특정 회사보다 산업군 기준이 질문 톤을 더 안정적으로 맞춰줍니다.
         </p>
@@ -348,7 +328,7 @@ export function SetupForm({
       </section>
 
       <section className="card-luxe space-y-4 p-6">
-        <h2 className="font-semibold text-foreground">3. 지원 직무</h2>
+        <h2 className="font-semibold text-foreground">2. 지원 직무</h2>
         <select
           value={jobRole}
           onChange={(e) => setJobRole(e.target.value)}
@@ -371,6 +351,64 @@ export function SetupForm({
           <p className="mx-auto max-w-md text-sm text-white/90">{persona.description}</p>
         </section>
       )}
+
+      <section className="card-luxe space-y-4 p-6">
+        <h2 className="font-semibold text-foreground">3. 역량 선택</h2>
+        <p className="text-xs text-muted">
+          한 번에 하나의 역량 · 문항 2~3개
+          {persona && " · ⭐ 표시는 선택한 직무에서 특히 중요하게 보는 역량 추천"}
+        </p>
+        {planId && (
+          <p className="text-sm text-accent">
+            진행 중인 플랜 · {completedCount}/{COMPETENCY_CODES.length} 역량 완료
+          </p>
+        )}
+        <div className="grid gap-2 sm:grid-cols-2">
+          {competencies.map((c) => {
+            const done = c.status === "COMPLETED";
+            const active = focusCompetency === c.code;
+            const recommended = Boolean(
+              persona &&
+                !done &&
+                (persona.focusCompetencies as string[]).includes(c.code)
+            );
+            return (
+              <button
+                key={c.code}
+                type="button"
+                disabled={done}
+                onClick={() => {
+                  competencyManuallyChanged.current = true;
+                  setFocusCompetency(c.code);
+                }}
+                className={`rounded-xl border p-3 text-left text-sm transition ${
+                  done
+                    ? "border-success/30 bg-success/5 text-muted"
+                    : active
+                      ? "border-gold bg-gold/10 text-foreground ring-1 ring-gold/30"
+                      : "border-card-border text-foreground hover:border-gold/40"
+                }`}
+              >
+                <span className="font-medium">
+                  {c.label}
+                  {recommended && (
+                    <span className="ml-1.5 rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent">
+                      ⭐ 추천
+                    </span>
+                  )}
+                </span>
+                <span className="mt-1 block text-xs opacity-70">
+                  {done
+                    ? `완료 · L${c.levelEst ?? "-"}`
+                    : c.status === "IN_PROGRESS"
+                      ? "진행 중"
+                      : "미시작"}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       <section className="card-luxe space-y-4 p-6">
         <h2 className="font-semibold text-foreground">4. 자기소개서 (선택)</h2>
