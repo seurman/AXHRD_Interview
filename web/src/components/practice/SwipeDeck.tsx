@@ -6,6 +6,7 @@ import { Bookmark, X as XIcon, RotateCcw } from "lucide-react";
 import { INDUSTRY_CODES, JOB_ROLES } from "@/types";
 import { industryLabel, jobRoleLabel } from "@/lib/labels";
 import { IconLoader } from "@/components/ui/icons";
+import { AnswerPracticeModal } from "@/components/practice/AnswerPracticeModal";
 
 type Card = {
   id: string;
@@ -16,6 +17,8 @@ type Card = {
   sourceUrl: string | null;
   isAiExample: boolean;
   savedAt?: string;
+  answerTranscript?: string | null;
+  answeredAt?: string | null;
 };
 
 type SwipeActionType = "PASS" | "SAVE";
@@ -42,6 +45,7 @@ export function SwipeDeck({
   const [showSaved, setShowSaved] = useState(false);
   const [savedList, setSavedList] = useState<Card[] | null>(null);
   const [savedLoading, setSavedLoading] = useState(false);
+  const [practiceCard, setPracticeCard] = useState<Card | null>(null);
 
   const loadDeck = useCallback(async (ind: string, role: string) => {
     setLoading(true);
@@ -87,6 +91,8 @@ export function SwipeDeck({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ questionId: card.id, action }),
     }).catch(() => {});
+    // Save는 단순 북마크로 끝내지 않고 바로 그 자리에서 답변 녹음까지 이어간다
+    if (action === "SAVE") setPracticeCard(card);
   };
 
   const openSaved = async () => {
@@ -254,12 +260,40 @@ export function SwipeDeck({
                       {industryLabel(q.industry)} · {jobRoleLabel(q.jobRole)} ·{" "}
                       {q.isAiExample ? "AI 생성 예시" : q.sourceName ?? "출처 미상"}
                     </p>
+                    {q.answerTranscript && (
+                      <p className="mt-2 rounded-lg bg-background p-2 text-xs text-foreground">
+                        {q.answerTranscript}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setPracticeCard(q)}
+                      className="mt-2 text-xs font-medium text-primary hover:underline"
+                    >
+                      {q.answerTranscript ? "다시 답변 연습하기" : "답변 연습하기"}
+                    </button>
                   </li>
                 ))}
               </ul>
             )}
           </div>
         </div>
+      )}
+
+      {practiceCard && (
+        <AnswerPracticeModal
+          card={practiceCard}
+          onClose={() => setPracticeCard(null)}
+          onSaved={(transcript) => {
+            setSavedList((list) =>
+              list
+                ? list.map((q) =>
+                    q.id === practiceCard.id ? { ...q, answerTranscript: transcript } : q
+                  )
+                : list
+            );
+          }}
+        />
       )}
     </div>
   );

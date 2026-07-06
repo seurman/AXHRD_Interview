@@ -84,6 +84,14 @@
   - "3. 지원 직무" 아래 실제 기출 질문 미리보기 목록(`/api/interview/real-questions` 호출 + 렌더링) 제거 — 불필요한 정보로 판단, 직무 선택 셀렉트박스만 남김. 백엔드 엔드포인트 자체는 그대로 둠(추후 재사용 가능)
   - "4. 자기소개서" 텍스트 영역이 파일에서 추출한 원문을 그대로 화면에 노출하던 것을 제거 — 업로드 시 "✓ 파일명 업로드됨" 확인 문구만 표시하고 추출된 본문은 화면에 그리지 않음(내부 상태 `fileResumeText`로만 보관해 제출에 사용). 직접 타이핑하고 싶을 때만 "파일 대신 텍스트로 직접 입력" 버튼으로 별도 `textarea`(`manualText`)를 펼칠 수 있음 — 제출 시 `manualText.trim() || fileResumeText` 우선순위로 전송
 - **JD 업로드 UI 버그 수정 + Vercel 빌드 에러 수정**: JD/인재상 섹션이 붙여넣기 토글만 있고 실제 파일 업로드가 없던 문제를 자소서 섹션과 동일한 드롭존 UX(업로드 → "✓ 파일명 업로드됨", 파일 대신 직접 입력 토글)로 교체, `handleJdFile()` 추가(`/api/resume/parse` 재사용). 동시에 Vercel 빌드를 막던 `lib/company/jd-mapper.ts`의 타입 에러(`filter` 콜백이 `string`을 반환해 `boolean` 타입가드와 불일치) 수정
+- **모바일 메뉴가 배경과 겹치는 버그 수정** (스키마 변경 없음): 우측 상단 햄버거 메뉴를 열면 드로어가 화면 전체가 아니라 헤더 높이 안에서만 뜨면서 배경 콘텐츠와 겹쳐 보이는 문제. 원인은 CSS 스펙상 `backdrop-filter`(헤더의 `backdrop-blur-md`)가 걸린 요소는 그 안의 `position: fixed` 자손들의 기준(containing block)이 스스로가 돼 버리는 것 — 드로어가 헤더 안에 있다 보니 뷰포트 기준이 아니라 헤더 높이 기준으로 "고정"돼 버렸음. `MobileNav.tsx`를 `createPortal`로 `document.body`에 직접 그리도록 고쳐서 헤더의 containing block 밖으로 빼냄. 열려 있는 동안 배경 스크롤도 잠금 처리 추가
+- **스와이프 카드 "저장" = 답변 연습으로 연결** (스키마 변경 있음 — 로컬 `prisma migrate dev` 필요): "저장이 무슨 의미가 있냐, 고르면 바로 녹음해서 답변할 수 있어야 한다"는 피드백 반영 — 지금까지 Save는 그냥 북마크만 하고 끝이었음
+  - `SwipeAction`에 `answerTranscript`/`answeredAt` 필드 추가. `POST /api/questions/swipe`가 `answerTranscript`를 같이 받으면 저장
+  - `components/practice/AnswerPracticeModal.tsx`(신규) — Save를 누르면(스와이프든 버튼이든) 바로 이 모달이 뜨면서 `VoiceRecorder`(방금 중복 버그 고친 그 컴포넌트 재사용)로 답변을 녹음. **채점은 하지 않고 자체 STT 텍스트만 기록** — 모바일=짧은 반복 연습(Engagement), PC=심층 분석(Insight)이라는 이원화 전략 원칙을 그대로 따름(비용도 안 듦: 추가 Gemini 호출 없음)
+  - "저장한 질문" 목록에서도 각 항목에 저장된 답변 미리보기 + "다시 답변 연습하기" 버튼 추가 — 나중에 다시 들어와서 반복 연습 가능
+- **모바일 음성 인식 중복 버그 수정** (스키마 변경 없음, 코드만 수정): "녹음 버튼을 눌러 설명하면 같은 내용이 반복된다" 리포트 — 안드로이드 Chrome 등 모바일에서는 `SpeechRecognition.continuous=true`여도 몇 초 침묵하면 내부적으로 인식 세션이 조용히 끊겼다 재시작되는데, 기존 코드는 `onresult`가 올 때마다 `event.results` 전체를 처음부터 다시 이어붙이는 방식이라 재시작 시 이미 확정된 문장이 또 붙어 중복됨
+  - `VoiceRecorder.tsx`: 확정된(`isFinal`) 문장을 `finalTranscriptRef`에 직접 누적하고, `event.resultIndex`부터만 처리하도록 변경. 재시작 직후 같은 문장이 다시 오면(`already.endsWith(piece)`) 건너뛰어 중복을 막음
+  - 겸사겸사 `onend`에서 사용자가 정지 버튼을 안 눌렀는데(=모바일이 알아서 끊은 것) 자동으로 `recognition.start()` 재시작하도록 추가 — 그동안 누적된 텍스트는 유지됨. 사용자가 직접 정지 버튼을 누른 경우만 재시작 안 함(`manualStopRef`)
 - **질문 카드 스와이프(모바일 습관형성 루프)** (스키마 변경 있음 — 로컬 `prisma migrate dev` 필요): 모바일/PC 이원화 전략 브레인스토밍에서 나온 "스와이프 카드 UI"를 첫 기능으로 구현. 핵심 요구사항은 "무작위가 아니라 본인이 결정한 직무 관련 카드"였음
   - `UserProfile.desiredIndustry`(신규 nullable 필드) + 기존에 있었지만 아무 데서도 안 쓰이던 `desiredJobRole`을 처음으로 실제 연결 — `PATCH /api/profile/preference`로 저장. `UserProfile` row 자체가 지금까지 한 번도 생성된 적 없던 죽은 테이블이었음(가입 시 생성 로직이 없었음)
   - `/practice/swipe`: 처음 진입하면(또는 아직 아무것도 안 골랐으면) 산업군+직무를 명시적으로 고르게 강제하고, 그 다음부터는 상단에 "{산업군}·{직무} 변경" 배지로 항상 보여줌 — 로그인할 때마다 랜덤이 아니라 본인이 정한 조합이 계속 유지됨

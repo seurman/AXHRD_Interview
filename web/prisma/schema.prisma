@@ -429,6 +429,10 @@ model SwipeAction {
   questionId String
   question   RealInterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
   action     SwipeActionType
+  /** Save한 질문에 실제로 음성 답변을 녹음해본 기록(자체 STT 텍스트만, 채점 없음).
+   *  "저장"이 단순 북마크로 끝나지 않고 그 자리에서 답변 연습까지 이어지도록 함 */
+  answerTranscript String?  @db.Text
+  answeredAt       DateTime?
   createdAt  DateTime              @default(now())
   updatedAt  DateTime              @updatedAt
 

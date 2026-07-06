@@ -10,12 +10,17 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { questionId, action: rawAction } = body as { questionId?: string; action?: string };
+  const {
+    questionId,
+    action: rawAction,
+    answerTranscript,
+  } = body as { questionId?: string; action?: string; answerTranscript?: string };
 
   if (!questionId || (rawAction !== "PASS" && rawAction !== "SAVE")) {
     return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
   }
   const action: "PASS" | "SAVE" = rawAction;
+  const trimmedAnswer = answerTranscript?.trim() || undefined;
 
   const question = await prisma.realInterviewQuestion.findUnique({
     where: { id: questionId },
@@ -27,8 +32,16 @@ export async function POST(req: Request) {
 
   await prisma.swipeAction.upsert({
     where: { userId_questionId: { userId: user.id, questionId } },
-    create: { userId: user.id, questionId, action },
-    update: { action },
+    create: {
+      userId: user.id,
+      questionId,
+      action,
+      ...(trimmedAnswer && { answerTranscript: trimmedAnswer, answeredAt: new Date() }),
+    },
+    update: {
+      action,
+      ...(trimmedAnswer && { answerTranscript: trimmedAnswer, answeredAt: new Date() }),
+    },
   });
 
   return NextResponse.json({ ok: true });
@@ -57,6 +70,8 @@ export async function GET() {
       sourceUrl: s.question.sourceUrl,
       isAiExample: s.question.isAiExample,
       savedAt: s.updatedAt,
+      answerTranscript: s.answerTranscript,
+      answeredAt: s.answeredAt,
     })),
   });
 }
