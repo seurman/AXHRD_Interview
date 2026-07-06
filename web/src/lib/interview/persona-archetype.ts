@@ -125,22 +125,28 @@ function overlapScore(a: string[], b: string[]): number {
 }
 
 /**
- * 산업군 + 직무 태그를 합쳐서 가장 유사한 페르소나 아키타입을 고른다.
- * 동점이면 배열 순서상 앞선(더 넓게 걸리는) 아키타입을 우선한다 — 항상 결정적(deterministic)이라
- * 같은 산업군+직무 조합이면 몇 번을 다시 골라도 같은 페르소나가 나온다.
+ * 산업군 + 직무 태그를 각각 아키타입과 겹치는 정도로 점수를 매겨 가장 유사한 페르소나를
+ * 고른다. 직무 쪽에 2배 가중치를 둔다 — NCS 기반 채용/모의면접 업계 관행을 벤치마킹한
+ * 결과("직무"가 1차 축, "산업"은 톤을 보정하는 보조 신호)에 맞춘 것이자, 실제로 두 태그를
+ * 단순 합집합으로 섞어 점수를 매기면(이전 방식) 일부 산업군(IT_SW·MANUFACTURING)의 태그
+ * 5개가 특정 아키타입과 완전히 일치해 만점을 채워버려서 직무를 뭘 골라도 같은 페르소나로만
+ * 나오는 문제가 있었음(검증 스크립트로 확인). 가중합으로 바꾸면 직무를 바꾸면 결과도 바뀐다.
+ * 동점이면 배열 순서상 앞선 아키타입을 우선한다 — 항상 결정적(deterministic)이라 같은
+ * 산업군+직무 조합이면 몇 번을 다시 골라도 같은 페르소나가 나온다.
  */
 export function matchPersona(
   industry: IndustryCode,
   jobRole: JobRoleCode
 ): PersonaArchetype {
-  const combinedTraits = [
-    ...new Set([...INDUSTRY_TRAITS[industry], ...JOBROLE_TRAITS[jobRole]]),
-  ];
+  const industryTraits = INDUSTRY_TRAITS[industry];
+  const jobTraits = JOBROLE_TRAITS[jobRole];
 
   let best = PERSONA_ARCHETYPES[0];
   let bestScore = -1;
   for (const archetype of PERSONA_ARCHETYPES) {
-    const score = overlapScore(combinedTraits, archetype.traits);
+    const score =
+      overlapScore(jobTraits, archetype.traits) * 2 +
+      overlapScore(industryTraits, archetype.traits);
     if (score > bestScore) {
       bestScore = score;
       best = archetype;

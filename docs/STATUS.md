@@ -112,7 +112,8 @@
   - `next.config.ts`에 `images.remotePatterns`로 `images.unsplash.com` 허용 추가 (Next.js Image Optimization 사용을 위해 필요)
   - 사용한 사진은 모두 Unsplash 자체 공개 API(napi)로 실존 여부와 무료(비-프리미엄) 라이선스를 확인 후 선정함
 - **지원자 페르소나(롤모델) 시스템** (스키마 변경 있음 — 로컬 `prisma migrate dev` 필요): "산업+직무를 종합해서 어떤 롤모델처럼 보이고 싶은지 정하는 재미"를 넣어달라는 상세 설계 요청 반영. 채점에는 절대 영향 없음(기존 압박 톤 원칙과 동일)
-  - `lib/interview/persona-archetype.ts`(신규) — 산업군별/직무별 특성 태그 사전(`INDUSTRY_TRAITS`/`JOBROLE_TRAITS`)을 합쳐, 큐레이션한 8개 페르소나 원형(`PERSONA_ARCHETYPES`, 예: "원칙있는 문제해결사", "데이터로 말하는 전략가" 등)과 태그 겹침 개수(`overlapScore`)로 매칭하는 순수 함수 `matchPersona(industry, jobRole)`. LLM 호출 없음(추가 비용 0) — 트리 구조 대신 태그 겹침으로 "유사성" 아이디어 구현. 공공기관+개발 조합 → "원칙있는 문제해결사"(사용자 예시와 일치) 확인함
+  - `lib/interview/persona-archetype.ts`(신규) — 산업군별/직무별 특성 태그 사전(`INDUSTRY_TRAITS`/`JOBROLE_TRAITS`)을 각각 아키타입과 겹치는 정도로 채점해(직무 2배 가중치, 산업 1배) 매칭하는 순수 함수 `matchPersona(industry, jobRole)`, 큐레이션한 8개 페르소나 원형(`PERSONA_ARCHETYPES`, 예: "원칙있는 문제해결사", "데이터로 말하는 전략가" 등). LLM 호출 없음(추가 비용 0) — 트리 구조 대신 태그 겹침으로 "유사성" 아이디어 구현. 공공기관+개발 조합 → "원칙있는 문제해결사"(사용자 예시와 일치) 확인함
+    - **[수정 2026-07-06]** 처음엔 산업+직무 태그를 그냥 합쳐서 단순 교집합으로 채점했는데, 국내 채용/모의면접 서비스 벤치마킹(사람인·원티드는 채용공고=직무를 1차 축으로 쓰고 산업은 자동 추출만 함, NCS/블라인드채용은 오히려 전공 배제·직무기술서 중심, 코멘토 직무부트캠프는 산업×직무 병행) 결과 "직무가 1차 축, 산업은 보조 신호"가 업계 표준이라 확인. 실제 검증 스크립트로 돌려보니 IT_SW·MANUFACTURING 산업군은 태그 5개가 특정 아키타입과 100% 일치해 직무를 뭘 골라도 늘 같은 페르소나만 나오는 버그가 있었음(사용자가 "산업군에만 반영되는 것 같다"고 정확히 지적한 부분) — 직무 겹침 점수에 2배 가중치를 줘서 직무 선택이 항상 결과에 반영되도록 수정
   - `TargetCompany.persona`(Json, 신규) — `api/interview/start/route.ts`에서 산업군+직무 확정 시 `matchPersona()` 결과를 저장
   - `interview/setup/SetupForm.tsx` — 산업/직무를 고르는 즉시 클라이언트에서 `matchPersona()`로 페르소나 이름·설명을 계산해 "당신의 페르소나는 OOO입니다" 리빌 카드를 보여줌(요청하신 "재미" 요소, 네트워크 호출 없이 즉시 표시)
   - `interview/[sessionId]/page.tsx` — 면접 진행 중 화면 상단에 페르소나 배지(🎭)를 계속 표시(면접 끝날 때까지 배지로 계속 보여달라는 요청 반영)
