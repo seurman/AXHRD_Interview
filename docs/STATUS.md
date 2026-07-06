@@ -84,6 +84,13 @@
   - "3. 지원 직무" 아래 실제 기출 질문 미리보기 목록(`/api/interview/real-questions` 호출 + 렌더링) 제거 — 불필요한 정보로 판단, 직무 선택 셀렉트박스만 남김. 백엔드 엔드포인트 자체는 그대로 둠(추후 재사용 가능)
   - "4. 자기소개서" 텍스트 영역이 파일에서 추출한 원문을 그대로 화면에 노출하던 것을 제거 — 업로드 시 "✓ 파일명 업로드됨" 확인 문구만 표시하고 추출된 본문은 화면에 그리지 않음(내부 상태 `fileResumeText`로만 보관해 제출에 사용). 직접 타이핑하고 싶을 때만 "파일 대신 텍스트로 직접 입력" 버튼으로 별도 `textarea`(`manualText`)를 펼칠 수 있음 — 제출 시 `manualText.trim() || fileResumeText` 우선순위로 전송
 - **JD 업로드 UI 버그 수정 + Vercel 빌드 에러 수정**: JD/인재상 섹션이 붙여넣기 토글만 있고 실제 파일 업로드가 없던 문제를 자소서 섹션과 동일한 드롭존 UX(업로드 → "✓ 파일명 업로드됨", 파일 대신 직접 입력 토글)로 교체, `handleJdFile()` 추가(`/api/resume/parse` 재사용). 동시에 Vercel 빌드를 막던 `lib/company/jd-mapper.ts`의 타입 에러(`filter` 콜백이 `string`을 반환해 `boolean` 타입가드와 불일치) 수정
+- **질문 카드 스와이프(모바일 습관형성 루프)** (스키마 변경 있음 — 로컬 `prisma migrate dev` 필요): 모바일/PC 이원화 전략 브레인스토밍에서 나온 "스와이프 카드 UI"를 첫 기능으로 구현. 핵심 요구사항은 "무작위가 아니라 본인이 결정한 직무 관련 카드"였음
+  - `UserProfile.desiredIndustry`(신규 nullable 필드) + 기존에 있었지만 아무 데서도 안 쓰이던 `desiredJobRole`을 처음으로 실제 연결 — `PATCH /api/profile/preference`로 저장. `UserProfile` row 자체가 지금까지 한 번도 생성된 적 없던 죽은 테이블이었음(가입 시 생성 로직이 없었음)
+  - `/practice/swipe`: 처음 진입하면(또는 아직 아무것도 안 골랐으면) 산업군+직무를 명시적으로 고르게 강제하고, 그 다음부터는 상단에 "{산업군}·{직무} 변경" 배지로 항상 보여줌 — 로그인할 때마다 랜덤이 아니라 본인이 정한 조합이 계속 유지됨
+  - `SwipeAction` 신규 모델(`userId`+`questionId` 유니크, `PASS`/`SAVE`) — 카드를 넘긴 기록. `GET/POST /api/questions/swipe`
+  - **콘텐츠 물량 이슈 발견**: `RealInterviewQuestion`은 총 45문항인데 산업군×직무 조합(16개)당 2~4개뿐이라, 정확히 고른 조합만 보여주면 몇 장 만에 바닥남. `GET /api/questions/swipe-deck`에서 우선순위를 낮춰가며 채우는 폴백을 넣음(①정확한 조합 → ②같은 산업군 → ③같은 직무 → ④전체), 그래도 다 봤으면 같은 조합을 재열람(`recycled: true`)으로 표시. 조합당 5개 미만이면 화면에 "관련 산업군·직무 질문도 섞어서 보여드려요" 안내 표시. **다만 습관형성 루프로서의 진짜 가치는 카드 절대량에 달려있어서, `seed/real-questions.json` 물량을 늘리는 게 자연스러운 다음 스텝**
+  - `components/practice/SwipeDeck.tsx` — 이미 의존성에 있던 `framer-motion`으로 드래그 스와이프 구현(추가 라이브러리 설치 없음), 왼쪽 Pass/오른쪽 Save + 하단 버튼(터치 제스처 없는 환경 대비), "저장한 질문" 목록 패널
+  - 헤더 네비게이션에 "질문 카드" 링크 추가(`/practice/swipe`)
 - **UI 리뉴얼 — 코발트 블루 테마 + 모바일 대응 + 스톡 사진**: "더 세련되고 모바일에서도 잘 보이면 좋겠다"는 요청으로 전체 색상 톤과 랜딩/로그인 화면을 손봄
   - `globals.css`: 기존 크림·네이비·골드 톤에서 `--color-primary`/`--color-primary-light`/`--color-accent`/`--color-background`/`--color-card-border`를 코발트 블루 계열로 교체(`--color-gold`는 보조 프리미엄 포인트 색으로 유지, 톤만 코발트와 어울리게 미세 조정). 클래스명(`text-gold`, `card-luxe` 등)은 그대로라 13개 파일의 기존 사용처를 건드리지 않고 전체 배색만 바뀜
   - `components/layout/AppHeader.tsx` + `MobileNav.tsx`(신규): 로그인 시 메뉴가 7개까지 늘어나는데 모바일 대응(햄버거/드로어 메뉴)이 전혀 없었던 문제 발견 — `sm:` 이상에서는 기존 가로 네비게이션, 그 이하에서는 우측 슬라이드 드로어 메뉴로 전환. 헤더에 `sticky top-0` 추가

@@ -131,6 +131,7 @@ model User {
   interviewPlans  InterviewPlan[]
   competencyProgress CompetencyProgress[]
   oauthAccounts   OAuthAccount[]
+  swipeActions    SwipeAction[]
 
   @@index([organizationId])
 }
@@ -152,15 +153,18 @@ model OAuthAccount {
 }
 
 model UserProfile {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  careerYears     Int      @default(0)
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  careerYears     Int       @default(0)
   education       String?
-  desiredJobRole  JobRole  @default(OTHER)
+  desiredJobRole  JobRole   @default(OTHER)
+  /** 질문 카드(스와이프)에서 보여줄 기본 산업군 — 사용자가 명시적으로 고른 값.
+   *  null이면 아직 한 번도 고르지 않은 상태(랜덤 대신 선택을 요구한다) */
+  desiredIndustry Industry?
   bio             String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 // ── Company context ──
@@ -405,5 +409,29 @@ model RealInterviewQuestion {
   isAiExample  Boolean  @default(false)
   createdAt    DateTime @default(now())
 
+  swipeActions SwipeAction[]
+
   @@index([industry, jobRole])
+}
+
+// ── 질문 카드 스와이프(모바일 습관형성 루프) ──
+// 사용자가 명시적으로 고른 산업군·직무에 맞는 실제 기출 질문 카드를 넘기며
+// Pass/Save 한다. 채점과 무관한 순수 열람·북마크 기록.
+enum SwipeActionType {
+  PASS
+  SAVE
+}
+
+model SwipeAction {
+  id         String                @id @default(cuid())
+  userId     String
+  user       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId String
+  question   RealInterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  action     SwipeActionType
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
+
+  @@unique([userId, questionId])
+  @@index([userId, action])
 }

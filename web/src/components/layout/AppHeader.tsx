@@ -14,6 +14,7 @@ export async function AppHeader() {
     ? [
         { href: "/dashboard", label: "역량 트래킹" },
         { href: "/interview/setup", label: "면접 시작" },
+        { href: "/practice/swipe", label: "질문 카드" },
         { href: "/profile", label: "프로필" },
         ...(isOrgStaff ? [{ href: "/org/dashboard", label: "코호트 대시보드" }] : []),
         ...(isAdmin

@@ -23,6 +23,21 @@ export const INDUSTRY_CODES = [
 
 export type IndustryCode = (typeof INDUSTRY_CODES)[number];
 
+// ── Job role ──
+
+export const JOB_ROLES = [
+  "MARKETING",
+  "DEVELOPMENT",
+  "BUSINESS_SUPPORT",
+  "SALES",
+  "DESIGN",
+  "HR",
+  "FINANCE",
+  "OTHER",
+] as const;
+
+export type JobRoleCode = (typeof JOB_ROLES)[number];
+
 // ── IRT Engine types (mirrors Python schemas) ──
 
 export type ChipType = "pass" | "attempt" | "downgrade";
