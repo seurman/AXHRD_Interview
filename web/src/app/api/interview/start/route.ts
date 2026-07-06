@@ -60,7 +60,10 @@ export async function POST(req: Request) {
 
   // 지원자 페르소나 — 산업군+직무 조합만으로 결정되는 순수 함수라 매번 새로 계산해도
   // 비용이 들지 않는다(추가 LLM 호출 없음). 채점에는 영향 없음, 화면 뱃지·리포트 코칭용.
-  const persona = matchPersona(industryCode, jobRoleCode);
+  // Prisma의 Json 필드(InputJsonValue)는 인덱스 시그니처가 없는 커스텀 타입을 그대로
+  // 받아들이지 않으므로(persona 필드 저장 시 빌드 타입 에러), JSON 왕복으로 순수 JSON
+  // 값(plain object)으로 한 번 변환해 저장한다 — 런타임 값은 동일하다.
+  const persona = JSON.parse(JSON.stringify(matchPersona(industryCode, jobRoleCode)));
 
   const existingPlan = planId
     ? await prisma.interviewPlan.findFirst({
