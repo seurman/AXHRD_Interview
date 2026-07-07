@@ -132,7 +132,8 @@ model Organization {
   rejectedAt DateTime?
   createdAt  DateTime  @default(now())
 
-  members User[]
+  members       User[]
+  subscriptions Subscription[]
 }
 
 // ── User ──
@@ -165,6 +166,7 @@ model User {
   selfDiscoverySessions SelfDiscoverySession[]
   adminAuditLogs  AdminAuditLog[] @relation("AdminAuditActor")
   auditRollbacks  AdminAuditLog[] @relation("AdminAuditRollback")
+  subscriptions   Subscription[]
 
   @@index([organizationId])
 }
@@ -555,4 +557,67 @@ model SelfDiscoveryProfile {
   /** McAdams 스타일 서사 주제 요약 */
   narrativeSummary  String               @db.Text
   generatedAt       DateTime             @default(now())
+}
+
+// ── Billing (토스페이먼츠 정기결제) ──
+
+/** 요금제 등급 — FREE는 Subscription 레코드 없이 기본 적용 */
+enum PlanTier {
+  FREE
+  INDIVIDUAL_PRO
+  ORG_STANDARD
+  ORG_ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  TRIALING
+}
+
+enum PaymentTransactionStatus {
+  SUCCESS
+  FAILED
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  planTier           PlanTier
+  /** 개인 플랜(INDIVIDUAL_PRO) — userId 또는 organizationId 중 정확히 하나 */
+  userId             String?
+  user               User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId     String?
+  organization       Organization?      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  status             SubscriptionStatus @default(TRIALING)
+  /** 토스페이먼츠 빌링키 — 카드번호 등은 저장하지 않음. ORG_ENTERPRISE 수동 계약은 null 가능 */
+  billingKey         String?
+  /** 토스 customerKey — 구매자 식별자(유니크) */
+  customerKey        String             @unique
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  payments PaymentTransaction[]
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([status, currentPeriodEnd])
+}
+
+model PaymentTransaction {
+  id             String                   @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription             @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  amount         Int
+  status         PaymentTransactionStatus
+  tossPaymentKey String?
+  tossOrderId    String                   @unique
+  paidAt         DateTime?
+  failReason     String?
+  createdAt      DateTime                 @default(now())
+
+  @@index([subscriptionId])
 }

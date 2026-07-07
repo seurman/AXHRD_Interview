@@ -39,6 +39,7 @@ export type Dictionary = {
       audit: string;
       orgApprove: string;
       orgBenchmark: string;
+      subscriptions: string;
     };
     language: {
       label: string;

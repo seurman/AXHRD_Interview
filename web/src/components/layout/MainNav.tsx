@@ -25,7 +25,7 @@ export function MainNav({
   mainHrefs: string[];
   adminLinks: {
     href: string;
-    labelKey: "content" | "users" | "audit" | "orgApprove" | "orgBenchmark";
+    labelKey: "content" | "users" | "audit" | "orgApprove" | "orgBenchmark" | "subscriptions";
   }[];
   userName?: string;
   loggedIn: boolean;
@@ -37,6 +37,9 @@ export function MainNav({
   if (!loggedIn) {
     return (
       <nav className="hidden items-center gap-2 sm:flex">
+        <Link href="/pricing" className="nav-pill">
+          Pricing
+        </Link>
         <LanguageSwitcher />
         <Link href="/auth/login" className="nav-pill">
           {c.auth.login}

@@ -6,6 +6,7 @@ import { jobRoleLabel } from "@/lib/utils";
 import { competencyLabel } from "@/lib/labels";
 import { getUserStrengthDeck } from "@/lib/discover/user-strengths";
 import { StrengthCardDeck } from "@/components/profile/StrengthCardDeck";
+import { BillingManageCard } from "@/components/billing/BillingManageCard";
 import { COMPETENCY_CODES } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -69,6 +70,8 @@ export default async function ProfilePage() {
           </div>
         </div>
       </header>
+
+      <BillingManageCard />
 
       <StrengthCardDeck
         strengths={strengthDeck?.strengths ?? []}

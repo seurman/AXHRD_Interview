@@ -7,6 +7,9 @@ function isPublicPath(pathname: string) {
   if (pathname.startsWith("/auth")) return true;
   if (pathname.startsWith("/api/auth")) return true;
   if (pathname.startsWith("/c/")) return true;
+  if (pathname === "/pricing") return true;
+  if (pathname.startsWith("/billing/fail")) return true;
+  if (pathname.startsWith("/demo")) return true;
   return false;
 }
 
@@ -24,6 +27,11 @@ function requiresAuth(pathname: string) {
   if (pathname.startsWith("/org")) return true;
   if (pathname.startsWith("/api/admin")) return true;
   if (pathname.startsWith("/admin")) return true;
+  if (pathname.startsWith("/billing/success")) return true;
+  if (pathname.startsWith("/api/billing/prepare")) return true;
+  if (pathname.startsWith("/api/billing/confirm")) return true;
+  if (pathname.startsWith("/api/billing/cancel")) return true;
+  if (pathname.startsWith("/api/billing/status")) return true;
   return false;
 }
 
@@ -63,5 +71,10 @@ export const config = {
     "/org/:path*",
     "/api/admin/:path*",
     "/admin/:path*",
+    "/billing/success",
+    "/api/billing/prepare",
+    "/api/billing/confirm",
+    "/api/billing/cancel",
+    "/api/billing/status",
   ],
 };

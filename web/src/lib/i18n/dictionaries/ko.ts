@@ -35,6 +35,7 @@ export const dictionary: Dictionary = {
       audit: "감사 로그",
       orgApprove: "기관 승인",
       orgBenchmark: "기관 비교",
+      subscriptions: "구독 관리",
     },
     language: {
       label: "언어",

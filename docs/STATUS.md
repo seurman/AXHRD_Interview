@@ -90,6 +90,16 @@
   - `/admin/audit`(SUPERADMIN) — 감사 로그 목록 + `POST /api/admin/audit/[id]/rollback` 롤백(역량·문항·루브릭 일괄·사용자 권한·기관 상태)
   - 마이그레이션 `20260707210000_add_admin_role_audit_log`
   - CLI: `npx tsx scripts/grant-platform-role.ts <email> ADMIN|SUPERADMIN`
+- **요금제 + 토스페이먼츠 정기결제(빌링)** (2026-07-07):
+  - **스키마**: `PlanTier`(FREE/INDIVIDUAL_PRO/ORG_STANDARD/ORG_ENTERPRISE), `Subscription`, `PaymentTransaction`. 마이그레이션 `20260707233000_add_billing_subscription`
+  - **플랜 정의**: `web/src/lib/billing/plans.ts` — FREE(월 3회 모의면접·자기발견 1회), Pro/Standard/Enterprise 한도·기능. **가격(원)은 placeholder(null)** — `plans.ts`에서 직접 숫자 입력 후 배포
+  - **ORG_ENTERPRISE는 토스 미경유** — 세금계산서·계좌이체 계약 후 SUPERADMIN이 `/admin/subscriptions`에서 수동 `Subscription` 생성(UserRoleEditor 패턴)
+  - **UI**: `/pricing`(hero-blue·Reveal), `/billing/success|fail`, 프로필 구독 관리·해지 예약, PAST_DUE 시 상단 배너
+  - **API**: `POST /api/billing/prepare|confirm|cancel`, `GET /api/billing/status`, `POST /api/billing/webhook`(PAYMENT_STATUS_CHANGED → paymentKey API 재조회), `GET /api/billing/cron`(Vercel Cron 하루 1회, `CRON_SECRET`)
+  - **사용량 가드**: `POST /api/interview/start`, `POST /api/discover/start` — 한도 초과 시 **402** + `/pricing` 안내
+  - **환경변수**: `NEXT_PUBLIC_TOSS_CLIENT_KEY`, `TOSS_SECRET_KEY`, `CRON_SECRET` (`web/.env.example` 참고)
+  - **토스페이먼츠 자동결제(빌링)는 별도 리스크 심사·추가 계약 필요** — [빌링 가이드](https://docs.tosspayments.com/guides/v2/billing). 테스트 키로 카드 등록·빌링키 발급까지는 가능하나, **라이브 자동결제 승인은 심사 완료 후**만 가능. 운영 전 개발자센터에서 자동결제 계약·웹훅 URL(`https://app.axhrd.com/api/billing/webhook`) 등록 필요
+  - **로컬**: `cd web && npx prisma migrate dev --name add_billing_subscription`(또는 deploy) + `npm run build`. 가격 설정 후 테스트 카드로 `/pricing` → 구독 플로우 확인
 - **압박 강도 적응형 조절** (스키마 변경 없음, 코드만 추가 — 마이그레이션 불필요): ROADMAP의 "면접관 페르소나 3종"을 사용자가 고르는 정적 방식이 아니라, IRT가 이미 추정하고 있는 역량 레벨(`current_level`, 1~5)을 그대로 재사용해 자동으로 조절하는 방식으로 구현 — 브레인스토밍에서 나온 "독창적 아이디어" 중 첫 번째로 착수
   - `lib/interview/persona.ts` 신규 — `pressureTierFromLevel(level)`: 레벨 1~2 GENTLE(실무진·우호적), 3 NEUTRAL, 4~5 TOUGH(임원·압박)로 매핑. `applyPressureTone()`: 사전 정의된 문구 풀에서 골라 질문 앞에 붙임(추가 LLM 호출 없음, 세션 내 반복 방지용 seed 회전)
   - **채점은 절대 이 값의 영향을 받지 않는다** — 톤은 화면 표시용 텍스트에만 적용되고, 채점에 쓰이는 `personalizedQuestions[...].text` 캐시는 원문 그대로 유지. 규준참조 점수처럼 세션 간 비교 가능한 지표를 만들려면 채점 기준이 페르소나에 따라 흔들리면 안 되기 때문

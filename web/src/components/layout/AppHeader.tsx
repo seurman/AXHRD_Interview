@@ -4,6 +4,7 @@ import { hasSuperadminAccess, isPlatformAdmin, isSuperadmin } from "@/lib/auth/g
 import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
 import { MobileNav } from "./MobileNav";
 import { MainNav } from "./MainNav";
+import { BillingPastDueBanner } from "@/components/billing/BillingPastDueBanner";
 
 export async function AppHeader() {
   const sessionUser = await getCurrentUser();
@@ -38,13 +39,16 @@ export async function AppHeader() {
               { href: "/admin/audit", labelKey: "audit" as const },
               { href: "/admin/organizations", labelKey: "orgApprove" as const },
               { href: "/admin/organizations/benchmark", labelKey: "orgBenchmark" as const },
+              { href: "/admin/subscriptions", labelKey: "subscriptions" as const },
             ]
           : []),
       ]
     : [];
 
   return (
-    <header className="header-premium sticky top-0 z-40">
+    <>
+      <BillingPastDueBanner />
+      <header className="header-premium sticky top-0 z-40">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:py-3.5">
         <Link href="/" className="group flex min-w-0 shrink items-center gap-2.5">
           <span className="brand-mark flex h-8 w-8 items-center justify-center rounded-full border border-gold/40 bg-gold/10 text-xs font-bold text-gold">
@@ -70,5 +74,6 @@ export async function AppHeader() {
         />
       </div>
     </header>
+    </>
   );
 }

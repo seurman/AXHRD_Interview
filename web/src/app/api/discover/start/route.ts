@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { checkUsageLimit } from "@/lib/billing/usage";
 import { DISCOVER_QUESTIONS } from "@/lib/discover/questions";
 
 export async function POST() {
@@ -18,6 +19,20 @@ export async function POST() {
     return NextResponse.json(
       { error: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
       { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } }
+    );
+  }
+
+  const usage = await checkUsageLimit(user.id, "self_discovery");
+  if (!usage.allowed) {
+    return NextResponse.json(
+      {
+        error: usage.message,
+        code: "PLAN_LIMIT_EXCEEDED",
+        upgradeUrl: usage.upgradeUrl,
+        used: usage.used,
+        limit: usage.limit,
+      },
+      { status: 402 }
     );
   }
 

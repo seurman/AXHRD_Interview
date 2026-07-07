@@ -35,6 +35,7 @@ export const dictionary: Dictionary = {
       audit: "Audit log",
       orgApprove: "Organizations",
       orgBenchmark: "Benchmark",
+      subscriptions: "Subscriptions",
     },
     language: {
       label: "Language",
