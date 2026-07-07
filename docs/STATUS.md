@@ -33,6 +33,18 @@
   - `/admin/content` → **「역량별 루브릭」** 탭: 직접 입력, JSON 템플릿 다운로드·업로드(`POST /api/admin/rubrics/import`), L레벨 전체 문항 일괄 적용(`POST /api/admin/rubrics/apply`)
   - 문항별 루브릭이 비어 있으면 역량·레벨 기본 루브릭 → `buildGenericRubric` 순으로 채점에 사용
   - 홈페이지(`HomeLanding`)·질문 카드(`SwipeDeck`) 상용급 UI 리디자인
+- **한·영 i18n + 헤더 이원화** (2026-07-07):
+  - `lib/i18n/` 언어팩(ko/en), 헤더 언어 스위처, 쿠키 `hr_in_locale` 유지
+  - 홈·네비·질문카드·대시보드·면접설정·발견·인증 페이지 i18n 적용
+  - **모바일**: 다크 골드 헤더 / **데스크탑(sm+)**: 기존 파란 톤 라이트 헤더
+- **기업 규모(CompanySize) 독립 축** (2026-07-07):
+  - 기존 `CompanySize` enum·`TargetCompany.size`를 실제 UI에서 선택 가능하게 활성화
+  - `/interview/setup` — 대기업/중견/중소/스타트업/공공기관 선택 (산업군과 독립 조합, 공공기관 선택 시 산업군 PUBLIC 자동 동기화)
+  - `lib/company/company-size-presets.ts` — 규모별 톤·라운드·중점 역량 프리셋 (추가 LLM 호출 없음)
+  - `resolveCompanyContext()` — 규모 프리셋 우선 + 산업군 보조 병합, 5대 기업(삼성/SK하이닉스/LG/현대차/포스코) 인재상 키워드 반영
+  - JD 매핑(`jd-mapper.ts`) — 기존 1회 호출에 `companySize` 추정 필드·키워드 폴백 추가
+  - `RealInterviewQuestion.companySize` optional 필드 추가 — 마이그레이션 `20260707095400_add_real_question_company_size` (기존 44문항 재태깅 불필요, 신규 문항부터 태깅)
+  - 질문 카드 API — `companySize` 쿼리 시 해당 규모·미태깅 문항 우선 필터
 - IRT(2PL) 기반 적응형 모의 면접 (역량별 2~3문항, 실시간 난이도 조정)
 - 자소서 맞춤 질문 생성 (Gemini) — 같은 일화 반복 방지, 문항별 채점 루브릭 자동 생성
 - 음성 답변 → STT 오타 교정(Gemini) → 채점

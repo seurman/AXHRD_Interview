@@ -3,7 +3,13 @@
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export function LogoutButton({ variant = "default" }: { variant?: "default" | "nav" }) {
+export function LogoutButton({
+  variant = "default",
+  label,
+}: {
+  variant?: "default" | "nav";
+  label?: string;
+}) {
   const router = useRouter();
 
   if (variant === "nav") {
@@ -16,7 +22,7 @@ export function LogoutButton({ variant = "default" }: { variant?: "default" | "n
           router.refresh();
         }}
         className="nav-pill text-white/60 hover:border-white/30 hover:text-white"
-        title="로그아웃"
+        title={label ?? "Sign out"}
       >
         <LogOut className="h-3.5 w-3.5" />
       </button>
@@ -32,9 +38,10 @@ export function LogoutButton({ variant = "default" }: { variant?: "default" | "n
         router.refresh();
       }}
       className="flex items-center gap-1 text-muted hover:text-danger"
-      title="로그아웃"
+      title={label ?? "Sign out"}
     >
       <LogOut className="h-4 w-4" />
+      {label && <span className="text-sm">{label}</span>}
     </button>
   );
 }

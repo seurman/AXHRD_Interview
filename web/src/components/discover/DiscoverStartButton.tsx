@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconLoader } from "@/components/ui/icons";
 
-export function DiscoverStartButton() {
+export function DiscoverStartButton({ label }: { label?: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -38,7 +38,7 @@ export function DiscoverStartButton() {
           준비 중…
         </>
       ) : (
-        "자기발견 인터뷰 시작하기"
+        label ?? "자기발견 인터뷰 시작하기"
       )}
     </button>
   );

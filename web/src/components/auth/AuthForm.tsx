@@ -6,10 +6,13 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { IconLoader } from "@/components/ui/icons";
 import { buildAuthRedirect, parseApiResponse } from "@/lib/auth/client";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 
 type Mode = "login" | "register";
 
 export function AuthForm({ mode }: { mode: Mode }) {
+  const { dict } = useI18n();
+  const a = dict.auth;
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/dashboard";
@@ -67,7 +70,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         router.refresh();
       }, 1600);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
+      setError(err instanceof Error ? err.message : a.errorGeneric);
       setLoading(false);
     }
   };
@@ -75,12 +78,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
   return (
     <div className="card-luxe mx-auto max-w-md p-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-foreground">
-        {mode === "login" ? "로그인" : "회원가입"}
+        {mode === "login" ? a.login : a.register}
       </h1>
       <p className="mt-2 text-sm text-muted">
-        {mode === "login"
-          ? "역량 트래킹과 면접 기록을 이어서 확인하세요."
-          : "가입 후 역량별 면접 기록이 자동 저장됩니다."}
+        {mode === "login" ? a.loginDesc : a.registerDesc}
       </p>
 
       {!success && (

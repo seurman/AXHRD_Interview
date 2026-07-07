@@ -15,6 +15,7 @@ import {
   Radar,
 } from "recharts";
 import { competencyLabel } from "@/lib/labels";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 import { QuestPanel } from "./QuestPanel";
 import { StrengthCardDeck } from "@/components/profile/StrengthCardDeck";
 import type { QuestItem } from "./QuestPanel";
@@ -64,6 +65,10 @@ export function CompetencyDashboard({
   level,
   strengthDeck,
 }: DashboardProps) {
+  const { dict } = useI18n();
+  const diff = dict.dashboard.differentiation;
+  const st = dict.dashboard.stats;
+
   const radarData = Object.entries(latestByCompetency).map(([code, v]) => ({
     competency: competencyLabel(code),
     score: v.percentile,
@@ -89,24 +94,24 @@ export function CompetencyDashboard({
   return (
     <div className="space-y-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="커리어 레벨" value={`Lv.${level}`} sub={`${totalXp} XP`} accent />
-        <StatCard label="완료 면접" value={`${sessionCount}회`} sub="IRT 적응형" />
+        <StatCard label={st.careerLevel} value={`Lv.${level}`} sub={`${totalXp} XP`} accent />
+        <StatCard label={st.sessions} value={`${sessionCount}`} sub="IRT" />
         <StatCard
-          label="평균 백분위"
+          label={st.avgPercentile}
           value={`${Math.round(avgPercentile)}%`}
           sub={growthDelta >= 0 ? `θ +${growthDelta.toFixed(2)}` : `θ ${growthDelta.toFixed(2)}`}
         />
         <StatCard
-          label="최강 / 취약"
+          label={st.strongest}
           value={strongest ? competencyLabel(strongest[0]) : "—"}
-          sub={weakest ? `보완: ${competencyLabel(weakest[0])}` : undefined}
+          sub={weakest ? `${st.improve}: ${competencyLabel(weakest[0])}` : undefined}
         />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
-            <ChartCard title="역량 레이더">
+            <ChartCard title={st.radar}>
               <ResponsiveContainer width="100%" height={260}>
                 <RadarChart data={radarData}>
                   <PolarGrid stroke="#e8e4dc" />
@@ -116,7 +121,7 @@ export function CompetencyDashboard({
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="θ 성장 곡선">
+            <ChartCard title={st.growth}>
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={timelineData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e8e4dc" />
@@ -130,7 +135,7 @@ export function CompetencyDashboard({
           </div>
 
           <div className="card-luxe p-6">
-            <h3 className="mb-4 font-semibold text-foreground">역량 스킬 트리</h3>
+            <h3 className="mb-4 font-semibold text-foreground">{st.skillTree}</h3>
             <div className="grid gap-3 sm:grid-cols-2">
               {Object.entries(latestByCompetency).map(([code, v]) => (
                 <CompetencySkillBar key={code} code={code} {...v} />
@@ -153,14 +158,14 @@ export function CompetencyDashboard({
           <QuestPanel quests={quests} totalXp={totalXp} level={level} />
 
           <div className="card-luxe p-5">
-            <h3 className="font-semibold text-foreground">AX-HRD 차별점</h3>
-            <ul className="mt-3 space-y-2 text-sm text-muted">
-              <li>🎯 IRT로 면접관이 아닌 <strong className="text-foreground">데이터</strong>가 난이도 조절</li>
-              <li>🃏 자기발견 강점 → 역량 면접 <strong className="text-foreground">브릿지</strong></li>
-              <li>📊 장기 θ 추적으로 <strong className="text-foreground">성장 스토리</strong> 증명</li>
+            <h3 className="font-semibold text-foreground">{diff.title}</h3>
+            <ul className="mt-3 space-y-2 text-sm leading-relaxed text-muted">
+              {diff.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
             <Link href="/discover" className="mt-4 block text-sm font-medium text-primary hover:underline">
-              강점 카드 더 모으기 →
+              {diff.link}
             </Link>
           </div>
         </div>

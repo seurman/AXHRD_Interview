@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
-import { INDUSTRY_CODES, JOB_ROLES } from "@/types";
-import type { IndustryCode, JobRoleCode } from "@/types";
+import { INDUSTRY_CODES, JOB_ROLES, COMPANY_SIZE_CODES } from "@/types";
+import type { IndustryCode, JobRoleCode, CompanySizeCode } from "@/types";
 
 /**
  * 질문 카드 스와이프 덱 — 사용자가 명시적으로 고른 산업군·직무 조합을 최우선으로 보여준다.
@@ -20,6 +20,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const industryParam = searchParams.get("industry") ?? "";
   const jobRoleParam = searchParams.get("jobRole") ?? "";
+  const companySizeParam = searchParams.get("companySize") ?? "";
 
   const industry: IndustryCode | null = (INDUSTRY_CODES as readonly string[]).includes(
     industryParam
@@ -28,6 +29,12 @@ export async function GET(req: Request) {
     : null;
   const jobRole: JobRoleCode | null = (JOB_ROLES as readonly string[]).includes(jobRoleParam)
     ? (jobRoleParam as JobRoleCode)
+    : null;
+
+  const companySize: CompanySizeCode | null = (
+    COMPANY_SIZE_CODES as readonly string[]
+  ).includes(companySizeParam)
+    ? (companySizeParam as CompanySizeCode)
     : null;
 
   if (!industry || !jobRole) {
@@ -63,8 +70,11 @@ export async function GET(req: Request) {
 
   async function addTier(where: Prisma.RealInterviewQuestionWhereInput) {
     if (picked.length >= TARGET_SIZE) return;
+    const sizeFilter = companySize
+      ? { OR: [{ companySize }, { companySize: null }] }
+      : {};
     const rows = await prisma.realInterviewQuestion.findMany({
-      where: { ...where, id: { notIn: [...usedIds] } },
+      where: { ...where, ...sizeFilter, id: { notIn: [...usedIds] } },
       orderBy: [{ isAiExample: "asc" }, { createdAt: "desc" }],
       take: TARGET_SIZE - picked.length,
     });

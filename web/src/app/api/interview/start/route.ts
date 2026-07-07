@@ -15,8 +15,15 @@ import { matchPersona } from "@/lib/interview/persona-archetype";
 import { summarizeResume } from "@/lib/interview/resume-summary";
 import { parseResumeSummary } from "@/lib/interview/build-question";
 import { filterAndRankQuestionPool } from "@/lib/interview/question-pool";
-import { COMPETENCY_CODES, INDUSTRY_CODES, JOB_ROLES } from "@/types";
-import type { CompanyContext, CompetencyCode, IndustryCode, JobRoleCode, ItemParams } from "@/types";
+import { COMPETENCY_CODES, INDUSTRY_CODES, JOB_ROLES, COMPANY_SIZE_CODES } from "@/types";
+import type {
+  CompanyContext,
+  CompetencyCode,
+  IndustryCode,
+  JobRoleCode,
+  ItemParams,
+  CompanySizeCode,
+} from "@/types";
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -47,6 +54,7 @@ export async function POST(req: Request) {
     planId,
     focusCompetency,
     jdText,
+    companySize,
   } = body;
 
   const industryCode: IndustryCode = INDUSTRY_CODES.includes(industry)
@@ -56,9 +64,18 @@ export async function POST(req: Request) {
     ? jobRole
     : "OTHER";
 
+  const sizeCode: CompanySizeCode = (COMPANY_SIZE_CODES as readonly string[]).includes(
+    companySize
+  )
+    ? companySize
+    : industryCode === "PUBLIC"
+      ? "PUBLIC"
+      : "MID";
+
   const companyContext = resolveCompanyContext({
     companyName,
     industry: industryCode,
+    companySize: sizeCode,
   });
 
   // 지원자 페르소나 — 산업군+직무 조합만으로 결정되는 순수 함수라 매번 새로 계산해도
@@ -81,12 +98,16 @@ export async function POST(req: Request) {
   // (역량 2, 3번째 세션 등) 이전 값을 그대로 유지하고, 새 프리셋으로 덮어쓰지 않는다.
   const trimmedJdText: string = typeof jdText === "string" ? jdText.trim() : "";
   let interviewStyle: CompanyContext["interviewStyle"] = companyContext.interviewStyle;
+  let resolvedSize: CompanySizeCode = companyContext.size;
   if (trimmedJdText) {
     const derived = await deriveInterviewStyleFromJD({
       jdText: trimmedJdText,
       industryLabel: companyContext.industry,
     });
-    if (derived) interviewStyle = derived;
+    if (derived) {
+      interviewStyle = derived.interviewStyle;
+      if (derived.companySize) resolvedSize = derived.companySize;
+    }
   } else if (existingPlan?.targetCompany?.interviewStyle) {
     interviewStyle = existingPlan.targetCompany.interviewStyle as CompanyContext["interviewStyle"];
   }
@@ -99,7 +120,7 @@ export async function POST(req: Request) {
         name: companyContext.name,
         industry: companyContext.industry,
         industryCode,
-        size: companyContext.size,
+        size: resolvedSize,
         interviewStyle,
         persona,
         enrichedAt: new Date(),
@@ -112,7 +133,7 @@ export async function POST(req: Request) {
         name: companyContext.name,
         industry: companyContext.industry,
         industryCode,
-        size: companyContext.size,
+        size: resolvedSize,
         interviewStyle,
         persona,
         enrichedAt: new Date(),

@@ -6,23 +6,31 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { LogoutButton } from "./LogoutButton";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { getMobileNavLabel } from "./MainNav";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 
-type NavLink = { href: string; label: string };
+type AdminLink = {
+  href: string;
+  labelKey: "content" | "users" | "orgApprove" | "orgBenchmark";
+};
 
 export function MobileNav({
-  mainLinks,
+  mainHrefs,
   adminLinks,
   userName,
   loggedIn,
 }: {
-  mainLinks: NavLink[];
-  adminLinks?: NavLink[];
+  mainHrefs: string[];
+  adminLinks?: AdminLink[];
   userName?: string;
   loggedIn: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+  const { dict, locale } = useI18n();
+  const c = dict.common;
 
   useEffect(() => {
     setMounted(true);
@@ -41,42 +49,48 @@ export function MobileNav({
     <div className="fixed inset-0 z-[100]">
       <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
       <div className="absolute right-0 top-0 flex h-full w-[min(18rem,88vw)] flex-col bg-card p-5 shadow-luxe">
-        <div className="mb-6 flex min-w-0 items-center justify-between gap-2">
+        <div className="mb-4 flex min-w-0 items-center justify-between gap-2">
           {userName ? (
-            <span className="truncate font-medium text-foreground">{userName}님</span>
+            <span className="truncate font-medium text-foreground">
+              {locale === "ko" ? `${userName}${c.userSuffix}` : userName}
+            </span>
           ) : (
-            <span className="font-medium text-foreground">메뉴</span>
+            <span className="font-medium text-foreground">{c.menu}</span>
           )}
           <button
             type="button"
             onClick={() => setOpen(false)}
-            aria-label="메뉴 닫기"
+            aria-label="Close menu"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-primary/5"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
+        <div className="mb-4">
+          <LanguageSwitcher compact />
+        </div>
+
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto text-sm">
-          {mainLinks.map((l) => (
+          {mainHrefs.map((href) => (
             <Link
-              key={l.href}
-              href={l.href}
+              key={href}
+              href={href}
               onClick={() => setOpen(false)}
               className={`keep-one-line rounded-lg px-3 py-2.5 hover:bg-primary/5 ${
-                pathname.startsWith(l.href)
+                pathname.startsWith(href)
                   ? "bg-primary/5 font-medium text-primary"
                   : "text-foreground"
               }`}
             >
-              {l.label}
+              {getMobileNavLabel(href, dict)}
             </Link>
           ))}
 
           {adminLinks && adminLinks.length > 0 && (
             <>
-              <p className="keep-one-line mb-1 mt-4 px-3 text-xs font-semibold uppercase tracking-wider text-gold">
-                관리자
+              <p className="keep-one-line mb-1 mt-4 px-3 text-xs font-semibold text-gold">
+                {c.admin.title}
               </p>
               {adminLinks.map((l) => (
                 <Link
@@ -89,7 +103,7 @@ export function MobileNav({
                       : "text-foreground"
                   }`}
                 >
-                  {l.label}
+                  {c.admin[l.labelKey]}
                 </Link>
               ))}
             </>
@@ -99,8 +113,8 @@ export function MobileNav({
         <div className="shrink-0 border-t border-card-border pt-4">
           {loggedIn ? (
             <div className="flex items-center justify-between px-3">
-              <span className="keep-one-line text-sm text-muted">로그아웃</span>
-              <LogoutButton />
+              <span className="keep-one-line text-sm text-muted">{c.auth.logout}</span>
+              <LogoutButton label={c.auth.logout} />
             </div>
           ) : (
             <div className="flex flex-col gap-2">
@@ -109,14 +123,14 @@ export function MobileNav({
                 onClick={() => setOpen(false)}
                 className="btn-secondary w-full"
               >
-                로그인
+                {c.auth.login}
               </Link>
               <Link
                 href="/auth/register"
                 onClick={() => setOpen(false)}
                 className="btn-primary w-full"
               >
-                회원가입
+                {c.auth.register}
               </Link>
             </div>
           )}
@@ -130,7 +144,7 @@ export function MobileNav({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="메뉴 열기"
+        aria-label={c.menu}
         className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/30 text-gold hover:bg-gold/10"
       >
         <Menu className="h-6 w-6" />

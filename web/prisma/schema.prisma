@@ -436,11 +436,14 @@ model RealInterviewQuestion {
   sourceName   String?
   sourceUrl    String?
   isAiExample  Boolean  @default(false)
+  /** 기업 규모 태그(선택) — 질문 카드 필터·향후 규모별 문항 확장용 */
+  companySize  CompanySize?
   createdAt    DateTime @default(now())
 
   swipeActions SwipeAction[]
 
   @@index([industry, jobRole])
+  @@index([industry, jobRole, companySize])
 }
 
 // ── 질문 카드 스와이프(모바일 습관형성 루프) ──

@@ -134,10 +134,20 @@ export interface InterviewSessionState {
 
 // ── Company enrichment ──
 
+export const COMPANY_SIZE_CODES = [
+  "LARGE",
+  "MID",
+  "SMALL",
+  "STARTUP",
+  "PUBLIC",
+] as const;
+
+export type CompanySizeCode = (typeof COMPANY_SIZE_CODES)[number];
+
 export interface CompanyContext {
   name: string;
   industry: string;
-  size: "LARGE" | "MID" | "SMALL" | "STARTUP" | "PUBLIC";
+  size: CompanySizeCode;
   interviewStyle: {
     tone: string;
     rounds: string[];

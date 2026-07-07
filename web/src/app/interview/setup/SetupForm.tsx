@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconLoader, IconUpload } from "@/components/ui/icons";
 import { jobRoleLabel, competencyLabel, industryLabel } from "@/lib/labels";
-import { COMPETENCY_CODES, INDUSTRY_CODES } from "@/types";
-import type { IndustryCode, JobRoleCode } from "@/types";
+import { COMPETENCY_CODES, INDUSTRY_CODES, COMPANY_SIZE_CODES } from "@/types";
+import type { IndustryCode, JobRoleCode, CompanySizeCode } from "@/types";
 import { matchPersona } from "@/lib/interview/persona-archetype";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 
 const JOB_ROLES = [
   "MARKETING",
@@ -35,11 +36,15 @@ export function SetupForm({
 }: {
   user: { id: string; name: string; email: string };
 }) {
+  const { dict, locale } = useI18n();
+  const s = dict.setup;
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [parsingFile, setParsingFile] = useState(false);
   const [industry, setIndustry] = useState<string>("");
+  const [companySize, setCompanySize] = useState<CompanySizeCode>("MID");
   const [companyName, setCompanyName] = useState("");
   const [jdText, setJdText] = useState("");
   const [jdFileName, setJdFileName] = useState<string | null>(null);
@@ -118,6 +123,24 @@ export function SetupForm({
     if (recommended) setFocusCompetency(recommended);
   }, [persona, competencies]);
 
+  useEffect(() => {
+    if (companySize === "PUBLIC") setIndustry("PUBLIC");
+  }, [companySize]);
+
+  useEffect(() => {
+    if (industry === "PUBLIC") setCompanySize("PUBLIC");
+  }, [industry]);
+
+  const handleIndustryChange = (code: string) => {
+    setIndustry(code);
+    if (code === "PUBLIC") setCompanySize("PUBLIC");
+  };
+
+  const handleCompanySizeChange = (size: CompanySizeCode) => {
+    setCompanySize(size);
+    if (size === "PUBLIC") setIndustry("PUBLIC");
+  };
+
   const handleFile = async (file: File) => {
     setFileError(null);
     setParsingFile(true);
@@ -180,11 +203,11 @@ export function SetupForm({
 
   const startInterview = async () => {
     if (!industry) {
-      alert("산업군을 선택해 주세요.");
+      alert(s.selectIndustry);
       return;
     }
     if (!focusCompetency) {
-      alert("면접할 역량을 선택해 주세요.");
+      alert(s.selectCompetency);
       return;
     }
     setLoading(true);
@@ -194,6 +217,7 @@ export function SetupForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           industry,
+          companySize,
           companyName,
           jobRole,
           resumeText: manualText.trim() || fileResumeText,
@@ -230,24 +254,22 @@ export function SetupForm({
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">모의 면접 설정</h1>
+        <h1 className="text-2xl font-bold text-foreground">{s.title}</h1>
         <p className="mt-2 text-muted">
-          {user.name}님 · 역량별 2~3문항 · 피드백 저장 · 자소서는 선택 사항
+          {locale === "ko" ? `${user.name}님 · ${s.subtitle}` : `${user.name} · ${s.subtitle}`}
         </p>
       </div>
 
       <section className="card-luxe space-y-4 p-6">
-        <h2 className="font-semibold text-foreground">1. 산업군</h2>
-        <p className="text-xs text-muted">
-          특정 회사보다 산업군 기준이 질문 톤을 더 안정적으로 맞춰줍니다.
-        </p>
+        <h2 className="font-semibold text-foreground">{s.industry.title}</h2>
+        <p className="text-xs leading-relaxed text-muted">{s.industry.hint}</p>
         <select
           value={industry}
-          onChange={(e) => setIndustry(e.target.value)}
+          onChange={(e) => handleIndustryChange(e.target.value)}
           className="input-luxe w-full"
         >
           <option value="" disabled>
-            선택해 주세요
+            {s.industry.placeholder}
           </option>
           {INDUSTRY_CODES.map((code) => (
             <option key={code} value={code}>
@@ -255,19 +277,38 @@ export function SetupForm({
             </option>
           ))}
         </select>
+
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-foreground">{s.companySize.title}</h3>
+          <p className="text-xs leading-relaxed text-muted">{s.companySize.hint}</p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {COMPANY_SIZE_CODES.map((size) => (
+              <button
+                key={size}
+                type="button"
+                onClick={() => handleCompanySizeChange(size)}
+                className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
+                  companySize === size
+                    ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/25"
+                    : "border-card-border text-foreground hover:border-primary/30"
+                }`}
+              >
+                {s.companySizes[size]}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <input
           type="text"
           value={companyName}
           onChange={(e) => setCompanyName(e.target.value)}
-          placeholder="지원 회사명 (선택 — 있으면 질문 문구에 반영)"
+          placeholder={s.industry.companyPlaceholder}
           className="input-luxe w-full text-sm"
         />
 
         <div className="space-y-2">
-          <p className="text-xs text-muted">
-            채용공고(JD)·인재상을 업로드하면 이 회사·직무에 맞는 면접 톤과 중점 역량을
-            분석해 질문에 반영합니다. (선택)
-          </p>
+          <p className="text-xs leading-relaxed text-muted">{s.jd.hint}</p>
           <label
             className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed p-5 transition ${
               parsingJdFile
@@ -278,12 +319,12 @@ export function SetupForm({
             {parsingJdFile ? (
               <>
                 <IconLoader className="h-7 w-7 text-accent" />
-                <span className="text-sm text-accent">파일에서 텍스트 추출 중…</span>
+                <span className="text-sm text-accent">{s.jd.parsing}</span>
               </>
             ) : (
               <>
                 <IconUpload className="h-7 w-7 text-muted" />
-                <span className="text-sm text-muted">PDF · Word · TXT 업로드</span>
+                <span className="text-sm text-muted">{s.jd.upload}</span>
               </>
             )}
             <input
@@ -312,7 +353,7 @@ export function SetupForm({
               value={jdText}
               onChange={(e) => setJdText(e.target.value)}
               rows={5}
-              placeholder="채용공고(JD) 원문이나 인재상 키워드를 붙여넣으세요…"
+              placeholder={s.jd.placeholder}
               className="input-luxe w-full text-sm"
             />
           ) : (
@@ -321,14 +362,14 @@ export function SetupForm({
               onClick={() => setShowJdManualInput(true)}
               className="text-xs text-muted underline hover:text-foreground"
             >
-              파일 대신 텍스트로 직접 입력
+              {s.jd.manual}
             </button>
           )}
         </div>
       </section>
 
       <section className="card-luxe space-y-4 p-6">
-        <h2 className="font-semibold text-foreground">2. 지원 직무</h2>
+        <h2 className="font-semibold text-foreground">{s.job.title}</h2>
         <select
           value={jobRole}
           onChange={(e) => setJobRole(e.target.value)}
@@ -344,23 +385,21 @@ export function SetupForm({
 
       {persona && (
         <section className="band-periwinkle animate-note-pop space-y-2 p-6 text-center">
-          <p className="text-xs font-medium uppercase tracking-widest text-white/80">
-            당신의 면접 페르소나
-          </p>
+          <p className="section-eyebrow text-white/80">{s.persona.eyebrow}</p>
           <h3 className="text-xl font-bold">{persona.name}</h3>
           <p className="mx-auto max-w-md text-sm text-white/90">{persona.description}</p>
         </section>
       )}
 
       <section className="card-luxe space-y-4 p-6">
-        <h2 className="font-semibold text-foreground">3. 역량 선택</h2>
-        <p className="text-xs text-muted">
-          한 번에 하나의 역량 · 문항 2~3개
-          {persona && " · ⭐ 표시는 선택한 직무에서 특히 중요하게 보는 역량 추천"}
+        <h2 className="font-semibold text-foreground">{s.competency.title}</h2>
+        <p className="text-xs leading-relaxed text-muted">
+          {s.competency.hint}
+          {persona && ` · ⭐ ${s.competency.recommended}`}
         </p>
         {planId && (
           <p className="text-sm text-accent">
-            진행 중인 플랜 · {completedCount}/{COMPETENCY_CODES.length} 역량 완료
+            {s.competency.plan} · {completedCount}/{COMPETENCY_CODES.length}
           </p>
         )}
         <div className="grid gap-2 sm:grid-cols-2">
@@ -393,16 +432,16 @@ export function SetupForm({
                   {c.label}
                   {recommended && (
                     <span className="ml-1.5 rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent">
-                      ⭐ 추천
+                      ⭐ {s.competency.recommended}
                     </span>
                   )}
                 </span>
                 <span className="mt-1 block text-xs opacity-70">
                   {done
-                    ? `완료 · L${c.levelEst ?? "-"}`
+                    ? `${s.competency.done} · L${c.levelEst ?? "-"}`
                     : c.status === "IN_PROGRESS"
-                      ? "진행 중"
-                      : "미시작"}
+                      ? s.competency.inProgress
+                      : s.competency.notStarted}
                 </span>
               </button>
             );
@@ -411,11 +450,8 @@ export function SetupForm({
       </section>
 
       <section className="card-luxe space-y-4 p-6">
-        <h2 className="font-semibold text-foreground">4. 자기소개서 (선택)</h2>
-        <p className="text-xs text-muted">
-          업로드하면 첫 질문에 내용이 반영됩니다. 내용은 화면에 표시되지 않고 질문 생성에만
-          쓰입니다. 없어도 일반 질문으로 면접을 진행할 수 있습니다.
-        </p>
+        <h2 className="font-semibold text-foreground">{s.resume.title}</h2>
+        <p className="text-xs leading-relaxed text-muted">{s.resume.hint}</p>
         <label
           className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed p-6 transition ${
             parsingFile
@@ -431,7 +467,7 @@ export function SetupForm({
           ) : (
             <>
               <IconUpload className="h-8 w-8 text-muted" />
-              <span className="text-sm text-muted">PDF · Word · TXT 업로드</span>
+              <span className="text-sm text-muted">{s.resume.upload}</span>
             </>
           )}
           <input
@@ -460,7 +496,7 @@ export function SetupForm({
             value={manualText}
             onChange={(e) => setManualText(e.target.value)}
             rows={6}
-            placeholder="자기소개서 내용을 붙여넣으세요…"
+            placeholder={s.resume.placeholder}
             className="input-luxe w-full text-sm"
           />
         ) : (
@@ -482,10 +518,10 @@ export function SetupForm({
       >
         {loading ? (
           <>
-            <IconLoader /> 준비 중…
+            <IconLoader /> {s.preparing}
           </>
         ) : (
-          `${competencyLabel(focusCompetency || "COMMUNICATION")} 역량 면접 시작`
+          `${competencyLabel(focusCompetency || "COMMUNICATION")} ${s.start}`
         )}
       </button>
     </div>
