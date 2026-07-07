@@ -15,10 +15,8 @@ export default async function OrgInterviewKitPage() {
         </p>
         <h1 className="mt-1 text-2xl font-bold text-foreground">인터뷰 킷 빌더</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted">
-          관리자 문항 뱅크와 동일한 데이터를 사용합니다. 플랫폼에서 큐레이션한 문항을
-          고르고 순서를 정하며, 역량별 채점 루브릭 강조점을 조정합니다. IRT 난이도
-          파라미터는 변경되지 않으며, 설정하지 않은 역량은 플랫폼 기본값으로 면접이
-          진행됩니다.
+          SPSS 변수창처럼 왼쪽에서 역량·문항을 드래그해 킷을 구성합니다. 관리자 문항
+          뱅크와 동일한 데이터를 사용하며, IRT 난이도 파라미터는 플랫폼이 관리합니다.
         </p>
       </div>
 
