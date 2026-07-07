@@ -13,7 +13,10 @@ import {
   viaLabel,
 } from "@/lib/discover/taxonomies";
 import { COMPETENCY_CODES } from "@/types";
+import { buildInterviewAdvice } from "@/lib/discover/interview-advice";
+import { jobRoleLabel } from "@/lib/utils";
 import type { DiscoverProfileData } from "@/types/discover";
+import type { JobRole } from "@prisma/client";
 
 const DEEPSEEK_BASE = "https://api.deepseek.com";
 
@@ -51,15 +54,20 @@ ${COMPETENCY_CODES.map((c) => `${c}: ${competencyLabel(c)}`).join(", ")}
   "competencySignals": [
     {"code":"COMMUNICATION","labelKo":"의사소통","signal":"답변에서 보이는 신호 1문장","quote":"실제 인용"}
   ],
+  "interviewAdvice": [
+    {"viaCode":"PERSEVERANCE","viaLabelKo":"끈기","competencyCode":"GROWTH","competencyLabelKo":"성장·학습","bridge":"강점이 역량과 어떻게 연결되는지 1문장","interviewTip":"면접에서 이 강점을 활용하는 구체적 조언","starPrompt":"STAR 구조로 답변할 때 채울 뼈대 문장","quote":"실제 인용"}
+  ],
   "narrativeSummary": "McAdams 스타일로 당신의 이야기를 관통하는 주제를 1문단(4-6문장)으로 요약",
   "riasecHint": {"code":"SOCIAL","labelKo":"사회형","note":"에너지 패턴에 대한 짧은 코멘트"} 또는 null
 }
 
-strengths는 상위 5개, values는 상위 3개, weaknesses는 2~3개, competencySignals는 6역량 중 실제로 신호가 보이는 것만(최대 6개).`;
+strengths는 상위 5개, values는 상위 3개, weaknesses는 2~3개, competencySignals는 6역량 중 실제로 신호가 보이는 것만(최대 6개).
+interviewAdvice는 strengths 상위 5개 각각에 대해, 해당 강점이 어떤 NCS 역량과 연결되는지(bridge)와 면접 답변에서 어떻게 활용하면 좋은지(interviewTip), STAR 뼈대(starPrompt)를 지원 희망 직무 맥락에 맞게 작성하세요.`;
 
 export async function generateDiscoverProfile(params: {
   responses: Array<{ questionCode: string; questionText: string; answerText: string }>;
   userName?: string;
+  jobRole?: JobRole;
 }): Promise<DiscoverProfileData> {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) return mockDiscoverProfile(params);
@@ -68,6 +76,7 @@ export async function generateDiscoverProfile(params: {
   const userContent = JSON.stringify(
     {
       participant: params.userName ?? "참여자",
+      desiredJobRole: params.jobRole ? jobRoleLabel(params.jobRole) : "미지정",
       responses: params.responses,
     },
     null,
@@ -104,7 +113,7 @@ export async function generateDiscoverProfile(params: {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]) as DiscoverProfileData;
-      return normalizeProfile(parsed);
+      return normalizeProfile(parsed, params.jobRole);
     }
   } catch (e) {
     console.error("[DeepSeek discover-profile]", e);
@@ -113,18 +122,28 @@ export async function generateDiscoverProfile(params: {
   return mockDiscoverProfile(params);
 }
 
-function normalizeProfile(raw: DiscoverProfileData): DiscoverProfileData {
+function normalizeProfile(raw: DiscoverProfileData, jobRole?: JobRole): DiscoverProfileData {
+  const strengths = (raw.strengths ?? []).slice(0, 5).map((s) => ({
+    ...s,
+    viaLabelKo: s.viaLabelKo || viaLabel(s.viaCode),
+  }));
+
+  const interviewAdvice =
+    raw.interviewAdvice?.length
+      ? raw.interviewAdvice.slice(0, 5)
+      : jobRole
+        ? buildInterviewAdvice(strengths, jobRole)
+        : undefined;
+
   return {
-    strengths: (raw.strengths ?? []).slice(0, 5).map((s) => ({
-      ...s,
-      viaLabelKo: s.viaLabelKo || viaLabel(s.viaCode),
-    })),
+    strengths,
     weaknesses: (raw.weaknesses ?? []).slice(0, 3),
     values: (raw.values ?? []).slice(0, 3).map((v) => ({
       ...v,
       schwartzLabelKo: v.schwartzLabelKo || schwartzLabel(v.schwartzCode),
     })),
     competencySignals: raw.competencySignals ?? [],
+    interviewAdvice,
     narrativeSummary: raw.narrativeSummary?.trim() || "당신의 이야기 속에서 꾸준함과 성장에 대한 열망이 반복적으로 드러났습니다.",
     riasecHint: raw.riasecHint ?? null,
   };
@@ -133,6 +152,7 @@ function normalizeProfile(raw: DiscoverProfileData): DiscoverProfileData {
 /** 키워드 기반 결정론적 mock — API 키 없을 때 */
 function mockDiscoverProfile(params: {
   responses: Array<{ questionCode: string; questionText: string; answerText: string }>;
+  jobRole?: JobRole;
 }): DiscoverProfileData {
   const allText = params.responses.map((r) => r.answerText).join(" ");
   const answers = params.responses.filter((r) => r.answerText?.trim());
@@ -250,6 +270,7 @@ function mockDiscoverProfile(params: {
     weaknesses: weaknesses.slice(0, 3),
     values,
     competencySignals,
+    interviewAdvice: buildInterviewAdvice(strengths, params.jobRole ?? "OTHER"),
     narrativeSummary:
       answers.length > 0
         ? `당신의 이야기를 들어보면, 어려운 순간을 견디며 성장해 온 경험과 앞으로 더 나은 모습을 향한 열망이 함께 흐르고 있습니다. 자랑스러웠던 순간과 전환점에서 드러난 선택은, 무엇을 소중히 여기는지 보여 줍니다. 이 대화는 평가가 아니라, 그동안 쌓아 온 자기 서사를 다시 바라보는 시간이었습니다.`

@@ -507,6 +507,8 @@ model SelfDiscoveryProfile {
   values            Json
   /** NCS 6역량 연결 신호 */
   competencySignals Json
+  /** 강점→역량→면접 활용 조언 (직무 맥락) */
+  interviewAdvice   Json?
   /** McAdams 스타일 서사 주제 요약 */
   narrativeSummary  String               @db.Text
   generatedAt       DateTime             @default(now())

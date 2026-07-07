@@ -8,13 +8,18 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { DiscoverProfileData } from "@/types/discover";
+import {
+  InterviewAdviceSection,
+  StrengthCompetencyMap,
+} from "@/components/discover/InterviewAdviceSection";
 
 interface DiscoverReportViewProps {
   profile: DiscoverProfileData;
   completedAt?: string | null;
+  jobRoleLabel?: string;
 }
 
-export function DiscoverReportView({ profile, completedAt }: DiscoverReportViewProps) {
+export function DiscoverReportView({ profile, completedAt, jobRoleLabel }: DiscoverReportViewProps) {
   const radarData = profile.competencySignals.map((s) => ({
     competency: s.labelKo,
     signal: 70 + (s.code.length % 5) * 6,
@@ -40,6 +45,16 @@ export function DiscoverReportView({ profile, completedAt }: DiscoverReportViewP
         <h2 className="font-semibold text-foreground">당신의 이야기를 관통하는 주제</h2>
         <p className="text-sm leading-relaxed text-foreground/90">{profile.narrativeSummary}</p>
       </section>
+
+      {profile.interviewAdvice && profile.interviewAdvice.length > 0 && (
+        <>
+          <StrengthCompetencyMap advice={profile.interviewAdvice} />
+          <InterviewAdviceSection
+            advice={profile.interviewAdvice}
+            jobRoleLabel={jobRoleLabel}
+          />
+        </>
+      )}
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-foreground">발견한 강점</h2>

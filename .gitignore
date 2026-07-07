@@ -53,3 +53,5 @@ uploads/
 
 # Python
 services/irt-engine/**/__pycache__/
+.vercel
+.env*

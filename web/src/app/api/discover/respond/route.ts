@@ -88,6 +88,11 @@ export async function POST(req: Request) {
     orderBy: { order: "asc" },
   });
 
+  const fullUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    include: { profile: true },
+  });
+
   const profileData = await generateDiscoverProfile({
     responses: allResponses.map((r) => ({
       questionCode: r.questionCode,
@@ -95,6 +100,7 @@ export async function POST(req: Request) {
       answerText: r.answerText,
     })),
     userName: user.name,
+    jobRole: fullUser?.profile?.desiredJobRole ?? "OTHER",
   });
 
   await prisma.$transaction([
@@ -110,6 +116,7 @@ export async function POST(req: Request) {
         weaknesses: profileData.weaknesses as unknown as Prisma.InputJsonValue,
         values: profileData.values as unknown as Prisma.InputJsonValue,
         competencySignals: profileData.competencySignals as unknown as Prisma.InputJsonValue,
+        interviewAdvice: (profileData.interviewAdvice ?? []) as unknown as Prisma.InputJsonValue,
         narrativeSummary: profileData.narrativeSummary,
       },
       update: {
@@ -117,6 +124,7 @@ export async function POST(req: Request) {
         weaknesses: profileData.weaknesses as unknown as Prisma.InputJsonValue,
         values: profileData.values as unknown as Prisma.InputJsonValue,
         competencySignals: profileData.competencySignals as unknown as Prisma.InputJsonValue,
+        interviewAdvice: (profileData.interviewAdvice ?? []) as unknown as Prisma.InputJsonValue,
         narrativeSummary: profileData.narrativeSummary,
         generatedAt: new Date(),
       },

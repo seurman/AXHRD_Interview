@@ -3,6 +3,10 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { jobRoleLabel } from "@/lib/utils";
+import { competencyLabel } from "@/lib/labels";
+import { getUserStrengthDeck } from "@/lib/discover/user-strengths";
+import { StrengthCardDeck } from "@/components/profile/StrengthCardDeck";
+import { COMPETENCY_CODES } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -17,52 +21,125 @@ export default async function ProfilePage() {
       targetCompanies: { take: 5, orderBy: { createdAt: "desc" } },
       resumes: { take: 3, orderBy: { createdAt: "desc" } },
       organization: { select: { name: true } },
+      competencyLogs: { orderBy: { recordedAt: "desc" } },
+      sessions: { where: { status: "COMPLETED" } },
+      selfDiscoverySessions: { where: { status: "COMPLETED" }, take: 1 },
     },
   });
 
   if (!user) redirect("/auth/login");
 
-  return (
-    <div className="mx-auto max-w-2xl space-y-8">
-      <h1 className="text-2xl font-bold text-foreground">내 프로필</h1>
+  const strengthDeck = await getUserStrengthDeck(user.id);
 
-      <Link
-        href="/profile/certificate"
-        className="flex items-center justify-between rounded-2xl border-2 border-double border-gold/70 bg-gold/5 p-6 transition hover:bg-gold/10"
-      >
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">
-            Competency Certificate
-          </p>
-          <p className="mt-1 font-semibold text-foreground">역량 인증서 보기 · 공유하기</p>
-          <p className="mt-1 text-sm text-muted">
-            IRT 기반 역량 프로필을 포트폴리오로 내보내거나 링크로 공유하세요
-          </p>
+  const latestByCompetency: Record<string, { percentile: number; levelEst: number }> = {};
+  for (const log of user.competencyLogs) {
+    if (!latestByCompetency[log.competency]) {
+      latestByCompetency[log.competency] = {
+        percentile: log.percentile,
+        levelEst: log.levelEst,
+      };
+    }
+  }
+
+  const avgPercentile =
+    Object.values(latestByCompetency).length > 0
+      ? Math.round(
+          Object.values(latestByCompetency).reduce((s, v) => s + v.percentile, 0) /
+            Object.values(latestByCompetency).length
+        )
+      : null;
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-8">
+      <header className="card-luxe overflow-hidden">
+        <div className="bg-gradient-to-r from-primary/10 via-gold/10 to-transparent px-6 py-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Player Profile</p>
+          <h1 className="mt-1 text-2xl font-bold text-foreground">{user.name}</h1>
+          <p className="mt-1 text-sm text-muted">{user.email}</p>
+          <div className="mt-4 flex flex-wrap gap-3 text-sm">
+            <Badge label="희망 직무" value={jobRoleLabel(user.profile?.desiredJobRole ?? "OTHER")} />
+            <Badge label="경력" value={`${user.profile?.careerYears ?? 0}년`} />
+            {avgPercentile !== null && (
+              <Badge label="평균 역량" value={`${avgPercentile}%`} />
+            )}
+            <Badge label="면접 완료" value={`${user.sessions.length}회`} />
+            {strengthDeck && (
+              <Badge label="강점 카드" value={`${strengthDeck.totalDiscovered}장`} accent />
+            )}
+          </div>
         </div>
-        <span className="text-2xl text-gold">→</span>
-      </Link>
+      </header>
+
+      <StrengthCardDeck
+        strengths={strengthDeck?.strengths ?? []}
+        interviewAdvice={strengthDeck?.interviewAdvice}
+        totalDiscovered={strengthDeck?.totalDiscovered ?? 0}
+        reportHref={strengthDeck ? `/discover/${strengthDeck.sessionId}/report` : undefined}
+      />
+
+      {strengthDeck?.narrativeSummary && (
+        <section className="card-luxe p-6">
+          <h2 className="font-semibold text-foreground">나의 이야기 한 줄</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted">{strengthDeck.narrativeSummary}</p>
+        </section>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Link
+          href="/profile/certificate"
+          className="card-luxe flex flex-col justify-between p-6 transition hover:border-gold/40"
+        >
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Certificate</p>
+            <p className="mt-1 font-semibold text-foreground">역량 인증서</p>
+            <p className="mt-1 text-sm text-muted">IRT 프로필을 포트폴리오로 공유</p>
+          </div>
+          <span className="mt-4 text-gold">→</span>
+        </Link>
+        <Link
+          href="/discover"
+          className="card-luxe flex flex-col justify-between p-6 transition hover:border-primary/40"
+        >
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Discover</p>
+            <p className="mt-1 font-semibold text-foreground">나를 발견하기</p>
+            <p className="mt-1 text-sm text-muted">강점 카드 업데이트 · 면접 브릿지</p>
+          </div>
+          <span className="mt-4 text-primary">→</span>
+        </Link>
+      </div>
+
+      {Object.keys(latestByCompetency).length > 0 && (
+        <section className="card-luxe p-6">
+          <h2 className="mb-4 font-semibold text-foreground">역량 배지</h2>
+          <div className="flex flex-wrap gap-2">
+            {COMPETENCY_CODES.filter((c) => latestByCompetency[c]).map((code) => {
+              const v = latestByCompetency[code];
+              return (
+                <span
+                  key={code}
+                  className="rounded-full border border-card-border bg-background px-3 py-1.5 text-xs font-medium"
+                >
+                  {competencyLabel(code)} L{v.levelEst} · {v.percentile}%
+                </span>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <Link
         href={user.organizationId ? "/org/dashboard" : "/org/setup"}
         className="flex items-center justify-between rounded-2xl border border-card-border bg-background p-6 transition hover:border-gold/40"
       >
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-            Organization
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Organization</p>
           <p className="mt-1 font-semibold text-foreground">
             {user.organizationId
               ? `${user.organization?.name ?? "소속 기관"} · ${
                   user.orgRole === "STUDENT" ? "학생" : "코호트 대시보드"
                 }`
               : "기관 연결하기"}
-          </p>
-          <p className="mt-1 text-sm text-muted">
-            {user.organizationId
-              ? user.orgRole === "STUDENT"
-                ? "소속 기관에 연결되어 있습니다"
-                : "소속 학생들의 진행 현황을 확인하세요"
-              : "대학 취업센터 등 소속 기관이 있다면 코드로 연결하세요"}
           </p>
         </div>
         <span className="text-2xl text-accent">→</span>
@@ -71,53 +148,44 @@ export default async function ProfilePage() {
       <section className="card-luxe p-6">
         <h2 className="mb-4 font-semibold text-foreground">기본 정보</h2>
         <dl className="grid gap-3 text-sm">
-          <Row label="이름" value={user.name} />
-          <Row label="이메일" value={user.email} />
-          <Row label="경력" value={`${user.profile?.careerYears ?? 0}년`} />
-          <Row
-            label="희망 직무"
-            value={jobRoleLabel(user.profile?.desiredJobRole ?? "OTHER")}
-          />
           <Row label="학력" value={user.profile?.education ?? "—"} />
+          <Row label="산업군" value={user.profile?.desiredIndustry ?? "—"} />
         </dl>
       </section>
 
       <section className="card-luxe p-6">
         <h2 className="mb-4 font-semibold text-foreground">지원 회사</h2>
         {user.targetCompanies.length === 0 ? (
-          <p className="text-sm text-muted">등록된 회사 없음</p>
+          <p className="text-sm text-muted">등록된 회사 없음 · 면접 설정에서 추가하세요</p>
         ) : (
           <ul className="space-y-2">
             {user.targetCompanies.map((c) => (
-              <li
-                key={c.id}
-                className="rounded-lg bg-background px-4 py-2 text-sm text-foreground"
-              >
-                {c.name} · {c.industry ?? "—"} · {c.size}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="card-luxe p-6">
-        <h2 className="mb-4 font-semibold text-foreground">자기소개서</h2>
-        {user.resumes.length === 0 ? (
-          <p className="text-sm text-muted">업로드된 자소서 없음</p>
-        ) : (
-          <ul className="space-y-2">
-            {user.resumes.map((r) => (
-              <li
-                key={r.id}
-                className="rounded-lg bg-background px-4 py-2 text-sm text-foreground"
-              >
-                {r.fileName} · {r.rawText.slice(0, 60)}…
+              <li key={c.id} className="rounded-lg bg-background px-4 py-2 text-sm text-foreground">
+                {c.name} · {c.industry ?? "—"}
               </li>
             ))}
           </ul>
         )}
       </section>
     </div>
+  );
+}
+
+function Badge({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <span
+      className={`rounded-full px-3 py-1 ${accent ? "bg-gold/15 text-gold" : "bg-background text-foreground"}`}
+    >
+      <span className="text-muted">{label}</span> {value}
+    </span>
   );
 }
 

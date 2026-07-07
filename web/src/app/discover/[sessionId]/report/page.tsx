@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
 import { DiscoverReportView } from "@/components/discover/DiscoverReportView";
-import type { DiscoverProfileData } from "@/types/discover";
+import { toDiscoverProfileData } from "@/lib/discover/user-strengths";
+import { jobRoleLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,10 @@ export default async function DiscoverReportPage({
 
   const session = await prisma.selfDiscoverySession.findUnique({
     where: { id: sessionId },
-    include: { profile: true },
+    include: {
+      profile: true,
+      user: { include: { profile: true } },
+    },
   });
 
   if (!session) notFound();
@@ -33,18 +37,16 @@ export default async function DiscoverReportPage({
     );
   }
 
-  const profile: DiscoverProfileData = {
-    strengths: session.profile.strengths as unknown as DiscoverProfileData["strengths"],
-    weaknesses: session.profile.weaknesses as unknown as DiscoverProfileData["weaknesses"],
-    values: session.profile.values as unknown as DiscoverProfileData["values"],
-    competencySignals: session.profile.competencySignals as unknown as DiscoverProfileData["competencySignals"],
-    narrativeSummary: session.profile.narrativeSummary,
-  };
+  const profile = toDiscoverProfileData(
+    session.profile,
+    session.user.profile?.desiredJobRole ?? "OTHER"
+  );
 
   return (
     <DiscoverReportView
       profile={profile}
       completedAt={session.completedAt?.toISOString()}
+      jobRoleLabel={jobRoleLabel(session.user.profile?.desiredJobRole ?? "OTHER")}
     />
   );
 }
