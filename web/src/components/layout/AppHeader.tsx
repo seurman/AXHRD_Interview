@@ -16,6 +16,7 @@ export async function AppHeader() {
       ? { ...sessionUser, platformRole: "SUPERADMIN" as const }
       : sessionUser;
   const isOrgStaff = !!user && (user.orgRole === "STAFF" || user.orgRole === "ADMIN");
+  const isOrgAdmin = !!user && user.orgRole === "ADMIN";
   const isSuperAdmin = !!user && hasSuperadminAccess(user);
   const isPlatformAdminUser = !!user && isPlatformAdmin(user);
 
@@ -26,9 +27,19 @@ export async function AppHeader() {
         "/interview/setup",
         "/practice/swipe",
         "/profile",
-        ...(isOrgStaff ? ["/org/dashboard"] : []),
       ]
     : [];
+
+  const saasLinks = user && isOrgStaff
+    ? {
+        titleKey: "saas" as const,
+        links: [{ href: "/org/dashboard", labelKey: "cohortDashboard" as const }],
+        settingsTitleKey: "settings" as const,
+        settingsLinks: isOrgAdmin
+          ? [{ href: "/org/saas/settings", labelKey: "settingsHub" as const }]
+          : [],
+      }
+    : null;
 
   const adminLinks = user
     ? [
@@ -63,6 +74,7 @@ export async function AppHeader() {
           adminLinks={adminLinks}
           loggedIn={!!user}
           mainHrefs={mainHrefs}
+          saasLinks={saasLinks}
           userName={user?.name}
         />
 
@@ -70,6 +82,7 @@ export async function AppHeader() {
           adminLinks={adminLinks}
           loggedIn={!!user}
           mainHrefs={mainHrefs}
+          saasLinks={saasLinks}
           userName={user?.name}
         />
       </div>

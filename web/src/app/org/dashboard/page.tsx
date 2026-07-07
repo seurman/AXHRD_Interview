@@ -78,8 +78,8 @@ export default async function OrgDashboardPage() {
               ORG_ENTERPRISE).
             </p>
           </div>
-          <Link href="/org/settings/interview-kit" className="btn-secondary shrink-0 text-sm">
-            킷 설정하기
+          <Link href="/org/saas/settings" className="btn-secondary shrink-0 text-sm">
+            기관 설정
           </Link>
         </div>
       )}

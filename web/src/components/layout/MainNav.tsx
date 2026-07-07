@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoutButton } from "./LogoutButton";
 import { AdminNavMenu } from "./AdminNavMenu";
+import { SaasNavMenu } from "./SaasNavMenu";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
@@ -13,12 +14,22 @@ const navKeyMap = {
   "/interview/setup": "interview",
   "/practice/swipe": "cards",
   "/profile": "profile",
-  "/org/dashboard": "cohort",
 } as const;
+
+type SaasLinksConfig = {
+  titleKey: "saas";
+  links: { href: string; labelKey: "cohortDashboard" }[];
+  settingsTitleKey: "settings";
+  settingsLinks: {
+    href: string;
+    labelKey: "settingsHub";
+  }[];
+};
 
 export function MainNav({
   mainHrefs,
   adminLinks,
+  saasLinks,
   userName,
   loggedIn,
 }: {
@@ -27,6 +38,7 @@ export function MainNav({
     href: string;
     labelKey: "content" | "users" | "audit" | "orgApprove" | "orgBenchmark" | "subscriptions";
   }[];
+  saasLinks?: SaasLinksConfig | null;
   userName?: string;
   loggedIn: boolean;
 }) {
@@ -72,6 +84,24 @@ export function MainNav({
           </Link>
         );
       })}
+      {saasLinks && (
+        <SaasNavMenu
+          title={c.saas.title}
+          links={saasLinks.links.map((l) => ({
+            href: l.href,
+            label: c.saas[l.labelKey],
+          }))}
+          settingsTitle={c.saas.settings}
+          settingsLinks={
+            saasLinks.settingsLinks.length > 0
+              ? saasLinks.settingsLinks.map((l) => ({
+                  href: l.href,
+                  label: c.saas[l.labelKey],
+                }))
+              : undefined
+          }
+        />
+      )}
       <AdminNavMenu
         links={adminLinks.map((l) => ({
           href: l.href,

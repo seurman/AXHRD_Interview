@@ -17,7 +17,6 @@ export type Dictionary = {
       interview: string;
       cards: string;
       profile: string;
-      cohort: string;
     };
     navLong: {
       dashboard: string;
@@ -25,7 +24,6 @@ export type Dictionary = {
       interview: string;
       cards: string;
       profile: string;
-      cohort: string;
     };
     auth: {
       login: string;
@@ -40,6 +38,13 @@ export type Dictionary = {
       orgApprove: string;
       orgBenchmark: string;
       subscriptions: string;
+    };
+    saas: {
+      title: string;
+      settings: string;
+      cohortDashboard: string;
+      settingsHub: string;
+      interviewKit: string;
     };
     language: {
       label: string;

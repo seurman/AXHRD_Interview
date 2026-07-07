@@ -13,7 +13,6 @@ export const dictionary: Dictionary = {
       interview: "Interview",
       cards: "Cards",
       profile: "Profile",
-      cohort: "Cohort",
     },
     navLong: {
       dashboard: "Competency Tracking",
@@ -21,7 +20,6 @@ export const dictionary: Dictionary = {
       interview: "Start Interview",
       cards: "Question Cards",
       profile: "Profile",
-      cohort: "Cohort Dashboard",
     },
     auth: {
       login: "Sign in",
@@ -36,6 +34,13 @@ export const dictionary: Dictionary = {
       orgApprove: "Organizations",
       orgBenchmark: "Benchmark",
       subscriptions: "Subscriptions",
+    },
+    saas: {
+      title: "SaaS",
+      settings: "Settings",
+      cohortDashboard: "Cohort dashboard",
+      settingsHub: "Organization settings",
+      interviewKit: "Interview kit builder",
     },
     language: {
       label: "Language",

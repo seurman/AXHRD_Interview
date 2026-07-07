@@ -15,14 +15,23 @@ type AdminLink = {
   labelKey: "content" | "users" | "audit" | "orgApprove" | "orgBenchmark" | "subscriptions";
 };
 
+type SaasLinksConfig = {
+  titleKey: "saas";
+  links: { href: string; labelKey: "cohortDashboard" }[];
+  settingsTitleKey: "settings";
+  settingsLinks: { href: string; labelKey: "settingsHub" }[];
+};
+
 export function MobileNav({
   mainHrefs,
   adminLinks,
+  saasLinks,
   userName,
   loggedIn,
 }: {
   mainHrefs: string[];
   adminLinks?: AdminLink[];
+  saasLinks?: SaasLinksConfig | null;
   userName?: string;
   loggedIn: boolean;
 }) {
@@ -86,6 +95,49 @@ export function MobileNav({
               {getMobileNavLabel(href, dict)}
             </Link>
           ))}
+
+          {saasLinks && (
+            <>
+              <p className="keep-one-line mb-1 mt-4 px-3 text-xs font-semibold text-gold">
+                {c.saas.title}
+              </p>
+              {saasLinks.links.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setOpen(false)}
+                  className={`keep-one-line rounded-lg px-3 py-2.5 hover:bg-primary/5 ${
+                    pathname.startsWith(l.href)
+                      ? "bg-primary/5 font-medium text-primary"
+                      : "text-foreground"
+                  }`}
+                >
+                  {c.saas[l.labelKey]}
+                </Link>
+              ))}
+              {saasLinks.settingsLinks.length > 0 && (
+                <>
+                  <p className="keep-one-line mb-1 mt-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted">
+                    {c.saas.settings}
+                  </p>
+                  {saasLinks.settingsLinks.map((l) => (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      onClick={() => setOpen(false)}
+                      className={`keep-one-line rounded-lg py-2.5 pl-5 pr-3 hover:bg-primary/5 ${
+                        pathname.startsWith(l.href)
+                          ? "bg-primary/5 font-medium text-primary"
+                          : "text-foreground"
+                      }`}
+                    >
+                      {c.saas[l.labelKey]}
+                    </Link>
+                  ))}
+                </>
+              )}
+            </>
+          )}
 
           {adminLinks && adminLinks.length > 0 && (
             <>

@@ -13,7 +13,6 @@ export const dictionary: Dictionary = {
       interview: "면접",
       cards: "카드",
       profile: "프로필",
-      cohort: "코호트",
     },
     navLong: {
       dashboard: "역량 트래킹",
@@ -21,7 +20,6 @@ export const dictionary: Dictionary = {
       interview: "면접 시작",
       cards: "질문 카드",
       profile: "프로필",
-      cohort: "코호트 대시보드",
     },
     auth: {
       login: "로그인",
@@ -36,6 +34,13 @@ export const dictionary: Dictionary = {
       orgApprove: "기관 승인",
       orgBenchmark: "기관 비교",
       subscriptions: "구독 관리",
+    },
+    saas: {
+      title: "SaaS",
+      settings: "설정",
+      cohortDashboard: "코호트 대시보드",
+      settingsHub: "기관 설정",
+      interviewKit: "인터뷰 킷 빌더",
     },
     language: {
       label: "언어",
