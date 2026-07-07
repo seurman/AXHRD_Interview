@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
-import { INDUSTRY_CODES, JOB_ROLES, COMPETENCY_CODES } from "@/types";
-import type { IndustryCode, JobRoleCode, CompetencyCode } from "@/types";
+import { INDUSTRY_CODES, JOB_ROLES } from "@/types";
+import type { IndustryCode, JobRoleCode } from "@/types";
 
 /**
  * 질문 카드 스와이프 덱 — 사용자가 명시적으로 고른 산업군·직무 조합을 최우선으로 보여준다.
@@ -107,12 +107,6 @@ export async function GET(req: Request) {
       text: q.questionText,
       industry: q.industry,
       jobRole: q.jobRole,
-      competency: (COMPETENCY_CODES as readonly string[]).includes(q.competency ?? "")
-        ? (q.competency as CompetencyCode)
-        : null,
-      sourceName: q.sourceName,
-      sourceUrl: q.sourceUrl,
-      isAiExample: q.isAiExample,
     })),
     comboCount,
     recycled,

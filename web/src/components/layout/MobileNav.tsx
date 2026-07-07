@@ -131,7 +131,7 @@ export function MobileNav({
         type="button"
         onClick={() => setOpen(true)}
         aria-label="메뉴 열기"
-        className="flex h-10 w-10 items-center justify-center rounded-lg text-foreground hover:bg-primary/5"
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/30 text-gold hover:bg-gold/10"
       >
         <Menu className="h-6 w-6" />
       </button>

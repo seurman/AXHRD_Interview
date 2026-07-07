@@ -5,8 +5,8 @@
       "jobRole": "DEVELOPMENT",
       "competency": "JOB_FIT",
       "questionText": "졸업작품이나 개인 프로젝트에서 어떤 노력과 성취가 있었는지 소개해 주세요.",
-      "sourceName": "잡코리아 IT/SW 직무인터뷰",
-      "sourceUrl": "https://www.jobkorea.co.kr/starter/interview/View/21876",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -32,8 +32,8 @@
       "jobRole": "MARKETING",
       "competency": "JOB_FIT",
       "questionText": "왜 마케팅 분야에 지원하게 되었나요?",
-      "sourceName": "링커리어 커뮤니티",
-      "sourceUrl": "https://community.linkareer.com/jayuu/2757939",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -41,8 +41,8 @@
       "jobRole": "MARKETING",
       "competency": "COMMUNICATION",
       "questionText": "가장 기억에 남는 마케팅 캠페인이나 광고 사례와 그 이유를 말씀해 주세요.",
-      "sourceName": "링커리어 커뮤니티",
-      "sourceUrl": "https://community.linkareer.com/jayuu/2722774",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -50,8 +50,8 @@
       "jobRole": "MARKETING",
       "competency": "JOB_FIT",
       "questionText": "마케팅과 영업의 차이를 본인의 언어로 설명해 주세요.",
-      "sourceName": "링커리어 커뮤니티",
-      "sourceUrl": "https://community.linkareer.com/jayuu/2757939",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -59,8 +59,8 @@
       "jobRole": "MARKETING",
       "competency": "PROBLEM_SOLVING",
       "questionText": "데이터 분석이 마케팅에서 중요한 이유는 무엇이라고 생각하나요?",
-      "sourceName": "링커리어 커뮤니티",
-      "sourceUrl": "https://community.linkareer.com/jayuu/2757939",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -68,8 +68,8 @@
       "jobRole": "BUSINESS_SUPPORT",
       "competency": "JOB_FIT",
       "questionText": "인사 직무에서 본인이 생각하는 가장 중요한 핵심 역량은 무엇인가요?",
-      "sourceName": "브런치 (25화 지원 직무별 필수 면접 질문)",
-      "sourceUrl": "https://brunch.co.kr/@insateam/190",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -77,8 +77,8 @@
       "jobRole": "BUSINESS_SUPPORT",
       "competency": "PROBLEM_SOLVING",
       "questionText": "노동조합의 순기능과 역기능에 대해 본인의 생각을 말씀해 주세요.",
-      "sourceName": "브런치 (25화 지원 직무별 필수 면접 질문)",
-      "sourceUrl": "https://brunch.co.kr/@insateam/190",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -86,8 +86,8 @@
       "jobRole": "BUSINESS_SUPPORT",
       "competency": "ORG_FIT",
       "questionText": "지원한 직무가 아닌 다른 부서로 발령난다면 어떻게 하시겠습니까?",
-      "sourceName": "브런치 (25화 지원 직무별 필수 면접 질문)",
-      "sourceUrl": "https://brunch.co.kr/@insateam/190",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -95,8 +95,8 @@
       "jobRole": "DESIGN",
       "competency": "JOB_FIT",
       "questionText": "본인의 대표 프로젝트는 무엇이고, 왜 그것을 대표작으로 꼽았나요?",
-      "sourceName": "취준생 UX/UI 디자인 직무 면접 후기",
-      "sourceUrl": "https://dawnbebright.wordpress.com/2021/04/07/",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -104,8 +104,8 @@
       "jobRole": "DESIGN",
       "competency": "COMMUNICATION",
       "questionText": "디자인할 때 가장 중요하게 생각하는 요소는 무엇인가요?",
-      "sourceName": "pxd story",
-      "sourceUrl": "https://story.pxd.co.kr/1574",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -113,8 +113,8 @@
       "jobRole": "DESIGN",
       "competency": "GROWTH",
       "questionText": "사용자 테스트 피드백을 반영해 기존 디자인을 크게 바꾼 경험이 있나요?",
-      "sourceName": "pxd story",
-      "sourceUrl": "https://story.pxd.co.kr/1574",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -122,8 +122,8 @@
       "jobRole": "DESIGN",
       "competency": "JOB_FIT",
       "questionText": "신입 디자이너에게 필요한 역량 3가지를 꼽는다면 무엇인가요?",
-      "sourceName": "UX/UI 디자이너 면접 후기",
-      "sourceUrl": "https://dawnbebright.wordpress.com/2021/04/18/",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -131,8 +131,8 @@
       "jobRole": "FINANCE",
       "competency": "JOB_FIT",
       "questionText": "지원하시는 은행/회사의 주요 재무 지표(당기순이익, 매출액 등)를 알고 계신가요?",
-      "sourceName": "잡코리아 실제 면접 질문 (우리은행)",
-      "sourceUrl": "https://www.jobkorea.co.kr/starter/review/view?c_idx=2&ctgr_code=5",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -140,8 +140,8 @@
       "jobRole": "FINANCE",
       "competency": "GROWTH",
       "questionText": "IB(투자금융) 부문에 지원한 동기와 입사 후 성장 계획을 말씀해 주세요.",
-      "sourceName": "잡코리아 실제 면접 질문 (우리은행)",
-      "sourceUrl": "https://www.jobkorea.co.kr/starter/review/view?c_idx=2&ctgr_code=5",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -158,8 +158,8 @@
       "jobRole": "SALES",
       "competency": "ORG_FIT",
       "questionText": "전문 자격증이 있어도 영업점부터 시작해야 한다는 점을 알고 계셨나요?",
-      "sourceName": "브릿지인 (은행 면접 준비)",
-      "sourceUrl": "https://bridgein.co.kr/S/C/E/64",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -167,8 +167,8 @@
       "jobRole": "SALES",
       "competency": "JOB_FIT",
       "questionText": "은행권(금융권)에서 일하고 싶은 이유는 무엇인가요?",
-      "sourceName": "브릿지인 (은행 면접 준비)",
-      "sourceUrl": "https://bridgein.co.kr/S/C/E/64",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -176,8 +176,8 @@
       "jobRole": "SALES",
       "competency": "PROBLEM_SOLVING",
       "questionText": "힘들거나 어려운 상황에서 본인만의 대처 방식은 무엇인가요?",
-      "sourceName": "잡코리아 실제 면접 질문 (국민은행)",
-      "sourceUrl": "https://www.jobkorea.co.kr/starter/review/view?c_idx=9&ctgr_code=5",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -203,8 +203,8 @@
       "jobRole": "HR",
       "competency": "JOB_FIT",
       "questionText": "인사(HR) 분야에 지원하게 된 계기는 무엇인가요?",
-      "sourceName": "링커리어 커뮤니티",
-      "sourceUrl": "https://community.linkareer.com/jayuu/2723071",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -212,8 +212,8 @@
       "jobRole": "HR",
       "competency": "JOB_FIT",
       "questionText": "채용·평가·보상·교육·노무 중 특히 관심 있는 분야와 그 이유는?",
-      "sourceName": "잇다 멘토링",
-      "sourceUrl": "https://www.itdaa.net/open_mentorings/386",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -221,8 +221,8 @@
       "jobRole": "HR",
       "competency": "GROWTH",
       "questionText": "이전 직장이나 활동에서의 인사 관련 업무 경험이 있다면 이야기해 주세요.",
-      "sourceName": "잇다 멘토링",
-      "sourceUrl": "https://www.itdaa.net/open_mentorings/386",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -230,8 +230,8 @@
       "jobRole": "DEVELOPMENT",
       "competency": "PROBLEM_SOLVING",
       "questionText": "생산 라인에서 발생한 문제를 해결했던 경험이 있다면 말씀해 주세요.",
-      "sourceName": "금호타이어 생산관리 최종합격자 면접후기",
-      "sourceUrl": "https://m.reportworld.co.kr/thema/t1633719",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -239,8 +239,8 @@
       "jobRole": "DEVELOPMENT",
       "competency": "ORG_FIT",
       "questionText": "안전 관리에 대해 본인이 가지고 있는 생각을 말씀해 주세요.",
-      "sourceName": "생산직 예상 면접 질문 Top 13",
-      "sourceUrl": "https://www.top-tier.co.kr/notice/getNoticeDetail.hs?noticeSeq=534&type=BT04",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -248,8 +248,8 @@
       "jobRole": "DEVELOPMENT",
       "competency": "GROWTH",
       "questionText": "생산/연구개발 직무에서 본인이 그리는 장기적인 목표는 무엇인가요?",
-      "sourceName": "서연이화 생산관리 최종합격자 면접후기",
-      "sourceUrl": "https://m.reportworld.co.kr/thema/t1633748",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -257,8 +257,8 @@
       "jobRole": "SALES",
       "competency": "PROBLEM_SOLVING",
       "questionText": "영업 현장에서 고객 클레임을 직접 겪어본 경험이 있다면 어떻게 대응하셨나요?",
-      "sourceName": "면접질문 \"영업이 뭐라고 생각하세요?\"",
-      "sourceUrl": "https://inthiswork.com/?kboard_content_redirect=405",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -266,8 +266,8 @@
       "jobRole": "SALES",
       "competency": "JOB_FIT",
       "questionText": "영업직에게 가장 중요한 자질 두 가지를 꼽는다면 무엇인가요?",
-      "sourceName": "영업직 면접 질문답변 모음",
-      "sourceUrl": "https://www.happycampus.com/intro-doc/27992544/",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -275,8 +275,8 @@
       "jobRole": "SALES",
       "competency": "COMMUNICATION",
       "questionText": "본인의 성격이나 적성이 영업에 적합하다고 생각하나요? 그렇게 생각하는 이유는?",
-      "sourceName": "영업직 면접 질문답변 모음",
-      "sourceUrl": "https://www.happycampus.com/intro-doc/27992544/",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -320,8 +320,8 @@
       "jobRole": "BUSINESS_SUPPORT",
       "competency": "PROBLEM_SOLVING",
       "questionText": "어떤 일이나 과제를 하면서 프로세스나 방법을 개선했던 경험이 있다면 이야기해 주십시오.",
-      "sourceName": "NCS 국가직무능력표준 면접문항 예시",
-      "sourceUrl": "https://www.ncs.go.kr/blind/blp/bbs_lib_list.do?libDstinCd=56",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -329,8 +329,8 @@
       "jobRole": "BUSINESS_SUPPORT",
       "competency": "GROWTH",
       "questionText": "어떤 일이나 과제를 하면서 많은 시행착오를 겪었던 경험이 있다면 이야기해 주십시오.",
-      "sourceName": "NCS 국가직무능력표준 면접문항 예시",
-      "sourceUrl": "https://www.ncs.go.kr/blind/blp/bbs_lib_list.do?libDstinCd=56",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -338,8 +338,8 @@
       "jobRole": "BUSINESS_SUPPORT",
       "competency": "ORG_FIT",
       "questionText": "공공기관 면접에서는 공정성과 직무 적합성이 중요합니다 — 본인이 공정하게 일 처리를 했던 경험을 말씀해 주세요.",
-      "sourceName": "링커리어 커뮤니티 (공기업 면접 질문 리스트)",
-      "sourceUrl": "https://community.linkareer.com/employment_data/5041048",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -356,8 +356,8 @@
       "jobRole": "HR",
       "competency": "GROWTH",
       "questionText": "이전 직장이나 활동에서의 인사 관련 경험을 이야기해 주세요.",
-      "sourceName": "링커리어 커뮤니티 (공기업 면접 질문 리스트)",
-      "sourceUrl": "https://community.linkareer.com/employment_data/5041048",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -365,8 +365,8 @@
       "jobRole": "FINANCE",
       "competency": "COMMUNICATION",
       "questionText": "재무 리포트를 작성하고 발표했던 경험이 있나요?",
-      "sourceName": "링커리어 커뮤니티 (회계 직무 면접 질문)",
-      "sourceUrl": "https://community.linkareer.com/jayuu/2723198",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {
@@ -374,8 +374,8 @@
       "jobRole": "FINANCE",
       "competency": "JOB_FIT",
       "questionText": "외부·내부 감사 프로세스에 참여했던 경험이 있다면 말씀해 주세요.",
-      "sourceName": "링커리어 커뮤니티 (회계 직무 면접 질문)",
-      "sourceUrl": "https://community.linkareer.com/jayuu/2723198",
+      "sourceName": null,
+      "sourceUrl": null,
       "isAiExample": false
     },
     {

@@ -1,6 +1,6 @@
 /**
- * 실제 기출 질문 참고 DB 시드 — IRT 채점 문항 뱅크(seed.ts/questions.json)와는 별개.
- * 공개 검색으로 수집한 질문 + 근거 부족한 조합은 AI 예시로 보강(isAiExample=true로 투명하게 표시).
+ * 실전 질문 카드 DB 시드 — IRT 채점 문항 뱅크(seed.ts/questions.json)와는 별개.
+ * 출처 메타데이터는 저장하지 않는다(사용자 UI에 노출하지 않음).
  *
  * 이 스크립트는 (industry, jobRole) 조합 단위로 기존 데이터를 지우고 다시 넣으므로
  * 여러 번 실행해도 안전하다(중복 누적 없음).
@@ -45,8 +45,8 @@ async function main() {
         jobRole: q.jobRole as never,
         competency: q.competency ?? null,
         questionText: q.questionText,
-        sourceName: q.sourceName ?? null,
-        sourceUrl: q.sourceUrl ?? null,
+        sourceName: null,
+        sourceUrl: null,
         isAiExample: q.isAiExample,
       },
     });

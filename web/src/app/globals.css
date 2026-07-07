@@ -169,13 +169,180 @@ body {
   border: 1px solid rgb(229 233 246 / 0.8);
 }
 
+/* 프리미엄 헤더 — caesarsholding 스타일 pill 네비 */
+.header-premium {
+  background: linear-gradient(180deg, rgb(10 15 28 / 0.97) 0%, rgb(12 18 34 / 0.95) 100%);
+  border-bottom: 1px solid rgb(199 154 90 / 0.15);
+  backdrop-filter: blur(12px);
+}
+
+.nav-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  border-radius: 9999px;
+  border: 1px solid rgb(199 154 90 / 0.35);
+  background: transparent;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: rgb(199 154 90 / 0.9);
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.nav-pill:hover {
+  border-color: rgb(199 154 90 / 0.6);
+  background: rgb(199 154 90 / 0.08);
+  color: var(--color-gold-light);
+}
+
+.nav-pill-active {
+  border-color: var(--color-gold);
+  background: linear-gradient(135deg, rgb(199 154 90 / 0.22) 0%, rgb(199 154 90 / 0.1) 100%);
+  color: var(--color-gold-light);
+}
+
+.nav-pill-gold {
+  border-color: var(--color-gold);
+  background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-light) 100%);
+  color: #0c1222;
+  box-shadow: 0 4px 14px -4px rgb(199 154 90 / 0.45);
+}
+
+.nav-pill-gold:hover {
+  background: linear-gradient(135deg, var(--color-gold-light) 0%, #e8c88a 100%);
+  color: #0c1222;
+}
+
+/* 다크 프리미엄 히어로 */
+.hero-premium {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.75rem;
+  background: linear-gradient(160deg, #0a0f1c 0%, #10182b 45%, #0d1424 100%);
+  border: 1px solid rgb(199 154 90 / 0.12);
+  color: white;
+}
+
+.hero-premium::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 78% 22%, rgb(47 95 238 / 0.12) 0%, transparent 42%),
+    radial-gradient(circle at 18% 78%, rgb(199 154 90 / 0.1) 0%, transparent 38%);
+  pointer-events: none;
+}
+
+.hero-premium::after {
+  content: "";
+  position: absolute;
+  right: -8%;
+  top: 50%;
+  height: 420px;
+  width: 420px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  border: 1px solid rgb(199 154 90 / 0.08);
+  box-shadow:
+    0 0 0 40px rgb(199 154 90 / 0.03),
+    0 0 0 80px rgb(47 95 238 / 0.04),
+    0 0 0 120px rgb(199 154 90 / 0.02);
+  pointer-events: none;
+}
+
+.section-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-light) 100%);
+  padding: 0.9rem 1.75rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #0c1222;
+  box-shadow: 0 8px 24px -6px rgb(199 154 90 / 0.5);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-gold:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px -6px rgb(199 154 90 / 0.55);
+}
+
+.btn-outline-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  border-radius: 9999px;
+  border: 1px solid rgb(199 154 90 / 0.5);
+  background: rgb(199 154 90 / 0.06);
+  padding: 0.9rem 1.75rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-gold-light);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-outline-gold:hover {
+  background: rgb(199 154 90 / 0.12);
+  border-color: var(--color-gold);
+}
+
+.feature-card-premium {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid rgb(229 233 246 / 0.9);
+  background: linear-gradient(145deg, #ffffff 0%, #f9fafd 100%);
+  padding: 2rem;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.feature-card-premium:hover {
+  transform: translateY(-4px);
+  border-color: rgb(199 154 90 / 0.35);
+  box-shadow:
+    0 8px 30px -8px rgb(16 26 51 / 0.12),
+    0 0 0 1px rgb(199 154 90 / 0.08);
+}
+
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid rgb(199 154 90 / 0.25);
+  background: rgb(199 154 90 / 0.08);
+  padding: 0.25rem 0.65rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-gold);
+}
+
 /* 질문 카드 스와이프 — 상용 앱 느낌의 카드 스택 */
 .swipe-card-pro {
-  background: linear-gradient(145deg, #ffffff 0%, #f8f9fe 100%);
-  border: 1px solid rgb(229 233 246);
+  background: linear-gradient(160deg, #ffffff 0%, #f6f7fc 55%, #eef1f9 100%);
+  border: 1px solid rgb(199 154 90 / 0.15);
   box-shadow:
     0 4px 6px -2px rgb(16 26 51 / 0.06),
-    0 20px 40px -12px rgb(47 95 238 / 0.12);
+    0 24px 48px -16px rgb(12 18 34 / 0.18),
+    0 0 0 1px rgb(199 154 90 / 0.06);
 }
 
 /* 데모 페이지 전용 — 실제 제품 화면처럼 보이도록 브라우저 창 느낌의 목업 프레임 */

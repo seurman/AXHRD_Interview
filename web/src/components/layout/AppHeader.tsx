@@ -1,15 +1,12 @@
 import Link from "next/link";
-import { Mic2 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canManageContent, hasSuperadminAccess, isSuperadmin } from "@/lib/auth/guards";
 import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
-import { LogoutButton } from "./LogoutButton";
 import { MobileNav } from "./MobileNav";
-import { AdminNavMenu } from "./AdminNavMenu";
+import { MainNav } from "./MainNav";
 
 export async function AppHeader() {
   const sessionUser = await getCurrentUser();
-  // SUPERADMIN_EMAILS에 등록된 계정은 로그인 세션 중에도 DB 역할을 맞춰 둔다
   if (sessionUser && isSuperadmin(sessionUser.email)) {
     await syncSuperadminPlatformRole(sessionUser.id, sessionUser.email);
   }
@@ -23,12 +20,12 @@ export async function AppHeader() {
 
   const mainLinks = user
     ? [
-        { href: "/dashboard", label: "역량 트래킹" },
-        { href: "/discover", label: "나를 발견하기" },
-        { href: "/interview/setup", label: "면접 시작" },
-        { href: "/practice/swipe", label: "질문 카드" },
+        { href: "/dashboard", label: "역량" },
+        { href: "/discover", label: "발견" },
+        { href: "/interview/setup", label: "면접" },
+        { href: "/practice/swipe", label: "카드" },
         { href: "/profile", label: "프로필" },
-        ...(isOrgStaff ? [{ href: "/org/dashboard", label: "코호트 대시보드" }] : []),
+        ...(isOrgStaff ? [{ href: "/org/dashboard", label: "코호트" }] : []),
       ]
     : [];
 
@@ -46,51 +43,41 @@ export async function AppHeader() {
     : [];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-card-border bg-card/90 backdrop-blur-md shadow-sm">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:py-4">
-        <Link
-          href="/"
-          className="flex min-w-0 shrink items-center gap-2 font-semibold text-primary"
-        >
-          <Mic2 className="h-6 w-6 shrink-0 text-gold" />
-          <span className="keep-one-line text-sm sm:text-base">HR_IN</span>
-          <span className="keep-one-line hidden rounded-full bg-gold/15 px-2 py-0.5 text-xs font-medium text-gold min-[400px]:inline-flex">
-            Premium
+    <header className="header-premium sticky top-0 z-40">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:py-3.5">
+        <Link href="/" className="group flex min-w-0 shrink items-center gap-2.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-gold/40 bg-gold/10 text-xs font-bold text-gold">
+            H
+          </span>
+          <span className="keep-one-line text-sm font-semibold tracking-[0.18em] text-gold sm:text-base">
+            HR_IN
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-5 text-sm text-muted sm:flex">
-          {user ? (
-            <>
-              <span className="hidden text-foreground lg:inline">{user.name}님</span>
-              {mainLinks.map((l) => (
-                <Link key={l.href} href={l.href} className="keep-one-line hover:text-primary">
-                  {l.label}
-                </Link>
-              ))}
-              <AdminNavMenu links={adminLinks} />
-              <LogoutButton />
-            </>
-          ) : (
-            <>
-              <Link href="/auth/login" className="hover:text-primary">
-                로그인
-              </Link>
-              <Link
-                href="/auth/register"
-                className="rounded-lg bg-primary px-3 py-1.5 text-white hover:opacity-90"
-              >
-                회원가입
-              </Link>
-            </>
-          )}
-        </nav>
+        <MainNav
+          adminLinks={adminLinks}
+          loggedIn={!!user}
+          mainLinks={mainLinks}
+          userName={user?.name}
+        />
 
         <MobileNav
           adminLinks={adminLinks}
-          userName={user?.name}
           loggedIn={!!user}
-          mainLinks={mainLinks}
+          mainLinks={mainLinks.map((l) => ({
+            ...l,
+            label:
+              l.href === "/dashboard"
+                ? "역량 트래킹"
+                : l.href === "/discover"
+                  ? "나를 발견하기"
+                  : l.href === "/interview/setup"
+                    ? "면접 시작"
+                    : l.href === "/practice/swipe"
+                      ? "질문 카드"
+                      : l.label,
+          }))}
+          userName={user?.name}
         />
       </div>
     </header>

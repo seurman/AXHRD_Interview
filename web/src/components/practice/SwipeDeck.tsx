@@ -13,9 +13,6 @@ type Card = {
   text: string;
   industry: string;
   jobRole: string;
-  sourceName: string | null;
-  sourceUrl: string | null;
-  isAiExample: boolean;
   savedAt?: string;
   answerTranscript?: string | null;
   answeredAt?: string | null;
@@ -285,8 +282,7 @@ export function SwipeDeck({
                   <li key={q.id} className="rounded-xl border border-card-border p-3">
                     <p className="text-sm text-foreground">{q.text}</p>
                     <p className="mt-1 text-xs text-muted">
-                      {industryLabel(q.industry)} · {jobRoleLabel(q.jobRole)} ·{" "}
-                      {q.isAiExample ? "AI 생성 예시" : q.sourceName ?? "출처 미상"}
+                      {industryLabel(q.industry)} · {jobRoleLabel(q.jobRole)}
                     </p>
                     {q.answerTranscript && (
                       <p className="mt-2 rounded-lg bg-background p-2 text-xs text-foreground">
@@ -360,11 +356,11 @@ function SwipeCard({
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className="swipe-card-pro absolute inset-0 flex cursor-grab flex-col justify-between overflow-hidden rounded-3xl p-0 active:cursor-grabbing"
     >
-      <div className="bg-gradient-to-r from-primary/8 to-gold/8 px-6 py-4">
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-          {card.isAiExample ? "AI 예시" : "실제 기출"}
+      <div className="bg-gradient-to-r from-[#0c1222] to-[#141d32] px-6 py-5">
+        <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-gold">
+          Interview Question
         </p>
-        <p className="mt-1 text-xs text-muted">
+        <p className="mt-1.5 text-sm font-medium text-white/70">
           {industryLabel(card.industry)} · {jobRoleLabel(card.jobRole)}
         </p>
       </div>
@@ -384,12 +380,14 @@ function SwipeCard({
           </motion.span>
         </>
       )}
-      <div className="flex flex-1 items-center justify-center px-8 py-6 text-center">
-        <p className="text-xl font-semibold leading-relaxed text-foreground">{card.text}</p>
+      <div className="flex flex-1 items-center justify-center px-8 py-8 text-center">
+        <p className="text-xl font-semibold leading-relaxed text-foreground sm:text-2xl">
+          {card.text}
+        </p>
       </div>
-      <div className="border-t border-card-border bg-background/50 px-6 py-3 text-center">
-        <p className="text-xs text-muted">
-          {card.sourceName ?? "출처 미상"}
+      <div className="border-t border-card-border bg-gradient-to-r from-gold/5 to-primary/5 px-6 py-3 text-center">
+        <p className="text-xs font-medium tracking-wide text-muted">
+          ← Pass · Save →
         </p>
       </div>
     </motion.div>

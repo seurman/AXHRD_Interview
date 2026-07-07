@@ -10,8 +10,6 @@ export type PracticeCard = {
   text: string;
   industry: string;
   jobRole: string;
-  sourceName: string | null;
-  isAiExample: boolean;
   answerTranscript?: string | null;
 };
 
@@ -59,8 +57,7 @@ export function AnswerPracticeModal({
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <p className="text-xs text-muted">
-              {industryLabel(card.industry)} · {jobRoleLabel(card.jobRole)} ·{" "}
-              {card.isAiExample ? "AI 생성 예시" : card.sourceName ?? "출처 미상"}
+              {industryLabel(card.industry)} · {jobRoleLabel(card.jobRole)}
             </p>
             <p className="mt-1 font-medium text-foreground">{card.text}</p>
           </div>

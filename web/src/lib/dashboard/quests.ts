@@ -30,7 +30,7 @@ export function buildCareerQuests(params: {
     {
       id: "swipe",
       title: "질문 카드 10장",
-      description: "실제 기출 질문 카드로 습관 만들기",
+      description: "실전 질문 카드로 습관 만들기",
       href: "/practice/swipe",
       xp: 80,
       done: !!params.hasSwipeToday,

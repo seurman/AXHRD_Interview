@@ -11,10 +11,10 @@ export default async function SwipePage() {
   return (
     <div className="mx-auto max-w-lg">
       <header className="mb-8 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">Question Deck</p>
-        <h1 className="mt-2 text-3xl font-bold text-foreground">질문 카드</h1>
+        <p className="section-eyebrow">Question Deck</p>
+        <h1 className="mt-3 text-3xl font-bold text-foreground">질문 카드</h1>
         <p className="mt-2 text-sm text-muted">
-          스와이프로 실전 기출에 익숙해지세요 · 왼쪽 Pass · 오른쪽 Save
+          스와이프로 실전 질문에 익숙해지세요 · 왼쪽 Pass · 오른쪽 Save
         </p>
       </header>
       <SwipeDeck

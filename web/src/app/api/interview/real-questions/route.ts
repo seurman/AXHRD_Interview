@@ -15,7 +15,7 @@ const JOB_ROLES = [
   "OTHER",
 ] as const;
 
-/** 설정 화면에서 "실제 기출 질문 참고"를 보여주기 위한 조회 전용 엔드포인트.
+/** 설정 화면에서 실전 질문 참고를 보여주기 위한 조회 전용 엔드포인트.
  *  IRT 채점 문항 뱅크(Question)와는 무관 — 순수 참고용 미리보기다. */
 export async function GET(req: Request) {
   const user = await getCurrentUser();
@@ -49,9 +49,6 @@ export async function GET(req: Request) {
       competency: (COMPETENCY_CODES as readonly string[]).includes(q.competency ?? "")
         ? (q.competency as CompetencyCode)
         : null,
-      sourceName: q.sourceName,
-      sourceUrl: q.sourceUrl,
-      isAiExample: q.isAiExample,
     })),
   });
 }
