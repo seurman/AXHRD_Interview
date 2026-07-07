@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import type { PlanTier } from "@prisma/client";
 import { planLabel } from "@/lib/billing/plans";
 
 type BillingStatus = {
-  planTier: string;
+  planTier: PlanTier;
   planName: string;
   subscription: {
     id: string;
@@ -21,13 +22,30 @@ type BillingStatus = {
 
 export function BillingManageCard() {
   const [data, setData] = useState<BillingStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [canceling, setCanceling] = useState(false);
 
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/billing/status");
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json.error ?? "구독 정보를 불러오지 못했습니다.");
+      }
+      setData(json);
+    } catch (e) {
+      setData(null);
+      setError(e instanceof Error ? e.message : "구독 정보를 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetch("/api/billing/status")
-      .then((r) => (r.ok ? r.json() : null))
-      .then(setData)
-      .catch(() => {});
+    load();
   }, []);
 
   const cancel = async () => {
@@ -38,8 +56,7 @@ export function BillingManageCard() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "해지 실패");
       alert(json.message ?? "해지 예약되었습니다.");
-      const refreshed = await fetch("/api/billing/status").then((r) => r.json());
-      setData(refreshed);
+      await load();
     } catch (e) {
       alert(e instanceof Error ? e.message : "해지 실패");
     } finally {
@@ -47,7 +64,33 @@ export function BillingManageCard() {
     }
   };
 
-  if (!data) return null;
+  if (loading) {
+    return (
+      <section className="card-luxe p-6">
+        <p className="text-sm text-muted">구독 정보 불러오는 중…</p>
+      </section>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <section className="card-luxe border-amber-500/20 p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Billing</p>
+        <p className="mt-2 text-sm text-muted">
+          {error ?? "구독 정보를 표시할 수 없습니다."}
+        </p>
+        {error?.includes("마이그레이션") && (
+          <p className="mt-2 text-xs text-muted">
+            운영 DB에 <code>20260707233000_add_billing_subscription</code> 마이그레이션을
+            적용해 주세요.
+          </p>
+        )}
+        <Link href="/pricing" className="mt-3 inline-block text-sm text-accent hover:underline">
+          요금제 보기 →
+        </Link>
+      </section>
+    );
+  }
 
   return (
     <section className="card-luxe p-6">
@@ -55,7 +98,7 @@ export function BillingManageCard() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Billing</p>
           <p className="mt-1 font-semibold text-foreground">
-            {data.planName} ({planLabel(data.planTier as never)})
+            {data.planName} ({planLabel(data.planTier)})
           </p>
           {data.subscription && (
             <p className="mt-1 text-xs text-muted">

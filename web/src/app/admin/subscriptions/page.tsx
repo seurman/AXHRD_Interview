@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { AdminSubscriptionEditor } from "@/components/admin/AdminSubscriptionEditor";
+import { BillingMigrationNotice } from "@/components/billing/BillingMigrationNotice";
+import { isMissingBillingTablesError } from "@/lib/billing/errors";
 import { planLabel } from "@/lib/billing/plans";
 
 export const dynamic = "force-dynamic";
@@ -9,19 +11,43 @@ export const dynamic = "force-dynamic";
 export default async function AdminSubscriptionsPage() {
   await requireSuperadmin("/admin/subscriptions");
 
-  const [subscriptions, organizations] = await Promise.all([
-    prisma.subscription.findMany({
-      where: { organizationId: { not: null } },
-      include: { organization: { select: { name: true } } },
-      orderBy: { updatedAt: "desc" },
-      take: 100,
-    }),
-    prisma.organization.findMany({
-      where: { status: "APPROVED" },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+  let subscriptions: Array<
+    Awaited<ReturnType<typeof prisma.subscription.findMany>>[number] & {
+      organization: { name: string } | null;
+    }
+  > = [];
+  let organizations: { id: string; name: string }[] = [];
+  let migrationRequired = false;
+
+  try {
+    [subscriptions, organizations] = await Promise.all([
+      prisma.subscription.findMany({
+        where: { organizationId: { not: null } },
+        include: { organization: { select: { name: true } } },
+        orderBy: { updatedAt: "desc" },
+        take: 100,
+      }),
+      prisma.organization.findMany({
+        where: { status: "APPROVED" },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
+    ]);
+  } catch (e) {
+    if (isMissingBillingTablesError(e)) {
+      migrationRequired = true;
+    } else {
+      throw e;
+    }
+  }
+
+  if (migrationRequired) {
+    return (
+      <div className="mx-auto max-w-4xl space-y-8">
+        <BillingMigrationNotice />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">

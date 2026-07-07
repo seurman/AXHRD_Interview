@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getBillingContext, getPastDueSubscription } from "@/lib/billing/subscription";
 import { getUsageSummary } from "@/lib/billing/usage";
 import { PLANS } from "@/lib/billing/plans";
+import { isMissingBillingTablesError } from "@/lib/billing/errors";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -10,28 +11,42 @@ export async function GET() {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
 
-  const [ctx, usage, pastDue] = await Promise.all([
-    getBillingContext(user.id),
-    getUsageSummary(user.id),
-    getPastDueSubscription(user.id),
-  ]);
+  try {
+    const [ctx, usage, pastDue] = await Promise.all([
+      getBillingContext(user.id),
+      getUsageSummary(user.id),
+      getPastDueSubscription(user.id),
+    ]);
 
-  return NextResponse.json({
-    planTier: ctx.planTier,
-    planName: PLANS[ctx.planTier].nameKo,
-    subscription: ctx.subscription
-      ? {
-          id: ctx.subscription.id,
-          status: ctx.subscription.status,
-          planTier: ctx.subscription.planTier,
-          currentPeriodStart: ctx.subscription.currentPeriodStart.toISOString(),
-          currentPeriodEnd: ctx.subscription.currentPeriodEnd.toISOString(),
-          cancelAtPeriodEnd: ctx.subscription.cancelAtPeriodEnd,
-        }
-      : null,
-    usage,
-    pastDue: !!pastDue,
-    orgRole: user.orgRole,
-    organizationId: user.organizationId,
-  });
+    return NextResponse.json({
+      planTier: ctx.planTier,
+      planName: PLANS[ctx.planTier].nameKo,
+      subscription: ctx.subscription
+        ? {
+            id: ctx.subscription.id,
+            status: ctx.subscription.status,
+            planTier: ctx.subscription.planTier,
+            currentPeriodStart: ctx.subscription.currentPeriodStart.toISOString(),
+            currentPeriodEnd: ctx.subscription.currentPeriodEnd.toISOString(),
+            cancelAtPeriodEnd: ctx.subscription.cancelAtPeriodEnd,
+          }
+        : null,
+      usage,
+      pastDue: !!pastDue,
+      orgRole: user.orgRole,
+      organizationId: user.organizationId,
+    });
+  } catch (e) {
+    if (isMissingBillingTablesError(e)) {
+      return NextResponse.json(
+        {
+          error: "구독 기능 DB 마이그레이션이 필요합니다.",
+          code: "BILLING_MIGRATION_REQUIRED",
+        },
+        { status: 503 }
+      );
+    }
+    console.error("[billing/status]", e);
+    return NextResponse.json({ error: "구독 정보를 불러오지 못했습니다." }, { status: 500 });
+  }
 }
