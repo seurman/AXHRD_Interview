@@ -1,29 +1,13 @@
 import Link from "next/link";
 import { requirePlatformAdmin, hasSuperadminAccess } from "@/lib/auth/guards";
-import { prisma } from "@/lib/prisma";
-import { parseFollowUpHints, parseRubricCriteria } from "@/lib/competency/bank";
+import { loadContentBankSnapshot } from "@/lib/competency/content-bank-data";
 import { ContentBankEditor } from "@/components/admin/ContentBankEditor";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminContentPage() {
   const user = await requirePlatformAdmin("/admin/content");
-
-  const [competencies, questions] = await Promise.all([
-    prisma.competency.findMany({
-      orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
-      include: { _count: { select: { questions: true } } },
-    }),
-    prisma.question.findMany({
-      orderBy: [
-        { competencyId: "asc" },
-        { level: "asc" },
-        { sortOrder: "asc" },
-        { externalId: "asc" },
-      ],
-      include: { competency: { select: { code: true } } },
-    }),
-  ]);
+  const { competencies, questions } = await loadContentBankSnapshot();
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
@@ -36,6 +20,9 @@ export default async function AdminContentPage() {
           모든 변경은 SUPERADMIN 감사 로그에 기록됩니다.
         </p>
         <div className="mt-3 flex flex-wrap gap-3 text-sm">
+          <Link href="/org/saas/settings/interview-kit" className="text-accent hover:underline">
+            기관 인터뷰 킷 빌더 →
+          </Link>
           {hasSuperadminAccess(user) && (
             <>
               <Link href="/admin/users" className="text-accent hover:underline">
@@ -53,30 +40,8 @@ export default async function AdminContentPage() {
       </div>
 
       <ContentBankEditor
-        initialCompetencies={competencies.map((c) => ({
-          id: c.id,
-          code: c.code,
-          nameKo: c.nameKo,
-          description: c.description,
-          sortOrder: c.sortOrder,
-          isActive: c.isActive,
-          rubricByLevel: c.rubricByLevel,
-          questionCount: c._count.questions,
-        }))}
-        initialQuestions={questions.map((q) => ({
-          id: q.id,
-          externalId: q.externalId,
-          competencyId: q.competencyId,
-          competencyCode: q.competency.code,
-          level: q.level,
-          template: q.template,
-          difficulty: q.difficulty,
-          discrimination: q.discrimination,
-          followUpHints: parseFollowUpHints(q.followUpHints),
-          rubricCriteria: parseRubricCriteria(q.rubricCriteria),
-          isActive: q.isActive,
-          sortOrder: q.sortOrder,
-        }))}
+        initialCompetencies={competencies}
+        initialQuestions={questions}
         canManagePermissions={hasSuperadminAccess(user)}
       />
     </div>

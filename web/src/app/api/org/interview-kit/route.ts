@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getActiveCompetencies } from "@/lib/competency/bank";
+import { loadContentBankSnapshot } from "@/lib/competency/content-bank-data";
 import {
   canUseInterviewKitBuilder,
   MIN_ORG_KIT_QUESTIONS,
@@ -20,45 +20,25 @@ export async function GET() {
 
   const access = await canUseInterviewKitBuilder(user);
   if (!access.allowed) {
-    const status =
-      access.reason === "not_admin" || access.reason === "no_org" ? 403 : 402;
     return NextResponse.json(
       {
         error:
-          access.reason === "plan_required"
-            ? "ORG_STANDARD 또는 ORG_ENTERPRISE 플랜이 필요합니다."
-            : "권한이 없습니다.",
+          access.reason === "not_admin"
+            ? "기관 ADMIN 또는 플랫폼 ADMIN 권한이 필요합니다."
+            : "연결된 기관이 없습니다. 프로필에서 기관을 연결하거나 기관을 생성해 주세요.",
         code: access.reason,
       },
-      { status }
+      { status: 403 }
     );
   }
 
-  const organizationId = user.organizationId!;
-
-  const [competencies, questions, kits] = await Promise.all([
-    getActiveCompetencies(),
-    prisma.question.findMany({
-      where: { isActive: true, competency: { isActive: true } },
-      orderBy: [{ competency: { sortOrder: "asc" } }, { level: "asc" }, { sortOrder: "asc" }],
-      select: {
-        id: true,
-        externalId: true,
-        level: true,
-        template: true,
-        competency: { select: { code: true } },
-      },
-    }),
-    prisma.orgInterviewKit.findMany({
-      where: { organizationId },
-    }),
-  ]);
-
-  const competencyRows = await prisma.competency.findMany({
-    where: { code: { in: competencies.map((c) => c.code) } },
-    select: { code: true, rubricByLevel: true },
+  const organizationId = access.organizationId;
+  const bank = await loadContentBankSnapshot();
+  const kits = await prisma.orgInterviewKit.findMany({
+    where: { organizationId },
   });
-  const rubricByCode = new Map(competencyRows.map((c) => [c.code, c.rubricByLevel]));
+
+  const rubricByCode = new Map(bank.competencies.map((c) => [c.code, c.rubricByLevel]));
 
   return NextResponse.json({
     organizationId,
@@ -66,18 +46,22 @@ export async function GET() {
       min: MIN_ORG_KIT_QUESTIONS,
       recommended: RECOMMENDED_ORG_KIT_QUESTIONS,
     },
-    competencies: competencies.map((c) => ({
-      code: c.code,
-      nameKo: c.nameKo,
-      description: c.description,
-      platformRubricOptions: platformRubricOptions(c.code, rubricByCode.get(c.code)),
-    })),
-    questions: questions.map((q) => ({
+    competencies: bank.competencies
+      .filter((c) => c.isActive)
+      .map((c) => ({
+        code: c.code,
+        nameKo: c.nameKo,
+        description: c.description,
+        platformRubricOptions: platformRubricOptions(c.code, rubricByCode.get(c.code)),
+      })),
+    questions: bank.questions.map((q) => ({
       id: q.id,
       externalId: q.externalId,
-      competencyCode: q.competency.code,
+      competencyCode: q.competencyCode,
       level: q.level,
       template: q.template,
+      isActive: q.isActive,
+      sortOrder: q.sortOrder,
     })),
     kits: kits.map((k) => ({
       competency: k.competency,
@@ -103,18 +87,7 @@ export async function PUT(req: Request) {
 
   const access = await canUseInterviewKitBuilder(user);
   if (!access.allowed) {
-    const status =
-      access.reason === "not_admin" || access.reason === "no_org" ? 403 : 402;
-    return NextResponse.json(
-      {
-        error:
-          access.reason === "plan_required"
-            ? "ORG_STANDARD 또는 ORG_ENTERPRISE 플랜이 필요합니다."
-            : "권한이 없습니다.",
-        code: access.reason,
-      },
-      { status }
-    );
+    return NextResponse.json({ error: "권한이 없습니다.", code: access.reason }, { status: 403 });
   }
 
   const body = (await req.json()) as PutBody;
@@ -158,7 +131,7 @@ export async function PUT(req: Request) {
     }
   }
 
-  const organizationId = user.organizationId!;
+  const organizationId = access.organizationId;
 
   const kit = await prisma.orgInterviewKit.upsert({
     where: { organizationId_competency: { organizationId, competency } },
@@ -206,7 +179,7 @@ export async function DELETE(req: Request) {
   }
 
   await prisma.orgInterviewKit.deleteMany({
-    where: { organizationId: user.organizationId!, competency },
+    where: { organizationId: access.organizationId, competency },
   });
 
   return NextResponse.json({ ok: true });

@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import type { PlatformRole } from "@prisma/client";
 import { parseRubricCriteria } from "@/lib/competency/bank";
 import { rubricForNcsLevel } from "@/lib/competency/ncs-rubric";
-import { isMissingBillingTablesError } from "@/lib/billing/errors";
-import { isPaidSubscriptionActive } from "@/lib/billing/subscription";
+import { isPlatformAdmin } from "@/lib/admin/auth";
 import {
   IRT_LEVEL_COUNT,
   MIN_CANDIDATES_PER_LEVEL,
@@ -14,46 +14,52 @@ export const RECOMMENDED_ORG_KIT_QUESTIONS =
   MIN_CANDIDATES_PER_LEVEL * IRT_LEVEL_COUNT;
 export const MIN_ORG_KIT_QUESTIONS = IRT_LEVEL_COUNT;
 
-const ORG_KIT_PLAN_TIERS = ["ORG_STANDARD", "ORG_ENTERPRISE"] as const;
-
 export type InterviewKitAccess =
-  | { allowed: true }
-  | { allowed: false; reason: "not_admin" | "no_org" | "plan_required" };
+  | { allowed: true; organizationId: string }
+  | { allowed: false; reason: "not_admin" | "no_org" };
 
-/** ORG_STANDARD/ORG_ENTERPRISE 구독 여부. Subscription 테이블 없으면 null(폴백 모드). */
-export async function organizationHasInterviewKitPlan(
-  organizationId: string
-): Promise<boolean | null> {
-  try {
-    const subs = await prisma.subscription.findMany({
-      where: {
-        organizationId,
-        planTier: { in: [...ORG_KIT_PLAN_TIERS] },
-        status: { in: ["ACTIVE", "TRIALING"] },
-        currentPeriodEnd: { gt: new Date() },
-      },
-    });
-    return subs.some(isPaidSubscriptionActive);
-  } catch (e) {
-    if (isMissingBillingTablesError(e)) return null;
-    throw e;
-  }
-}
-
-export async function canUseInterviewKitBuilder(user: {
+type KitUser = {
+  id: string;
   orgRole: string;
   organizationId: string | null;
-}): Promise<InterviewKitAccess> {
+  email: string;
+  platformRole: PlatformRole;
+};
+
+/** 킷 저장 대상 기관 — 소속 기관 우선, 플랫폼 ADMIN은 ADMIN 소속·승인 기관 순으로 휴리스틱 폴백 */
+export async function resolveKitOrganizationId(user: KitUser): Promise<string | null> {
+  if (user.organizationId) return user.organizationId;
+
+  if (!isPlatformAdmin(user)) return null;
+
+  const asOrgAdmin = await prisma.organization.findFirst({
+    where: { members: { some: { id: user.id, orgRole: "ADMIN" } } },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
+  if (asOrgAdmin) return asOrgAdmin.id;
+
+  const approved = await prisma.organization.findFirst({
+    where: { status: "APPROVED" },
+    orderBy: { createdAt: "asc" },
+    select: { id: true },
+  });
+  return approved?.id ?? null;
+}
+
+/** org ADMIN 또는 플랫폼 ADMIN(문항 관리 권한) — 구독/결제 여부는 검사하지 않음 */
+export async function canUseInterviewKitBuilder(user: KitUser): Promise<InterviewKitAccess> {
+  const platformAdmin = isPlatformAdmin(user);
+
+  if (platformAdmin) {
+    const organizationId = await resolveKitOrganizationId(user);
+    if (!organizationId) return { allowed: false, reason: "no_org" };
+    return { allowed: true, organizationId };
+  }
+
   if (!user.organizationId) return { allowed: false, reason: "no_org" };
   if (user.orgRole !== "ADMIN") return { allowed: false, reason: "not_admin" };
-
-  const hasPlan = await organizationHasInterviewKitPlan(user.organizationId);
-  if (hasPlan === null) {
-    // TODO: billing 마이그레이션 완료 후 ORG_STANDARD/ORG_ENTERPRISE만 허용
-    return { allowed: true };
-  }
-  if (hasPlan) return { allowed: true };
-  return { allowed: false, reason: "plan_required" };
+  return { allowed: true, organizationId: user.organizationId };
 }
 
 export function parseSelectedQuestionIds(raw: unknown): string[] {
@@ -133,7 +139,6 @@ export async function filterQuestionsByOrgKit<T extends PoolQuestion & { id: str
   return applyOrgKitQuestionFilter(params.questions, ids);
 }
 
-/** UI/API용 — 역량별 플랫폼 L3 루브릭 한 줄 요약 */
 export async function resolveOrgKitRubricForUser(
   userId: string,
   competency: string

@@ -19,9 +19,10 @@ export async function AppHeader() {
     !!user &&
     !!user.organizationId &&
     (user.orgRole === "STAFF" || user.orgRole === "ADMIN");
-  const isOrgAdmin = !!user && user.orgRole === "ADMIN";
+  const isOrgAdmin = !!user && user.orgRole === "ADMIN" && !!user.organizationId;
   const isSuperAdmin = !!user && hasSuperadminAccess(user);
   const isPlatformAdminUser = !!user && isPlatformAdmin(user);
+  const canSaasSettings = isOrgAdmin || isPlatformAdminUser;
 
   const mainHrefs = user
     ? [
@@ -33,16 +34,19 @@ export async function AppHeader() {
       ]
     : [];
 
-  const saasLinks = user && isOrgStaff
-    ? {
-        titleKey: "saas" as const,
-        links: [{ href: "/org/dashboard", labelKey: "cohortDashboard" as const }],
-        settingsTitleKey: "settings" as const,
-        settingsLinks: isOrgAdmin
-          ? [{ href: "/org/saas/settings", labelKey: "settingsHub" as const }]
-          : [],
-      }
-    : null;
+  const saasLinks =
+    user && (isOrgStaff || isPlatformAdminUser)
+      ? {
+          titleKey: "saas" as const,
+          links: isOrgStaff
+            ? [{ href: "/org/dashboard", labelKey: "cohortDashboard" as const }]
+            : [],
+          settingsTitleKey: "settings" as const,
+          settingsLinks: canSaasSettings
+            ? [{ href: "/org/saas/settings", labelKey: "settingsHub" as const }]
+            : [],
+        }
+      : null;
 
   const adminLinks = user
     ? [

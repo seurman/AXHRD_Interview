@@ -24,11 +24,13 @@ export async function requireOrgStaff(nextPath?: string) {
   return user as typeof user & { organizationId: string };
 }
 
-/** 기관 생성자(ADMIN) 전용 — 인터뷰 킷 빌더 등 */
-export async function requireOrgAdmin(nextPath?: string) {
+/** 기관 생성자(ADMIN) 또는 플랫폼 ADMIN — 인터뷰 킷 빌더 */
+export async function requireInterviewKitUser(nextPath?: string) {
   const user = await requirePageUser(nextPath);
-  if (!user.organizationId || user.orgRole !== "ADMIN") notFound();
-  return user as typeof user & { organizationId: string };
+  const { canUseInterviewKitBuilder } = await import("@/lib/org/interview-kit");
+  const access = await canUseInterviewKitBuilder(user);
+  if (!access.allowed) notFound();
+  return { user, organizationId: access.organizationId };
 }
 
 /** 플랫폼 슈퍼어드민(운영자) 이메일 허용 목록. 콤마로 구분해 여러 명 등록 가능. */

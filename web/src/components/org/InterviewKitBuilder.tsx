@@ -12,6 +12,7 @@ type ApiQuestion = {
   competencyCode: string;
   level: number;
   template: string;
+  isActive: boolean;
 };
 
 type ApiCompetency = {
@@ -260,15 +261,9 @@ export function InterviewKitBuilder() {
     return (
       <div className="card-luxe space-y-4 p-6">
         <p className="text-sm text-red-600">{error}</p>
-        {error.includes("ORG_STANDARD") || error.includes("플랜") ? (
-          <Link href="/pricing" className="btn-primary inline-block text-sm">
-            요금제 보기
-          </Link>
-        ) : (
-          <Link href="/org/dashboard" className="text-sm text-accent hover:underline">
-            코호트 대시보드로
-          </Link>
-        )}
+        <Link href="/org/saas/settings" className="text-sm text-accent hover:underline">
+          기관 설정으로
+        </Link>
       </div>
     );
   }
@@ -337,23 +332,32 @@ export function InterviewKitBuilder() {
           <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
             {bankQuestions.map((q) => {
               const checked = activeDraft.selectedIds.includes(q.id);
+              const disabled = !q.isActive;
               return (
                 <label
                   key={q.id}
-                  className={`flex cursor-pointer gap-3 rounded-lg border p-3 text-sm transition ${
-                    checked
-                      ? "border-accent/40 bg-accent/5"
-                      : "border-card-border hover:border-accent/20"
+                  className={`flex gap-3 rounded-lg border p-3 text-sm transition ${
+                    disabled
+                      ? "cursor-not-allowed border-card-border/60 opacity-50"
+                      : checked
+                        ? "cursor-pointer border-accent/40 bg-accent/5"
+                        : "cursor-pointer border-card-border hover:border-accent/20"
                   }`}
                 >
                   <input
                     type="checkbox"
                     className="mt-1 shrink-0"
                     checked={checked}
+                    disabled={disabled}
                     onChange={(e) => toggleQuestion(q.id, e.target.checked)}
                   />
                   <div className="min-w-0">
-                    <span className="text-xs font-medium text-gold">L{q.level}</span>
+                    <span className="text-xs font-medium text-gold">
+                      L{q.level}
+                      {!q.isActive && (
+                        <span className="ml-1 text-muted">(비활성)</span>
+                      )}
+                    </span>
                     <p className="mt-0.5 text-foreground">{previewText(q.template)}</p>
                   </div>
                 </label>
@@ -384,6 +388,7 @@ export function InterviewKitBuilder() {
                     type="button"
                     className="shrink-0 text-muted hover:text-red-600"
                     aria-label="선택 해제"
+                    onPointerDown={(e) => e.stopPropagation()}
                     onClick={() => toggleQuestion(id, false)}
                   >
                     <Trash2 className="h-4 w-4" />

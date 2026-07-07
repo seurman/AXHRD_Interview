@@ -1,9 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { Reorder } from "framer-motion";
 import { GripVertical } from "lucide-react";
-
-const ITEM_HEIGHT = 76;
 
 type Props = {
   ids: string[];
@@ -11,19 +9,8 @@ type Props = {
   renderItem: (id: string, index: number) => React.ReactNode;
 };
 
-/** framer-motion drag + layout — v11에는 Reorder export가 없어 동일 UX로 구현 */
+/** framer-motion Reorder — Greenhouse/HireVue 스타일 세로 드래그 정렬 */
 export function MotionReorderList({ ids, onReorder, renderItem }: Props) {
-  function moveItem(fromIndex: number, offsetY: number) {
-    const delta = Math.round(offsetY / ITEM_HEIGHT);
-    if (delta === 0) return;
-    const toIndex = Math.max(0, Math.min(ids.length - 1, fromIndex + delta));
-    if (toIndex === fromIndex) return;
-    const next = [...ids];
-    const [removed] = next.splice(fromIndex, 1);
-    next.splice(toIndex, 0, removed);
-    onReorder(next);
-  }
-
   if (ids.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-card-border p-6 text-center text-sm text-muted">
@@ -33,22 +20,31 @@ export function MotionReorderList({ ids, onReorder, renderItem }: Props) {
   }
 
   return (
-    <ul className="space-y-2">
+    <Reorder.Group
+      axis="y"
+      values={ids}
+      onReorder={onReorder}
+      className="flex list-none flex-col gap-2 p-0"
+    >
       {ids.map((id, index) => (
-        <motion.li
+        <Reorder.Item
           key={id}
-          layout
-          drag="y"
-          dragConstraints={{ top: 0, bottom: 0 }}
-          dragElastic={0.15}
-          onDragEnd={(_, info) => moveItem(index, info.offset.y)}
+          value={id}
           className="flex cursor-grab items-start gap-2 rounded-xl border border-card-border bg-background p-3 active:cursor-grabbing"
           style={{ touchAction: "none" }}
+          whileDrag={{
+            scale: 1.02,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+            zIndex: 10,
+          }}
         >
-          <GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-muted" aria-hidden />
+          <GripVertical
+            className="mt-0.5 h-4 w-4 shrink-0 text-muted"
+            aria-hidden
+          />
           <div className="min-w-0 flex-1">{renderItem(id, index)}</div>
-        </motion.li>
+        </Reorder.Item>
       ))}
-    </ul>
+    </Reorder.Group>
   );
 }

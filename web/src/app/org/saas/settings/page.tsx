@@ -1,20 +1,21 @@
 import Link from "next/link";
 import { ChevronRight, ClipboardList } from "lucide-react";
-import { requireOrgStaff } from "@/lib/auth/guards";
+import { requirePageUser } from "@/lib/auth/guards";
+import { canUseInterviewKitBuilder } from "@/lib/org/interview-kit";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrgSaasSettingsPage() {
-  const user = await requireOrgStaff("/org/saas/settings");
-  const isAdmin = user.orgRole === "ADMIN";
+  const user = await requirePageUser("/org/saas/settings");
+  const access = await canUseInterviewKitBuilder(user);
 
-  const items = isAdmin
+  const items = access.allowed
     ? [
         {
           href: "/org/saas/settings/interview-kit",
           title: "인터뷰 킷 빌더",
           description:
-            "플랫폼 문항 뱅크에서 역량별 문항 선택·순서·루브릭 강조점을 기관 맞춤으로 설정합니다.",
+            "관리자 문항 뱅크와 동일한 문항·루브릭 데이터로 역량별 킷을 구성합니다.",
           icon: ClipboardList,
         },
       ]
@@ -32,7 +33,9 @@ export default async function OrgSaasSettingsPage() {
 
       {items.length === 0 ? (
         <div className="card-luxe p-6 text-sm text-muted">
-          설정 메뉴는 기관 관리자(ADMIN)만 이용할 수 있습니다.
+          {!access.allowed && access.reason === "not_admin"
+            ? "기관 ADMIN 또는 플랫폼 ADMIN(문항 관리) 권한이 필요합니다."
+            : "연결된 기관이 없습니다. 프로필에서 기관을 연결하거나 기관을 생성해 주세요."}
         </div>
       ) : (
         <ul className="space-y-3">
