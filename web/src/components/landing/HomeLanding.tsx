@@ -42,40 +42,35 @@ export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
 
   return (
     <div className="space-y-0">
-      <section className="hero-premium relative px-6 py-20 sm:px-12 md:py-28">
+      <section className="hero-blue relative px-6 py-20 sm:px-12 md:py-28">
         <div className="relative mx-auto max-w-4xl text-center">
-          <p className="section-eyebrow">{h.hero.eyebrow}</p>
+          <p className="section-eyebrow hero-eyebrow">{h.hero.eyebrow}</p>
 
-          <h1 className="mt-5 text-4xl font-extrabold leading-[1.15] tracking-tight sm:text-5xl lg:text-[3.4rem]">
+          <h1 className="mt-5 text-4xl font-extrabold leading-[1.15] tracking-tight text-foreground sm:text-5xl lg:text-[3.4rem]">
             {h.hero.titleLine1}
             <br />
-            <span className="bg-gradient-to-r from-gold via-gold-light to-gold bg-clip-text text-transparent">
-              {h.hero.titleHighlight}
-            </span>
+            <span className="hero-highlight">{h.hero.titleHighlight}</span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-xl text-base leading-[1.75] text-white/65 sm:text-lg">
+          <p className="mx-auto mt-6 max-w-xl text-base leading-[1.75] text-muted sm:text-lg">
             {h.hero.subtitle}
           </p>
 
           <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <Link href={loggedIn ? "/interview/setup" : "/auth/register"} className="btn-gold">
+            <Link href={loggedIn ? "/interview/setup" : "/auth/register"} className="btn-primary px-8 py-4 text-base">
               {loggedIn ? h.hero.ctaStartLoggedIn : h.hero.ctaStart}
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link href="/demo" className="btn-outline-gold">
+            <Link href="/demo" className="btn-outline-primary">
               {h.hero.ctaDemo}
             </Link>
           </div>
 
           <div className="mx-auto mt-14 grid max-w-lg grid-cols-3 gap-3">
             {stats.map((s) => (
-              <div
-                key={s.label}
-                className="rounded-2xl border border-white/10 bg-white/5 px-3 py-4 backdrop-blur"
-              >
-                <p className="text-2xl font-bold text-gold">{s.value}</p>
-                <p className="mt-0.5 text-[0.7rem] font-medium leading-snug text-white/50">
+              <div key={s.label} className="hero-stat rounded-2xl px-3 py-4">
+                <p className="hero-stat-value text-2xl font-bold">{s.value}</p>
+                <p className="hero-stat-label mt-0.5 text-[0.7rem] font-medium leading-snug">
                   {s.label}
                 </p>
               </div>
@@ -164,12 +159,12 @@ export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
       </section>
 
       <Reveal>
-        <section className="hero-premium mb-8 px-6 py-16 text-center sm:px-10">
-          <h2 className="text-3xl font-extrabold sm:text-4xl">{h.cta.title}</h2>
-          <p className="mx-auto mt-3 max-w-md leading-relaxed text-white/60">{h.cta.subtitle}</p>
+        <section className="hero-blue mb-8 px-6 py-16 text-center sm:px-10">
+          <h2 className="text-3xl font-extrabold text-foreground sm:text-4xl">{h.cta.title}</h2>
+          <p className="mx-auto mt-3 max-w-md leading-relaxed text-muted">{h.cta.subtitle}</p>
           <Link
             href={loggedIn ? "/dashboard" : "/auth/register"}
-            className="btn-gold mt-8 px-10"
+            className="btn-primary mt-8 px-10 py-4 text-base"
           >
             {loggedIn ? h.cta.buttonLoggedIn : h.cta.button}
             <ArrowRight className="h-4 w-4" />

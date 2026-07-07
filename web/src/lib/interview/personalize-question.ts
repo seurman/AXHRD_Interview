@@ -10,6 +10,7 @@
  */
 
 import { competencyLabel, jobRoleLabel } from "@/lib/labels";
+import { buildNcsRubric } from "@/lib/competency/ncs-rubric";
 import { generateGeminiText } from "@/lib/gemini/client";
 import type { ResumeSummary } from "@/lib/interview/resume-summary";
 
@@ -242,13 +243,8 @@ function heuristicPersonalize(
 }
 
 function heuristicRubric(competency: string, highlights: string[]): string[] {
-  const label = competencyLabel(competency);
+  const rubric = buildNcsRubric(competency).slice(0, 3);
   const anchor = highlights[0];
-  const rubric = [
-    `${label}과 관련된 구체적 상황·과제를 설명했는가`,
-    "본인이 직접 수행한 행동을 명확히 서술했는가",
-    "수치나 결과로 성과를 뒷받침했는가",
-  ];
   if (anchor) {
     rubric.push(`자소서에 언급된 "${anchor.slice(0, 40)}" 경험과 연결지어 답변했는가`);
   }
@@ -256,10 +252,5 @@ function heuristicRubric(competency: string, highlights: string[]): string[] {
 }
 
 export function buildGenericRubric(competency: string): string[] {
-  const label = competencyLabel(competency);
-  return [
-    `${label}과 관련된 구체적 사례(상황·과제)를 제시했는가`,
-    "본인이 직접 수행한 행동을 명확히 서술했는가",
-    "수치나 결과로 성과를 뒷받침했는가",
-  ];
+  return buildNcsRubric(competency);
 }

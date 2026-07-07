@@ -287,7 +287,7 @@ body {
   color: #0c1222;
 }
 
-/* 다크 프리미엄 히어로 */
+/* 다크 프리미엄 히어로 — 발견 리포트 등 소규모 CTA용 */
 .hero-premium {
   position: relative;
   overflow: hidden;
@@ -322,6 +322,95 @@ body {
     0 0 0 80px rgb(47 95 238 / 0.04),
     0 0 0 120px rgb(199 154 90 / 0.02);
   pointer-events: none;
+}
+
+/* 홈 히어로 — 파란 프리미엄 (데스크탑·모바일 공통) */
+.hero-blue {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.75rem;
+  background: linear-gradient(155deg, #f5f8ff 0%, #eaf0ff 38%, #dce8ff 72%, #d0e0ff 100%);
+  border: 1px solid rgb(47 95 238 / 0.14);
+  color: var(--color-foreground);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.8) inset,
+    0 24px 48px -24px rgb(47 95 238 / 0.18);
+}
+
+.hero-blue::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 55% 45% at 12% 8%, rgb(47 95 238 / 0.14) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 88% 18%, rgb(106 123 242 / 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 35% at 70% 92%, rgb(47 95 238 / 0.08) 0%, transparent 45%);
+  pointer-events: none;
+}
+
+.hero-blue::after {
+  content: "";
+  position: absolute;
+  right: -6%;
+  top: 42%;
+  height: 380px;
+  width: 380px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  border: 1px solid rgb(47 95 238 / 0.1);
+  box-shadow:
+    0 0 0 36px rgb(47 95 238 / 0.03),
+    0 0 0 72px rgb(106 123 242 / 0.025);
+  pointer-events: none;
+}
+
+.hero-blue .hero-eyebrow {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.hero-blue .hero-highlight {
+  background: linear-gradient(120deg, var(--color-primary) 0%, var(--color-primary-light) 55%, var(--color-accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-blue .hero-stat {
+  border: 1px solid rgb(47 95 238 / 0.12);
+  background: rgb(255 255 255 / 0.72);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px -6px rgb(47 95 238 / 0.12);
+}
+
+.hero-blue .hero-stat-value {
+  color: var(--color-primary);
+}
+
+.hero-blue .hero-stat-label {
+  color: var(--color-muted);
+}
+
+.btn-outline-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  border-radius: 9999px;
+  border: 1px solid rgb(47 95 238 / 0.35);
+  background: rgb(255 255 255 / 0.65);
+  padding: 0.9rem 1.75rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-primary);
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.btn-outline-primary:hover {
+  background: rgb(255 255 255 / 0.9);
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 14px -4px rgb(47 95 238 / 0.2);
 }
 
 .section-eyebrow {
