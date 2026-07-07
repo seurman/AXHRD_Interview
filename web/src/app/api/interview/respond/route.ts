@@ -16,6 +16,7 @@ import {
 import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { buildAnswerKeyPointFeedback } from "@/lib/interview/feedback-helpers";
+import { resolveOrgKitRubricForUser } from "@/lib/org/interview-kit";
 import type { CompetencyState, ItemParams } from "@/types";
 
 export async function POST(req: Request) {
@@ -369,6 +370,10 @@ async function handleRespond(req: Request, userId: string) {
       const nextTier = pressureTierFromLevel(
         irtResult.competency_states[next.competency.code]?.current_level ?? 2
       );
+      const orgKitRubric = await resolveOrgKitRubricForUser(
+        session.userId,
+        next.competency.code
+      );
       // 이 시점의 next 문항은 이미 이번 턴에 문항 하나를 답한 뒤라(updatedAdministered에
       // 최소 1개 포함) 해당 역량의 2번째 이상 문항이다 — 첫 문항만 자소서로 맞춤화한다는
       // 정책에 따라 여기서는 항상 일반 질문(Gemini 미호출)으로 처리한다.
@@ -376,7 +381,7 @@ async function handleRespond(req: Request, userId: string) {
         { ...session, irtState: serializeIrtState(updatedState) },
         next,
         rationale,
-        { skipPersonalization: true, pressureTier: nextTier }
+        { skipPersonalization: true, pressureTier: nextTier, orgKitRubric }
       );
     })(),
   ]);

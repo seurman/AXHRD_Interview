@@ -4,6 +4,7 @@ import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
 import { InterviewSession } from "@/components/interview/InterviewSession";
 import { parseIrtState, defaultCompetencyStates } from "@/lib/irt-state";
 import { buildPersonalizedQuestion } from "@/lib/interview/build-question";
+import { resolveOrgKitRubricForUser } from "@/lib/org/interview-kit";
 import { buildQuestionRationale } from "@/lib/interview/rationale";
 import { pressureTierFromLevel } from "@/lib/interview/persona";
 import { competencyLabel } from "@/lib/labels";
@@ -53,11 +54,16 @@ export default async function InterviewPage({ params }: PageProps) {
       // 압박 강도 적응형 조절 — 현재까지 추정된 역량 레벨(current_level)을 그대로
       // 면접관 톤에도 재사용한다. 세션 시작 직후는 기본값(레벨 2, NEUTRAL)이다.
       const currentLevel = stored.competencies[q.competency.code]?.current_level ?? 2;
+      const orgKitRubric = await resolveOrgKitRubricForUser(user.id, q.competency.code);
       currentQuestion = await buildPersonalizedQuestion(
         session,
         q,
         buildQuestionRationale({ level: q.level }),
-        { skipPersonalization: !isFirstItem, pressureTier: pressureTierFromLevel(currentLevel) }
+        {
+          skipPersonalization: !isFirstItem,
+          pressureTier: pressureTierFromLevel(currentLevel),
+          orgKitRubric,
+        }
       );
     }
   }

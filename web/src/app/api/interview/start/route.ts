@@ -16,6 +16,7 @@ import { matchPersona } from "@/lib/interview/persona-archetype";
 import { summarizeResume } from "@/lib/interview/resume-summary";
 import { parseResumeSummary } from "@/lib/interview/build-question";
 import { filterAndRankQuestionPool } from "@/lib/interview/question-pool";
+import { filterQuestionsByOrgKit } from "@/lib/org/interview-kit";
 import { COMPETENCY_CODES, INDUSTRY_CODES, JOB_ROLES, COMPANY_SIZE_CODES } from "@/types";
 import type {
   CompanyContext,
@@ -260,13 +261,19 @@ export async function POST(req: Request) {
     );
   }
 
+  const kitFilteredQuestions = await filterQuestionsByOrgKit({
+    organizationId: user.organizationId,
+    competency,
+    questions,
+  });
+
   // 이 사용자가 이 역량에서 이미 답했던 문항은 기본적으로 제외하고(반복 출제 방지),
   // 남은 후보 중에서는 자소서 요약·직무·JD 중점 역량과 더 관련 있어 보이는 문항을
   // 우선 남긴다. IRT 엔진 자체의 통계적 선택 로직(2PL 정보량 기반)은 그대로 둔다.
   const rankedQuestions = await filterAndRankQuestionPool({
     userId: user.id,
     competency,
-    questions,
+    questions: kitFilteredQuestions,
     resumeSummary: parseResumeSummary(resume?.parsedTags),
     jobRole,
     interviewStyleFocus: interviewStyle.focus,

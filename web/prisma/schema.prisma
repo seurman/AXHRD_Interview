@@ -134,6 +134,7 @@ model Organization {
 
   members       User[]
   subscriptions Subscription[]
+  interviewKits OrgInterviewKit[]
 }
 
 // ── User ──
@@ -167,6 +168,7 @@ model User {
   adminAuditLogs  AdminAuditLog[] @relation("AdminAuditActor")
   auditRollbacks  AdminAuditLog[] @relation("AdminAuditRollback")
   subscriptions   Subscription[]
+  orgInterviewKitUpdates OrgInterviewKit[] @relation("OrgInterviewKitUpdatedBy")
 
   @@index([organizationId])
 }
@@ -620,4 +622,24 @@ model PaymentTransaction {
   createdAt      DateTime                 @default(now())
 
   @@index([subscriptionId])
+}
+
+/** B2B 기관 인터뷰 킷 — 플랫폼 문항 뱅크에서 선택·순서·루브릭 강조점만 커스터마이즈 */
+model OrgInterviewKit {
+  id                   String       @id @default(cuid())
+  organizationId       String
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /** Competency.code (COMMUNICATION 등) */
+  competency           String
+  /** 드래그 순서대로 저장되는 Question.id 배열 */
+  selectedQuestionIds  Json         @default("[]")
+  /** 체크된 플랫폼 기준 + 기관 추가 문구 */
+  customRubricCriteria Json         @default("[]")
+  updatedByUserId      String?
+  updatedBy            User?        @relation("OrgInterviewKitUpdatedBy", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+  updatedAt            DateTime     @updatedAt
+  createdAt            DateTime     @default(now())
+
+  @@unique([organizationId, competency])
+  @@index([organizationId])
 }

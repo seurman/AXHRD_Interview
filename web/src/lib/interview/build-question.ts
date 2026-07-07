@@ -24,7 +24,11 @@ type QuestionRow = {
   competency: { code: string; rubricByLevel?: unknown };
 };
 
-function rubricForQuestion(question: QuestionRow): string[] {
+function rubricForQuestion(
+  question: QuestionRow,
+  orgKitRubric?: string[] | null
+): string[] {
+  if (orgKitRubric && orgKitRubric.length > 0) return orgKitRubric;
   const stored = parseRubricCriteria(question.rubricCriteria);
   if (stored.length > 0) return stored;
   const compLevel = rubricForCompetencyLevel(question.competency.rubricByLevel, question.level);
@@ -88,7 +92,12 @@ export async function buildPersonalizedQuestion(
   session: SessionContext,
   question: QuestionRow,
   rationale?: string,
-  options?: { skipPersonalization?: boolean; pressureTier?: PressureTier }
+  options?: {
+    skipPersonalization?: boolean;
+    pressureTier?: PressureTier;
+    /** 기관 인터뷰 킷 customRubricCriteria — 있으면 플랫폼/문항 루브릭 대신 사용 */
+    orgKitRubric?: string[] | null;
+  }
 ): Promise<InterviewQuestion> {
   const stored = parseIrtState(session.irtState);
   const cached = stored.personalizedQuestions?.[question.externalId];
@@ -114,7 +123,7 @@ export async function buildPersonalizedQuestion(
   // 역량당 첫 문항만 자소서 인용(Gemini 호출)으로 맞춤화하고, 나머지 문항은 일반
   // 질문으로 처리해 턴당 지연을 줄인다. 채점 루브릭은 일반 기준으로 캐싱해 둔다.
   if (options?.skipPersonalization) {
-    const rubric = rubricForQuestion(question);
+    const rubric = rubricForQuestion(question, options.orgKitRubric);
     const personalizedQuestions = {
       ...stored.personalizedQuestions,
       [question.externalId]: { text: question.template, rubric, resumePersonalized: false },
@@ -154,7 +163,12 @@ export async function buildPersonalizedQuestion(
   });
 
   const adminRubric = parseRubricCriteria(question.rubricCriteria);
-  const rubric = adminRubric.length > 0 ? adminRubric : result.rubric;
+  const rubric =
+    options?.orgKitRubric && options.orgKitRubric.length > 0
+      ? options.orgKitRubric
+      : adminRubric.length > 0
+        ? adminRubric
+        : result.rubric;
 
   const personalizedQuestions = {
     ...stored.personalizedQuestions,

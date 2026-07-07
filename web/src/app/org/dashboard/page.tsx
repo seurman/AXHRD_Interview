@@ -69,6 +69,21 @@ export default async function OrgDashboardPage() {
         </div>
       </div>
 
+      {user.orgRole === "ADMIN" && (
+        <div className="card-luxe flex flex-wrap items-center justify-between gap-4 p-5">
+          <div>
+            <p className="text-sm font-medium text-foreground">인터뷰 킷 빌더</p>
+            <p className="mt-1 text-xs text-muted">
+              역량별 문항 풀·루브릭 강조점을 기관 맞춤으로 설정합니다 (ORG_STANDARD /
+              ORG_ENTERPRISE).
+            </p>
+          </div>
+          <Link href="/org/settings/interview-kit" className="btn-secondary shrink-0 text-sm">
+            킷 설정하기
+          </Link>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="card-luxe p-5 text-center">
           <p className="text-3xl font-bold text-foreground">{data.memberCount}</p>

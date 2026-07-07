@@ -29,7 +29,9 @@ export interface PoolQuestion {
 const MIN_SESSIONS_BEFORE_REPEAT = 3;
 const POOR_SCORE_THRESHOLD = 0.5;
 /** 같은 난이도(level) 안에서 연관도로 추릴 때 최소 이만큼은 남겨서 IRT가 고를 여지를 준다 */
-const MIN_CANDIDATES_PER_LEVEL = 2;
+export const MIN_CANDIDATES_PER_LEVEL = 2;
+/** IRT level 1~5 — 기관 킷 최소 권장 문항 수 산정에 사용 */
+export const IRT_LEVEL_COUNT = 5;
 
 export async function filterAndRankQuestionPool(params: {
   userId: string;

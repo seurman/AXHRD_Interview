@@ -100,6 +100,14 @@
   - **환경변수**: `NEXT_PUBLIC_TOSS_CLIENT_KEY`, `TOSS_SECRET_KEY`, `CRON_SECRET` (`web/.env.example` 참고)
   - **토스페이먼츠 자동결제(빌링)는 별도 리스크 심사·추가 계약 필요** — [빌링 가이드](https://docs.tosspayments.com/guides/v2/billing). 테스트 키로 카드 등록·빌링키 발급까지는 가능하나, **라이브 자동결제 승인은 심사 완료 후**만 가능. 운영 전 개발자센터에서 자동결제 계약·웹훅 URL(`https://app.axhrd.com/api/billing/webhook`) 등록 필요
   - **로컬**: `cd web && npx prisma migrate dev --name add_billing_subscription`(또는 deploy) + `npm run build`. 가격 설정 후 테스트 카드로 `/pricing` → 구독 플로우 확인
+- **B2B 인터뷰 킷 빌더(Interview Kit Builder)** (2026-07-08):
+  - **배경**: Greenhouse·HireVue 등 B2B 면접 SaaS는 공개 요금표·셀프서비스 문항/루브릭 커스터마이즈 스펙이 없어, 대학 취업센터·기업 HR이 "플랫폼 문항 뱅크에서 고르고 순서·채점 강조점만 조정"하는 셀프서비스를 직접 설계
+  - **스키마**: `OrgInterviewKit` — `organizationId` + `competency`(코드), `selectedQuestionIds`(Json, 드래그 순서), `customRubricCriteria`(Json), `updatedByUserId`, `updatedAt`. 마이그레이션 `20260708010000_add_org_interview_kit`
+  - **접근**: B2C(개인 구독)와 분리된 B2B 전용. `orgRole=ADMIN` + `ORG_STANDARD`/`ORG_ENTERPRISE` 활성 구독(`lib/org/interview-kit.ts`). Subscription 테이블 미적용 DB에서는 ADMIN 폴백(TODO: billing 마이그레이션 전면 적용 후 플랜 필수)
+  - **UI**: `/org/settings/interview-kit` — 역량 6개 탭, 플랫폼 문항 체크박스 + framer-motion drag 순서 변경(`MotionReorderList`), 플랫폼 루브릭 체크 + 커스텀 문구 추가. 미설정 역량은 "플랫폼 기본값 사용 중" 안내. `/org/dashboard`에 ADMIN용 링크
+  - **API**: `GET|PUT|DELETE /api/org/interview-kit` — 역량별 upsert·초기화. 최소 문항 수 5(`IRT_LEVEL_COUNT`), 권장 10(`MIN_CANDIDATES_PER_LEVEL×5`)
+  - **적용 로직**: `POST /api/interview/start`에서 `filterAndRankQuestionPool()` **앞단**에 기관 `selectedQuestionIds`로 풀 좁히기(`filterQuestionsByOrgKit`). 채점 루브릭은 `buildPersonalizedQuestion()`에서 `customRubricCriteria` 우선(`resolveOrgKitRubricForUser`). IRT difficulty/discrimination은 기관이 수정 불가
+  - **로컬**: `cd web && npx prisma migrate dev`(또는 `migrate deploy`) + `npm run build` 성공 확인됨(로컬 DB 미기동 시 SQL 마이그레이션 파일만 추가 후 `prisma generate` + build로 타입 검증)
 - **압박 강도 적응형 조절** (스키마 변경 없음, 코드만 추가 — 마이그레이션 불필요): ROADMAP의 "면접관 페르소나 3종"을 사용자가 고르는 정적 방식이 아니라, IRT가 이미 추정하고 있는 역량 레벨(`current_level`, 1~5)을 그대로 재사용해 자동으로 조절하는 방식으로 구현 — 브레인스토밍에서 나온 "독창적 아이디어" 중 첫 번째로 착수
   - `lib/interview/persona.ts` 신규 — `pressureTierFromLevel(level)`: 레벨 1~2 GENTLE(실무진·우호적), 3 NEUTRAL, 4~5 TOUGH(임원·압박)로 매핑. `applyPressureTone()`: 사전 정의된 문구 풀에서 골라 질문 앞에 붙임(추가 LLM 호출 없음, 세션 내 반복 방지용 seed 회전)
   - **채점은 절대 이 값의 영향을 받지 않는다** — 톤은 화면 표시용 텍스트에만 적용되고, 채점에 쓰이는 `personalizedQuestions[...].text` 캐시는 원문 그대로 유지. 규준참조 점수처럼 세션 간 비교 가능한 지표를 만들려면 채점 기준이 페르소나에 따라 흔들리면 안 되기 때문
