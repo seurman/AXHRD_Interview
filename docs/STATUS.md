@@ -28,6 +28,11 @@
     - `/profile` — 게임형 **강점 카드 덱**(탭 뒤집기, 덕목별 희귀도 색상, 역량 연결 배지), 플레이어 프로필 헤더·역량 배지
     - `/dashboard` — **Career Quest** 패널(XP/Lv), 역량 스킬 트리 바, 강점 카드 미리보기, AX-HRD 차별점 카드 (Yoodli/LinkedIn/Duolingo 퀘스트 루프 벤치마킹 + IRT·자기발견 브릿지)
     - 기존 완료 세션은 `interviewAdvice` 없어도 읽기 시 `buildInterviewAdvice()`로 자동 보강
+- **역량별 루브릭 CMS + UI 리디자인** (2026-07-07):
+  - `Competency.rubricByLevel`(Json) — L1~L5·default 채점 기준. 마이그레이션 `20260707002320_add_competency_rubric_by_level`
+  - `/admin/content` → **「역량별 루브릭」** 탭: 직접 입력, JSON 템플릿 다운로드·업로드(`POST /api/admin/rubrics/import`), L레벨 전체 문항 일괄 적용(`POST /api/admin/rubrics/apply`)
+  - 문항별 루브릭이 비어 있으면 역량·레벨 기본 루브릭 → `buildGenericRubric` 순으로 채점에 사용
+  - 홈페이지(`HomeLanding`)·질문 카드(`SwipeDeck`) 상용급 UI 리디자인
 - IRT(2PL) 기반 적응형 모의 면접 (역량별 2~3문항, 실시간 난이도 조정)
 - 자소서 맞춤 질문 생성 (Gemini) — 같은 일화 반복 방지, 문항별 채점 루브릭 자동 생성
 - 음성 답변 → STT 오타 교정(Gemini) → 채점

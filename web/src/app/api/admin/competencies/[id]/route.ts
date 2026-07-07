@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isAdminResponse, requireContentAdminApi } from "@/lib/admin/auth";
+import { parseRubricByLevel } from "@/lib/competency/rubric";
 
 export async function PATCH(
   req: Request,
@@ -21,6 +23,7 @@ export async function PATCH(
     description?: string | null;
     isActive?: boolean;
     sortOrder?: number;
+    rubricByLevel?: Prisma.InputJsonValue;
   } = {};
 
   if (typeof body.nameKo === "string" && body.nameKo.trim()) {
@@ -31,6 +34,9 @@ export async function PATCH(
       typeof body.description === "string" ? body.description.trim() || null : null;
   }
   if (typeof body.isActive === "boolean") data.isActive = body.isActive;
+  if (body.rubricByLevel !== undefined) {
+    data.rubricByLevel = parseRubricByLevel(body.rubricByLevel) as Prisma.InputJsonValue;
+  }
 
   const updated = await prisma.competency.update({ where: { id }, data });
   return NextResponse.json({ competency: updated });

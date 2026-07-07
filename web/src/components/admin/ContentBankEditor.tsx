@@ -19,7 +19,13 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { GripVertical, Plus, Trash2, ClipboardList, LayoutGrid } from "lucide-react";
+import {
+  CompetencyRubricPanel,
+  mapCompetencyRubrics,
+  type RubricCompetency,
+} from "@/components/admin/CompetencyRubricPanel";
+import type { RubricByLevel } from "@/lib/competency/rubric";
 
 export type BankCompetency = {
   id: string;
@@ -29,6 +35,7 @@ export type BankCompetency = {
   sortOrder: number;
   isActive: boolean;
   questionCount: number;
+  rubricByLevel?: unknown;
 };
 
 export type BankQuestion = {
@@ -176,6 +183,12 @@ export function ContentBankEditor({
   const [editing, setEditing] = useState<BankQuestion | null>(null);
   const [activeDrag, setActiveDrag] = useState<BankQuestion | null>(null);
   const [saving, setSaving] = useState(false);
+  const [viewMode, setViewMode] = useState<"questions" | "rubrics">("questions");
+
+  const rubricCompetencies: RubricCompetency[] = useMemo(
+    () => mapCompetencyRubrics(competencies),
+    [competencies]
+  );
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -468,6 +481,62 @@ export function ContentBankEditor({
 
   return (
     <div className="space-y-4">
+      <div className="flex gap-2 border-b border-card-border pb-2">
+        <button
+          type="button"
+          onClick={() => setViewMode("questions")}
+          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${
+            viewMode === "questions" ? "bg-primary text-white" : "text-muted hover:text-foreground"
+          }`}
+        >
+          <LayoutGrid className="h-4 w-4" />
+          문항 배치
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewMode("rubrics")}
+          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${
+            viewMode === "rubrics" ? "bg-primary text-white" : "text-muted hover:text-foreground"
+          }`}
+        >
+          <ClipboardList className="h-4 w-4" />
+          역량별 루브릭
+        </button>
+      </div>
+
+      {viewMode === "rubrics" ? (
+        <CompetencyRubricPanel
+          competencies={rubricCompetencies}
+          onUpdate={async (id, rubricByLevel: RubricByLevel) => {
+            const res = await fetch(`/api/admin/competencies/${id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ rubricByLevel }),
+            });
+            if (!res.ok) throw new Error("저장 실패");
+            setCompetencies((prev) =>
+              prev.map((c) => (c.id === id ? { ...c, rubricByLevel } : c))
+            );
+          }}
+          onApplyToQuestions={async (competencyId, level, criteria) => {
+            const res = await fetch("/api/admin/rubrics/apply", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ competencyId, level, rubricCriteria: criteria }),
+            });
+            if (!res.ok) throw new Error("적용 실패");
+            setQuestions((prev) =>
+              prev.map((q) =>
+                q.competencyId === competencyId && q.level === level
+                  ? { ...q, rubricCriteria: criteria }
+                  : q
+              )
+            );
+          }}
+          onImportComplete={() => window.location.reload()}
+        />
+      ) : (
+        <>
       {saving && (
         <p className="text-xs text-muted">변경 사항 저장 중…</p>
       )}
@@ -557,6 +626,8 @@ export function ContentBankEditor({
           onSave={saveQuestion}
           onDelete={deleteQuestion}
         />
+      )}
+        </>
       )}
     </div>
   );
@@ -667,8 +738,11 @@ function QuestionEditModal({
         </div>
 
         <label className="mt-4 block text-sm font-medium">
-          채점 루브릭 (한 줄에 기준 1개 — HireVue 평가 가이드 방식)
+          채점 루브릭 (한 줄에 기준 1개)
         </label>
+        <p className="text-xs text-muted">
+          비워 두면 역량별 루브릭 탭의 L{draft.level} 기본값을 사용합니다.
+        </p>
         <textarea
           className="input-luxe mt-1 min-h-[120px] w-full font-mono text-xs"
           placeholder="상황·배경을 구체적으로 설명했는가&#10;본인의 역할과 행동을 밝혔는가&#10;정량적 결과를 제시했는가"

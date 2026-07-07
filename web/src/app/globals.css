@@ -160,6 +160,24 @@ body {
   pointer-events: none;
 }
 
+.hero-mesh {
+  position: relative;
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 0%, rgb(47 95 238 / 0.14), transparent),
+    radial-gradient(ellipse 60% 45% at 90% 20%, rgb(199 154 90 / 0.1), transparent),
+    linear-gradient(180deg, #fafbff 0%, #f4f6fd 100%);
+  border: 1px solid rgb(229 233 246 / 0.8);
+}
+
+/* 질문 카드 스와이프 — 상용 앱 느낌의 카드 스택 */
+.swipe-card-pro {
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fe 100%);
+  border: 1px solid rgb(229 233 246);
+  box-shadow:
+    0 4px 6px -2px rgb(16 26 51 / 0.06),
+    0 20px 40px -12px rgb(47 95 238 / 0.12);
+}
+
 /* 데모 페이지 전용 — 실제 제품 화면처럼 보이도록 브라우저 창 느낌의 목업 프레임 */
 .window-chrome {
   background: #eef0f8;

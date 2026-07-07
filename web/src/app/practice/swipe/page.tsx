@@ -9,13 +9,14 @@ export default async function SwipePage() {
   if (!user) redirect("/auth/login?next=/practice/swipe");
 
   return (
-    <div className="mx-auto max-w-md">
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-foreground">질문 카드</h1>
+    <div className="mx-auto max-w-lg">
+      <header className="mb-8 text-center">
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">Question Deck</p>
+        <h1 className="mt-2 text-3xl font-bold text-foreground">질문 카드</h1>
         <p className="mt-2 text-sm text-muted">
-          내가 고른 직무의 실제 기출 질문을 넘겨보세요 · 왼쪽 Pass, 오른쪽 Save
+          스와이프로 실전 기출에 익숙해지세요 · 왼쪽 Pass · 오른쪽 Save
         </p>
-      </div>
+      </header>
       <SwipeDeck
         initialIndustry={user.profile?.desiredIndustry ?? null}
         initialJobRole={user.profile?.desiredJobRole ?? null}

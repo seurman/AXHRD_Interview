@@ -294,6 +294,8 @@ model Competency {
   description String?
   sortOrder   Int      @default(0)
   isActive    Boolean  @default(true)
+  /** 역량·레벨별 기본 채점 루브릭 — { "1": ["기준",...], "2": [...], "default": [...] } */
+  rubricByLevel Json?
   questions   Question[]
 }
 

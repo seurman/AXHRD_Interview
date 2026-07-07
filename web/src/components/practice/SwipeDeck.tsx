@@ -37,6 +37,7 @@ export function SwipeDeck({
   const [pendingJobRole, setPendingJobRole] = useState(initialJobRole ?? JOB_ROLES[0]);
 
   const [deck, setDeck] = useState<Card[]>([]);
+  const [initialTotal, setInitialTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [comboCount, setComboCount] = useState<number | null>(null);
@@ -57,6 +58,7 @@ export function SwipeDeck({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "카드를 불러오지 못했습니다.");
       setDeck(data.deck);
+      setInitialTotal(data.deck.length);
       setComboCount(data.comboCount);
       setRecycled(data.recycled);
     } catch (e) {
@@ -109,10 +111,11 @@ export function SwipeDeck({
 
   if (editingTarget) {
     return (
-      <div className="card-luxe space-y-4 p-6">
-        <p className="text-sm text-muted">
-          어떤 직무를 준비 중이신가요? 고르신 조합에 맞는 질문만 보여드립니다.
-        </p>
+      <div className="card-luxe space-y-5 p-8">
+        <div className="text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Setup</p>
+          <h2 className="mt-1 text-xl font-bold text-foreground">어떤 직무를 준비 중이신가요?</h2>
+        </div>
         <select
           value={pendingIndustry}
           onChange={(e) => setPendingIndustry(e.target.value)}
@@ -135,31 +138,50 @@ export function SwipeDeck({
             </option>
           ))}
         </select>
-        <button type="button" onClick={confirmTarget} className="btn-primary w-full">
-          카드 보기 시작
+        <button type="button" onClick={confirmTarget} className="btn-primary w-full py-3.5">
+          카드 덱 시작
         </button>
       </div>
     );
   }
 
+  const progress =
+    initialTotal > 0 ? Math.round(((initialTotal - deck.length) / initialTotal) * 100) : 0;
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between text-sm">
-        <button
-          type="button"
-          onClick={() => setEditingTarget(true)}
-          className="rounded-full bg-primary/10 px-3 py-1.5 font-medium text-primary hover:bg-primary/15"
-        >
-          {industryLabel(industry!)} · {jobRoleLabel(jobRole!)} 변경
-        </button>
-        <button
-          type="button"
-          onClick={openSaved}
-          className="flex items-center gap-1 text-muted hover:text-primary"
-        >
-          <Bookmark className="h-4 w-4" />
-          저장한 질문
-        </button>
+    <div className="space-y-5">
+      <div className="rounded-2xl border border-card-border bg-white/80 p-4 backdrop-blur">
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setEditingTarget(true)}
+            className="rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/15"
+          >
+            {industryLabel(industry!)} · {jobRoleLabel(jobRole!)}
+          </button>
+          <button
+            type="button"
+            onClick={openSaved}
+            className="flex items-center gap-1.5 text-sm text-muted hover:text-primary"
+          >
+            <Bookmark className="h-4 w-4" />
+            저장함
+          </button>
+        </div>
+        {initialTotal > 0 && (
+          <div className="mt-3">
+            <div className="mb-1 flex justify-between text-xs text-muted">
+              <span>진행률</span>
+              <span>{initialTotal - deck.length}/{initialTotal}</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-primary/10">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-primary to-gold transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {comboCount !== null && comboCount < 5 && (
@@ -195,7 +217,7 @@ export function SwipeDeck({
               새 카드가 없어 이전 카드를 다시 보여드려요
             </p>
           )}
-          <div className="relative h-[420px]">
+          <div className="relative h-[440px]">
             <AnimatePresence>
               {deck.slice(0, 3).map((card, i) => (
                 <SwipeCard
@@ -209,22 +231,28 @@ export function SwipeDeck({
             </AnimatePresence>
           </div>
 
-          <div className="flex justify-center gap-6">
+          <div className="flex items-center justify-center gap-8 pt-2">
             <button
               type="button"
-              onClick={() => handleSwipe(deck[0], "PASS")}
+              onClick={() => deck[0] && handleSwipe(deck[0], "PASS")}
               aria-label="Pass"
-              className="flex h-14 w-14 items-center justify-center rounded-full border border-card-border bg-card text-danger shadow-luxe hover:bg-danger/5"
+              className="flex flex-col items-center gap-2"
             >
-              <XIcon className="h-6 w-6" />
+              <span className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-rose-200 bg-white text-rose-500 shadow-lg transition hover:scale-105 hover:bg-rose-50">
+                <XIcon className="h-7 w-7" />
+              </span>
+              <span className="text-xs font-medium text-muted">넘기기</span>
             </button>
             <button
               type="button"
-              onClick={() => handleSwipe(deck[0], "SAVE")}
+              onClick={() => deck[0] && handleSwipe(deck[0], "SAVE")}
               aria-label="Save"
-              className="flex h-14 w-14 items-center justify-center rounded-full border border-card-border bg-card text-success shadow-luxe hover:bg-success/5"
+              className="flex flex-col items-center gap-2"
             >
-              <Bookmark className="h-6 w-6" />
+              <span className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-emerald-200 bg-white text-emerald-600 shadow-lg transition hover:scale-105 hover:bg-emerald-50">
+                <Bookmark className="h-7 w-7" />
+              </span>
+              <span className="text-xs font-medium text-muted">저장·연습</span>
             </button>
           </div>
         </>
@@ -330,31 +358,40 @@ function SwipeCard({
       animate={{ scale: 1 - depth * 0.05, y: depth * 10, opacity: depth === 0 ? 1 : 0.7 }}
       exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="card-luxe absolute inset-0 flex cursor-grab flex-col justify-between p-6 active:cursor-grabbing"
+      className="swipe-card-pro absolute inset-0 flex cursor-grab flex-col justify-between overflow-hidden rounded-3xl p-0 active:cursor-grabbing"
     >
+      <div className="bg-gradient-to-r from-primary/8 to-gold/8 px-6 py-4">
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+          {card.isAiExample ? "AI 예시" : "실제 기출"}
+        </p>
+        <p className="mt-1 text-xs text-muted">
+          {industryLabel(card.industry)} · {jobRoleLabel(card.jobRole)}
+        </p>
+      </div>
       {isTop && (
         <>
           <motion.span
             style={{ opacity: passOpacity }}
-            className="absolute left-4 top-4 rounded-lg border-2 border-danger px-2 py-1 text-sm font-bold text-danger"
+            className="absolute left-5 top-20 z-10 rotate-[-12deg] rounded-lg border-[3px] border-rose-500 px-3 py-1 text-lg font-black text-rose-500"
           >
             PASS
           </motion.span>
           <motion.span
             style={{ opacity: saveOpacity }}
-            className="absolute right-4 top-4 rounded-lg border-2 border-success px-2 py-1 text-sm font-bold text-success"
+            className="absolute right-5 top-20 z-10 rotate-[12deg] rounded-lg border-[3px] border-emerald-500 px-3 py-1 text-lg font-black text-emerald-600"
           >
             SAVE
           </motion.span>
         </>
       )}
-      <div className="flex flex-1 items-center justify-center text-center">
-        <p className="text-lg font-medium leading-relaxed text-foreground">{card.text}</p>
+      <div className="flex flex-1 items-center justify-center px-8 py-6 text-center">
+        <p className="text-xl font-semibold leading-relaxed text-foreground">{card.text}</p>
       </div>
-      <p className="text-center text-xs text-muted">
-        {industryLabel(card.industry)} · {jobRoleLabel(card.jobRole)} ·{" "}
-        {card.isAiExample ? "AI 생성 예시" : card.sourceName ?? "출처 미상"}
-      </p>
+      <div className="border-t border-card-border bg-background/50 px-6 py-3 text-center">
+        <p className="text-xs text-muted">
+          {card.sourceName ?? "출처 미상"}
+        </p>
+      </div>
     </motion.div>
   );
 }

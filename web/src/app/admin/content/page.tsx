@@ -54,6 +54,7 @@ export default async function AdminContentPage() {
           description: c.description,
           sortOrder: c.sortOrder,
           isActive: c.isActive,
+          rubricByLevel: c.rubricByLevel,
           questionCount: c._count.questions,
         }))}
         initialQuestions={questions.map((q) => ({

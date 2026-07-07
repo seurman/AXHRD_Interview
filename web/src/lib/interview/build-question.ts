@@ -7,6 +7,7 @@ import {
 } from "@/lib/interview/personalize-question";
 import type { ResumeSummary } from "@/lib/interview/resume-summary";
 import { parseRubricCriteria } from "@/lib/competency/bank";
+import { rubricForCompetencyLevel } from "@/lib/competency/rubric";
 import {
   applyPressureTone,
   pressureTierLabel,
@@ -20,12 +21,14 @@ type QuestionRow = {
   template: string;
   level: number;
   rubricCriteria?: unknown;
-  competency: { code: string };
+  competency: { code: string; rubricByLevel?: unknown };
 };
 
 function rubricForQuestion(question: QuestionRow): string[] {
   const stored = parseRubricCriteria(question.rubricCriteria);
   if (stored.length > 0) return stored;
+  const compLevel = rubricForCompetencyLevel(question.competency.rubricByLevel, question.level);
+  if (compLevel.length > 0) return compLevel;
   return buildGenericRubric(question.competency.code);
 }
 
