@@ -46,10 +46,12 @@
   - `RealInterviewQuestion.companySize` optional 필드 추가 — 마이그레이션 `20260707095400_add_real_question_company_size` (기존 44문항 재태깅 불필요, 신규 문항부터 태깅)
   - 질문 카드 API — `companySize` 쿼리 시 해당 규모·미태깅 문항 우선 필터
 - **NCS 공식 정의 기반 루브릭** (2026-07-07):
-  - `lib/competency/ncs-rubric.ts` — NCS 직업기초능력 10개 영역 공식 정의·하위능력을 6개 역량 채점 루브릭에 반영
+  - `lib/competency/ncs-rubric.ts` — NCS 직업기초능력 10개 영역 공식 정의·하위능력을 6개 역량 L1~L5 채점 루브릭에 반영
+  - `seed/ncs-rubrics.json` — 관리자 일괄 업로드·DB 시드용 (6역량 × 5레벨)
+  - `npm run db:seed:rubrics` — `Competency.rubricByLevel`에 NCS 루브릭 반영 (로컬·프로덕션 각각 1회 실행)
   - 출처: 한국산업인력공단 「NCS 기반 교육과정 가이드라인」(2015, ncs.go.kr, KOGL 제1유형)
   - 매칭: COMMUNICATION←의사소통, PROBLEM_SOLVING←문제해결, JOB_FIT←정보+기술+자원관리, ORG_FIT←조직이해+직업윤리, LEADERSHIP←대인관계, GROWTH←자기개발
-  - `buildGenericRubric()` — 역량별 고정 3줄 → NCS 하위능력 반영 3~4줄 (마이그레이션 불필요, 코드만)
+  - 런타임 폴백: DB 루브릭 없을 때 `rubricForNcsLevel(code, level)` 사용
 - **홈 히어로 파란 프리미엄 UI** (2026-07-07): `hero-blue` — 다크 제거, 파란 그라디언트·화이트 스탯 카드
 - IRT(2PL) 기반 적응형 모의 면접 (역량별 2~3문항, 실시간 난이도 조정)
 - 자소서 맞춤 질문 생성 (Gemini) — 같은 일화 반복 방지, 문항별 채점 루브릭 자동 생성

@@ -2,9 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { parseIrtState, serializeIrtState } from "@/lib/irt-state";
 import {
   personalizeQuestion,
-  buildGenericRubric,
   type InterviewStyleHint,
 } from "@/lib/interview/personalize-question";
+import { rubricForNcsLevel } from "@/lib/competency/ncs-rubric";
 import type { ResumeSummary } from "@/lib/interview/resume-summary";
 import { parseRubricCriteria } from "@/lib/competency/bank";
 import { rubricForCompetencyLevel } from "@/lib/competency/rubric";
@@ -29,7 +29,7 @@ function rubricForQuestion(question: QuestionRow): string[] {
   if (stored.length > 0) return stored;
   const compLevel = rubricForCompetencyLevel(question.competency.rubricByLevel, question.level);
   if (compLevel.length > 0) return compLevel;
-  return buildGenericRubric(question.competency.code);
+  return rubricForNcsLevel(question.competency.code, question.level);
 }
 
 type SessionContext = {

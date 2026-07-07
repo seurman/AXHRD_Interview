@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { Download, Upload, Save, Copy } from "lucide-react";
 import {
-  RUBRIC_IMPORT_TEMPLATE,
   linesToRubric,
   parseRubricByLevel,
   rubricToLines,
   type RubricByLevel,
 } from "@/lib/competency/rubric";
+import { ncsRubricImportFile } from "@/lib/competency/ncs-rubric";
 
 export type RubricCompetency = {
   id: string;
@@ -100,13 +100,13 @@ export function CompetencyRubricPanel({
   };
 
   const downloadTemplate = () => {
-    const blob = new Blob([JSON.stringify(RUBRIC_IMPORT_TEMPLATE, null, 2)], {
+    const blob = new Blob([JSON.stringify(ncsRubricImportFile(), null, 2)], {
       type: "application/json",
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "rubric-template.json";
+    a.download = "ncs-rubrics.json";
     a.click();
     URL.revokeObjectURL(url);
   };
