@@ -78,9 +78,12 @@ export type Dictionary = {
       eyebrow: string;
       title: string;
       subtitle: string;
+      trustBadges: string[];
       transparent: { title: string; desc: string };
       adaptive: { title: string; desc: string };
       growth: { title: string; desc: string };
+      ncs: { title: string; desc: string };
+      miniStats: { value: string; label: string }[];
     };
     enterprise: {
       eyebrow: string;

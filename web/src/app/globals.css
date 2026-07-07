@@ -391,6 +391,38 @@ body {
   color: var(--color-muted);
 }
 
+.hero-blue .hero-value-card {
+  border: 1px solid rgb(47 95 238 / 0.12);
+  background: rgb(255 255 255 / 0.72);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px -6px rgb(47 95 238 / 0.1);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.hero-blue .hero-value-card:hover {
+  border-color: rgb(47 95 238 / 0.22);
+  box-shadow: 0 8px 24px -8px rgb(47 95 238 / 0.16);
+}
+
+.hero-blue .hero-value-icon {
+  border: 1px solid rgb(47 95 238 / 0.2);
+  background: rgb(47 95 238 / 0.08);
+  color: var(--color-primary);
+}
+
+.hero-blue .hero-trust-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid rgb(47 95 238 / 0.18);
+  background: rgb(255 255 255 / 0.55);
+  padding: 0.35rem 0.85rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  letter-spacing: 0.01em;
+}
+
 .btn-outline-primary {
   display: inline-flex;
   align-items: center;

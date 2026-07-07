@@ -13,6 +13,7 @@ import {
   Zap,
   Target,
   TrendingUp,
+  Scale,
 } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
 import { useI18n } from "@/lib/i18n/I18nProvider";
@@ -38,6 +39,7 @@ export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
     { icon: Shield, ...h.values.transparent },
     { icon: Target, ...h.values.adaptive },
     { icon: TrendingUp, ...h.values.growth },
+    { icon: Scale, ...h.values.ncs },
   ];
 
   return (
@@ -114,25 +116,42 @@ export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
       </section>
 
       <Reveal>
-        <section className="rounded-[1.75rem] border border-card-border bg-gradient-to-br from-[#0c1222] to-[#141d32] px-8 py-14 text-white sm:px-12">
-          <div className="text-center">
-            <p className="section-eyebrow">{h.values.eyebrow}</p>
-            <h2 className="mt-3 text-2xl font-bold sm:text-3xl">{h.values.title}</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/60">
+        <section className="hero-blue px-8 py-14 sm:px-12">
+          <div className="relative text-center">
+            <p className="section-eyebrow hero-eyebrow">{h.values.eyebrow}</p>
+            <h2 className="mt-3 text-2xl font-bold text-foreground sm:text-3xl">{h.values.title}</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted">
               {h.values.subtitle}
             </p>
+            <div className="mx-auto mt-5 flex max-w-2xl flex-wrap justify-center gap-2">
+              {h.values.trustBadges.map((badge) => (
+                <span key={badge} className="hero-trust-badge">
+                  {badge}
+                </span>
+              ))}
+            </div>
           </div>
-          <div className="mx-auto mt-10 grid max-w-4xl gap-6 sm:grid-cols-3">
+          <div className="relative mx-auto mt-10 grid max-w-5xl gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {values.map((v) => (
               <div
                 key={v.title}
-                className="rounded-2xl border border-white/8 bg-white/4 p-6 text-center transition hover:border-gold/25"
+                className="hero-value-card rounded-2xl p-6 text-center"
               >
-                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-gold/30 bg-gold/10">
-                  <v.icon className="h-5 w-5 text-gold" />
+                <div className="hero-value-icon mx-auto flex h-11 w-11 items-center justify-center rounded-full">
+                  <v.icon className="h-5 w-5" />
                 </div>
-                <h3 className="mt-4 font-semibold">{v.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/55">{v.desc}</p>
+                <h3 className="mt-4 font-semibold text-foreground">{v.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">{v.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="relative mx-auto mt-8 grid max-w-lg grid-cols-3 gap-3">
+            {h.values.miniStats.map((s) => (
+              <div key={s.label} className="hero-stat rounded-2xl px-3 py-3">
+                <p className="hero-stat-value text-xl font-bold">{s.value}</p>
+                <p className="hero-stat-label mt-0.5 text-[0.68rem] font-medium leading-snug">
+                  {s.label}
+                </p>
               </div>
             ))}
           </div>

@@ -92,6 +92,7 @@ export const dictionary: Dictionary = {
       eyebrow: "Core Values",
       title: "Why HR_IN",
       subtitle: "A trustworthy interview prep platform for the age of hiring AI regulation",
+      trustBadges: ["No emotion AI", "NCS official competency rubrics", "Raw answers kept private"],
       transparent: {
         title: "Transparent scoring",
         desc: "No emotion AI. Stable rubrics so every session stays fairly comparable.",
@@ -104,6 +105,15 @@ export const dictionary: Dictionary = {
         title: "Proof of growth",
         desc: "Per-competency θ tracking and cohort analytics for individuals and institutions.",
       },
+      ncs: {
+        title: "NCS official competencies",
+        desc: "Rubrics grounded in Korea's National Competency Standards — not the same three lines with renamed labels.",
+      },
+      miniStats: [
+        { value: "6", label: "core competencies" },
+        { value: "NCS", label: "official rubrics" },
+        { value: "5 min", label: "first feedback" },
+      ],
     },
     enterprise: {
       eyebrow: "Institutions",

@@ -92,6 +92,7 @@ export const dictionary: Dictionary = {
       eyebrow: "핵심 가치",
       title: "왜 HR_IN인가",
       subtitle: "채용 AI 규제 시대에 신뢰할 수 있는 면접 준비 플랫폼",
+      trustBadges: ["감정 AI 미사용", "NCS 공식 역량 기준", "개인 답변 원문 비공개"],
       transparent: {
         title: "투명한 채점",
         desc: "감정 AI 없이, 채점 기준이 바뀌지 않아 세션마다 공정하게 비교할 수 있습니다.",
@@ -104,6 +105,15 @@ export const dictionary: Dictionary = {
         title: "성장 증명",
         desc: "역량별 θ 추적과 코호트 집계로 개인·기관 모두 성과를 숫자로 남깁니다.",
       },
+      ncs: {
+        title: "NCS 공식 역량",
+        desc: "한국산업인력공단 직업기초능력 정의·하위능력을 채점 루브릭에 반영해, 역량 이름만 바뀌는 고정 문구가 아닙니다.",
+      },
+      miniStats: [
+        { value: "6", label: "핵심 역량" },
+        { value: "NCS", label: "공식 루브릭" },
+        { value: "5분", label: "첫 피드백" },
+      ],
     },
     enterprise: {
       eyebrow: "기관·대학",
