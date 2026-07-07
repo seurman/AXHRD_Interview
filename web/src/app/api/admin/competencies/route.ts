@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isAdminResponse, requireContentAdminApi } from "@/lib/admin/auth";
+import { auditActor, isAdminResponse, requirePlatformAdminApi } from "@/lib/admin/auth";
+import { logAdminAudit, snapshotCompetency } from "@/lib/admin/audit";
 
 const CODE_RE = /^[A-Z][A-Z0-9_]{1,31}$/;
 
 export async function POST(req: Request) {
-  const auth = await requireContentAdminApi();
+  const auth = await requirePlatformAdminApi();
   if (isAdminResponse(auth)) return auth;
 
   const body = await req.json().catch(() => ({}));
@@ -31,6 +32,15 @@ export async function POST(req: Request) {
     const created = await prisma.competency.create({
       data: { code, nameKo, description, sortOrder, isActive: true },
     });
+    await logAdminAudit({
+      actor: auditActor(auth),
+      action: "CREATE",
+      entityType: "competency",
+      entityId: created.id,
+      summary: `역량 생성: ${created.code}`,
+      beforeState: null,
+      afterState: snapshotCompetency(created),
+    });
     return NextResponse.json({ competency: created });
   } catch {
     return NextResponse.json({ error: "이미 존재하는 역량 코드입니다." }, { status: 409 });
@@ -38,7 +48,7 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const auth = await requireContentAdminApi();
+  const auth = await requirePlatformAdminApi();
   if (isAdminResponse(auth)) return auth;
 
   const body = await req.json().catch(() => ({}));

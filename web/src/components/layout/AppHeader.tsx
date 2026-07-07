@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
-import { canManageContent, hasSuperadminAccess, isSuperadmin } from "@/lib/auth/guards";
+import { hasSuperadminAccess, isPlatformAdmin, isSuperadmin } from "@/lib/auth/guards";
 import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
 import { MobileNav } from "./MobileNav";
 import { MainNav } from "./MainNav";
@@ -16,7 +16,7 @@ export async function AppHeader() {
       : sessionUser;
   const isOrgStaff = !!user && (user.orgRole === "STAFF" || user.orgRole === "ADMIN");
   const isSuperAdmin = !!user && hasSuperadminAccess(user);
-  const isContentAdmin = !!user && canManageContent(user);
+  const isPlatformAdminUser = !!user && isPlatformAdmin(user);
 
   const mainHrefs = user
     ? [
@@ -31,10 +31,11 @@ export async function AppHeader() {
 
   const adminLinks = user
     ? [
-        ...(isContentAdmin ? [{ href: "/admin/content", labelKey: "content" as const }] : []),
+        ...(isPlatformAdminUser ? [{ href: "/admin/content", labelKey: "content" as const }] : []),
         ...(isSuperAdmin
           ? [
               { href: "/admin/users", labelKey: "users" as const },
+              { href: "/admin/audit", labelKey: "audit" as const },
               { href: "/admin/organizations", labelKey: "orgApprove" as const },
               { href: "/admin/organizations/benchmark", labelKey: "orgBenchmark" as const },
             ]

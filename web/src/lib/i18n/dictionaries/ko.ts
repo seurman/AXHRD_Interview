@@ -32,6 +32,7 @@ export const dictionary: Dictionary = {
       title: "관리",
       content: "문항 관리",
       users: "사용자 권한",
+      audit: "감사 로그",
       orgApprove: "기관 승인",
       orgBenchmark: "기관 비교",
     },

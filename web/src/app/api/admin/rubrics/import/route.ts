@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { isAdminResponse, requireContentAdminApi } from "@/lib/admin/auth";
+import { auditActor, isAdminResponse, requirePlatformAdminApi } from "@/lib/admin/auth";
+import { logAdminAudit } from "@/lib/admin/audit";
 import {
   normalizeImportLevels,
   parseRubricImportFile,
 } from "@/lib/competency/rubric";
 
 export async function POST(req: Request) {
-  const auth = await requireContentAdminApi();
+  const auth = await requirePlatformAdminApi();
   if (isAdminResponse(auth)) return auth;
 
   const body = await req.json().catch(() => null);
@@ -20,7 +21,10 @@ export async function POST(req: Request) {
     );
   }
 
+  const beforeItems: Array<{ competencyId: string; code: string; rubricByLevel: unknown }> =
+    [];
   let updated = 0;
+
   for (const item of parsed.competencies) {
     const code = item.code?.trim()?.toUpperCase();
     if (!code || !item.levels) continue;
@@ -30,6 +34,12 @@ export async function POST(req: Request) {
 
     const rubricByLevel = normalizeImportLevels(item.levels);
     if (Object.keys(rubricByLevel).length === 0) continue;
+
+    beforeItems.push({
+      competencyId: comp.id,
+      code: comp.code,
+      rubricByLevel: comp.rubricByLevel,
+    });
 
     await prisma.competency.update({
       where: { id: comp.id },
@@ -44,6 +54,16 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
+
+  await logAdminAudit({
+    actor: auditActor(auth),
+    action: "BULK_IMPORT",
+    entityType: "rubric_import",
+    entityId: null,
+    summary: `루브릭 일괄 반영 ${updated}개 역량`,
+    beforeState: { items: beforeItems },
+    afterState: { competencyCodes: beforeItems.map((b) => b.code) },
+  });
 
   return NextResponse.json({
     ok: true,

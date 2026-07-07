@@ -9,19 +9,44 @@ export function hasSuperadminAccess(user: { email: string; platformRole: Platfor
   return isSuperadmin(user.email) || user.platformRole === "SUPERADMIN";
 }
 
-export function canManageContent(user: { email: string; platformRole: PlatformRole }) {
-  return hasSuperadminAccess(user) || user.platformRole === "CONTENT_ADMIN";
+/** 플랫폼 ADMIN(레거시 CONTENT_ADMIN 포함) 또는 SUPERADMIN */
+export function isPlatformAdmin(user: { email: string; platformRole: PlatformRole }) {
+  return (
+    hasSuperadminAccess(user) ||
+    user.platformRole === "ADMIN" ||
+    user.platformRole === "CONTENT_ADMIN"
+  );
 }
 
-export async function requireContentAdminApi(): Promise<AdminUser | NextResponse> {
+/** @deprecated isPlatformAdmin 사용 */
+export function canManageContent(user: { email: string; platformRole: PlatformRole }) {
+  return isPlatformAdmin(user);
+}
+
+/** 하드 삭제·시스템 파괴적 작업 — SUPERADMIN만 */
+export function canHardDelete(user: { email: string; platformRole: PlatformRole }) {
+  return hasSuperadminAccess(user);
+}
+
+/** 플랫폼 ADMIN 부여/회수 — SUPERADMIN만 */
+export function canGrantPlatformRoles(user: { email: string; platformRole: PlatformRole }) {
+  return hasSuperadminAccess(user);
+}
+
+export async function requirePlatformAdminApi(): Promise<AdminUser | NextResponse> {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
-  if (!canManageContent(user)) {
+  if (!isPlatformAdmin(user)) {
     return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
   }
   return user;
+}
+
+/** @deprecated requirePlatformAdminApi */
+export async function requireContentAdminApi() {
+  return requirePlatformAdminApi();
 }
 
 export async function requireSuperadminApi(): Promise<AdminUser | NextResponse> {
@@ -37,4 +62,8 @@ export async function requireSuperadminApi(): Promise<AdminUser | NextResponse> 
 
 export function isAdminResponse(result: AdminUser | NextResponse): result is NextResponse {
   return result instanceof NextResponse;
+}
+
+export function auditActor(user: AdminUser) {
+  return { id: user.id, email: user.email, platformRole: user.platformRole };
 }

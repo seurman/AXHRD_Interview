@@ -79,11 +79,17 @@
   - `/org/dashboard`에 "다른 학교와 비교" 카드 추가 — 전체 승인 기관 중 순위(상위 N%), 완료율/평균 백분위를 비교 평균과 나란히 표시, 역량별로는 우리 학교 막대 + 비교 평균 위치를 세로선으로 표시. 비교 가능한 기관이 없으면 안내 문구만 표시
   - `/admin/organizations/benchmark` 신규 페이지(슈퍼어드민 전용) — 승인된 기관 전체를 평균 백분위 내림차순으로 실명 랭킹 표시(학생 수·활동 학생 수·완료율·평균 백분위). `/admin/organizations`에 링크 추가
   - `components/layout/AppHeader.tsx`(전 페이지 공통 헤더)에 역할별 메뉴 추가 — `orgRole`이 STAFF/ADMIN이면 "코호트 대시보드"(`/org/dashboard`), `SUPERADMIN_EMAILS`에 등록된 계정이면 "기관 승인 관리"(`/admin/organizations`)와 "기관 비교"(`/admin/organizations/benchmark`) 링크가 상단 네비게이션에 표시됨(그전까지는 URL을 직접 입력해야만 접근 가능했음)
-- **슈퍼어드민 전체 사용자·권한 관리** (스키마 변경 없음, 코드만 추가 — 마이그레이션 불필요): 기존에는 `orgRole`을 STAFF로 올리거나 한 기관에 담당자를 추가로 지정하는 화면이 전혀 없었음(가입 시 ADMIN/STUDENT 둘 중 하나로 고정)
-  - `/admin/users` 신규 페이지(슈퍼어드민 전용) — 전체 사용자 목록(이름/이메일/현재 소속·역할), 이름·이메일 검색, 사용자별로 소속 기관과 역할(학생/담당자/기관 관리자)을 직접 변경
-  - `PATCH /api/admin/users/[id]` 신규 — 소속 기관이 없으면 역할은 자동으로 "학생"으로 강제(담당자/관리자 역할은 소속 기관이 있어야만 의미가 있음)
-  - `SUPERADMIN_EMAILS` 자체는 여전히 환경변수 — DB화하지 않기로 함(이번 스코프 아님)
-  - `/admin/organizations`, 헤더 메뉴에 "전체 사용자 관리" 링크 추가
+- **슈퍼어드민 전체 사용자·권한 관리** (2026-07-07, 이후 ADMIN 계층으로 확장 — 아래 참고):
+  - `/admin/users` — SUPERADMIN 전용, 전체 사용자 검색·소속/역할/플랫폼 권한 변경
+  - `PATCH /api/admin/users/[id]` — 소속 없으면 orgRole 자동 STUDENT
+  - `SUPERADMIN_EMAILS`는 환경변수 부트스트랩용(여전히 DB `platformRole=SUPERADMIN`과 병행)
+- **플랫폼 ADMIN 계층 + 감사 로그·롤백** (2026-07-07):
+  - `PlatformRole.ADMIN` 추가 — CMS(문항·역량·루브릭) 전체 접근, **하드 삭제 불가**(응답 기록 있으면 soft-delete만), 기관 승인/반려·ADMIN 권한 부여는 SUPERADMIN 전용
+  - 레거시 `CONTENT_ADMIN`은 코드에서 `ADMIN`과 동일 취급(저장 시 `ADMIN`으로 정규화)
+  - `AdminAuditLog` — ADMIN(및 SUPERADMIN)의 CMS·권한·기관 변경 기록, `beforeState`/`afterState` JSON
+  - `/admin/audit`(SUPERADMIN) — 감사 로그 목록 + `POST /api/admin/audit/[id]/rollback` 롤백(역량·문항·루브릭 일괄·사용자 권한·기관 상태)
+  - 마이그레이션 `20260707210000_add_admin_role_audit_log`
+  - CLI: `npx tsx scripts/grant-platform-role.ts <email> ADMIN|SUPERADMIN`
 - **압박 강도 적응형 조절** (스키마 변경 없음, 코드만 추가 — 마이그레이션 불필요): ROADMAP의 "면접관 페르소나 3종"을 사용자가 고르는 정적 방식이 아니라, IRT가 이미 추정하고 있는 역량 레벨(`current_level`, 1~5)을 그대로 재사용해 자동으로 조절하는 방식으로 구현 — 브레인스토밍에서 나온 "독창적 아이디어" 중 첫 번째로 착수
   - `lib/interview/persona.ts` 신규 — `pressureTierFromLevel(level)`: 레벨 1~2 GENTLE(실무진·우호적), 3 NEUTRAL, 4~5 TOUGH(임원·압박)로 매핑. `applyPressureTone()`: 사전 정의된 문구 풀에서 골라 질문 앞에 붙임(추가 LLM 호출 없음, 세션 내 반복 방지용 seed 회전)
   - **채점은 절대 이 값의 영향을 받지 않는다** — 톤은 화면 표시용 텍스트에만 적용되고, 채점에 쓰이는 `personalizedQuestions[...].text` 캐시는 원문 그대로 유지. 규준참조 점수처럼 세션 간 비교 가능한 지표를 만들려면 채점 기준이 페르소나에 따라 흔들리면 안 되기 때문

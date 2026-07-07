@@ -12,7 +12,7 @@ import { useI18n } from "@/lib/i18n/I18nProvider";
 
 type AdminLink = {
   href: string;
-  labelKey: "content" | "users" | "orgApprove" | "orgBenchmark";
+  labelKey: "content" | "users" | "audit" | "orgApprove" | "orgBenchmark";
 };
 
 export function MobileNav({

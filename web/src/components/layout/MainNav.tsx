@@ -23,7 +23,10 @@ export function MainNav({
   loggedIn,
 }: {
   mainHrefs: string[];
-  adminLinks: { href: string; labelKey: "content" | "users" | "orgApprove" | "orgBenchmark" }[];
+  adminLinks: {
+    href: string;
+    labelKey: "content" | "users" | "audit" | "orgApprove" | "orgBenchmark";
+  }[];
   userName?: string;
   loggedIn: boolean;
 }) {

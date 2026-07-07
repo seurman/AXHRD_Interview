@@ -41,9 +41,33 @@ export function hasSuperadminAccess(user: { email: string; platformRole?: string
   return isSuperadmin(user.email) || user.platformRole === "SUPERADMIN";
 }
 
-/** 역량·문항·루브릭 CMS 접근 — CONTENT_ADMIN 이상 */
+/** 역량·문항·루브릭 CMS 접근 — ADMIN(또는 레거시 CONTENT_ADMIN) 이상 */
+export function isPlatformAdmin(user: { email: string; platformRole?: string }) {
+  return (
+    hasSuperadminAccess(user) ||
+    user.platformRole === "ADMIN" ||
+    user.platformRole === "CONTENT_ADMIN"
+  );
+}
+
+/** @deprecated isPlatformAdmin */
 export function canManageContent(user: { email: string; platformRole?: string }) {
-  return hasSuperadminAccess(user) || user.platformRole === "CONTENT_ADMIN";
+  return isPlatformAdmin(user);
+}
+
+/** 하드 삭제 등 파괴적 작업 — SUPERADMIN만 */
+export function canHardDelete(user: { email: string; platformRole?: string }) {
+  return hasSuperadminAccess(user);
+}
+
+/** 플랫폼 ADMIN 부여/회수·감사 로그 — SUPERADMIN만 */
+export function canManagePlatformAdmins(user: { email: string; platformRole?: string }) {
+  return hasSuperadminAccess(user);
+}
+
+/** @deprecated canManagePlatformAdmins */
+export function canGrantPlatformRoles(user: { email: string; platformRole?: string }) {
+  return canManagePlatformAdmins(user);
 }
 
 /** 기관 승인/반려 등 플랫폼 운영 화면 접근 제어. 슈퍼어드민만. */
@@ -53,9 +77,14 @@ export async function requireSuperadmin(nextPath?: string) {
   return user;
 }
 
-/** 문항 뱅크 CMS — 콘텐츠 관리자 이상 */
-export async function requireContentAdmin(nextPath?: string) {
+/** 문항 뱅크 CMS — 플랫폼 ADMIN 이상 */
+export async function requirePlatformAdmin(nextPath?: string) {
   const user = await requirePageUser(nextPath);
-  if (!canManageContent(user)) notFound();
+  if (!isPlatformAdmin(user)) notFound();
   return user;
+}
+
+/** @deprecated requirePlatformAdmin */
+export async function requireContentAdmin(nextPath?: string) {
+  return requirePlatformAdmin(nextPath);
 }

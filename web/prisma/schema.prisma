@@ -95,11 +95,25 @@ enum OrgStatus {
 }
 
 /** 플랫폼(콘텐츠·운영) 권한 — OrgRole(기관 소속)과 별개.
- *  SUPERADMIN_EMAILS 환경변수도 슈퍼어드민으로 인정(부트스트랩용). */
+ *  SUPERADMIN_EMAILS 환경변수도 슈퍼어드민으로 인정(부트스트랩용).
+ *  ADMIN — CMS·운영(파괴적 작업 제한, 변경 감사). CONTENT_ADMIN은 ADMIN과 동일(레거시). */
 enum PlatformRole {
   NONE
+  ADMIN
   CONTENT_ADMIN
   SUPERADMIN
+}
+
+/** 플랫폼 관리자(ADMIN) 변경 감사 — SUPERADMIN 롤백용 */
+enum AdminAuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  SOFT_DELETE
+  BULK_IMPORT
+  ROLE_GRANT
+  ORG_APPROVE
+  ORG_REJECT
 }
 
 /** 자기발견 인터뷰 세션 상태 — 채점 없는 성찰형 대화 */
@@ -149,8 +163,32 @@ model User {
   oauthAccounts   OAuthAccount[]
   swipeActions    SwipeAction[]
   selfDiscoverySessions SelfDiscoverySession[]
+  adminAuditLogs  AdminAuditLog[] @relation("AdminAuditActor")
+  auditRollbacks  AdminAuditLog[] @relation("AdminAuditRollback")
 
   @@index([organizationId])
+}
+
+model AdminAuditLog {
+  id           String           @id @default(cuid())
+  actorId      String
+  actor        User             @relation("AdminAuditActor", fields: [actorId], references: [id], onDelete: Cascade)
+  actorEmail   String
+  actorRole    PlatformRole
+  action       AdminAuditAction
+  entityType   String
+  entityId     String?
+  summary      String
+  beforeState  Json?
+  afterState   Json?
+  rolledBackAt DateTime?
+  rolledBackBy String?
+  rollbackUser User?            @relation("AdminAuditRollback", fields: [rolledBackBy], references: [id], onDelete: SetNull)
+  createdAt    DateTime         @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@index([entityType, entityId])
+  @@index([actorId])
 }
 
 // ── Social login (카카오/네이버) ──

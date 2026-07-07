@@ -36,6 +36,7 @@ export type Dictionary = {
       title: string;
       content: string;
       users: string;
+      audit: string;
       orgApprove: string;
       orgBenchmark: string;
     };

@@ -32,6 +32,7 @@ export const dictionary: Dictionary = {
       title: "Admin",
       content: "Content",
       users: "Users",
+      audit: "Audit log",
       orgApprove: "Organizations",
       orgBenchmark: "Benchmark",
     },

@@ -1,6 +1,6 @@
 /**
- * 운영 DB에서 특정 이메일에 SUPERADMIN 또는 CONTENT_ADMIN 부여
- * 사용: npx tsx scripts/grant-platform-role.ts seurman@gmail.com SUPERADMIN
+ * 운영 DB에서 특정 이메일에 SUPERADMIN 또는 ADMIN 부여
+ * 사용: npx tsx scripts/grant-platform-role.ts seurman@gmail.com ADMIN
  */
 import { PrismaClient, PlatformRole } from "@prisma/client";
 
@@ -8,16 +8,18 @@ const prisma = new PrismaClient();
 
 async function main() {
   const email = process.argv[2]?.trim().toLowerCase();
-  const roleArg = (process.argv[3] ?? "SUPERADMIN").toUpperCase();
+  const roleArg = (process.argv[3] ?? "ADMIN").toUpperCase();
 
   if (!email) {
-    console.error("사용법: npx tsx scripts/grant-platform-role.ts <email> [SUPERADMIN|CONTENT_ADMIN]");
+    console.error("사용법: npx tsx scripts/grant-platform-role.ts <email> [ADMIN|SUPERADMIN|CONTENT_ADMIN]");
     process.exit(1);
   }
 
-  const role = roleArg as PlatformRole;
-  if (!["SUPERADMIN", "CONTENT_ADMIN"].includes(role)) {
-    console.error("역할은 SUPERADMIN 또는 CONTENT_ADMIN 이어야 합니다.");
+  let role = roleArg as PlatformRole;
+  if (roleArg === "CONTENT_ADMIN") role = "ADMIN";
+
+  if (!["SUPERADMIN", "ADMIN"].includes(role)) {
+    console.error("역할은 SUPERADMIN 또는 ADMIN 이어야 합니다.");
     process.exit(1);
   }
 

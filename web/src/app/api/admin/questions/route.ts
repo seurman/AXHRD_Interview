@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isAdminResponse, requireContentAdminApi } from "@/lib/admin/auth";
+import { auditActor, isAdminResponse, requirePlatformAdminApi } from "@/lib/admin/auth";
+import { logAdminAudit, snapshotQuestion } from "@/lib/admin/audit";
 import { parseFollowUpHints, parseRubricCriteria } from "@/lib/competency/bank";
 
 const COMP_PREFIX: Record<string, string> = {
@@ -28,7 +29,7 @@ async function nextExternalId(competencyCode: string, level: number) {
 }
 
 export async function POST(req: Request) {
-  const auth = await requireContentAdminApi();
+  const auth = await requirePlatformAdminApi();
   if (isAdminResponse(auth)) return auth;
 
   const body = await req.json().catch(() => ({}));
@@ -80,6 +81,15 @@ export async function POST(req: Request) {
         followUpHints,
       },
     });
+    await logAdminAudit({
+      actor: auditActor(auth),
+      action: "CREATE",
+      entityType: "question",
+      entityId: created.id,
+      summary: `문항 생성: ${created.externalId}`,
+      beforeState: null,
+      afterState: snapshotQuestion(created),
+    });
     return NextResponse.json({
       question: {
         ...created,
@@ -93,7 +103,7 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const auth = await requireContentAdminApi();
+  const auth = await requirePlatformAdminApi();
   if (isAdminResponse(auth)) return auth;
 
   const body = await req.json().catch(() => ({}));

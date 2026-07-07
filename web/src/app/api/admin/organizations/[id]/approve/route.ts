@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { hasSuperadminAccess } from "@/lib/auth/guards";
+import { auditActor } from "@/lib/admin/auth";
+import { logAdminAudit } from "@/lib/admin/audit";
 
-/** 슈퍼어드민이 대기 중인 기관 생성 요청을 승인한다. */
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -19,9 +20,29 @@ export async function POST(
     return NextResponse.json({ error: "기관을 찾을 수 없습니다." }, { status: 404 });
   }
 
+  const before = {
+    status: org.status,
+    approvedAt: org.approvedAt?.toISOString() ?? null,
+    rejectedAt: org.rejectedAt?.toISOString() ?? null,
+  };
+
   const updated = await prisma.organization.update({
     where: { id },
     data: { status: "APPROVED", approvedAt: new Date(), rejectedAt: null },
+  });
+
+  await logAdminAudit({
+    actor: auditActor(user),
+    action: "ORG_APPROVE",
+    entityType: "organization",
+    entityId: id,
+    summary: `기관 승인: ${org.name}`,
+    beforeState: before,
+    afterState: {
+      status: updated.status,
+      approvedAt: updated.approvedAt?.toISOString() ?? null,
+      rejectedAt: null,
+    },
   });
 
   return NextResponse.json({ id: updated.id, status: updated.status });

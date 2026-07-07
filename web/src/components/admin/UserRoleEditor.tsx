@@ -9,11 +9,15 @@ const ROLE_LABEL: Record<string, string> = {
   ADMIN: "기관 관리자",
 };
 
-const PLATFORM_LABEL: Record<string, string> = {
-  NONE: "일반",
-  CONTENT_ADMIN: "콘텐츠 관리자",
-  SUPERADMIN: "슈퍼어드민",
-};
+const PLATFORM_OPTIONS = [
+  { value: "NONE", label: "일반" },
+  { value: "ADMIN", label: "플랫폼 ADMIN" },
+  { value: "SUPERADMIN", label: "SUPERADMIN" },
+] as const;
+
+function normalizePlatformRole(role: string) {
+  return role === "CONTENT_ADMIN" ? "ADMIN" : role;
+}
 
 export function UserRoleEditor({
   userId,
@@ -31,13 +35,13 @@ export function UserRoleEditor({
   const router = useRouter();
   const [role, setRole] = useState(currentRole);
   const [orgId, setOrgId] = useState(currentOrgId ?? "");
-  const [platformRole, setPlatformRole] = useState(currentPlatformRole);
+  const [platformRole, setPlatformRole] = useState(normalizePlatformRole(currentPlatformRole));
   const [saving, setSaving] = useState(false);
 
   const dirty =
     role !== currentRole ||
     orgId !== (currentOrgId ?? "") ||
-    platformRole !== currentPlatformRole;
+    platformRole !== normalizePlatformRole(currentPlatformRole);
 
   const save = async () => {
     setSaving(true);
@@ -97,9 +101,9 @@ export function UserRoleEditor({
         value={platformRole}
         onChange={(e) => setPlatformRole(e.target.value)}
         className="input-luxe px-2 py-1 text-xs"
-        title="플랫폼 권한"
+        title="플랫폼 권한 (SUPERADMIN만 부여 가능)"
       >
-        {Object.entries(PLATFORM_LABEL).map(([value, label]) => (
+        {PLATFORM_OPTIONS.map(({ value, label }) => (
           <option key={value} value={value}>
             {label}
           </option>

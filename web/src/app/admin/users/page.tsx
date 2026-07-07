@@ -11,6 +11,13 @@ const ROLE_LABEL: Record<string, string> = {
   ADMIN: "기관 관리자",
 };
 
+const PLATFORM_LABEL: Record<string, string> = {
+  NONE: "—",
+  ADMIN: "ADMIN",
+  CONTENT_ADMIN: "ADMIN",
+  SUPERADMIN: "SUPERADMIN",
+};
+
 export default async function AdminUsersPage({
   searchParams,
 }: {
@@ -44,18 +51,21 @@ export default async function AdminUsersPage({
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <div>
-        <p className="text-xs font-medium uppercase tracking-widest text-gold">Admin</p>
-        <h1 className="mt-1 text-2xl font-bold text-foreground">전체 사용자 · 권한 관리</h1>
+        <p className="text-xs font-medium uppercase tracking-widest text-gold">Superadmin</p>
+        <h1 className="mt-1 text-2xl font-bold text-foreground">플랫폼 ADMIN 권한 · 사용자 관리</h1>
         <p className="mt-1 text-sm text-muted">
-          사용자의 소속 기관·기관 역할과 플랫폼 권한(콘텐츠 관리자/슈퍼어드민)을 변경할 수 있습니다.
-          콘텐츠 관리자는 문항 뱅크 CMS에, 슈퍼어드민은 기관 승인·사용자 권한까지 접근합니다.
+          SUPERADMIN만 플랫폼 ADMIN 권한을 부여·회수할 수 있습니다. ADMIN은 문항 뱅크 CMS를
+          사용할 수 있으나 하드 삭제·기관 승인은 불가하며, 변경 내역은 감사 로그에 기록됩니다.
         </p>
         <div className="mt-2 flex flex-wrap gap-3 text-sm">
+          <Link href="/admin/audit" className="text-accent hover:underline">
+            감사 로그 · 롤백 →
+          </Link>
           <Link href="/admin/content" className="text-accent hover:underline">
             문항 뱅크 관리 →
           </Link>
           <Link href="/admin/organizations" className="text-accent hover:underline">
-            ← 기관 승인 관리
+            기관 승인 관리 →
           </Link>
         </div>
       </div>
@@ -99,11 +109,7 @@ export default async function AdminUsersPage({
                         : "소속 없음"}
                     </td>
                     <td className="py-2 pr-4 text-muted text-xs">
-                      {u.platformRole === "SUPERADMIN"
-                        ? "슈퍼어드민"
-                        : u.platformRole === "CONTENT_ADMIN"
-                          ? "콘텐츠 관리자"
-                          : "—"}
+                      {PLATFORM_LABEL[u.platformRole] ?? u.platformRole}
                     </td>
                     <td className="py-2 pr-4">
                       <UserRoleEditor

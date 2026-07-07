@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isAdminResponse, requireContentAdminApi } from "@/lib/admin/auth";
+import { isAdminResponse, requirePlatformAdminApi } from "@/lib/admin/auth";
 import { parseFollowUpHints, parseRubricCriteria } from "@/lib/competency/bank";
 
 export async function GET() {
-  const auth = await requireContentAdminApi();
+  const auth = await requirePlatformAdminApi();
   if (isAdminResponse(auth)) return auth;
 
   const [competencies, questions] = await Promise.all([
