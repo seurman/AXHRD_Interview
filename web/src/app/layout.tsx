@@ -5,6 +5,9 @@ import "./globals.css";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { I18nProvider } from "@/lib/i18n/I18nProvider";
 
+/** 로그인·기관 역할에 따라 헤더(SaaS 메뉴 등)가 달라지므로 항상 동적 렌더 */
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const dict = getDictionary(locale);

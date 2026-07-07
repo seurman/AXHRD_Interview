@@ -15,7 +15,10 @@ export async function AppHeader() {
     sessionUser && isSuperadmin(sessionUser.email)
       ? { ...sessionUser, platformRole: "SUPERADMIN" as const }
       : sessionUser;
-  const isOrgStaff = !!user && (user.orgRole === "STAFF" || user.orgRole === "ADMIN");
+  const isOrgStaff =
+    !!user &&
+    !!user.organizationId &&
+    (user.orgRole === "STAFF" || user.orgRole === "ADMIN");
   const isOrgAdmin = !!user && user.orgRole === "ADMIN";
   const isSuperAdmin = !!user && hasSuperadminAccess(user);
   const isPlatformAdminUser = !!user && isPlatformAdmin(user);
