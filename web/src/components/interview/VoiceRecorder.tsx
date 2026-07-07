@@ -7,24 +7,43 @@ import { cn } from "@/lib/cn";
 interface VoiceRecorderProps {
   onTranscript: (text: string, durationSec?: number) => void;
   disabled?: boolean;
+  /** 음성 인식 실패 시 직접 입력 폴백 */
+  allowTextFallback?: boolean;
 }
 
-export function VoiceRecorder({ onTranscript, disabled }: VoiceRecorderProps) {
+const SPEECH_ERROR_MESSAGES: Record<string, string> = {
+  "not-allowed": "마이크 권한이 거부되었습니다. 브라우저 설정에서 마이크를 허용해 주세요.",
+  "no-speech": "음성이 감지되지 않았습니다. 조금 더 크게 말씀해 주세요.",
+  network: "음성 인식 네트워크 오류입니다. 인터넷 연결을 확인해 주세요.",
+  aborted: "음성 인식이 중단되었습니다. 다시 시도해 주세요.",
+  "audio-capture": "마이크를 찾을 수 없습니다. 장치 연결을 확인해 주세요.",
+  "service-not-allowed": "이 페이지에서는 음성 인식을 사용할 수 없습니다. HTTPS 또는 localhost에서 시도해 주세요.",
+};
+
+function speechErrorMessage(code: string): string {
+  return SPEECH_ERROR_MESSAGES[code] ?? `음성 인식 오류(${code}). 다시 시도하거나 직접 입력해 주세요.`;
+}
+
+export function VoiceRecorder({
+  onTranscript,
+  disabled,
+  allowTextFallback = true,
+}: VoiceRecorderProps) {
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [supported, setSupported] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showTextInput, setShowTextInput] = useState(false);
+  const [textDraft, setTextDraft] = useState("");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const startedAtRef = useRef<number | null>(null);
-  // 모바일(특히 안드로이드 Chrome)은 continuous=true라도 내부적으로 인식 세션이
-  // 조용히 끊겼다 재시작되는데, 이때 이미 확정(isFinal)된 문장을 다시 결과에 얹어
-  // "같은 내용이 반복"되는 경우가 있다. 화면에 보여줄 인식 결과 자체가 아니라
-  // 지금까지 확정된 문장들을 여기(ref)에 직접 누적해 매 onresult마다 처음부터
-  // 다시 합치지 않도록 한다 — 그래야 세션이 재시작돼도 중복이 안 생긴다.
   const finalTranscriptRef = useRef("");
-  // 사용자가 정지 버튼을 눌러 끝낸 것인지 구분 — 아니면 onend에서 자동 재시작한다
-  // (모바일은 몇 초 침묵만 있어도 continuous여도 알아서 멈춰버리는 경우가 많음)
   const manualStopRef = useRef(false);
+
+  const getFullTranscript = useCallback(() => {
+    return finalTranscriptRef.current.trim() || transcript.trim();
+  }, [transcript]);
 
   useEffect(() => {
     const SR =
@@ -50,7 +69,6 @@ export function VoiceRecorder({ onTranscript, disabled }: VoiceRecorderProps) {
         if (result.isFinal) {
           const already = finalTranscriptRef.current.trim();
           const piece = text.trim();
-          // 세션 재시작 직후 방금 확정한 문장이 그대로 다시 들어오는 경우 스킵
           if (piece && !already.endsWith(piece)) {
             finalTranscriptRef.current = already ? `${already} ${piece}` : piece;
           }
@@ -59,15 +77,22 @@ export function VoiceRecorder({ onTranscript, disabled }: VoiceRecorderProps) {
         }
       }
       setTranscript(`${finalTranscriptRef.current} ${interim}`.trim());
+      setError(null);
     };
 
-    recognition.onerror = () => setListening(false);
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      const code = event.error ?? "unknown";
+      setListening(false);
+      if (code !== "aborted") {
+        setError(speechErrorMessage(code));
+      }
+    };
+
     recognition.onend = () => {
       if (manualStopRef.current) {
         setListening(false);
         return;
       }
-      // 사용자가 정지를 안 눌렀는데 끊겼다 — 모바일 자동 종료로 보고 이어서 재시작
       try {
         recognition.start();
       } catch {
@@ -78,34 +103,74 @@ export function VoiceRecorder({ onTranscript, disabled }: VoiceRecorderProps) {
     recognitionRef.current = recognition;
   }, []);
 
+  const submitText = useCallback(
+    (text: string, durationSec?: number) => {
+      const trimmed = text.trim();
+      if (!trimmed) {
+        setError("답변 내용이 비어 있습니다. 말씀하시거나 직접 입력해 주세요.");
+        return;
+      }
+      setError(null);
+      onTranscript(trimmed, durationSec);
+    },
+    [onTranscript]
+  );
+
   const start = useCallback(() => {
     if (!recognitionRef.current || disabled) return;
     setTranscript("");
+    setTextDraft("");
     finalTranscriptRef.current = "";
     manualStopRef.current = false;
+    setError(null);
     startedAtRef.current = Date.now();
-    recognitionRef.current.start();
-    setListening(true);
+    try {
+      recognitionRef.current.start();
+      setListening(true);
+    } catch {
+      setError("마이크를 시작할 수 없습니다. 잠시 후 다시 시도하거나 직접 입력해 주세요.");
+      setListening(false);
+    }
   }, [disabled]);
 
   const stop = useCallback(() => {
     manualStopRef.current = true;
     recognitionRef.current?.stop();
     setListening(false);
-    if (transcript.trim()) {
-      const durationSec = startedAtRef.current
-        ? Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000))
-        : undefined;
-      onTranscript(transcript.trim(), durationSec);
-    }
+
+    const fullText = getFullTranscript();
+    const durationSec = startedAtRef.current
+      ? Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000))
+      : undefined;
     startedAtRef.current = null;
-  }, [onTranscript, transcript]);
+
+    if (fullText) {
+      submitText(fullText, durationSec);
+    } else {
+      setError("음성이 인식되지 않았습니다. 조금 더 길게 말씀하시거나 아래에 직접 입력해 주세요.");
+      if (allowTextFallback) setShowTextInput(true);
+    }
+  }, [allowTextFallback, getFullTranscript, submitText]);
+
+  const submitDraft = () => {
+    submitText(textDraft);
+  };
 
   if (!supported) {
     return (
-      <div className="rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm text-warning">
-        이 브라우저는 Web Speech API를 지원하지 않습니다. Chrome/Edge를
-        사용해 주세요.
+      <div className="space-y-4">
+        <div className="rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm text-warning">
+          이 브라우저는 Web Speech API를 지원하지 않습니다. Chrome/Edge를 사용하거나 아래에
+          직접 입력해 주세요.
+        </div>
+        {allowTextFallback && (
+          <TextFallback
+            value={textDraft}
+            onChange={setTextDraft}
+            onSubmit={submitDraft}
+            disabled={disabled}
+          />
+        )}
       </div>
     );
   }
@@ -147,11 +212,72 @@ export function VoiceRecorder({ onTranscript, disabled }: VoiceRecorderProps) {
         )}
       </p>
 
+      {error && (
+        <div className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
+          {error}
+        </div>
+      )}
+
       {transcript && (
         <div className="rounded-xl border border-card-border bg-background p-4 text-sm text-foreground">
           {transcript}
         </div>
       )}
+
+      {allowTextFallback && (
+        <div className="space-y-2">
+          {!showTextInput ? (
+            <button
+              type="button"
+              onClick={() => setShowTextInput(true)}
+              className="w-full text-center text-xs text-primary hover:underline"
+              disabled={disabled}
+            >
+              음성이 안 될 때 직접 입력하기
+            </button>
+          ) : (
+            <TextFallback
+              value={textDraft}
+              onChange={setTextDraft}
+              onSubmit={submitDraft}
+              disabled={disabled}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TextFallback({
+  value,
+  onChange,
+  onSubmit,
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="space-y-2">
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="답변을 직접 입력하세요…"
+        rows={4}
+        disabled={disabled}
+        className="w-full resize-none rounded-xl border border-card-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary/40"
+      />
+      <button
+        type="button"
+        onClick={onSubmit}
+        disabled={disabled || !value.trim()}
+        className="btn-primary w-full py-3 text-sm disabled:opacity-50"
+      >
+        답변 제출
+      </button>
     </div>
   );
 }
@@ -159,6 +285,10 @@ export function VoiceRecorder({ onTranscript, disabled }: VoiceRecorderProps) {
 interface SpeechRecognitionEvent {
   results: SpeechRecognitionResultList;
   resultIndex?: number;
+}
+
+interface SpeechRecognitionErrorEvent {
+  error?: string;
 }
 
 interface SpeechRecognitionResultList {
@@ -183,6 +313,6 @@ interface SpeechRecognitionInstance {
   start: () => void;
   stop: () => void;
   onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
   onend: (() => void) | null;
 }

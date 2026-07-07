@@ -6,9 +6,11 @@ import { IconLoader, IconVolume } from "@/components/ui/icons";
 import { LevelChip } from "./LevelChip";
 import { CompetencyBar } from "./CompetencyBar";
 import { VoiceRecorder } from "./VoiceRecorder";
+import { AnswerFeedbackPanel } from "./AnswerFeedbackPanel";
 import { competencyLabel } from "@/lib/labels";
 import { displayQuestionText } from "@/lib/interview/build-question";
 import type {
+  AnswerFeedback,
   ChipEvent,
   CompetencyState,
   InterviewQuestion,
@@ -31,6 +33,7 @@ export function InterviewSession({
   const router = useRouter();
   const [state, setState] = useState(initialState);
   const [processing, setProcessing] = useState(false);
+  const [lastFeedback, setLastFeedback] = useState<AnswerFeedback | null>(null);
   // Gemini TTS는 합성 자체에 시간이 걸릴 수 있어 "합성 중"과 "재생 중"을 구분해서 보여준다.
   // 구분 없이 재생 중 배지만 있으면 그 사이에는 아무 피드백이 없어 멈춘 것처럼 보인다.
   const [ttsStatus, setTtsStatus] = useState<"idle" | "synthesizing" | "playing">("idle");
@@ -69,6 +72,7 @@ export function InterviewSession({
   const handleAnswer = async (transcript: string, durationSec?: number) => {
     if (!state.currentQuestion || processing) return;
     setProcessing(true);
+    setLastFeedback(null);
 
     try {
       const res = await fetch("/api/interview/respond", {
@@ -90,6 +94,10 @@ export function InterviewSession({
       }
 
       const data = await res.json();
+
+      if (data.answerFeedback) {
+        setLastFeedback(data.answerFeedback as AnswerFeedback);
+      }
 
       setState((prev) => ({
         ...prev,
@@ -201,12 +209,15 @@ export function InterviewSession({
           {processing ? (
             <div className="flex flex-col items-center gap-3 py-8 text-muted">
               <IconLoader className="h-8 w-8 text-accent" />
-              <p>답변을 평가하고 다음 문항을 준비 중…</p>
+              <p>답변을 평가하고 IRT 난이도를 조정하는 중…</p>
+              <p className="text-xs">STAR 구조·루브릭 기준으로 핵심 피드백을 준비합니다</p>
             </div>
           ) : (
-            <VoiceRecorder onTranscript={handleAnswer} disabled={!q} />
+            <VoiceRecorder onTranscript={handleAnswer} disabled={!q} allowTextFallback />
           )}
         </div>
+
+        {lastFeedback && !processing && <AnswerFeedbackPanel feedback={lastFeedback} />}
 
         <p className="text-center text-xs text-muted">
           문항 {state.totalItems + 1}/{maxItems}
@@ -224,18 +235,21 @@ export function InterviewSession({
         </div>
 
         <div className="card-luxe p-5 text-sm text-muted">
-          <p className="mb-2 font-medium text-foreground">레벨 안내</p>
+          <p className="mb-2 font-medium text-foreground">IRT 적응형 안내</p>
           <ul className="space-y-1 text-xs">
             <li>
-              <span className="text-success">♩</span> 레벨 통과 → 상승
+              <span className="text-success">♩</span> 통과 → 더 높은 난이도 문항
             </li>
             <li>
-              <span className="text-accent">♪</span> 부분 통과 → 유지
+              <span className="text-accent">♪</span> 부분 통과 → 비슷한 수준 유지
             </li>
             <li>
-              <span className="text-warning">♭</span> 미달 → 하향
+              <span className="text-warning">♭</span> 미달 → 쉬운 난이도로 조정
             </li>
           </ul>
+          <p className="mt-3 text-xs leading-relaxed">
+            매 답변마다 실력(θ)을 추정해 다음 질문 난이도를 맞춥니다.
+          </p>
         </div>
       </aside>
     </div>

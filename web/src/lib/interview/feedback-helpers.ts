@@ -83,6 +83,88 @@ export function starCoachingNote(coverage: StarCoverage): string {
   return `${missing.join("·")} 순서로 구조를 채워보면 훨씬 설득력 있는 답변이 됩니다.`;
 }
 
+const STAR_LABELS: Record<keyof StarCoverage, string> = {
+  situation: "상황",
+  task: "과제",
+  action: "행동",
+  result: "결과(수치)",
+};
+
+/** 답변 직후 UI에 보여줄 핵심 포인트·IRT 코멘트를 만든다(추가 LLM 호출 없음). */
+export function buildAnswerKeyPointFeedback(params: {
+  answer: string;
+  briefFeedback: string;
+  dimensions?: {
+    structure: number;
+    specificity: number;
+    relevance: number;
+    clarity: number;
+  };
+  chipType?: "pass" | "attempt" | "downgrade";
+  level?: number;
+  competency?: string;
+  nextLevel?: number;
+  isInterim?: boolean;
+}): {
+  summary: string;
+  keyPoints: string[];
+  irtNote: string;
+  quote: string;
+} {
+  const coverage = detectStarCoverage(params.answer);
+  const keyPoints: string[] = [];
+
+  for (const [key, label] of Object.entries(STAR_LABELS) as [keyof StarCoverage, string][]) {
+    keyPoints.push(`${coverage[key] ? "✓" : "·"} ${label}: ${coverage[key] ? "드러남" : "보강 필요"}`);
+  }
+
+  if (params.dimensions) {
+    const dimLabels: Record<string, string> = {
+      structure: "구조",
+      specificity: "구체성",
+      relevance: "역량 연관",
+      clarity: "명확성",
+    };
+    const sorted = Object.entries(params.dimensions).sort((a, b) => b[1] - a[1]);
+    const best = sorted[0];
+    const weak = sorted[sorted.length - 1];
+    if (best && best[1] >= 0.6) {
+      keyPoints.push(`강점 — ${dimLabels[best[0]] ?? best[0]} (${Math.round(best[1] * 100)}%)`);
+    }
+    if (weak && weak[1] < 0.55) {
+      keyPoints.push(`보완 — ${dimLabels[weak[0]] ?? weak[0]} (${Math.round(weak[1] * 100)}%)`);
+    }
+  }
+
+  const quote = extractQuote(params.answer);
+
+  let irtNote = "";
+  if (params.isInterim) {
+    irtNote =
+      "답변 구체성을 더 확인하기 위해 꼬리질문이 이어집니다. 꼬리질문까지 답하면 난이도 조정이 확정됩니다.";
+  } else if (params.chipType && params.level != null) {
+    const lv = params.level;
+    const next = params.nextLevel;
+    if (params.chipType === "pass") {
+      irtNote =
+        next && next > lv
+          ? `L${lv} 통과(♩) — 실력 추정치(θ) 상승. 다음 문항은 L${next} 난이도로 출제됩니다.`
+          : `L${lv} 통과(♩) — 실력 추정치(θ) 상승. 더 높은 난이도 문항이 선택됩니다.`;
+    } else if (params.chipType === "attempt") {
+      irtNote = `L${lv} 부분 통과(♪) — 현재 수준 유지. 비슷한 난이도로 보완·확인 문항이 이어집니다.`;
+    } else {
+      irtNote = `L${lv} 미달(♭) — 다음 문항은 더 쉬운 난이도로 조정되어 맞춤 연습이 이어집니다.`;
+    }
+  }
+
+  return {
+    summary: params.briefFeedback.trim() || starCoachingNote(coverage),
+    keyPoints,
+    irtNote,
+    quote,
+  };
+}
+
 /** 역량별 STAR 리라이트 예시 — LLM 없이도 바로 쓸 수 있는 문장 뼈대. */
 export function starRewriteTemplate(competencyLabel: string): string {
   return `"(상황) 당시 ${competencyLabel}와 관련해 ~한 상황이었고, (과제) 제가 맡은 과제는 ~였습니다. (행동) 저는 ~을 직접 수행했고, (결과) 그 결과 ~% 개선/증가라는 성과를 냈습니다."`;

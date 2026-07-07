@@ -15,6 +15,7 @@ import {
 } from "@/lib/candidate/service";
 import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { buildAnswerKeyPointFeedback } from "@/lib/interview/feedback-helpers";
 import type { CompetencyState, ItemParams } from "@/types";
 
 export async function POST(req: Request) {
@@ -47,6 +48,13 @@ export async function POST(req: Request) {
 
 async function handleRespond(req: Request, userId: string) {
   const { sessionId, questionId, transcript, durationSec } = await req.json();
+
+  if (!transcript || typeof transcript !== "string" || !transcript.trim()) {
+    return NextResponse.json(
+      { error: "답변 내용이 비어 있습니다. 음성 인식 후 제출하거나 직접 입력해 주세요." },
+      { status: 400 }
+    );
+  }
 
   const session = await prisma.interviewSession.findUnique({
     where: { id: sessionId },
@@ -187,6 +195,20 @@ async function handleRespond(req: Request, userId: string) {
         isFollowUp: true,
         competencyStates: stored.competencies,
         chipEvent: null,
+        answerFeedback: {
+          ...buildAnswerKeyPointFeedback({
+            answer: correctedAnswer,
+            briefFeedback: rubric.briefFeedback,
+            dimensions: rubric.dimensions,
+            level: question.level,
+            competency: question.competency.code,
+            isInterim: true,
+          }),
+          score: rubric.score,
+          level: question.level,
+          competency: question.competency.code,
+          isInterim: true,
+        },
         nextQuestion: {
           id: question.id,
           externalId: question.externalId,
@@ -397,6 +419,22 @@ async function handleRespond(req: Request, userId: string) {
       ...irtResult.chip_event,
       had_follow_up: isFollowUpAnswer,
       brief_feedback: briefFeedbackWithConsistency,
+    },
+    answerFeedback: {
+      ...buildAnswerKeyPointFeedback({
+        answer: correctedAnswer,
+        briefFeedback: briefFeedbackWithConsistency,
+        dimensions: rubric.dimensions,
+        chipType: irtResult.chip_event.chip_type,
+        level: irtResult.chip_event.level,
+        nextLevel: nextQuestion?.level,
+        competency: irtResult.chip_event.competency,
+      }),
+      score: rubric.score,
+      chipType: irtResult.chip_event.chip_type,
+      level: irtResult.chip_event.level,
+      competency: irtResult.chip_event.competency,
+      isInterim: false,
     },
     nextQuestion,
     shouldTerminate: irtResult.should_terminate,

@@ -68,6 +68,19 @@ export interface ChipEvent {
   had_follow_up?: boolean;
 }
 
+/** 문항 답변 직후 클라이언트에 보여주는 핵심 피드백 */
+export interface AnswerFeedback {
+  summary: string;
+  keyPoints: string[];
+  irtNote: string;
+  quote?: string;
+  score?: number;
+  chipType?: ChipType;
+  level?: number;
+  competency?: string;
+  isInterim?: boolean;
+}
+
 export interface NextItem {
   item_id: string;
   competency: string;

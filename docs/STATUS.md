@@ -53,6 +53,10 @@
   - 매칭: COMMUNICATION←의사소통, PROBLEM_SOLVING←문제해결, JOB_FIT←정보+기술+자원관리, ORG_FIT←조직이해+직업윤리, LEADERSHIP←대인관계, GROWTH←자기개발
   - 런타임 폴백: DB 루브릭 없을 때 `rubricForNcsLevel(code, level)` 사용
 - **홈 히어로 파란 프리미엄 UI** (2026-07-07): `hero-blue` — 다크 제거, 파란 그라디언트·화이트 스탯 카드
+- **면접 음성 안정화 + 답변 직후 피드백** (2026-07-07):
+  - `VoiceRecorder` — ref 기반 transcript 제출(끊김 방지), 오류 메시지 표시, 빈 답변 안내, 직접 입력 폴백
+  - `AnswerFeedbackPanel` — 문항 답변 직후 STAR 핵심 포인트 + IRT 난이도 조정 코멘트 표시
+  - `/api/interview/respond` — `answerFeedback` 필드 반환(꼬리질문 턴에도 interim 코칭)
 - IRT(2PL) 기반 적응형 모의 면접 (역량별 2~3문항, 실시간 난이도 조정)
 - 자소서 맞춤 질문 생성 (Gemini) — 같은 일화 반복 방지, 문항별 채점 루브릭 자동 생성
 - 음성 답변 → STT 오타 교정(Gemini) → 채점
