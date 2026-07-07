@@ -296,3 +296,50 @@ npx.cmd tsx scripts/flow-smoke.ts
 
 `flow-smoke.ts`는 테스트용 계정을 자동 생성하고 소통능력 역량으로 3세션을 돌려
 반복출제 방지·자소서 반영·STAR 피드백을 콘솔에 ✓/✗로 출력합니다.
+
+---
+
+## 다음 세션 핸드오프 (2026-07-07)
+
+### 이번 대화에서 완료·푸시됨
+
+| 커밋 | 내용 |
+|------|------|
+| `57008e3` | NCS 루브릭 + 홈 히어로 파란 프리미엄 |
+| `222dbbf` | 왜 HR_IN 섹션 hero-blue + NCS 카드·신뢰 배지 |
+| `a154787` | NCS L1~L5 역량 루브릭 DB 시드 (`npm run db:seed:rubrics`) |
+| `b92b4cb` | 면접 음성 안정화 + 답변 직후 IRT 피드백 (`AnswerFeedbackPanel`) |
+
+프로덕션 DB에 NCS 루브릭 미반영 시:
+`cd web && npx dotenv-cli -e .env.production.local -- npm run db:seed:rubrics`
+
+### 다음에 구현 예정: **트리플 모드 (Triple Feedback)**
+
+**컨셉:** 동일 답변에 대해 **대기업 · 공공기관 · 스타트업** 3명의 면접관 관점 피드백을 카드 3장으로 병렬 표시. IRT 점수(θ, pass/attempt/downgrade)는 **1개만** 유지하고, 3카드는 **해석·코칭 렌즈**만 다름.
+
+**벤치마킹 (2026-07-07):**
+- MockWin — 페르소나 매트릭스(면접 *진행* 중 톤), 답변 후 3카드 UI 없음
+- Coril — 라운드별 페르소나(순차), 동시 3관점 카드 없음
+- AceInterview — 회사별 단일 루브릭 피드백
+- **“한 답변 → 3조직 유형 카드 병렬 피드백”** 은 시장에서 거의 없음 → HR_IN 차별화 포인트
+
+**이미 있는 기반:**
+- `lib/company/company-size-presets.ts` — LARGE / PUBLIC / STARTUP focus·tone
+- `AnswerFeedbackPanel` + `respond/route.ts` `answerFeedback`
+- NCS 루브릭(공공), IRT 파이프라인
+
+**구현 스케치 (MVP):**
+1. `lib/interview/triple-feedback.ts` — 3관점 프롬프트·휴리스틱 폴백
+2. `evaluate.ts` 또는 `respond/route.ts` — Gemini 1회 호출에 `tripleFeedback: { LARGE, PUBLIC, STARTUP }` JSON 추가 (score는 공통 1개)
+3. `TripleFeedbackPanel.tsx` — 3카드 그리드 + 하단 공통 IRT 노트
+4. `SetupForm` — 트리플 모드 토글 (옵션)
+5. `InterviewSession` — 트리플 모드 시 `AnswerFeedbackPanel` 대체/병행
+
+**관점 차이 (제품 카피용):**
+- 대기업: 조직적합·리더십·프로세스·윤리
+- 공공: NCS·공직가치·규칙·책임
+- 스타트업: 오너십·성장·속도·비전 공감
+
+**리스크:** Gemini 토큰 증가 → 옵션/Pro 모드 권장. 3 verdict 불일치는 정상(안내 문구 필요).
+
+**시작 명령:** 새 대화에서 `docs/STATUS.md`의 「트리플 모드」절을 읽고 MVP 구현 요청.
