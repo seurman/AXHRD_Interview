@@ -27,16 +27,75 @@ export type DemoQuestionDto = {
 };
 
 export function slugifyDemoName(name: string): string {
-  const base = name
+  // URL·Vercel 라우팅 안정성: ASCII만 사용 (한글 slug는 미리보기 404 유발)
+  const ascii = name
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9가-힣]+/g, "-")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 48);
-  return base || `demo-${Date.now().toString(36)}`;
+    .slice(0, 40);
+  return ascii || `demo-${Date.now().toString(36)}`;
+}
+
+function decodeSlugCandidates(slug: string): string[] {
+  const out: string[] = [];
+  const push = (s: string) => {
+    const t = s.trim();
+    if (t && !out.includes(t)) out.push(t);
+  };
+  push(slug);
+  try {
+    push(decodeURIComponent(slug));
+  } catch {
+    /* ignore */
+  }
+  try {
+    push(decodeURIComponent(decodeURIComponent(slug)));
+  } catch {
+    /* ignore */
+  }
+  for (const s of [...out]) {
+    push(s.normalize("NFC"));
+    push(s.normalize("NFD"));
+  }
+  return out;
+}
+
+/** 기존 한글 slug를 ASCII로 고쳐 공개 URL이 404 나지 않게 한다 */
+export async function ensureDemoWorkspacePublicSlug(workspaceId: string): Promise<string> {
+  const ws = await prisma.demoWorkspace.findUnique({
+    where: { id: workspaceId },
+    select: { id: true, name: true, slug: true },
+  });
+  if (!ws) throw new Error("데모를 찾을 수 없습니다.");
+
+  const needsFix = /[^a-z0-9-]/i.test(ws.slug) || !ws.slug;
+  if (!needsFix) return ws.slug;
+
+  let next = slugifyDemoName(ws.name);
+  const clash = await prisma.demoWorkspace.findFirst({
+    where: { slug: next, NOT: { id: workspaceId } },
+    select: { id: true },
+  });
+  if (clash) next = `${next}-${Date.now().toString(36).slice(-4)}`;
+
+  await prisma.demoWorkspace.update({
+    where: { id: workspaceId },
+    data: { slug: next },
+  });
+  return next;
 }
 
 export async function loadDemoWorkspaceSnapshot(workspaceId: string) {
+  // ensure ASCII slug lazily so preview links keep working
+  try {
+    await ensureDemoWorkspacePublicSlug(workspaceId);
+  } catch {
+    /* ignore */
+  }
+
   const workspace = await prisma.demoWorkspace.findUnique({
     where: { id: workspaceId },
     include: {
@@ -89,12 +148,34 @@ export async function loadDemoWorkspaceSnapshot(workspaceId: string) {
 }
 
 export async function loadDemoWorkspaceBySlug(slug: string) {
-  const ws = await prisma.demoWorkspace.findUnique({
-    where: { slug },
-    select: { id: true },
-  });
-  if (!ws) return null;
-  return loadDemoWorkspaceSnapshot(ws.id);
+  const candidates = decodeSlugCandidates(slug);
+  for (const candidate of candidates) {
+    const ws = await prisma.demoWorkspace.findUnique({
+      where: { slug: candidate },
+      select: { id: true },
+    });
+    if (ws) return loadDemoWorkspaceSnapshot(ws.id);
+  }
+
+  // 한글 이름 → 깨진 ASCII 슬러그로 남은 workspace: 이름 부분 일치 시도
+  const decoded = candidates.find((c) => /[가-힣]/.test(c));
+  if (decoded) {
+    const spaced = decoded.replace(/-/g, " ").trim();
+    const compact = decoded.replace(/-/g, "").trim();
+    const guess = await prisma.demoWorkspace.findFirst({
+      where: {
+        OR: [
+          { name: { contains: spaced } },
+          ...(compact && compact !== spaced ? [{ name: { contains: compact } }] : []),
+        ],
+      },
+      select: { id: true },
+      orderBy: { updatedAt: "desc" },
+    });
+    if (guess) return loadDemoWorkspaceSnapshot(guess.id);
+  }
+
+  return null;
 }
 
 /** 운영 문항 뱅크 → 데모 워크스페이스로 일괄 복사 (createMany로 타임아웃 완화) */

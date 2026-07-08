@@ -408,7 +408,7 @@ export function DemoWorkspaceEditor({
           ))}
         </ol>
         <a
-          href={`/demo/${workspaceSlug}`}
+          href={`/demo/${encodeURIComponent(workspaceSlug)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="btn-secondary inline-flex items-center gap-1 px-3 py-1.5 text-xs"

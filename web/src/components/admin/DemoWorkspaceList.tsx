@@ -154,7 +154,7 @@ export function DemoWorkspaceList({ initialWorkspaces }: { initialWorkspaces: Wo
               </div>
               <div className="flex gap-2">
                 <a
-                  href={`/demo/${ws.slug}`}
+                  href={`/demo/${encodeURIComponent(ws.slug)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-secondary px-3 py-1 text-xs"
