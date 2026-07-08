@@ -19,6 +19,8 @@ type Snap = {
 type Props = {
   slug: string;
   initialSnap?: Snap | null;
+  presenterModeEnabled?: boolean;
+  presenterKey?: string | null;
 };
 
 const LEVELS = [1, 2, 3, 4, 5] as const;
@@ -57,10 +59,17 @@ function firstLevelWithQuestions(
   return lv ?? fallback;
 }
 
-export function DemoShowcase({ slug, initialSnap = null }: Props) {
+export function DemoShowcase({
+  slug,
+  initialSnap = null,
+  presenterModeEnabled = false,
+  presenterKey = null,
+}: Props) {
   const router = useRouter();
   const nav = useNavSession();
   const loggedIn = nav?.loggedIn ?? false;
+  const canPresentDemo = nav?.canPresentDemo ?? false;
+  const showPresenterStart = presenterModeEnabled || canPresentDemo;
   const publicSlug = decodeSlug(slug);
 
   const [snap, setSnap] = useState<Snap | null>(initialSnap);
@@ -154,9 +163,9 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
 
   const loginNext = `/demo/${encodeURIComponent(snap?.workspace.slug ?? publicSlug)}`;
 
-  const startInterview = async () => {
+  const startInterview = async (presenter = false) => {
     if (!snap) return;
-    if (!loggedIn) {
+    if (!presenter && !loggedIn) {
       router.push(`/auth/login?next=${encodeURIComponent(loginNext)}`);
       return;
     }
@@ -168,15 +177,23 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
     setStarting(true);
     setStartError(null);
     const kitSlug = snap.workspace.slug ?? publicSlug;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 95_000);
     try {
       const res = await fetch(`/api/demo/${encodeURIComponent(kitSlug)}/start`, {
         method: "POST",
         credentials: "include",
+        signal: controller.signal,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ focusCompetency: activeComp.code, jobRole }),
+        body: JSON.stringify({
+          focusCompetency: activeComp.code,
+          jobRole,
+          presenterMode: presenter,
+          presenterKey: presenter ? presenterKey ?? undefined : undefined,
+        }),
       });
       const data = await res.json().catch(() => ({}));
-      if (res.status === 401) {
+      if (res.status === 401 && !presenter) {
         router.push(`/auth/login?next=${encodeURIComponent(loginNext)}`);
         return;
       }
@@ -193,8 +210,15 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
       }
       throw new Error("세션 ID를 받지 못했습니다.");
     } catch (e) {
-      setStartError(e instanceof Error ? e.message : "면접을 시작하지 못했습니다.");
+      if (e instanceof Error && e.name === "AbortError") {
+        setStartError(
+          "세션 준비가 너무 오래 걸립니다. 잠시 후 다시 시도하거나 적응형 엔진 상태를 확인해 주세요.",
+        );
+      } else {
+        setStartError(e instanceof Error ? e.message : "면접을 시작하지 못했습니다.");
+      }
     } finally {
+      window.clearTimeout(timer);
       setStarting(false);
     }
   };
@@ -340,7 +364,11 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
               {comp ? (
                 <>
                   선택 역량: <strong className="text-foreground">{comp.nameKo}</strong>
-                  {loggedIn ? " · 로그인됨" : " · 로그인 후 시작"}
+                  {showPresenterStart
+                    ? " · 시연 모드"
+                    : loggedIn
+                      ? " · 로그인됨"
+                      : " · 로그인 후 시작"}
                 </>
               ) : (
                 "위에서 역량을 선택한 뒤 시작하세요."
@@ -365,11 +393,28 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
                 ))}
               </select>
             </label>
-            {loggedIn ? (
+            {showPresenterStart ? (
               <button
                 type="button"
-                onClick={() => void startInterview()}
-                disabled={starting || irtWarming || snap.competencies.length === 0 || !comp}
+                onClick={() => void startInterview(true)}
+                disabled={starting || snap.competencies.length === 0 || !comp}
+                className="btn-primary inline-flex w-full items-center justify-center gap-2 px-5 py-3 text-sm sm:w-auto sm:py-2.5"
+              >
+                {starting ? (
+                  "세션 준비 중… (최대 1분)"
+                ) : (
+                  <>
+                    <Play className="h-4 w-4" />
+                    시연용 면접 시작
+                    <ArrowRight className="h-4 w-4 opacity-70" />
+                  </>
+                )}
+              </button>
+            ) : loggedIn ? (
+              <button
+                type="button"
+                onClick={() => void startInterview(false)}
+                disabled={starting || snap.competencies.length === 0 || !comp}
                 className="btn-primary inline-flex w-full items-center justify-center gap-2 px-5 py-3 text-sm sm:w-auto sm:py-2.5"
               >
                 {starting ? (

@@ -1,19 +1,24 @@
 import { NextResponse } from "next/server";
 import { synthesizeSpeechWithMeta } from "@/lib/gemini/tts";
-import { getCurrentUser } from "@/lib/auth/session";
+import { resolveInterviewActorFromRequest } from "@/lib/auth/interview-access";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
-  // TTS는 호출당 비용이 발생하므로 로그인 사용자만 호출 가능하도록 제한.
-  const user = await getCurrentUser();
-  if (!user) {
+  const body = await req.json().catch(() => ({}));
+  const sessionId = typeof body.sessionId === "string" ? body.sessionId : "";
+  const actor = sessionId
+    ? await resolveInterviewActorFromRequest(req, sessionId)
+    : null;
+
+  if (!actor) {
     return NextResponse.json(
       { error: "로그인이 필요합니다.", redirect: "/auth/login" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
-  const rl = checkRateLimit(`interview:tts:${user.id}`, 30, 5 * 60 * 1000);
+  const rlKey = actor.isPresenter ? `presenter:${sessionId}` : actor.userId;
+  const rl = checkRateLimit(`interview:tts:${rlKey}`, 30, 5 * 60 * 1000);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
@@ -21,7 +26,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { text } = await req.json();
+  const { text } = body;
 
   if (!text?.trim()) {
     return NextResponse.json({ error: "Text required" }, { status: 400 });

@@ -13,7 +13,7 @@ import {
   markPlanCompleteIfNeeded,
   syncCompetencyProgress,
 } from "@/lib/candidate/service";
-import { getCurrentUser } from "@/lib/auth/session";
+import { resolveInterviewActorFromRequest } from "@/lib/auth/interview-access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { buildAnswerKeyPointFeedback } from "@/lib/interview/feedback-helpers";
 import { getOrgKitCustomRubric } from "@/lib/org/interview-kit";
@@ -25,25 +25,30 @@ import type { CompetencyState, ItemParams } from "@/types";
 
 export async function POST(req: Request) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
+    const body = await req.clone().json().catch(() => ({}));
+    const sessionId = typeof body.sessionId === "string" ? body.sessionId : "";
+    if (!sessionId) {
+      return NextResponse.json({ error: "sessionId가 필요합니다." }, { status: 400 });
+    }
+
+    const actor = await resolveInterviewActorFromRequest(req, sessionId);
+    if (!actor) {
       return NextResponse.json(
         { error: "로그인이 필요합니다.", redirect: "/auth/login" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
-    // 매 응답마다 Gemini 채점 + 질문 개인화(유료 API)를 호출하므로
-    // 로그인 사용자 기준으로 방어한다.
-    const rl = checkRateLimit(`interview:respond:${user.id}`, 40, 5 * 60 * 1000);
+    const rlKey = actor.isPresenter ? `presenter:${sessionId}` : actor.userId;
+    const rl = checkRateLimit(`interview:respond:${rlKey}`, 40, 5 * 60 * 1000);
     if (!rl.allowed) {
       return NextResponse.json(
         { error: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
-        { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } }
+        { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
       );
     }
 
-    return await handleRespond(req, user.id);
+    return await handleRespond(req, actor.userId);
   } catch (e) {
     console.error("[interview/respond]", e);
     const message = e instanceof Error ? e.message : "답변 처리 실패";

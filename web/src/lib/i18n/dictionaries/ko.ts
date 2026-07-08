@@ -40,10 +40,10 @@ export const dictionary: Dictionary = {
       subscriptions: "구독 관리",
       permissions: "권한 설정",
       sections: {
-        ops: "운영",
-        orgs: "기관 관리",
-        accounts: "계정/보안",
-        billing: "결제",
+        content: "콘텐츠",
+        tenants: "테넌트",
+        security: "계정·보안",
+        billing: "결제·구독",
       },
     },
     saas: {

@@ -1,6 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
+import { resolveInterviewActor } from "@/lib/auth/interview-access";
 import { InterviewSession } from "@/components/interview/InterviewSession";
 import { parseIrtState, defaultCompetencyStates } from "@/lib/irt-state";
 import { buildPersonalizedQuestion } from "@/lib/interview/build-question";
@@ -19,7 +19,10 @@ interface PageProps {
 
 export default async function InterviewPage({ params }: PageProps) {
   const { sessionId } = await params;
-  const user = await requirePageUser(`/interview/${sessionId}`);
+  const actor = await resolveInterviewActor(sessionId);
+  if (!actor) {
+    redirect(`/auth/login?next=${encodeURIComponent(`/interview/${sessionId}`)}`);
+  }
 
   const session = await prisma.interviewSession.findUnique({
     where: { id: sessionId },
@@ -31,7 +34,7 @@ export default async function InterviewPage({ params }: PageProps) {
   });
 
   if (!session) notFound();
-  assertResourceOwner(session.userId, user.id);
+  if (session.userId !== actor.userId) notFound();
 
   const stored = parseIrtState(session.irtState);
   const competencyStates =

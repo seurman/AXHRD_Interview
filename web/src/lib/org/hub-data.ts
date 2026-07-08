@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { getCohortData } from "@/lib/org/cohort";
+import {
+  formatOrgPeriod,
+  getOrgContractStatus,
+  resolveOrgSeatCap,
+} from "@/lib/org/contract";
 
 const ROLE_ORDER = { ADMIN: 0, STAFF: 1, STUDENT: 2 } as const;
 
@@ -34,6 +39,10 @@ export async function getOrgHubSnapshot(organizationId: string) {
 
   const cohort = await getCohortData(organizationId);
 
+  const subscription = org.subscriptions[0] ?? null;
+  const seatCap = resolveOrgSeatCap(org, subscription);
+  const contractStatus = getOrgContractStatus(org);
+
   const members = [...org.members].sort((a, b) => {
     const ra = ROLE_ORDER[a.orgRole as keyof typeof ROLE_ORDER] ?? 9;
     const rb = ROLE_ORDER[b.orgRole as keyof typeof ROLE_ORDER] ?? 9;
@@ -53,11 +62,18 @@ export async function getOrgHubSnapshot(organizationId: string) {
     createdAt: org.createdAt,
     approvedAt: org.approvedAt,
     rejectedAt: org.rejectedAt,
+    validFrom: org.validFrom,
+    validUntil: org.validUntil,
+    maxSeats: org.maxSeats,
+    adminNotes: org.adminNotes,
+    contractStatus,
+    contractPeriodLabel: formatOrgPeriod(org.validFrom, org.validUntil),
+    seatCap,
     personalizationEnabled: org.saasPersonalizationEnabled,
     personalizationEnabledAt: org.saasPersonalizationEnabledAt,
     kitCount: org.interviewKits.length,
     kits: org.interviewKits,
-    subscription: org.subscriptions[0] ?? null,
+    subscription,
     members,
     admins,
     staff,

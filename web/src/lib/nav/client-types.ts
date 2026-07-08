@@ -12,6 +12,7 @@ export type NavPayload = {
   userName: string | null;
   orgRole: string | null;
   organizationId: string | null;
+  canPresentDemo: boolean;
   dashboardHref: string | null;
   prepareLinks: { href: string; labelKey: PrepareLabelKey }[];
   profileHref: string | null;
@@ -24,6 +25,7 @@ export const GUEST_NAV: NavPayload = {
   userName: null,
   orgRole: null,
   organizationId: null,
+  canPresentDemo: false,
   dashboardHref: null,
   prepareLinks: [],
   profileHref: null,

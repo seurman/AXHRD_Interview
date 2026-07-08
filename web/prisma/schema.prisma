@@ -114,6 +114,9 @@ enum AdminAuditAction {
   ROLE_GRANT
   ORG_APPROVE
   ORG_REJECT
+  ORG_CREATE
+  ORG_UPDATE
+  ORG_DELETE
 }
 
 /** 자기발견 인터뷰 세션 상태 — 채점 없는 성찰형 대화 */
@@ -133,7 +136,15 @@ model Organization {
   /** 슈퍼어드민이 부여 시 기관 ADMIN이 인터뷰 킷·루브릭 개인화 가능 */
   saasPersonalizationEnabled Boolean @default(false)
   saasPersonalizationEnabledAt DateTime?
+  /** 계약·서비스 이용 기간 (슈퍼어드민 설정). null이면 기간 제한 없음 */
+  validFrom  DateTime?
+  validUntil DateTime?
+  /** 최대 소속 인원(학생·담당자 포함). null이면 구독 플랜 기본값 또는 무제한 */
+  maxSeats   Int?
+  /** 슈퍼어드민 메모 */
+  adminNotes String?
   createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   members       User[]
   subscriptions Subscription[]
@@ -428,6 +439,9 @@ model InterviewSession {
   pasteDetected   Boolean       @default(false)
   /** 면접 중 탭 이탈 횟수(채점 무관) */
   tabSwitchCount  Int           @default(0)
+  /** 고객 시연(presenter) 모드로 시작된 데모 세션 */
+  isPresenterDemo Boolean       @default(false)
+  demoWorkspaceId String?
   createdAt       DateTime      @default(now())
 
   responses ResponseRecord[]
@@ -727,6 +741,8 @@ model DemoWorkspace {
   name            String
   slug            String           @unique
   description     String?
+  /** 시연 URL(?pk=) 인증 — 관리자만 공유 */
+  presenterKey    String?          @unique
   createdByUserId String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt

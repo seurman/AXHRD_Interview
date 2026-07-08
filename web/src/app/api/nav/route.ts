@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { isSuperadmin } from "@/lib/auth/guards";
 import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
 import { buildNavigationForUser } from "@/lib/platform/nav-registry";
+import { canManageDemoWorkspaces } from "@/lib/auth/roles";
 import type { NavPayload } from "@/lib/nav/client-types";
 
 /** 클라이언트 헤더용 — 로그인 상태·역할별 네비 구성 */
@@ -23,6 +24,7 @@ export async function GET() {
       userName: null,
       orgRole: null,
       organizationId: null,
+      canPresentDemo: false,
       dashboardHref: null,
       prepareLinks: [],
       profileHref: null,
@@ -43,6 +45,10 @@ export async function GET() {
     userName: user.name,
     orgRole: user.orgRole,
     organizationId: user.organizationId,
+    canPresentDemo: canManageDemoWorkspaces({
+      email: user.email,
+      platformRole: user.platformRole,
+    }),
     dashboardHref: nav.dashboardHref,
     prepareLinks: nav.prepareLinks,
     profileHref: nav.profileHref,

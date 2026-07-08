@@ -58,7 +58,8 @@ export function InterviewSession({
       const res = await fetch("/api/interview/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        credentials: "include",
+        body: JSON.stringify({ text, sessionId }),
       });
       if (!res.ok) return;
       const blob = await res.blob();
@@ -93,7 +94,8 @@ export function InterviewSession({
       const res = await fetch("/api/interview/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        credentials: "include",
+        body: JSON.stringify({ text, sessionId }),
       });
       if (res.ok) {
         const blob = await res.blob();

@@ -32,29 +32,51 @@ async function irtFetch<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export async function initIrtSession(params: {
-  sessionId: string;
-  competencies: string[];
-  itemPool: ItemParams[];
-  priorTheta?: Record<string, number>;
-  focusCompetency?: string;
-  mode?: "competency" | "full";
-  minItems?: number;
-  maxItems?: number;
-}): Promise<{
+export async function initIrtSession(
+  params: {
+    sessionId: string;
+    competencies: string[];
+    itemPool: ItemParams[];
+    priorTheta?: Record<string, number>;
+    focusCompetency?: string;
+    mode?: "competency" | "full";
+    minItems?: number;
+    maxItems?: number;
+  },
+  opts?: { timeoutMs?: number; retries?: number },
+): Promise<{
   competency_states: Record<string, CompetencyState>;
   next_item: NextItem | null;
 }> {
-  return irtFetch("/session/init", {
-    session_id: params.sessionId,
-    competencies: params.competencies,
-    item_pool: params.itemPool,
-    prior_theta: params.priorTheta ?? {},
-    focus_competency: params.focusCompetency,
-    mode: params.mode ?? "competency",
-    min_items: params.minItems ?? 2,
-    max_items: params.maxItems ?? 3,
+  const timeoutMs = opts?.timeoutMs ?? IRT_TIMEOUT_MS;
+  const retries = opts?.retries ?? IRT_RETRIES;
+  const res = await fetchWithTimeout(`${IRT_BASE}/api/v1/session/init`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      session_id: params.sessionId,
+      competencies: params.competencies,
+      item_pool: params.itemPool,
+      prior_theta: params.priorTheta ?? {},
+      focus_competency: params.focusCompetency,
+      mode: params.mode ?? "competency",
+      min_items: params.minItems ?? 2,
+      max_items: params.maxItems ?? 3,
+    }),
+    timeoutMs,
+    retries,
+    retryDelayMs: 800,
   });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`IRT Engine error: ${res.status} ${text}`);
+  }
+
+  return res.json() as Promise<{
+    competency_states: Record<string, CompetencyState>;
+    next_item: NextItem | null;
+  }>;
 }
 
 export async function submitIrtResponse(params: {

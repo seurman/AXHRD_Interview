@@ -1,7 +1,7 @@
 import type { CapabilityId } from "@/lib/platform/capabilities";
 import { CAPABILITY_REGISTRY } from "@/lib/platform/capabilities";
 import { hasCapability, resolveUserCapabilities, type AccessContext } from "@/lib/platform/access";
-import { isSuperAdminUser, type RoleUser } from "@/lib/auth/roles";
+import { type RoleUser } from "@/lib/auth/roles";
 
 export type NavLabelKey =
   | "content"
@@ -15,7 +15,7 @@ export type NavLabelKey =
 
 export type PrepareLabelKey = "interview" | "discover" | "cards";
 
-export type AdminSectionKey = "ops" | "orgs" | "accounts" | "billing";
+export type AdminSectionKey = "content" | "tenants" | "security" | "billing";
 
 export type AdminNavItem = {
   href: string;
@@ -25,28 +25,28 @@ export type AdminNavItem = {
 };
 
 const PLATFORM_NAV_ORDER: AdminNavItem[] = [
-  { href: "/admin/content", labelKey: "content", capability: "platform.content", section: "ops" },
-  { href: "/admin/demo", labelKey: "demo", capability: "platform.demo", section: "ops" },
+  { href: "/admin/content", labelKey: "content", capability: "platform.content", section: "content" },
+  { href: "/admin/demo", labelKey: "demo", capability: "platform.demo", section: "content" },
   {
     href: "/admin/organizations",
     labelKey: "orgApprove",
     capability: "platform.organizations",
-    section: "orgs",
+    section: "tenants",
   },
   {
     href: "/admin/organizations/benchmark",
     labelKey: "orgBenchmark",
     capability: "platform.benchmark",
-    section: "orgs",
+    section: "tenants",
   },
-  { href: "/admin/users", labelKey: "users", capability: "platform.users", section: "accounts" },
+  { href: "/admin/users", labelKey: "users", capability: "platform.users", section: "security" },
   {
     href: "/admin/permissions",
     labelKey: "permissions",
     capability: "platform.permissions",
-    section: "accounts",
+    section: "security",
   },
-  { href: "/admin/audit", labelKey: "audit", capability: "platform.audit", section: "accounts" },
+  { href: "/admin/audit", labelKey: "audit", capability: "platform.audit", section: "security" },
   {
     href: "/admin/subscriptions",
     labelKey: "subscriptions",
@@ -55,7 +55,7 @@ const PLATFORM_NAV_ORDER: AdminNavItem[] = [
   },
 ];
 
-const ADMIN_SECTION_ORDER: AdminSectionKey[] = ["ops", "orgs", "accounts", "billing"];
+const ADMIN_SECTION_ORDER: AdminSectionKey[] = ["content", "tenants", "security", "billing"];
 
 const PREPARE_HREFS: { href: string; labelKey: PrepareLabelKey; capability: CapabilityId }[] = [
   { href: "/interview/setup", labelKey: "interview", capability: "product.interview" },
@@ -116,11 +116,12 @@ export async function buildNavigationForUser(user: RoleUser): Promise<Navigation
   ];
 
   let saasLinks: SaasNavConfig | null = null;
+  const hasOrgMembership = !!user.organizationId;
   const hasTenantNav =
-    caps.has("tenant.cohort") ||
-    caps.has("tenant.settings") ||
-    caps.has("tenant.interview_kit") ||
-    isSuperAdminUser(user);
+    hasOrgMembership &&
+    (caps.has("tenant.cohort") ||
+      caps.has("tenant.settings") ||
+      caps.has("tenant.interview_kit"));
 
   if (hasTenantNav) {
     const links: SaasNavConfig["links"] = [];
@@ -128,17 +129,15 @@ export async function buildNavigationForUser(user: RoleUser): Promise<Navigation
 
     if (caps.has("tenant.cohort")) {
       links.push({
-        href: isSuperAdminUser(user) ? "/admin/organizations" : "/org/dashboard",
+        href: "/org/dashboard",
         labelKey: "cohortDashboard",
       });
     }
 
-    if (isSuperAdminUser(user)) {
-      settingsLinks.push({ href: "/admin/organizations", labelKey: "settingsHub" });
-    } else if (caps.has("tenant.settings")) {
+    if (caps.has("tenant.settings")) {
       settingsLinks.push({ href: "/org/settings", labelKey: "settingsHub" });
     }
-    if (!isSuperAdminUser(user) && caps.has("tenant.interview_kit")) {
+    if (caps.has("tenant.interview_kit")) {
       settingsLinks.push({ href: "/org/settings/interview-kit", labelKey: "interviewKit" });
     }
 

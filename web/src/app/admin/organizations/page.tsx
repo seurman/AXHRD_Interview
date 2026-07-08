@@ -1,10 +1,17 @@
 import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
+import { OrgCreatePanel } from "@/components/admin/OrgCreatePanel";
 import { OrgReviewActions } from "@/components/admin/OrgReviewActions";
 import { OrgStatusBadge } from "@/components/admin/OrgStatusBadge";
 import {
+  formatOrgPeriod,
+  getOrgContractStatus,
+  resolveOrgSeatCap,
+} from "@/lib/org/contract";
+import {
   Building2,
+  CalendarRange,
   ChevronRight,
   ClipboardList,
   Sparkles,
@@ -24,6 +31,12 @@ export default async function AdminOrganizationsPage() {
         select: { name: true, email: true },
         take: 1,
       },
+      subscriptions: {
+        where: { status: { not: "CANCELED" } },
+        select: { planTier: true },
+        take: 1,
+        orderBy: { updatedAt: "desc" },
+      },
       _count: { select: { members: true, interviewKits: true } },
     },
   });
@@ -38,19 +51,10 @@ export default async function AdminOrganizationsPage() {
         <p className="text-xs font-medium uppercase tracking-widest text-gold">Admin · Tenants</p>
         <h1 className="mt-1 text-2xl font-bold text-foreground sm:text-3xl">기관 관리</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted">
-          AXHRD 테넌트 허브 — 기관별 승인, 팀, 코호트, 인터뷰 킷을 한곳에서
-          관리합니다.
+          테넌트 생성·승인·가입 코드·이용 기간·좌석 상한을 한곳에서 관리합니다.
         </p>
-        <div className="mt-4 flex flex-wrap gap-3 text-sm">
-          <Link href="/admin/content" className="text-accent hover:underline">
-            문항 뱅크
-          </Link>
-          <Link href="/admin/users" className="text-accent hover:underline">
-            사용자 권한
-          </Link>
-          <Link href="/admin/organizations/benchmark" className="text-accent hover:underline">
-            기관 비교
-          </Link>
+        <div className="mt-5">
+          <OrgCreatePanel />
         </div>
       </header>
 
@@ -99,7 +103,10 @@ export default async function AdminOrganizationsPage() {
           <p className="text-sm text-muted">승인된 기관이 없습니다.</p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {active.map((org) => (
+            {active.map((org) => {
+              const seatCap = resolveOrgSeatCap(org, org.subscriptions[0]);
+              const contractStatus = getOrgContractStatus(org);
+              return (
               <Link
                 key={org.id}
                 href={`/admin/organizations/${org.id}`}
@@ -127,6 +134,11 @@ export default async function AdminOrganizationsPage() {
                   <span className="inline-flex items-center gap-1">
                     <Users className="h-3.5 w-3.5" />
                     {org._count.members}명
+                    {seatCap != null ? ` / ${seatCap}` : ""}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <CalendarRange className="h-3.5 w-3.5" />
+                    {formatOrgPeriod(org.validFrom, org.validUntil)}
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <ClipboardList className="h-3.5 w-3.5" />
@@ -134,8 +146,15 @@ export default async function AdminOrganizationsPage() {
                   </span>
                   <span className="font-mono">{org.joinCode}</span>
                 </div>
+                {contractStatus === "expired" && (
+                  <p className="mt-2 text-xs font-medium text-danger">이용 기간 만료</p>
+                )}
+                {seatCap != null && org._count.members >= seatCap && (
+                  <p className="mt-2 text-xs font-medium text-amber-700">좌석 상한 도달</p>
+                )}
               </Link>
-            ))}
+            );
+            })}
           </div>
         )}
       </section>

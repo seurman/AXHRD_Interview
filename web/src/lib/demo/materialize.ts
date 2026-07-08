@@ -175,3 +175,43 @@ export async function materializeDemoKitToInterviewBank(workspaceId: string): Pr
 
   return { codes, questionCount };
 }
+
+/** 데모 키트가 이미 운영 뱅크에 있으면 재료화를 건너뛴다 */
+export async function ensureDemoKitMaterialized(workspaceId: string): Promise<{
+  codes: string[];
+  questionCount: number;
+  cached: boolean;
+}> {
+  const workspace = await prisma.demoWorkspace.findUnique({
+    where: { id: workspaceId },
+    include: {
+      competencies: { where: { isActive: true } },
+      questions: { where: { isActive: true } },
+    },
+  });
+  if (!workspace) throw new Error("데모를 찾을 수 없습니다.");
+
+  const codes = workspace.competencies.map((c) => c.code);
+  const activeDemoQs = workspace.questions.length;
+  if (codes.length === 0 || activeDemoQs === 0) {
+    return materializeDemoKitToInterviewBank(workspaceId).then((r) => ({
+      ...r,
+      cached: false,
+    }));
+  }
+
+  const bankCount = await prisma.question.count({
+    where: {
+      isActive: true,
+      externalId: { startsWith: "DEMO-" },
+      competency: { code: { in: codes }, isActive: true },
+    },
+  });
+
+  if (bankCount >= Math.min(activeDemoQs, 2)) {
+    return { codes, questionCount: bankCount, cached: true };
+  }
+
+  const fresh = await materializeDemoKitToInterviewBank(workspaceId);
+  return { ...fresh, cached: false };
+}

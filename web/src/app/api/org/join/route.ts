@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { canOrgAcceptMember } from "@/lib/org/contract";
 
 /** 학생/구직자가 가입 코드를 입력해 기관에 소속된다 (STUDENT 권한). */
 export async function POST(req: Request) {
@@ -31,15 +32,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "가입 코드를 입력해 주세요." }, { status: 400 });
   }
 
-  const org = await prisma.organization.findUnique({ where: { joinCode: rawCode } });
+  const org = await prisma.organization.findUnique({
+    where: { joinCode: rawCode },
+    include: {
+      subscriptions: {
+        where: { status: { not: "CANCELED" } },
+        select: { planTier: true },
+        take: 1,
+        orderBy: { updatedAt: "desc" },
+      },
+    },
+  });
   if (!org) {
     return NextResponse.json({ error: "유효하지 않은 가입 코드입니다." }, { status: 404 });
   }
-  if (org.status !== "APPROVED") {
-    return NextResponse.json(
-      { error: "이 기관은 아직 승인 대기 중이라 가입할 수 없습니다. 담당자에게 문의해 주세요." },
-      { status: 409 }
-    );
+
+  const accept = await canOrgAcceptMember(org);
+  if (!accept.ok) {
+    return NextResponse.json({ error: accept.reason }, { status: 409 });
   }
 
   await prisma.user.update({

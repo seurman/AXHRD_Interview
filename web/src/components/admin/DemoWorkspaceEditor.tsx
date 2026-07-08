@@ -68,6 +68,7 @@ export function DemoWorkspaceEditor({
   const [dropActive, setDropActive] = useState(false);
   const [draggingCode, setDraggingCode] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [presenterUrl, setPresenterUrl] = useState<string | null>(null);
   const [openLevels, setOpenLevels] = useState<Set<number>>(() => new Set([1, 2, 3, 4, 5]));
 
   const base = `/api/admin/demo/workspaces/${workspaceId}`;
@@ -98,6 +99,9 @@ export function DemoWorkspaceEditor({
     const data = await res.json();
     setCompetencies(data.competencies);
     setQuestions(data.questions);
+    if (typeof data.presenterUrl === "string") {
+      setPresenterUrl(data.presenterUrl);
+    }
     if (!data.competencies.some((c: DemoCompetencyDto) => c.id === selectedCompId)) {
       setSelectedCompId(data.competencies[0]?.id ?? "");
     }
@@ -129,6 +133,15 @@ export function DemoWorkspaceEditor({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    void fetch(base)
+      .then((res) => res.json())
+      .then((data) => {
+        if (typeof data.presenterUrl === "string") setPresenterUrl(data.presenterUrl);
+      })
+      .catch(() => {});
+  }, [base]);
 
   const addFromCatalog = async (
     selections: Array<{ source: "ncs" | "global"; code: string }>,
@@ -422,6 +435,17 @@ export function DemoWorkspaceEditor({
         >
           데모 미리보기 · 면접 <ExternalLink className="h-3 w-3" />
         </a>
+        {presenterUrl ? (
+          <a
+            href={presenterUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-lg border border-gold/40 bg-gold/10 px-3 py-1.5 text-xs text-gold hover:bg-gold/20"
+            title="고객 시연용 — 로그인 없이 면접 시작"
+          >
+            시연 URL (로그인 불필요) <ExternalLink className="h-3 w-3" />
+          </a>
+        ) : null}
       </div>
       </div>
 

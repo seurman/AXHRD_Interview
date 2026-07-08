@@ -1,19 +1,26 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { checkUsageLimit } from "@/lib/billing/usage";
-import { isUsageExemptUser } from "@/lib/auth/roles";
+import { isUsageExemptUser, canManageDemoWorkspaces } from "@/lib/auth/roles";
 import { loadDemoWorkspaceBySlug } from "@/lib/demo/workspace";
-import { materializeDemoKitToInterviewBank } from "@/lib/demo/materialize";
+import { ensureDemoKitMaterialized } from "@/lib/demo/materialize";
 import { startInterviewSession } from "@/lib/interview/start-session";
+import {
+  createDemoPresenterToken,
+  DEMO_PRESENTER_COOKIE,
+  getOrCreateDemoPresenterUser,
+  validatePresenterKey,
+} from "@/lib/demo/presenter";
+import { warmIrtEngine } from "@/lib/irt-client";
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 type Ctx = { params: Promise<{ slug: string }> };
 
 /**
  * 고객 데모 공개 URL → 모의면접 실행.
- * 키트에 NCS가 없어도 DemoCompetency/Question을 운영 뱅크에 재료화한 뒤 IRT 세션을 연다.
+ * - 로그인 사용자: 일반 시작
+ * - 시연 키(?pk=) 또는 관리자: 로그인 없이 시연 세션 시작
  */
 export async function POST(req: Request, { params }: Ctx) {
   const { slug: rawSlug } = await params;
@@ -25,8 +32,27 @@ export async function POST(req: Request, { params }: Ctx) {
     }
   })();
 
+  const body = await req.json().catch(() => ({}));
+  const presenterKey =
+    typeof body.presenterKey === "string" ? body.presenterKey.trim() : "";
+  const presenterMode = body.presenterMode === true || !!presenterKey;
+
   const user = await getCurrentUser();
-  if (!user) {
+  const presenterAuth = presenterKey
+    ? await validatePresenterKey(slug, presenterKey)
+    : null;
+
+  if (presenterMode) {
+    if (!presenterAuth && !user) {
+      return NextResponse.json(
+        { error: "시연 키가 필요합니다." },
+        { status: 401 },
+      );
+    }
+    if (!presenterAuth && user && !canManageDemoWorkspaces(user)) {
+      return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+    }
+  } else if (!user) {
     return NextResponse.json(
       {
         error: "로그인이 필요합니다.",
@@ -60,7 +86,11 @@ export async function POST(req: Request, { params }: Ctx) {
     );
   }
 
-  const rl = checkRateLimit(`interview:start:${user.id}`, 10, 10 * 60 * 1000);
+  const actorUser = presenterMode
+    ? await getOrCreateDemoPresenterUser()
+    : user!;
+
+  const rl = checkRateLimit(`interview:start:${actorUser.id}`, 10, 10 * 60 * 1000);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "면접 세션 생성 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
@@ -68,41 +98,36 @@ export async function POST(req: Request, { params }: Ctx) {
     );
   }
 
-  const exempt = isUsageExemptUser({
-    email: user.email,
-    platformRole: user.platformRole,
-  });
-  if (!exempt) {
-    const usage = await checkUsageLimit(user.id, "mock_interview");
-    if (!usage.allowed) {
-      return NextResponse.json(
-        {
-          error: usage.message,
-          code: "PLAN_LIMIT_EXCEEDED",
-          upgradeUrl: usage.upgradeUrl,
-          used: usage.used,
-          limit: usage.limit,
-        },
-        { status: 402 },
-      );
+  if (!presenterMode && user) {
+    const exempt = isUsageExemptUser({
+      email: user.email,
+      platformRole: user.platformRole,
+    });
+    if (!exempt) {
+      const { checkUsageLimit } = await import("@/lib/billing/usage");
+      const usage = await checkUsageLimit(user.id, "mock_interview");
+      if (!usage.allowed) {
+        return NextResponse.json(
+          {
+            error: usage.message,
+            code: "PLAN_LIMIT_EXCEEDED",
+            upgradeUrl: usage.upgradeUrl,
+            used: usage.used,
+            limit: usage.limit,
+          },
+          { status: 402 },
+        );
+      }
     }
   }
 
-  let materialize;
-  try {
-    materialize = await materializeDemoKitToInterviewBank(snap.workspace.id);
-  } catch (e) {
-    console.error("[demo/start materialize]", e);
-    return NextResponse.json(
-      {
-        error:
-          e instanceof Error
-            ? `면접용 문항 준비 실패: ${e.message}`
-            : "면접용 문항 준비에 실패했습니다.",
-      },
-      { status: 500 },
-    );
-  }
+  const [materialize] = await Promise.all([
+    ensureDemoKitMaterialized(snap.workspace.id).catch((e) => {
+      console.error("[demo/start materialize]", e);
+      throw e;
+    }),
+    warmIrtEngine().catch(() => ({ ok: false, elapsedMs: 0 })),
+  ]);
 
   if (materialize.codes.length === 0 || materialize.questionCount === 0) {
     return NextResponse.json(
@@ -111,7 +136,6 @@ export async function POST(req: Request, { params }: Ctx) {
     );
   }
 
-  const body = await req.json().catch(() => ({}));
   const requested =
     typeof body.focusCompetency === "string" ? body.focusCompetency.trim().toUpperCase() : "";
   const jobRole = typeof body.jobRole === "string" ? body.jobRole : "OTHER";
@@ -121,7 +145,7 @@ export async function POST(req: Request, { params }: Ctx) {
     requested && allowed.includes(requested) ? requested : withQuestions[0]?.code ?? allowed[0];
 
   const result = await startInterviewSession(
-    user,
+    actorUser,
     {
       companyName: snap.workspace.name,
       jobRole,
@@ -131,18 +155,38 @@ export async function POST(req: Request, { params }: Ctx) {
     {
       allowedCompetencies: allowed,
       allowAnyCompetencyCode: true,
+      kitOrganizationId: null,
+      demoMode: true,
+      isPresenterDemo: presenterMode,
+      demoWorkspaceId: snap.workspace.id,
     },
   );
 
-  if (result.ok) {
-    return NextResponse.json({
-      ...result.body,
-      demoSlug: snap.workspace.slug,
-      demoName: snap.workspace.name,
-      resolvedFocus: focus,
-      materialize,
-    });
+  if (!result.ok) {
+    return NextResponse.json(result.body, { status: result.status });
   }
 
-  return NextResponse.json(result.body, { status: result.status });
+  const payload = {
+    ...result.body,
+    demoSlug: snap.workspace.slug,
+    demoName: snap.workspace.name,
+    resolvedFocus: focus,
+    materialize,
+    presenterMode,
+  };
+
+  if (presenterMode) {
+    const token = await createDemoPresenterToken(result.body.sessionId);
+    const res = NextResponse.json(payload);
+    res.cookies.set(DEMO_PRESENTER_COOKIE, token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 4 * 60 * 60,
+    });
+    return res;
+  }
+
+  return NextResponse.json(payload);
 }

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/jwt";
+import {
+  DEMO_PRESENTER_COOKIE,
+  verifyDemoPresenterToken,
+} from "@/lib/demo/presenter";
 
 function isPublicPath(pathname: string) {
   if (pathname === "/") return true;
@@ -10,6 +14,7 @@ function isPublicPath(pathname: string) {
   if (pathname === "/pricing") return true;
   if (pathname.startsWith("/billing/fail")) return true;
   if (pathname.startsWith("/demo")) return true;
+  if (pathname.startsWith("/api/demo")) return true;
   return false;
 }
 
@@ -18,7 +23,12 @@ function requiresAuth(pathname: string) {
   if (pathname.startsWith("/dashboard")) return true;
   if (pathname.startsWith("/profile")) return true;
   if (pathname.startsWith("/interview")) return true;
-  if (pathname.startsWith("/api/interview")) return true;
+  if (pathname.startsWith("/api/interview")) {
+    if (pathname === "/api/interview/respond" || pathname === "/api/interview/tts") {
+      return false;
+    }
+    return true;
+  }
   if (pathname.startsWith("/api/candidates")) return true;
   if (pathname.startsWith("/api/profile")) return true;
   if (pathname.startsWith("/api/companies")) return true;
@@ -43,6 +53,18 @@ export async function middleware(request: NextRequest) {
 
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const userId = token ? await verifySessionToken(token) : null;
+
+  if (!userId && pathname.startsWith("/interview/")) {
+    const sessionId = pathname.split("/")[2];
+    const demoToken = request.cookies.get(DEMO_PRESENTER_COOKIE)?.value;
+    if (
+      sessionId &&
+      demoToken &&
+      (await verifyDemoPresenterToken(demoToken, sessionId))
+    ) {
+      return NextResponse.next();
+    }
+  }
 
   if (!userId) {
     if (pathname.startsWith("/api/")) {

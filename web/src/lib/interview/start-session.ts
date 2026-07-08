@@ -57,6 +57,10 @@ export type StartSessionOpts = {
    * COMPETENCY_CODES 밖 코드(Global 재료화)도 허용한다.
    */
   allowAnyCompetencyCode?: boolean;
+  /** 고객 데모 — JD·자소서 enrichment 생략, 문항 풀 단순화 */
+  demoMode?: boolean;
+  isPresenterDemo?: boolean;
+  demoWorkspaceId?: string | null;
 };
 
 export type StartSessionResult =
@@ -138,7 +142,7 @@ export async function startInterviewSession(
   }
   let interviewStyle: CompanyContext["interviewStyle"] = companyContext.interviewStyle;
   let resolvedSize: CompanySizeCode = companyContext.size;
-  if (trimmedJdText) {
+  if (!opts.demoMode && trimmedJdText) {
     const derived = await deriveInterviewStyleFromJD({
       jdText: trimmedJdText,
       industryLabel: companyContext.industry,
@@ -322,6 +326,8 @@ export async function startInterviewSession(
       startedAt: new Date(),
       kitOrganizationId: kitOrganizationId ?? null,
       orgKitShareId: opts.orgKitShareId ?? null,
+      isPresenterDemo: opts.isPresenterDemo ?? false,
+      demoWorkspaceId: opts.demoWorkspaceId ?? null,
     },
   });
 
@@ -348,14 +354,16 @@ export async function startInterviewSession(
     questions,
   });
 
-  const rankedQuestions = await filterAndRankQuestionPool({
-    userId: user.id,
-    competency,
-    questions: kitFilteredQuestions,
-    resumeSummary: parseResumeSummary(resume?.parsedTags),
-    jobRole,
-    interviewStyleFocus: interviewStyle.focus,
-  });
+  const rankedQuestions = opts.demoMode
+    ? kitFilteredQuestions
+    : await filterAndRankQuestionPool({
+        userId: user.id,
+        competency,
+        questions: kitFilteredQuestions,
+        resumeSummary: parseResumeSummary(resume?.parsedTags),
+        jobRole,
+        interviewStyleFocus: interviewStyle.focus,
+      });
 
   const itemPool: ItemParams[] = rankedQuestions.map((q) => ({
     item_id: q.externalId,
@@ -378,16 +386,19 @@ export async function startInterviewSession(
 
   let irtResult;
   try {
-    irtResult = await initIrtSession({
-      sessionId: session.id,
-      competencies: [competency],
-      itemPool,
-      priorTheta,
-      focusCompetency: competency,
-      mode: "competency",
-      minItems: 2,
-      maxItems: 3,
-    });
+    irtResult = await initIrtSession(
+      {
+        sessionId: session.id,
+        competencies: [competency],
+        itemPool,
+        priorTheta,
+        focusCompetency: competency,
+        mode: "competency",
+        minItems: 2,
+        maxItems: 3,
+      },
+      opts.demoMode ? { timeoutMs: 28_000, retries: 1 } : undefined,
+    );
   } catch (e) {
     console.error("[start-session] IRT init failed:", e);
     await prisma.interviewSession.delete({ where: { id: session.id } }).catch(() => {});

@@ -41,10 +41,10 @@ export const dictionary: Dictionary = {
       subscriptions: "Subscriptions",
       permissions: "Permissions",
       sections: {
-        ops: "Operations",
-        orgs: "Organizations",
-        accounts: "Accounts & security",
-        billing: "Billing",
+        content: "Content",
+        tenants: "Tenants",
+        security: "Accounts & security",
+        billing: "Billing & plans",
       },
     },
     saas: {

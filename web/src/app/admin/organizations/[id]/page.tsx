@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { getOrgHubSnapshot } from "@/lib/org/hub-data";
+import { OrgContractEditor } from "@/components/admin/OrgContractEditor";
 import { OrgHubPersonalizationToggle } from "@/components/admin/OrgHubPersonalizationToggle";
 import { OrgReviewActions } from "@/components/admin/OrgReviewActions";
 import { OrgStatusBadge } from "@/components/admin/OrgStatusBadge";
@@ -60,7 +61,16 @@ export default async function AdminOrgHubPage({ params }: Props) {
             <p className="mt-1 text-xs text-white/40">
               등록 {hub.createdAt.toLocaleDateString("ko-KR")}
               {hub.approvedAt && ` · 승인 ${hub.approvedAt.toLocaleDateString("ko-KR")}`}
+              {hub.contractPeriodLabel !== "기간 제한 없음" && ` · ${hub.contractPeriodLabel}`}
             </p>
+            {hub.seatCap != null && (
+              <p className="mt-2 text-xs text-white/50">
+                좌석 {hub.memberCount} / {hub.seatCap}
+                {hub.memberCount >= hub.seatCap && (
+                  <span className="ml-2 text-amber-300">상한 도달</span>
+                )}
+              </p>
+            )}
           </div>
           {hub.status === "PENDING" && (
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -94,6 +104,21 @@ export default async function AdminOrgHubPage({ params }: Props) {
           ))}
         </div>
       </header>
+
+      <OrgContractEditor
+        organizationId={hub.id}
+        initial={{
+          name: hub.name,
+          joinCode: hub.joinCode,
+          status: hub.status,
+          validFrom: hub.validFrom?.toISOString() ?? null,
+          validUntil: hub.validUntil?.toISOString() ?? null,
+          maxSeats: hub.maxSeats,
+          adminNotes: hub.adminNotes,
+          memberCount: hub.memberCount,
+          seatCap: hub.seatCap,
+        }}
+      />
 
       {hub.status === "APPROVED" && (
         <section className="grid gap-4 md:grid-cols-2">

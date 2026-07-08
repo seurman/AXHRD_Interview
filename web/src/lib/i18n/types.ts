@@ -44,9 +44,9 @@ export type Dictionary = {
       subscriptions: string;
       permissions: string;
       sections: {
-        ops: string;
-        orgs: string;
-        accounts: string;
+        content: string;
+        tenants: string;
+        security: string;
         billing: string;
       };
     };

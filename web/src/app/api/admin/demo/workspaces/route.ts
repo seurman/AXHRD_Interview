@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAdminResponse, requireDemoManagerApi } from "@/lib/admin/auth";
 import { slugifyDemoName } from "@/lib/demo/workspace";
+import { generatePresenterKey } from "@/lib/demo/presenter";
 
 export const maxDuration = 60;
 
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
         name,
         slug,
         description,
+        presenterKey: generatePresenterKey(),
         createdByUserId: auth.id,
       },
     });

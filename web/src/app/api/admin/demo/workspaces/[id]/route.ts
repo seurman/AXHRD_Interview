@@ -5,6 +5,7 @@ import {
   cloneProductionToDemoWorkspace,
   loadDemoWorkspaceSnapshot,
 } from "@/lib/demo/workspace";
+import { ensureWorkspacePresenterKey } from "@/lib/demo/presenter";
 
 export const maxDuration = 60;
 
@@ -19,7 +20,12 @@ export async function GET(_req: Request, { params }: Ctx) {
   if (!snap) {
     return NextResponse.json({ error: "데모를 찾을 수 없습니다." }, { status: 404 });
   }
-  return NextResponse.json(snap);
+  const presenterKey = await ensureWorkspacePresenterKey(id);
+  return NextResponse.json({
+    ...snap,
+    presenterKey,
+    presenterUrl: `/demo/${encodeURIComponent(snap.workspace.slug)}?pk=${encodeURIComponent(presenterKey)}`,
+  });
 }
 
 export async function PATCH(req: Request, { params }: Ctx) {
