@@ -66,7 +66,9 @@ export function DemoWorkspaceEditor({
   const [openClusters, setOpenClusters] = useState<Set<string>>(new Set(["NCS_IRT"]));
   const [filter, setFilter] = useState("");
   const [dropActive, setDropActive] = useState(false);
+  const [draggingCode, setDraggingCode] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [openLevels, setOpenLevels] = useState<Set<number>>(() => new Set([1, 2, 3, 4, 5]));
 
   const base = `/api/admin/demo/workspaces/${workspaceId}`;
   const selectedComp = competencies.find((c) => c.id === selectedCompId);
@@ -168,22 +170,56 @@ export function DemoWorkspaceEditor({
     }
   };
 
+  const parseDragPayload = (e: React.DragEvent): { source: "ncs" | "global"; code: string } | null => {
+    const raw =
+      e.dataTransfer.getData(DND_TYPE) ||
+      e.dataTransfer.getData("text/plain") ||
+      e.dataTransfer.getData("text");
+    if (!raw) return null;
+    try {
+      const payload = JSON.parse(raw) as { source?: string; code?: string };
+      if (!payload.code) return null;
+      return {
+        source: payload.source === "global" ? "global" : "ncs",
+        code: String(payload.code).toUpperCase(),
+      };
+    } catch {
+      return null;
+    }
+  };
+
   const onDragStart = (e: React.DragEvent, c: CatalogComp) => {
-    e.dataTransfer.setData(DND_TYPE, JSON.stringify({ source: c.source, code: c.code }));
+    const payload = JSON.stringify({ source: c.source, code: c.code });
+    e.dataTransfer.setData(DND_TYPE, payload);
+    // text/plain: Safari / 일부 브라우저가 커스텀 MIME만으로는 드래그가 깨짐
+    e.dataTransfer.setData("text/plain", payload);
     e.dataTransfer.effectAllowed = "copy";
+    setDraggingCode(c.code);
+    // 질의/루브릭 화면에서도 드롭 가능하도록 키트 스텝으로 유도하지 않음 — 우측 전역 드롭존 사용
+  };
+
+  const onDragEnd = () => {
+    setDraggingCode(null);
+    setDropActive(false);
   };
 
   const onDropToKit = async (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setDropActive(false);
-    const raw = e.dataTransfer.getData(DND_TYPE);
-    if (!raw) return;
-    try {
-      const payload = JSON.parse(raw) as { source: "ncs" | "global"; code: string };
-      await addFromCatalog([payload]);
-    } catch {
-      /* ignore */
+    setDraggingCode(null);
+    const payload = parseDragPayload(e);
+    if (!payload) {
+      setMessage("드래그 데이터를 읽지 못했습니다. + 버튼으로 추가해 보세요.");
+      return;
     }
+    await addFromCatalog([payload]);
+  };
+
+  const onCanvasDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+    if (!dropActive) setDropActive(true);
   };
 
   const removeCompetency = async (comp: DemoCompetencyDto) => {
@@ -441,17 +477,36 @@ export function DemoWorkspaceEditor({
                           return (
                             <li key={`${c.source}-${c.code}`}>
                               <div
-                                draggable={!inKit && !busy}
-                                onDragStart={(e) => onDragStart(e, c)}
                                 className={`group flex items-start gap-1 rounded-md border px-1.5 py-1.5 text-xs ${
                                   inKit
                                     ? "border-transparent bg-primary/5 opacity-60"
-                                    : "cursor-grab border-transparent hover:border-card-border hover:bg-background active:cursor-grabbing"
+                                    : draggingCode === c.code
+                                      ? "border-accent bg-accent/10"
+                                      : "border-transparent hover:border-card-border hover:bg-background"
                                 }`}
                                 title={c.description ?? c.code}
                               >
-                                <GripVertical className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted/60" />
-                                <div className="min-w-0 flex-1">
+                                {!inKit ? (
+                                  <span
+                                    draggable={!busy}
+                                    onDragStart={(e) => onDragStart(e, c)}
+                                    onDragEnd={onDragEnd}
+                                    className="mt-0.5 cursor-grab touch-none text-muted/80 active:cursor-grabbing"
+                                    aria-label={`${c.nameKo} 드래그`}
+                                  >
+                                    <GripVertical className="h-3.5 w-3.5" />
+                                  </span>
+                                ) : (
+                                  <GripVertical className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted/30" />
+                                )}
+                                <button
+                                  type="button"
+                                  disabled={inKit || busy}
+                                  onClick={() => {
+                                    if (!inKit) void addFromCatalog([{ source: c.source, code: c.code }]);
+                                  }}
+                                  className="min-w-0 flex-1 text-left disabled:cursor-default"
+                                >
                                   <p className="font-medium leading-snug text-foreground">
                                     {c.nameKo}
                                   </p>
@@ -459,7 +514,7 @@ export function DemoWorkspaceEditor({
                                     {c.source === "global" ? "Global" : "NCS"} · {c.code} ·{" "}
                                     {c.questionCount}문항
                                   </p>
-                                </div>
+                                </button>
                                 {inKit ? (
                                   <span className="shrink-0 text-[10px] text-accent">키트</span>
                                 ) : (
@@ -469,7 +524,7 @@ export function DemoWorkspaceEditor({
                                     onClick={() =>
                                       void addFromCatalog([{ source: c.source, code: c.code }])
                                     }
-                                    className="shrink-0 rounded p-0.5 text-muted opacity-0 hover:text-accent group-hover:opacity-100"
+                                    className="shrink-0 rounded p-0.5 text-muted hover:text-accent"
                                     aria-label="키트에 추가"
                                   >
                                     <Plus className="h-3.5 w-3.5" />
@@ -488,27 +543,40 @@ export function DemoWorkspaceEditor({
           </div>
         </aside>
 
-        {/* Right: canvas by step */}
-        <div className="min-w-0 space-y-3">
+        {/* Right: canvas by step — always accepts catalog drops */}
+        <div
+          className="relative min-w-0 space-y-3"
+          onDragOver={onCanvasDragOver}
+          onDragLeave={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropActive(false);
+          }}
+          onDrop={(e) => void onDropToKit(e)}
+        >
+          {dropActive || draggingCode ? (
+            <div
+              className={`pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-dashed ${
+                dropActive ? "border-accent bg-accent/10" : "border-card-border/40 bg-transparent"
+              }`}
+            >
+              {dropActive ? (
+                <p className="rounded-lg bg-card px-4 py-2 text-sm font-medium text-foreground shadow">
+                  여기에 놓아 키트에 추가
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
           {step === "kit" && (
             <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDropActive(true);
-              }}
-              onDragLeave={() => setDropActive(false)}
-              onDrop={(e) => void onDropToKit(e)}
               className={`min-h-[320px] rounded-xl border-2 border-dashed p-4 transition ${
-                dropActive
-                  ? "border-accent bg-accent/5"
-                  : "border-card-border bg-card"
+                dropActive ? "border-accent bg-accent/5" : "border-card-border bg-card"
               }`}
             >
               <div className="mb-3 flex items-center justify-between gap-2">
                 <div>
                   <h2 className="text-sm font-semibold text-foreground">필요 역량 키트</h2>
                   <p className="text-xs text-muted">
-                    좌측에서 끌어다 놓거나 + 로 추가 · {competencies.length}개 선택됨
+                    좌측 그립(⋮⋮)을 잡고 이 영역으로 끌어오거나 + 로 추가 · {competencies.length}개
                   </p>
                 </div>
                 {competencies.length > 0 ? (
@@ -525,9 +593,9 @@ export function DemoWorkspaceEditor({
               {competencies.length === 0 ? (
                 <div className="flex h-48 flex-col items-center justify-center text-center text-sm text-muted">
                   <p>여기에 역량을 놓으세요.</p>
-                  <p className="mt-1 text-xs">
-                    Global 20이 안 보이면 운영 DB에{" "}
-                    <code className="text-[10px]">npm run db:seed:global</code> 가 필요합니다.
+                  <p className="mt-1 max-w-sm text-xs">
+                    드래그가 안 되면 항목 오른쪽 <strong>+</strong> 를 누르세요. Global이 비면{" "}
+                    <code className="text-[10px]">npm run db:seed:global</code>
                   </p>
                 </div>
               ) : (
@@ -585,15 +653,33 @@ export function DemoWorkspaceEditor({
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h2 className="text-sm font-semibold text-foreground">질의 조정</h2>
-                  <p className="text-xs text-muted">키트에 넣은 역량별로 문항을 다듬습니다</p>
+                  <p className="text-xs text-muted">
+                    레벨을 펼쳐 문항 전문을 보고 수정합니다. 좌측에서 역량을 끌어와도 키트에 추가됩니다.
+                  </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => goStep("rubrics")}
-                  className="btn-primary px-3 py-1.5 text-xs"
-                >
-                  다음: 루브릭 →
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setOpenLevels(new Set([1, 2, 3, 4, 5]))}
+                    className="btn-secondary px-2 py-1 text-[11px]"
+                  >
+                    전부 펼치기
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOpenLevels(new Set())}
+                    className="btn-secondary px-2 py-1 text-[11px]"
+                  >
+                    접기
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goStep("rubrics")}
+                    className="btn-primary px-3 py-1.5 text-xs"
+                  >
+                    다음: 루브릭 →
+                  </button>
+                </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 {competencies.map((c) => (
@@ -608,67 +694,133 @@ export function DemoWorkspaceEditor({
                     }`}
                   >
                     {c.nameKo}
+                    <span className="ml-1 text-muted">({c.questionCount})</span>
                   </button>
                 ))}
               </div>
               {!selectedComp ? (
                 <p className="text-sm text-muted">역량을 선택해 주세요.</p>
               ) : (
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                  {LEVELS.map((lv) => (
-                    <div key={lv} className="rounded-xl border border-card-border bg-background p-3">
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-gold">L{lv}</span>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground">
+                    {selectedComp.nameKo}
+                    <span className="ml-2 text-xs font-normal text-muted">{selectedComp.code}</span>
+                  </p>
+                  {LEVELS.map((lv) => {
+                    const list = questionsByLevel.get(lv) ?? [];
+                    const open = openLevels.has(lv);
+                    return (
+                      <div
+                        key={lv}
+                        className="overflow-hidden rounded-xl border border-card-border bg-background"
+                      >
                         <button
                           type="button"
-                          onClick={() => void addQuestion(lv)}
-                          disabled={busy}
-                          className="text-muted hover:text-foreground"
+                          onClick={() =>
+                            setOpenLevels((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(lv)) next.delete(lv);
+                              else next.add(lv);
+                              return next;
+                            })
+                          }
+                          className="flex w-full items-center gap-2 px-3 py-2.5 text-left hover:bg-card/80"
                         >
-                          <Plus className="h-4 w-4" />
+                          {open ? (
+                            <ChevronDown className="h-4 w-4 shrink-0 text-muted" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
+                          )}
+                          <span className="text-sm font-semibold text-gold">L{lv}</span>
+                          <span className="text-xs text-muted">{list.length}문항</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void addQuestion(lv);
+                            }}
+                            className="ml-auto inline-flex rounded p-1 text-muted hover:bg-card hover:text-foreground"
+                            title="문항 추가"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
                         </button>
+                        {open ? (
+                          <ul className="space-y-3 border-t border-card-border px-3 py-3">
+                            {list.length === 0 ? (
+                              <li className="text-xs text-muted">
+                                문항 없음. + 로 추가하거나 전부 펼친 뒤 다른 레벨을 확인하세요.
+                              </li>
+                            ) : (
+                              list.map((q, qIdx, arr) => (
+                                <li
+                                  key={q.id}
+                                  className="rounded-lg border border-card-border bg-card p-3"
+                                >
+                                  <label className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-muted">
+                                    {q.externalId}
+                                  </label>
+                                  <textarea
+                                    className="mb-2 min-h-[6.5rem] w-full resize-y rounded-lg border border-card-border bg-background px-3 py-2.5 text-sm leading-relaxed text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                    value={q.template}
+                                    rows={4}
+                                    onChange={(e) =>
+                                      setQuestions((prev) =>
+                                        prev.map((x) =>
+                                          x.id === q.id ? { ...x, template: e.target.value } : x,
+                                        ),
+                                      )
+                                    }
+                                    onBlur={() => void updateQuestion(q, { template: q.template })}
+                                  />
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-[11px] text-muted">순서</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => void moveQuestion(q, -1)}
+                                      disabled={qIdx === 0}
+                                      className="rounded border border-card-border px-2 py-0.5 text-xs disabled:opacity-40"
+                                    >
+                                      위
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => void moveQuestion(q, 1)}
+                                      disabled={qIdx === arr.length - 1}
+                                      className="rounded border border-card-border px-2 py-0.5 text-xs disabled:opacity-40"
+                                    >
+                                      아래
+                                    </button>
+                                    <select
+                                      className="rounded border border-card-border bg-background px-2 py-0.5 text-xs"
+                                      value={q.level}
+                                      onChange={(e) => {
+                                        const level = Number(e.target.value);
+                                        void updateQuestion(q, { level }).then(() => refresh());
+                                      }}
+                                    >
+                                      {LEVELS.map((l) => (
+                                        <option key={l} value={l}>
+                                          L{l}로 이동
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <button
+                                      type="button"
+                                      onClick={() => void removeQuestion(q)}
+                                      className="ml-auto text-xs text-muted hover:text-red-500"
+                                    >
+                                      삭제
+                                    </button>
+                                  </div>
+                                </li>
+                              ))
+                            )}
+                          </ul>
+                        ) : null}
                       </div>
-                      <ul className="space-y-2">
-                        {(questionsByLevel.get(lv) ?? []).map((q, qIdx, arr) => (
-                          <li key={q.id} className="rounded border border-card-border p-2 text-xs">
-                            <textarea
-                              className="input-luxe mb-1 min-h-[4rem] w-full resize-y text-xs"
-                              value={q.template}
-                              onChange={(e) =>
-                                setQuestions((prev) =>
-                                  prev.map((x) =>
-                                    x.id === q.id ? { ...x, template: e.target.value } : x,
-                                  ),
-                                )
-                              }
-                              onBlur={() => void updateQuestion(q, { template: q.template })}
-                            />
-                            <div className="flex items-center justify-between">
-                              <div className="flex gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => void moveQuestion(q, -1)}
-                                  disabled={qIdx === 0}
-                                >
-                                  <ChevronUp className="h-3 w-3" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => void moveQuestion(q, 1)}
-                                  disabled={qIdx === arr.length - 1}
-                                >
-                                  <ChevronDown className="h-3 w-3" />
-                                </button>
-                              </div>
-                              <button type="button" onClick={() => void removeQuestion(q)}>
-                                <Trash2 className="h-3 w-3 text-muted" />
-                              </button>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
