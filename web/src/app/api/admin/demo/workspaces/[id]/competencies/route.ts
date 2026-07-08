@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAdminResponse, requireDemoManagerApi } from "@/lib/admin/auth";
+import {
+  addCatalogCompetenciesToDemo,
+  type DemoCatalogSource,
+} from "@/lib/demo/catalog";
 
 const CODE_RE = /^[A-Z][A-Z0-9_]{1,31}$/;
 
@@ -17,6 +21,48 @@ export async function POST(req: Request, { params }: Ctx) {
   }
 
   const body = await req.json().catch(() => ({}));
+
+  // Business Objects식: 메타데이터 팔레트에서 끌어온 항목
+  if (body.fromCatalog || Array.isArray(body.selections)) {
+    const raw = Array.isArray(body.selections)
+      ? body.selections
+      : body.code
+        ? [{ source: body.source ?? "ncs", code: body.code }]
+        : [];
+    const selections = raw
+      .map((s: { source?: string; code?: string }) => ({
+        source: (s.source === "global" ? "global" : "ncs") as DemoCatalogSource,
+        code: typeof s.code === "string" ? s.code.trim().toUpperCase() : "",
+      }))
+      .filter((s: { code: string }) => CODE_RE.test(s.code));
+
+    if (selections.length === 0) {
+      return NextResponse.json({ error: "추가할 역량을 선택해 주세요." }, { status: 400 });
+    }
+
+    try {
+      const result = await addCatalogCompetenciesToDemo(workspaceId, selections);
+      if (result.added.length === 0) {
+        return NextResponse.json(
+          {
+            error:
+              result.skipped.length > 0
+                ? `이미 키트에 있거나 카탈로그에 없는 역량입니다: ${result.skipped.join(", ")}`
+                : "추가된 역량이 없습니다.",
+          },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json(result);
+    } catch (e) {
+      console.error("[demo competencies fromCatalog]", e);
+      return NextResponse.json(
+        { error: e instanceof Error ? e.message : "추가 실패" },
+        { status: 500 },
+      );
+    }
+  }
+
   const code = typeof body.code === "string" ? body.code.trim().toUpperCase() : "";
   const nameKo = typeof body.nameKo === "string" ? body.nameKo.trim() : "";
   const description =
@@ -25,7 +71,7 @@ export async function POST(req: Request, { params }: Ctx) {
   if (!CODE_RE.test(code)) {
     return NextResponse.json(
       { error: "역량 코드는 대문자·숫자·밑줄만 사용할 수 있습니다." },
-      { status: 400 }
+      { status: 400 },
     );
   }
   if (!nameKo) {
@@ -64,8 +110,8 @@ export async function PATCH(req: Request, { params }: Ctx) {
       prisma.demoCompetency.updateMany({
         where: { id: item.id, workspaceId },
         data: { sortOrder: item.sortOrder },
-      })
-    )
+      }),
+    ),
   );
   return NextResponse.json({ ok: true });
 }

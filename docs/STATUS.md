@@ -13,6 +13,11 @@
 
 ## 완료된 주요 기능
 
+- **고객 데모 BO식 빌더 (메타→키트→질의→루브릭)** (2026-07-09):
+  - 좌측 Metadata 팔레트: **NCS 6 + Global 20** (`GET /api/admin/demo/catalog`). 드래그 또는 +로 키트에 추가.
+  - 워크플로 스텝: ① 필요 역량 ② 질의 조정 ③ 루브릭. `POST .../competencies` `{ fromCatalog, selections }`.
+  - Global이 비어 있으면 `npm run db:seed:global` 필요. 기존 "운영 뱅크만 복제" UX는 팔레트 추가로 대체.
+
 - **Meaning Layer 구현 (L3 온톨로지 엣지)** (2026-07-08):
   - **문서**: `docs/AX-PLATFORM-LAYERS.md` (Surfaces → Workflows → Meaning★ → Intelligence + Trust).
   - **스키마**: `ConceptNodeKind` · `ConceptEdgeType` · `ConceptRelation` (from/to kind+key, weight, note, source). 마이그레이션 `20260709020000_add_meaning_concept_relation`. NCS `Competency`와 `GlobalCompetency`는 **미병합**, `MAPS_TO`만.

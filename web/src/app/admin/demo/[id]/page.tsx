@@ -23,6 +23,8 @@ export default async function AdminDemoEditPage({ params }: Props) {
         <h1 className="mt-2 text-xl font-bold text-foreground sm:text-2xl">{snap.workspace.name}</h1>
         <p className="mt-1 text-sm text-muted">
           공개 URL: <code className="text-xs">/demo/{snap.workspace.slug}</code>
+          {" · "}
+          좌측 메타(NCS 6 + Global 20)에서 역량을 끌어와 키트를 구성한 뒤, 질의·루브릭 순으로 조정하세요.
         </p>
       </div>
       <DemoWorkspaceEditor
