@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "description": "NCS IRT 6역량 → Global 20역량 MAPS_TO (명시적 브릿지, 자동 병합 아님). weight는 상대 관련도.",
+  "edgeType": "MAPS_TO",
+  "fromKind": "NCS_COMPETENCY",
+  "toKind": "GLOBAL_COMPETENCY",
+  "mappings": [
+    {
+      "fromKey": "COMMUNICATION",
+      "targets": [
+        { "toKey": "INTERPERSONAL_UNDERSTANDING", "weight": 1.0, "note": "경청·공감·전달" },
+        { "toKey": "IMPACT_AND_INFLUENCE", "weight": 0.8, "note": "설득·영향력" },
+        { "toKey": "CUSTOMER_SERVICE_ORIENTATION", "weight": 0.6, "note": "상대 관점 맞춤 커뮤니케이션" }
+      ]
+    },
+    {
+      "fromKey": "PROBLEM_SOLVING",
+      "targets": [
+        { "toKey": "ANALYTICAL_THINKING", "weight": 1.0, "note": "분해·인과·우선순위" },
+        { "toKey": "CONCEPTUAL_THINKING", "weight": 0.85, "note": "패턴·추상화" },
+        { "toKey": "INFORMATION_SEEKING", "weight": 0.7, "note": "정보 수집으로 문제 정의" }
+      ]
+    },
+    {
+      "fromKey": "JOB_FIT",
+      "targets": [
+        { "toKey": "EXPERTISE", "weight": 1.0, "note": "직무 전문성" },
+        { "toKey": "ACHIEVEMENT_ORIENTATION", "weight": 0.75, "note": "성과 기준" },
+        { "toKey": "CONCERN_FOR_ORDER", "weight": 0.55, "note": "품질·절차" }
+      ]
+    },
+    {
+      "fromKey": "ORG_FIT",
+      "targets": [
+        { "toKey": "ORGANIZATIONAL_AWARENESS", "weight": 1.0, "note": "조직 맥락 이해" },
+        { "toKey": "ORGANIZATIONAL_COMMITMENT", "weight": 0.9, "note": "조직 헌신" },
+        { "toKey": "RELATIONSHIP_BUILDING", "weight": 0.65, "note": "사내 관계" }
+      ]
+    },
+    {
+      "fromKey": "LEADERSHIP",
+      "targets": [
+        { "toKey": "TEAM_LEADERSHIP", "weight": 1.0, "note": "팀 이끌기" },
+        { "toKey": "DIRECTIVENESS", "weight": 0.8, "note": "지시·판단" },
+        { "toKey": "DEVELOPING_OTHERS", "weight": 0.75, "note": "육성" },
+        { "toKey": "IMPACT_AND_INFLUENCE", "weight": 0.7, "note": "영향력" }
+      ]
+    },
+    {
+      "fromKey": "GROWTH",
+      "targets": [
+        { "toKey": "FLEXIBILITY", "weight": 0.9, "note": "변화에 적응" },
+        { "toKey": "INITIATIVE", "weight": 0.85, "note": "학습·행동 주도" },
+        { "toKey": "SELF_CONFIDENCE", "weight": 0.7, "note": "도전 자신감" },
+        { "toKey": "SELF_CONTROL", "weight": 0.6, "note": "감정 조절하며 성장" }
+      ]
+    }
+  ]
+}

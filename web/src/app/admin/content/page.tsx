@@ -3,6 +3,7 @@ import { requireProductionContentAdmin, hasSuperadminAccess } from "@/lib/auth/g
 import { loadContentBankSnapshot } from "@/lib/competency/content-bank-data";
 import { ContentBankEditor } from "@/components/admin/ContentBankEditor";
 import { GlobalCompetencyDictionaryPanel } from "@/components/admin/GlobalCompetencyDictionaryPanel";
+import { MeaningLayerPanel } from "@/components/admin/MeaningLayerPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +22,8 @@ export default async function AdminContentPage() {
           <Link href="/admin/demo" className="text-accent hover:underline">
             고객 데모
           </Link>
-          메뉴에서 별도로 관리합니다. 하단의 글로벌 역량사전은 IRT NCS 6역량과 분리된
-          자기평가/360용 콘텐츠입니다.
+          메뉴에서 별도로 관리합니다. 하단의 글로벌 역량사전·Meaning Layer는 IRT NCS 6과
+          분리된 온톨로지/자기평가·360용 의미 층입니다.
         </p>
         <div className="mt-3 flex flex-wrap gap-3 text-sm">
           <Link href="/admin/organizations" className="text-accent hover:underline">
@@ -48,6 +49,8 @@ export default async function AdminContentPage() {
       />
 
       <GlobalCompetencyDictionaryPanel />
+
+      <MeaningLayerPanel />
     </div>
   );
 }

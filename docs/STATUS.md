@@ -13,6 +13,21 @@
 
 ## 완료된 주요 기능
 
+- **Meaning Layer 구현 (L3 온톨로지 엣지)** (2026-07-08):
+  - **문서**: `docs/AX-PLATFORM-LAYERS.md` (Surfaces → Workflows → Meaning★ → Intelligence + Trust).
+  - **스키마**: `ConceptNodeKind` · `ConceptEdgeType` · `ConceptRelation` (from/to kind+key, weight, note, source). 마이그레이션 `20260709020000_add_meaning_concept_relation`. NCS `Competency`와 `GlobalCompetency`는 **미병합**, `MAPS_TO`만.
+  - **시드**: `seed/meaning-maps-to.json` + `prisma/seed-meaning-layer.ts` (`npm run db:seed:meaning`) — MAPS_TO(NCS→Global) + Global MEMBER_OF/HAS_LEVEL/PROBES/ALIGNS_WITH + IRT PROBES.
+  - **API/UI**: `GET/POST /api/admin/meaning`, `GET /api/admin/meaning/node/[kind]/[key]`, `/admin/content`에 `MeaningLayerPanel`.
+  - **반영**:
+    ```
+    cd web
+    npx prisma migrate deploy && npx prisma generate
+    npm run db:seed:global   # 필요 시
+    npm run db:seed:meaning
+    ```
+
+- **AX 플랫폼 레이어 스펙** (2026-07-08): Salesforce 복제 없이 가벼운 4단 — `Surfaces → Workflows → Meaning★ → Intelligence` + 가로지르는 `Trust`. Meaning에 온톨로지·증거 그래프(Postgres 먼저, 그래프 DB는 선택). 문서: `docs/AX-PLATFORM-LAYERS.md`.
+
 - **글로벌 역량사전 (Spencer & Spencer 구조 참고, IRT NCS와 분리)** (2026-07-08):
   - **근거**: Spencer & Spencer *Competence at Work*(1993)의 6클러스터·20역량 **구조만** 참고해 AXHRD가 정의·L1–L5 루브릭·질문을 자체 저작. 교차검증으로 SHL Great Eight·Korn Ferry 구조 중첩 확인. 영국 Civil Service Behaviours 9항목 **정의 원문**은 OGL v3.0로 인용·출처표시(Crown copyright, gov.uk). 미국 OPM ECQ 2025 개정판은 제외.
   - **원칙**: 기존 `Competency`/`Question`(NCS 6·IRT)는 **미연결**. 향후 자기평가/360 모듈용 콘텐츠 레이어.

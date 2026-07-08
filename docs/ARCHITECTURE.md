@@ -4,6 +4,9 @@
 
 IRT(2PL) 기반 적응형 모의 면접 플랫폼. 실시간 저비용 AI(Gemini)와 세션 리포트(DeepSeek)를 분리해 비용을 최적화한다.
 
+**플랫폼 레이어(제품 지도):** Salesforce식 전면 스택이 아니라 AX 시대용 얇은 4단 — Surfaces · Workflows · **Meaning(온톨로지)** · Intelligence + Trust.  
+상세는 [`docs/AX-PLATFORM-LAYERS.md`](./AX-PLATFORM-LAYERS.md).
+
 ## 구성 요소
 
 ```

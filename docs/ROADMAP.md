@@ -31,6 +31,7 @@
 
 ## Phase 3 — 차별화 (12주)
 
+- [ ] **Meaning Layer** — ✅ v0 (`ConceptRelation` + MAPS_TO 시드 + admin 패널). 다음: 채점 Evidence 인용, 그래프 DB PoC. `docs/AX-PLATFORM-LAYERS.md`
 - [ ] **트리플 모드** — 답변 직후 대기업·공공·스타트업 3관점 피드백 카드 (IRT 점수는 단일, 렌즈만 3분할). `docs/STATUS.md` 핸드오프 참고
 - [ ] 영상 면접 + 비언어 피드백 (Yoodli식, 표정 특허 회피)
 - [ ] JD URL 자동 파싱 (패스잇식)

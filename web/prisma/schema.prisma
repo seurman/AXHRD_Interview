@@ -832,3 +832,53 @@ model GlobalCompetencyBenchmarkRef {
 
   @@index([competencyId])
 }
+
+// ── Meaning Layer (AX platform L3) ──
+// Logical ontology edges. Postgres is system of record; graph DB optional later.
+// See docs/AX-PLATFORM-LAYERS.md — do NOT merge NCS Competency with GlobalCompetency.
+
+enum ConceptNodeKind {
+  NCS_COMPETENCY
+  GLOBAL_CLUSTER
+  GLOBAL_COMPETENCY
+  GLOBAL_RUBRIC_LEVEL
+  IRT_QUESTION
+  GLOBAL_QUESTION
+  BENCHMARK_REF
+  ROLE_CONTEXT
+}
+
+enum ConceptEdgeType {
+  MEMBER_OF
+  HAS_LEVEL
+  PROBES
+  ALIGNS_WITH
+  MAPS_TO
+  CONTEXTUALIZES
+  SIGNALS
+  SUPPORTED_BY
+}
+
+/** Typed edge between Meaning concepts. Keys (codes) are stable; ids are optional resolved refs. */
+model ConceptRelation {
+  id        String          @id @default(cuid())
+  edgeType  ConceptEdgeType
+  fromKind  ConceptNodeKind
+  fromKey   String
+  fromId    String?
+  toKind    ConceptNodeKind
+  toKey     String
+  toId      String?
+  weight    Float           @default(1)
+  note      String?
+  meta      Json            @default("{}")
+  isActive  Boolean         @default(true)
+  source    String          @default("system") // system | seed | admin | sync
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@unique([edgeType, fromKind, fromKey, toKind, toKey])
+  @@index([fromKind, fromKey])
+  @@index([toKind, toKey])
+  @@index([edgeType])
+}
