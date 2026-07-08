@@ -66,21 +66,14 @@ export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
       {/* Full-viewport branded hero — edge to edge, no inset card */}
       <section className="lp-hero">
         <div className="lp-hero-mesh" aria-hidden />
-        <div className="lp-hero-photos" aria-hidden>
-          <div className="lp-hero-photo lp-hero-photo--a">
-            <Image src={HERO_MAIN} alt="" fill sizes="40vw" priority className="object-cover" />
-          </div>
-          <div className="lp-hero-photo lp-hero-photo--b">
-            <Image src={HERO_SIDE} alt="" fill sizes="30vw" priority className="object-cover" />
-          </div>
-        </div>
 
         <div className="lp-shell lp-hero-grid">
           <div className="lp-hero-copy">
             <p className="lp-kicker">{h.hero.eyebrow}</p>
             <p className="lp-brand">{h.hero.brand}</p>
             <h1 className="lp-display">
-              {h.hero.titleLine1}{" "}
+              {h.hero.titleLine1}
+              <br />
               <em className="lp-display-em">{h.hero.titleHighlight}</em>
             </h1>
             <p className="lp-lead">{h.hero.subtitle}</p>
@@ -102,6 +95,29 @@ export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
                 {loggedIn ? h.hero.ctaStartLoggedIn : h.hero.ctaStart}
                 <ArrowRight className="h-4 w-4" />
               </Link>
+            </div>
+          </div>
+
+          <div className="lp-hero-visual" aria-hidden>
+            <div className="lp-hero-photo lp-hero-photo--a">
+              <Image
+                src={HERO_MAIN}
+                alt=""
+                fill
+                sizes="(max-width: 960px) 90vw, 42vw"
+                priority
+                className="object-cover"
+              />
+            </div>
+            <div className="lp-hero-photo lp-hero-photo--b">
+              <Image
+                src={HERO_SIDE}
+                alt=""
+                fill
+                sizes="(max-width: 960px) 55vw, 22vw"
+                priority
+                className="object-cover"
+              />
             </div>
           </div>
         </div>

@@ -59,17 +59,17 @@ export const dictionary: Dictionary = {
     hero: {
       eyebrow: "AXHRD i",
       brand: "AXHRD",
-      titleLine1: "Setting a new standard for interviews",
-      titleHighlight: "in the AI era",
+      titleLine1: "In the AI era,",
+      titleHighlight: "we’re rewriting what interviews mean",
       subtitle:
-        "Orgs configure interviews in SaaS; individuals subscribe on web and mobile. Evidence-based, structured interviewing — AXHRD i.",
-      ctaStart: "Explore the platform",
+        "Universities and companies design interviews on the web; candidates practice on web and mobile. Questions grounded in your resume and your answers — AXHRD i.",
+      ctaStart: "Get started",
       ctaStartLoggedIn: "Start interview",
-      imageAlt: "Professionals in a structured interview setting",
+      imageAlt: "Confident professional portrait",
       bullets: [
-        "Questions cite phrases actually in the resume",
-        "One follow-up per session, grounded in the answer",
-        "Scores arrive with quoted answer evidence",
+        "Questions pull only from lines in your resume",
+        "One follow-up per session, built only from what you said",
+        "Scores arrive next to quotes from your answer",
       ],
     },
     stats: {
