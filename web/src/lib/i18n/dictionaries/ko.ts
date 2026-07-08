@@ -89,18 +89,37 @@ export const dictionary: Dictionary = {
     preview: {
       interview: {
         label: "구조화 AI 면접",
+        sessionTitle: "네이버페이 백엔드 · 2/3문항",
         competency: "의사소통",
         level: "L3",
-        question: "자소서에 적으신 결제 API 지연 개선 경험에서, 병목을 어떻게 찾으셨나요?",
-        chips: ["자소서 인용", "꼬리질문 1회", "STAR"],
+        question:
+          "자소서에 적으신 결제 API 지연 개선 경험에서, 병목을 어떻게 찾으셨고 어떤 지표로 개선을 검증하셨나요?",
+        chips: ["자소서 인용", "꼬리질문 1회", "STAR", "음성 답변"],
+        resumeLabel: "자소서 근거",
+        resumeQuote:
+          "「프로파일링으로 DB 쿼리 N+1을 발견했고, 캐시 레이어를 도입해 평균 응답을 0.8초로 줄였습니다」",
+        recording: "질문 재생 중 · 마이크로 답변",
+        itemProgress: "의사소통 · 적응형 IRT",
+      },
+      chipHistory: [
+        { symbol: "♩", label: "L2 의사소통", tone: "pass" },
+        { symbol: "♪", label: "L3 문제해결", tone: "attempt" },
+      ],
+      feedback: {
+        label: "방금 답변 피드백",
+        score: "3.8",
+        quote: "캐시 레이어 도입 후 평균 0.8초까지 개선했다는 수치가 설득력 있습니다.",
+        note: "결과(수치) 설명은 좋았어요. 상황·과제 맥락을 한 문장 더 넣으면 완성도가 올라갑니다.",
       },
       dashboard: {
         label: "역량 스킬 트리",
+        theta: "θ +0.42 · L3→L4",
         rows: [
-          { label: "의사소통", pct: 72 },
-          { label: "문제해결", pct: 58 },
-          { label: "협업", pct: 41 },
+          { label: "의사소통", pct: 72, delta: "+8" },
+          { label: "문제해결", pct: 58, delta: "+3" },
+          { label: "협업", pct: 41, delta: "—" },
         ],
+        legend: "측정한 역량만 표시 · 미측정 0%",
       },
     },
     gallery: {

@@ -90,19 +90,37 @@ export const dictionary: Dictionary = {
     preview: {
       interview: {
         label: "Structured AI interview",
+        sessionTitle: "Naver Pay Backend · Q 2/3",
         competency: "Communication",
         level: "L3",
         question:
-          "In your resume you mentioned improving payment API latency — how did you find the bottleneck?",
-        chips: ["Resume quote", "1 follow-up", "STAR"],
+          "In your resume you improved payment API latency — how did you find the bottleneck, and which metrics proved the fix?",
+        chips: ["Resume quote", "1 follow-up", "STAR", "Voice answer"],
+        resumeLabel: "Resume anchor",
+        resumeQuote:
+          "「Profiling revealed N+1 DB queries; a cache layer cut average response to 0.8s.」",
+        recording: "Playing question · answer by mic",
+        itemProgress: "Communication · adaptive IRT",
+      },
+      chipHistory: [
+        { symbol: "♩", label: "L2 Communication", tone: "pass" },
+        { symbol: "♪", label: "L3 Problem solving", tone: "attempt" },
+      ],
+      feedback: {
+        label: "Latest answer feedback",
+        score: "3.8",
+        quote: "The 0.8s metric after caching is concrete and credible.",
+        note: "Strong on results — add one sentence on situation and task for a fuller STAR arc.",
       },
       dashboard: {
         label: "Competency skill tree",
+        theta: "θ +0.42 · L3→L4",
         rows: [
-          { label: "Communication", pct: 72 },
-          { label: "Problem solving", pct: 58 },
-          { label: "Collaboration", pct: 41 },
+          { label: "Communication", pct: 72, delta: "+8" },
+          { label: "Problem solving", pct: 58, delta: "+3" },
+          { label: "Collaboration", pct: 41, delta: "—" },
         ],
+        legend: "Only measured skills shown · unmeasured stays 0%",
       },
     },
     gallery: {

@@ -88,14 +88,28 @@ export type Dictionary = {
     preview: {
       interview: {
         label: string;
+        sessionTitle: string;
         competency: string;
         level: string;
         question: string;
         chips: string[];
+        resumeLabel: string;
+        resumeQuote: string;
+        recording: string;
+        itemProgress: string;
+      };
+      chipHistory: { symbol: string; label: string; tone: "pass" | "attempt" | "down" }[];
+      feedback: {
+        label: string;
+        score: string;
+        quote: string;
+        note: string;
       };
       dashboard: {
         label: string;
-        rows: { label: string; pct: number }[];
+        theta: string;
+        rows: { label: string; pct: number; delta: string }[];
+        legend: string;
       };
     };
     gallery: {
