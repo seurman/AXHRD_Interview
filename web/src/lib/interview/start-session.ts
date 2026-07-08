@@ -302,7 +302,7 @@ export async function startInterviewSession(
       planId: plan.id,
       targetCompanyId: targetCompany.id,
       resumeId: resume?.id,
-      jobRole: jobRole ?? "OTHER",
+      jobRole: jobRoleCode,
       focusCompetency: competency,
       mode: "COMPETENCY",
       status: "IN_PROGRESS",
