@@ -8,17 +8,19 @@ export const dictionary: Dictionary = {
   common: {
     brand: "AXHRD",
     nav: {
-      dashboard: "역량",
-      discover: "발견",
-      interview: "면접",
-      cards: "카드",
+      dashboard: "대시보드",
+      prepare: "면접 준비",
+      discover: "자기발견 인터뷰",
+      interview: "모의면접 시작",
+      cards: "질문카드 연습",
       profile: "프로필",
     },
     navLong: {
-      dashboard: "역량 트래킹",
-      discover: "나를 발견하기",
-      interview: "면접 시작",
-      cards: "질문 카드",
+      dashboard: "대시보드",
+      prepare: "면접 준비",
+      discover: "자기발견 인터뷰",
+      interview: "모의면접 시작",
+      cards: "질문카드 연습",
       profile: "프로필",
     },
     auth: {
@@ -37,6 +39,12 @@ export const dictionary: Dictionary = {
       orgBenchmark: "기관 비교",
       subscriptions: "구독 관리",
       permissions: "권한 설정",
+      sections: {
+        ops: "운영",
+        orgs: "기관 관리",
+        accounts: "계정/보안",
+        billing: "결제",
+      },
     },
     saas: {
       title: "기관",

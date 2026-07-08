@@ -3,18 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoutButton } from "./LogoutButton";
-import { AdminNavMenu } from "./AdminNavMenu";
+import { NavDropdownMenu } from "./NavDropdownMenu";
 import { SaasNavMenu } from "./SaasNavMenu";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useI18n } from "@/lib/i18n/I18nProvider";
-
-const navKeyMap = {
-  "/dashboard": "dashboard",
-  "/discover": "discover",
-  "/interview/setup": "interview",
-  "/practice/swipe": "cards",
-  "/profile": "profile",
-} as const;
+import type { AdminNavSection, PrepareLabelKey } from "@/lib/platform/nav-registry";
 
 type SaasLinksConfig = {
   titleKey: "saas";
@@ -27,17 +20,18 @@ type SaasLinksConfig = {
 };
 
 export function MainNav({
-  mainHrefs,
-  adminLinks,
+  dashboardHref,
+  prepareLinks,
+  profileHref,
+  adminSections,
   saasLinks,
   userName,
   loggedIn,
 }: {
-  mainHrefs: string[];
-  adminLinks: {
-    href: string;
-    labelKey: "content" | "demo" | "permissions" | "users" | "audit" | "orgApprove" | "orgBenchmark" | "subscriptions";
-  }[];
+  dashboardHref: string | null;
+  prepareLinks: { href: string; labelKey: PrepareLabelKey }[];
+  profileHref: string | null;
+  adminSections: AdminNavSection[];
   saasLinks?: SaasLinksConfig | null;
   userName?: string;
   loggedIn: boolean;
@@ -63,6 +57,8 @@ export function MainNav({
     );
   }
 
+  const linkActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
   return (
     <nav className="hidden items-center gap-1.5 lg:gap-2 sm:flex">
       {userName && (
@@ -70,20 +66,33 @@ export function MainNav({
           {locale === "ko" ? `${userName}${c.userSuffix}` : userName}
         </span>
       )}
-      {mainHrefs.map((href) => {
-        const key = navKeyMap[href as keyof typeof navKeyMap];
-        const label = key ? c.nav[key] : href;
-        const active = pathname === href || pathname.startsWith(`${href}/`);
-        return (
-          <Link
-            key={href}
-            href={href}
-            className={`nav-pill ${active ? "nav-pill-active" : ""}`}
-          >
-            {label}
-          </Link>
-        );
-      })}
+
+      {dashboardHref && (
+        <Link
+          href={dashboardHref}
+          className={`nav-pill ${linkActive(dashboardHref) ? "nav-pill-active" : ""}`}
+        >
+          {c.nav.dashboard}
+        </Link>
+      )}
+
+      <NavDropdownMenu
+        title={c.nav.prepare}
+        links={prepareLinks.map((l) => ({
+          href: l.href,
+          label: c.nav[l.labelKey],
+        }))}
+      />
+
+      {profileHref && (
+        <Link
+          href={profileHref}
+          className={`nav-pill ${linkActive(profileHref) ? "nav-pill-active" : ""}`}
+        >
+          {c.nav.profile}
+        </Link>
+      )}
+
       {saasLinks && (
         <SaasNavMenu
           title={c.saas.title}
@@ -102,12 +111,18 @@ export function MainNav({
           }
         />
       )}
-      <AdminNavMenu
-        links={adminLinks.map((l) => ({
-          href: l.href,
-          label: c.admin[l.labelKey],
+
+      <NavDropdownMenu
+        title={c.admin.title}
+        sections={adminSections.map((s) => ({
+          title: c.admin.sections[s.sectionKey],
+          links: s.links.map((l) => ({
+            href: l.href,
+            label: c.admin[l.labelKey],
+          })),
         }))}
       />
+
       <LanguageSwitcher />
       <LogoutButton variant="nav" label={c.auth.logout} />
     </nav>
@@ -116,9 +131,8 @@ export function MainNav({
 
 /** 모바일용 긴 라벨 */
 export function getMobileNavLabel(
-  href: string,
+  key: "dashboard" | "discover" | "interview" | "cards" | "profile",
   dict: ReturnType<typeof useI18n>["dict"]
 ): string {
-  const key = navKeyMap[href as keyof typeof navKeyMap];
-  return key ? dict.common.navLong[key] : href;
+  return dict.common.navLong[key];
 }

@@ -32,9 +32,11 @@ export async function AppHeader() {
       })
     : null;
 
-  const mainHrefs = nav?.mainHrefs ?? [];
+  const dashboardHref = nav?.dashboardHref ?? null;
+  const prepareLinks = nav?.prepareLinks ?? [];
+  const profileHref = nav?.profileHref ?? null;
   const saasLinks = nav?.saasLinks ?? null;
-  const adminLinks = nav?.adminLinks ?? [];
+  const adminSections = nav?.adminSections ?? [];
 
   return (
     <>
@@ -51,17 +53,21 @@ export async function AppHeader() {
         </Link>
 
         <MainNav
-          adminLinks={adminLinks}
+          adminSections={adminSections}
+          dashboardHref={dashboardHref}
           loggedIn={!!user}
-          mainHrefs={mainHrefs}
+          prepareLinks={prepareLinks}
+          profileHref={profileHref}
           saasLinks={saasLinks}
           userName={user?.name}
         />
 
         <MobileNav
-          adminLinks={adminLinks}
+          adminSections={adminSections}
+          dashboardHref={dashboardHref}
           loggedIn={!!user}
-          mainHrefs={mainHrefs}
+          prepareLinks={prepareLinks}
+          profileHref={profileHref}
           saasLinks={saasLinks}
           userName={user?.name}
         />

@@ -13,6 +13,7 @@ export type Dictionary = {
     brand: string;
     nav: {
       dashboard: string;
+      prepare: string;
       discover: string;
       interview: string;
       cards: string;
@@ -20,6 +21,7 @@ export type Dictionary = {
     };
     navLong: {
       dashboard: string;
+      prepare: string;
       discover: string;
       interview: string;
       cards: string;
@@ -41,6 +43,12 @@ export type Dictionary = {
       orgBenchmark: string;
       subscriptions: string;
       permissions: string;
+      sections: {
+        ops: string;
+        orgs: string;
+        accounts: string;
+        billing: string;
+      };
     };
     saas: {
       title: string;

@@ -9,17 +9,19 @@ export const dictionary: Dictionary = {
   common: {
     brand: "AXHRD",
     nav: {
-      dashboard: "Skills",
-      discover: "Discover",
-      interview: "Interview",
-      cards: "Cards",
+      dashboard: "Dashboard",
+      prepare: "Interview prep",
+      discover: "Self-discovery",
+      interview: "Start mock interview",
+      cards: "Question cards",
       profile: "Profile",
     },
     navLong: {
-      dashboard: "Competency Tracking",
-      discover: "Self-Discovery",
-      interview: "Start Interview",
-      cards: "Question Cards",
+      dashboard: "Dashboard",
+      prepare: "Interview prep",
+      discover: "Self-discovery interview",
+      interview: "Start mock interview",
+      cards: "Question card practice",
       profile: "Profile",
     },
     auth: {
@@ -38,6 +40,12 @@ export const dictionary: Dictionary = {
       orgBenchmark: "Benchmark",
       subscriptions: "Subscriptions",
       permissions: "Permissions",
+      sections: {
+        ops: "Operations",
+        orgs: "Organizations",
+        accounts: "Accounts & security",
+        billing: "Billing",
+      },
     },
     saas: {
       title: "Organization",
