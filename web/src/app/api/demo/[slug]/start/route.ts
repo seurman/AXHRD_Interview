@@ -1,19 +1,17 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { checkUsageLimit } from "@/lib/billing/usage";
 import { isUsageExemptUser } from "@/lib/auth/roles";
 import { loadDemoWorkspaceBySlug } from "@/lib/demo/workspace";
+import { materializeDemoKitToInterviewBank } from "@/lib/demo/materialize";
 import { startInterviewSession } from "@/lib/interview/start-session";
-import { COMPETENCY_CODES, type CompetencyCode } from "@/types";
 
 type Ctx = { params: Promise<{ slug: string }> };
 
 /**
- * 고객 데모 공개 URL에서 모의면접 실행.
- * DemoWorkspace에 Global만 있어도 MAPS_TO로 NCS 면접 역량에 연결해 IRT 세션을 연다.
- * (DemoQuestion은 쇼케이스용 — 실제 채점 루프는 운영 Question 뱅크 사용)
+ * 고객 데모 공개 URL → 모의면접 실행.
+ * 키트에 NCS가 없어도 DemoCompetency/Question을 운영 뱅크에 재료화한 뒤 IRT 세션을 연다.
  */
 export async function POST(req: Request, { params }: Ctx) {
   const { slug: rawSlug } = await params;
@@ -52,6 +50,14 @@ export async function POST(req: Request, { params }: Ctx) {
     );
   }
 
+  const withQuestions = active.filter((c) => c.questionCount > 0);
+  if (withQuestions.length === 0) {
+    return NextResponse.json(
+      { error: "키트 역량에 문항이 없습니다. 질의 조정에서 문항을 추가해 주세요." },
+      { status: 409 },
+    );
+  }
+
   const rl = checkRateLimit(`interview:start:${user.id}`, 10, 10 * 60 * 1000);
   if (!rl.allowed) {
     return NextResponse.json(
@@ -80,63 +86,37 @@ export async function POST(req: Request, { params }: Ctx) {
     }
   }
 
+  let materialize;
+  try {
+    materialize = await materializeDemoKitToInterviewBank(snap.workspace.id);
+  } catch (e) {
+    console.error("[demo/start materialize]", e);
+    return NextResponse.json(
+      {
+        error:
+          e instanceof Error
+            ? `면접용 문항 준비 실패: ${e.message}`
+            : "면접용 문항 준비에 실패했습니다.",
+      },
+      { status: 500 },
+    );
+  }
+
+  if (materialize.codes.length === 0 || materialize.questionCount === 0) {
+    return NextResponse.json(
+      { error: "면접에 쓸 문항을 준비하지 못했습니다. 키트 문항을 확인해 주세요." },
+      { status: 409 },
+    );
+  }
+
   const body = await req.json().catch(() => ({}));
   const requested =
     typeof body.focusCompetency === "string" ? body.focusCompetency.trim().toUpperCase() : "";
   const jobRole = typeof body.jobRole === "string" ? body.jobRole : "OTHER";
 
-  const ncsInKit = active
-    .map((c) => c.code)
-    .filter((code): code is CompetencyCode =>
-      (COMPETENCY_CODES as readonly string[]).includes(code),
-    );
-
-  const globalCodes = active
-    .map((c) => c.code)
-    .filter((code) => !(COMPETENCY_CODES as readonly string[]).includes(code));
-
-  // Global → NCS via MAPS_TO (edge is NCS → Global)
-  const maps =
-    globalCodes.length > 0
-      ? await prisma.conceptRelation.findMany({
-          where: {
-            isActive: true,
-            edgeType: "MAPS_TO",
-            fromKind: "NCS_COMPETENCY",
-            toKind: "GLOBAL_COMPETENCY",
-            toKey: { in: globalCodes },
-          },
-          orderBy: { weight: "desc" },
-        })
-      : [];
-
-  const globalToNcs = new Map<string, string>();
-  for (const m of maps) {
-    if (!globalToNcs.has(m.toKey)) globalToNcs.set(m.toKey, m.fromKey);
-  }
-
-  const mappedFromGlobal = [...new Set(globalToNcs.values())].filter((code): code is CompetencyCode =>
-    (COMPETENCY_CODES as readonly string[]).includes(code),
-  );
-
-  const allowedSet = new Set<string>([...ncsInKit, ...mappedFromGlobal]);
-  if (allowedSet.size === 0) {
-    return NextResponse.json(
-      {
-        error:
-          "이 키트의 역량으로는 IRT 면접을 시작할 수 없습니다. NCS 역량을 하나 이상 키트에 넣거나, Meaning Layer MAPS_TO 시드를 적용해 주세요.",
-      },
-      { status: 409 },
-    );
-  }
-
-  let focus = requested;
-  if (focus && !(COMPETENCY_CODES as readonly string[]).includes(focus)) {
-    focus = globalToNcs.get(focus) ?? "";
-  }
-  if (!focus || !allowedSet.has(focus)) {
-    focus = ncsInKit[0] ?? mappedFromGlobal[0] ?? [...allowedSet][0];
-  }
+  const allowed = materialize.codes;
+  const focus =
+    requested && allowed.includes(requested) ? requested : withQuestions[0]?.code ?? allowed[0];
 
   const result = await startInterviewSession(
     user,
@@ -147,7 +127,8 @@ export async function POST(req: Request, { params }: Ctx) {
       industry: "OTHER",
     },
     {
-      allowedCompetencies: [...allowedSet],
+      allowedCompetencies: allowed,
+      allowAnyCompetencyCode: true,
     },
   );
 
@@ -157,7 +138,7 @@ export async function POST(req: Request, { params }: Ctx) {
       demoSlug: snap.workspace.slug,
       demoName: snap.workspace.name,
       resolvedFocus: focus,
-      mappedFrom: requested && requested !== focus ? requested : null,
+      materialize,
     });
   }
 

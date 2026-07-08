@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { InterviewKitBuilder } from "@/components/org/InterviewKitBuilder";
+import { KitShareManager } from "@/components/org/KitShareManager";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,11 @@ export default async function AdminOrgInterviewKitPage({ params }: Props) {
         <span className="text-foreground">인터뷰 킷</span>
       </nav>
 
+      <p className="max-w-2xl text-sm text-muted">
+        고객 데모 빌더와 같은 메타→키트→질의→루브릭 흐름입니다. 구성 후 공유 링크로 바로 실행할 수
+        있습니다.
+      </p>
+
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-medium uppercase tracking-widest text-gold">Tenant workspace</p>
@@ -49,6 +55,8 @@ export default async function AdminOrgInterviewKitPage({ params }: Props) {
       </div>
 
       <InterviewKitBuilder organizationId={org.id} backHref={hubBase} backLabel="기관 허브로" />
+
+      <KitShareManager organizationId={org.id} />
     </div>
   );
 }

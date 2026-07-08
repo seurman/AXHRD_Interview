@@ -22,12 +22,18 @@ export default async function PublicDemoPage({ params }: Props) {
   const publicSlug = snap.workspace.slug;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
-      <div className="mb-6 text-center text-xs text-muted">
-        공개 URL:{" "}
-        <Link href={`/demo/${encodeURIComponent(publicSlug)}`} className="text-accent hover:underline">
-          /demo/{publicSlug}
-        </Link>
+    <div className="mx-auto max-w-5xl px-4 py-10 sm:py-12">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
+        <span>
+          공개 킷 ·{" "}
+          <Link
+            href={`/demo/${encodeURIComponent(publicSlug)}`}
+            className="font-mono text-accent hover:underline"
+          >
+            /demo/{publicSlug}
+          </Link>
+        </span>
+        <span className="text-[11px]">AXHRD interview kit</span>
       </div>
       <DemoShowcase
         slug={publicSlug}

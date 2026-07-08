@@ -2,20 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight, Layers, ListChecks, Play, Sparkles } from "lucide-react";
 import type { DemoCompetencyDto, DemoQuestionDto } from "@/lib/demo/workspace";
 import { JOB_ROLES } from "@/types";
 import { jobRoleLabel } from "@/lib/labels";
-
-type Props = {
-  slug: string;
-  /** 서버에서 이미 로드한 스냅샷 — API 재조회 실패해도 미리보기 가능 */
-  initialSnap?: Snap | null;
-};
 
 type Snap = {
   workspace: { name: string; description: string | null; slug?: string };
   competencies: DemoCompetencyDto[];
   questions: DemoQuestionDto[];
+};
+
+type Props = {
+  slug: string;
+  initialSnap?: Snap | null;
 };
 
 const LEVELS = [1, 2, 3, 4, 5] as const;
@@ -36,8 +36,7 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
       setSelectedId(initialSnap.competencies[0]?.id ?? "");
       return;
     }
-    const encoded = encodeURIComponent(slug);
-    fetch(`/api/demo/${encoded}`)
+    fetch(`/api/demo/${encodeURIComponent(slug)}`)
       .then(async (res) => {
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -51,7 +50,6 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
         setSnap(data);
         setSelectedId(data.competencies[0]?.id ?? "");
         if (data.workspace.slug && data.workspace.slug !== slug) {
-          // ASCII로 고쳐진 slug로 URL 정리
           router.replace(`/demo/${encodeURIComponent(data.workspace.slug)}`);
         }
       })
@@ -72,10 +70,7 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
       const res = await fetch(`/api/demo/${encodeURIComponent(publicSlug)}/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          focusCompetency: comp.code,
-          jobRole,
-        }),
+        body: JSON.stringify({ focusCompetency: comp.code, jobRole }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.status === 401) {
@@ -86,7 +81,9 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
       }
       if (!res.ok) {
         throw new Error(
-          typeof data.error === "string" ? data.error : `면접을 시작하지 못했습니다. (${res.status})`,
+          typeof data.error === "string"
+            ? data.error
+            : `면접을 시작하지 못했습니다. (${res.status})`,
         );
       }
       router.push(`/interview/${data.sessionId}`);
@@ -98,11 +95,10 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-lg space-y-3 text-center">
+      <div className="mx-auto max-w-lg space-y-3 rounded-2xl border border-red-500/20 bg-red-500/5 px-6 py-8 text-center">
         <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         <p className="text-xs text-muted">
-          관리자 → 고객 데모 → 해당 워크스페이스를 연 뒤 「데모 미리보기」를 다시 눌러 주세요.
-          (한글 URL은 ASCII slug로 자동 교정됩니다)
+          관리자 → 고객 데모에서 워크스페이스를 연 뒤 「데모 미리보기」를 다시 눌러 주세요.
         </p>
       </div>
     );
@@ -117,115 +113,175 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
   );
   const allForComp = snap.questions.filter((q) => q.competencyId === selectedId);
   const rubric = comp?.rubricByLevel[String(level)] ?? comp?.rubricByLevel.default ?? [];
+  const totalQs = snap.questions.length;
 
   return (
     <div className="space-y-8">
-      <header className="text-center">
-        <p className="text-xs font-medium uppercase tracking-widest text-gold">AXHRD Demo</p>
-        <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">{snap.workspace.name}</h1>
-        {snap.workspace.description && (
-          <p className="mx-auto mt-2 max-w-xl text-sm text-muted">{snap.workspace.description}</p>
+      {/* Hero — kit launch (Greenhouse / HireVue assessment vibe) */}
+      <header className="relative overflow-hidden rounded-3xl border border-card-border bg-[linear-gradient(135deg,#0f172a_0%,#1e293b_48%,#0f172a_100%)] px-6 py-10 text-white sm:px-10">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-gold/20 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-24 left-10 h-48 w-48 rounded-full bg-sky-500/15 blur-3xl"
+        />
+        <p className="relative text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
+          Live interview kit
+        </p>
+        <h1 className="relative mt-3 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
+          {snap.workspace.name}
+        </h1>
+        {snap.workspace.description ? (
+          <p className="relative mt-3 max-w-xl text-sm leading-relaxed text-white/70">
+            {snap.workspace.description}
+          </p>
+        ) : (
+          <p className="relative mt-3 max-w-xl text-sm leading-relaxed text-white/70">
+            구성된 역량·문항으로 바로 모의면접을 실행합니다. NCS만 있어도, Global만 있어도
+            같은 흐름으로 연습할 수 있습니다.
+          </p>
         )}
+        <div className="relative mt-6 flex flex-wrap gap-3 text-xs text-white/60">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1">
+            <Layers className="h-3.5 w-3.5 text-gold" />
+            역량 {snap.competencies.length}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1">
+            <ListChecks className="h-3.5 w-3.5 text-gold" />
+            문항 {totalQs}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1">
+            <Sparkles className="h-3.5 w-3.5 text-gold" />
+            IRT 적응형
+          </span>
+        </div>
       </header>
 
-      <section className="rounded-xl border border-accent/40 bg-accent/5 p-4 sm:p-5">
-        <h2 className="text-sm font-semibold text-foreground">데모 면접 실행</h2>
-        <p className="mt-1 text-xs text-muted">
-          키트에 넣은 역량으로 모의면접을 시작합니다. Global 역량은 NCS 면접 축에 매핑되어
-          실행됩니다.
-        </p>
-        <div className="mt-3 flex flex-wrap items-end gap-3">
-          <label className="block text-xs text-muted">
-            직무
-            <select
-              value={jobRole}
-              onChange={(e) => setJobRole(e.target.value)}
-              className="input-luxe mt-1 block min-w-[10rem] text-sm"
+      {/* Launch strip */}
+      <section className="rounded-2xl border border-card-border bg-card p-5 shadow-sm sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">면접 실행</h2>
+            <p className="mt-1 text-sm text-muted">
+              아래에서 역량을 고른 뒤 바로 시작합니다. 로그인만 되어 있으면 됩니다.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="block text-xs font-medium text-muted">
+              직무 맥락
+              <select
+                value={jobRole}
+                onChange={(e) => setJobRole(e.target.value)}
+                className="input-luxe mt-1 block min-w-[11rem] text-sm"
+              >
+                {JOB_ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {jobRoleLabel(r)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={() => void startInterview()}
+              disabled={starting || snap.competencies.length === 0}
+              className="btn-primary inline-flex items-center gap-2 px-5 py-2.5 text-sm"
             >
-              {JOB_ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {jobRoleLabel(r)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            onClick={() => void startInterview()}
-            disabled={starting || snap.competencies.length === 0}
-            className="btn-primary px-5 py-2.5 text-sm"
-          >
-            {starting ? "세션 준비 중…" : "이 구성으로 면접하기"}
-          </button>
+              {starting ? (
+                "세션 준비 중…"
+              ) : (
+                <>
+                  <Play className="h-4 w-4" />
+                  이 구성으로 면접하기
+                  <ArrowRight className="h-4 w-4 opacity-70" />
+                </>
+              )}
+            </button>
+          </div>
         </div>
         {startError ? (
-          <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400">
+          <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400">
             {startError}
           </p>
         ) : null}
       </section>
 
-      <section className="rounded-xl border border-card-border bg-card p-4">
-        <h2 className="mb-3 text-sm font-semibold text-foreground">역량</h2>
+      {/* Competency chips */}
+      <section>
+        <h2 className="mb-3 text-sm font-semibold text-foreground">초점 역량</h2>
         {snap.competencies.length === 0 ? (
           <p className="text-sm text-muted">아직 키트에 역량이 없습니다.</p>
         ) : (
-          <div className="flex flex-wrap gap-2">
-            {snap.competencies.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setSelectedId(c.id)}
-                className={`rounded-lg border px-3 py-2 text-sm ${
-                  selectedId === c.id
-                    ? "border-gold bg-gold/10 text-foreground"
-                    : "border-card-border text-muted"
-                }`}
-              >
-                {c.nameKo}
-                <span className="ml-1 text-xs opacity-70">({c.code})</span>
-              </button>
-            ))}
+          <div className="grid gap-2 sm:grid-cols-2">
+            {snap.competencies.map((c) => {
+              const active = selectedId === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setSelectedId(c.id)}
+                  className={`rounded-2xl border px-4 py-3 text-left transition ${
+                    active
+                      ? "border-gold/50 bg-gold/10 ring-1 ring-gold/30"
+                      : "border-card-border bg-card hover:border-gold/30"
+                  }`}
+                >
+                  <p className="font-medium text-foreground">{c.nameKo}</p>
+                  <p className="mt-0.5 text-[11px] text-muted">
+                    {c.code} · {c.questionCount}문항
+                  </p>
+                </button>
+              );
+            })}
           </div>
         )}
       </section>
 
       {comp && (
-        <>
-          <section className="rounded-xl border border-card-border bg-card p-4">
-            <h2 className="mb-3 text-sm font-semibold text-foreground">
-              질문 리스트 · {comp.nameKo}
-              <span className="ml-2 text-xs font-normal text-muted">총 {allForComp.length}문항</span>
-            </h2>
-            <div className="mb-4 flex flex-wrap gap-2">
-              {LEVELS.map((lv) => {
-                const n = snap.questions.filter(
-                  (q) => q.competencyId === selectedId && q.level === lv,
-                ).length;
-                return (
-                  <button
-                    key={lv}
-                    type="button"
-                    onClick={() => setLevel(lv)}
-                    className={`rounded px-3 py-1 text-xs font-medium ${
-                      level === lv ? "bg-gold/20 text-gold" : "bg-muted/10 text-muted"
-                    }`}
-                  >
-                    L{lv}
-                    {n > 0 ? ` · ${n}` : ""}
-                  </button>
-                );
-              })}
+        <div className="grid gap-6 lg:grid-cols-5">
+          <section className="space-y-4 lg:col-span-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold text-foreground">
+                질문 · {comp.nameKo}
+                <span className="ml-2 font-normal text-muted">총 {allForComp.length}</span>
+              </h2>
+              <div className="flex flex-wrap gap-1">
+                {LEVELS.map((lv) => {
+                  const n = snap.questions.filter(
+                    (q) => q.competencyId === selectedId && q.level === lv,
+                  ).length;
+                  return (
+                    <button
+                      key={lv}
+                      type="button"
+                      onClick={() => setLevel(lv)}
+                      className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                        level === lv
+                          ? "bg-foreground text-background"
+                          : "bg-card text-muted ring-1 ring-card-border"
+                      }`}
+                    >
+                      L{lv}
+                      {n > 0 ? ` ${n}` : ""}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <ul className="space-y-2">
               {levelQuestions.length === 0 ? (
-                <li className="text-sm text-muted">이 레벨에 등록된 질문이 없습니다.</li>
+                <li className="rounded-2xl border border-dashed border-card-border px-4 py-8 text-center text-sm text-muted">
+                  이 레벨에 등록된 질문이 없습니다.
+                </li>
               ) : (
-                levelQuestions.map((q) => (
+                levelQuestions.map((q, i) => (
                   <li
                     key={q.id}
-                    className="rounded-lg border border-card-border px-3 py-3 text-sm leading-relaxed"
+                    className="rounded-2xl border border-card-border bg-card px-4 py-3.5 text-sm leading-relaxed text-foreground"
                   >
+                    <span className="mr-2 text-[11px] font-semibold text-gold">Q{i + 1}</span>
                     {q.template}
                   </li>
                 ))
@@ -233,21 +289,23 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
             </ul>
           </section>
 
-          <section className="rounded-xl border border-card-border bg-card p-4">
-            <h2 className="mb-3 text-sm font-semibold text-foreground">
-              루브릭 · {comp.nameKo} L{level}
-            </h2>
-            {rubric.length === 0 ? (
-              <p className="text-sm text-muted">등록된 루브릭 기준이 없습니다.</p>
-            ) : (
-              <ol className="list-decimal space-y-1 pl-5 text-sm text-foreground">
-                {rubric.map((line, i) => (
-                  <li key={i}>{line}</li>
-                ))}
-              </ol>
-            )}
+          <section className="lg:col-span-2">
+            <div className="sticky top-24 rounded-2xl border border-card-border bg-card p-5">
+              <h2 className="text-sm font-semibold text-foreground">
+                채점 루브릭 · L{level}
+              </h2>
+              {rubric.length === 0 ? (
+                <p className="mt-3 text-sm text-muted">등록된 루브릭 기준이 없습니다.</p>
+              ) : (
+                <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-foreground/90">
+                  {rubric.map((line, i) => (
+                    <li key={i}>{line}</li>
+                  ))}
+                </ol>
+              )}
+            </div>
           </section>
-        </>
+        </div>
       )}
     </div>
   );

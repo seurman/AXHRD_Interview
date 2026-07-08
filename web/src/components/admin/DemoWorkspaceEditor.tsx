@@ -382,25 +382,32 @@ export function DemoWorkspaceEditor({
   return (
     <div className="space-y-4">
       {/* Workflow strip */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="overflow-hidden rounded-2xl border border-card-border bg-[linear-gradient(120deg,#0f172a_0%,#1e293b_55%,#0f172a_100%)] p-4 text-white sm:p-5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold">
+          Kit studio
+        </p>
+        <p className="mt-1 text-sm text-white/70">
+          메타데이터 → 필요 역량 → 질의 → 루브릭. 저장 후 미리보기에서 바로 면접을 실행합니다.
+        </p>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <ol className="flex flex-wrap items-center gap-1">
           {steps.map((s, i) => (
             <li key={s.id} className="flex items-center gap-1">
-              {i > 0 ? <span className="px-1 text-muted">→</span> : null}
+              {i > 0 ? <span className="px-1 text-white/30">→</span> : null}
               <button
                 type="button"
                 onClick={() => goStep(s.id)}
                 className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
                   step === s.id
-                    ? "border-primary bg-primary/10 text-foreground"
-                    : "border-card-border text-muted hover:border-primary/40"
+                    ? "border-gold/50 bg-gold/15 text-white"
+                    : "border-white/10 text-white/65 hover:border-white/25"
                 }`}
               >
-                <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-foreground/10 text-[10px] font-bold">
+                <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-[10px] font-bold">
                   {s.n}
                 </span>
                 <span className="font-medium">{s.label}</span>
-                <span className="mt-0.5 block text-[10px] text-muted sm:inline sm:ml-2 sm:mt-0">
+                <span className="mt-0.5 block text-[10px] text-white/45 sm:ml-2 sm:mt-0 sm:inline">
                   {s.hint}
                 </span>
               </button>
@@ -411,10 +418,11 @@ export function DemoWorkspaceEditor({
           href={`/demo/${encodeURIComponent(workspaceSlug)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="btn-secondary inline-flex items-center gap-1 px-3 py-1.5 text-xs"
+          className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white hover:bg-white/10"
         >
-          데모 미리보기 <ExternalLink className="h-3 w-3" />
+          데모 미리보기 · 면접 <ExternalLink className="h-3 w-3" />
         </a>
+      </div>
       </div>
 
       {message ? (

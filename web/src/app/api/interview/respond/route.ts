@@ -16,7 +16,7 @@ import {
 import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { buildAnswerKeyPointFeedback } from "@/lib/interview/feedback-helpers";
-import { resolveOrgKitRubricForUser } from "@/lib/org/interview-kit";
+import { getOrgKitCustomRubric } from "@/lib/org/interview-kit";
 import {
   appendUserTextRecord,
   formatInterviewAnswerText,
@@ -391,8 +391,10 @@ async function handleRespond(req: Request, userId: string) {
       const nextTier = pressureTierFromLevel(
         irtResult.competency_states[next.competency.code]?.current_level ?? 2
       );
-      const orgKitRubric = await resolveOrgKitRubricForUser(
-        session.userId,
+      // 세션 시작 시점에 적용된 기관 킷(kitOrganizationId) 기준으로 조회한다 —
+      // 공유 링크로 시작한 비가입자 세션도 정확히 반영된다.
+      const orgKitRubric = await getOrgKitCustomRubric(
+        session.kitOrganizationId,
         next.competency.code,
         next.level
       );
