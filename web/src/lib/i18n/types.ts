@@ -33,11 +33,14 @@ export type Dictionary = {
     admin: {
       title: string;
       content: string;
+      demo: string;
       users: string;
       audit: string;
       orgApprove: string;
+      saasAdmin: string;
       orgBenchmark: string;
       subscriptions: string;
+      permissions: string;
     };
     saas: {
       title: string;
@@ -58,6 +61,7 @@ export type Dictionary = {
   home: {
     hero: {
       eyebrow: string;
+      brand: string;
       titleLine1: string;
       titleHighlight: string;
       subtitle: string;

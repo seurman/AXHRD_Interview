@@ -23,9 +23,9 @@ export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
   const h = dict.home;
 
   const stats = [
-    { value: "6", label: h.stats.competencies },
-    { value: "IRT", label: h.stats.adaptive },
-    { value: "24/7", label: h.stats.anytime },
+    { value: "AX", label: h.stats.competencies },
+    { value: "360°", label: h.stats.adaptive },
+    { value: "Total", label: h.stats.anytime },
   ];
 
   const features = [
@@ -48,7 +48,11 @@ export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
         <div className="relative mx-auto max-w-4xl text-center">
           <p className="section-eyebrow hero-eyebrow">{h.hero.eyebrow}</p>
 
-          <h1 className="mt-5 text-4xl font-extrabold leading-[1.15] tracking-tight text-foreground sm:text-5xl lg:text-[3.4rem]">
+          <p className="hero-brand-wordmark mt-4 text-[2.75rem] font-black leading-none tracking-tighter sm:text-6xl lg:text-7xl">
+            {h.hero.brand}
+          </p>
+
+          <h1 className="mt-4 text-3xl font-extrabold leading-[1.2] tracking-tight text-foreground sm:text-4xl lg:text-[2.75rem]">
             {h.hero.titleLine1}
             <br />
             <span className="hero-highlight">{h.hero.titleHighlight}</span>

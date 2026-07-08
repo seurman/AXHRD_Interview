@@ -2,22 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
-const ROLE_LABEL: Record<string, string> = {
-  STUDENT: "학생",
-  STAFF: "담당자",
-  ADMIN: "기관 관리자",
-};
+import { ORG_ROLE_LABEL, PLATFORM_ROLE_LABEL } from "@/lib/auth/roles";
 
 const PLATFORM_OPTIONS = [
-  { value: "NONE", label: "일반" },
-  { value: "ADMIN", label: "플랫폼 ADMIN" },
-  { value: "SUPERADMIN", label: "SUPERADMIN" },
+  { value: "NONE", label: PLATFORM_ROLE_LABEL.NONE },
+  { value: "ADMIN", label: PLATFORM_ROLE_LABEL.ADMIN },
+  { value: "CONTENT_ADMIN", label: PLATFORM_ROLE_LABEL.CONTENT_ADMIN },
+  { value: "SUPERADMIN", label: PLATFORM_ROLE_LABEL.SUPERADMIN },
 ] as const;
-
-function normalizePlatformRole(role: string) {
-  return role === "CONTENT_ADMIN" ? "ADMIN" : role;
-}
 
 export function UserRoleEditor({
   userId,
@@ -35,13 +27,13 @@ export function UserRoleEditor({
   const router = useRouter();
   const [role, setRole] = useState(currentRole);
   const [orgId, setOrgId] = useState(currentOrgId ?? "");
-  const [platformRole, setPlatformRole] = useState(normalizePlatformRole(currentPlatformRole));
+  const [platformRole, setPlatformRole] = useState(currentPlatformRole);
   const [saving, setSaving] = useState(false);
 
   const dirty =
     role !== currentRole ||
     orgId !== (currentOrgId ?? "") ||
-    platformRole !== normalizePlatformRole(currentPlatformRole);
+    platformRole !== currentPlatformRole;
 
   const save = async () => {
     setSaving(true);
@@ -91,7 +83,7 @@ export function UserRoleEditor({
         disabled={!orgId}
         className="input-luxe px-2 py-1 text-xs disabled:opacity-50"
       >
-        {Object.entries(ROLE_LABEL).map(([value, label]) => (
+        {Object.entries(ORG_ROLE_LABEL).map(([value, label]) => (
           <option key={value} value={value}>
             {label}
           </option>

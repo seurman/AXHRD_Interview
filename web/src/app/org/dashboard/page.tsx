@@ -78,8 +78,8 @@ export default async function OrgDashboardPage() {
               ORG_ENTERPRISE).
             </p>
           </div>
-          <Link href="/org/saas/settings" className="btn-secondary shrink-0 text-sm">
-            기관 설정
+          <Link href="/org/settings" className="btn-secondary shrink-0 text-sm">
+            면접 설정
           </Link>
         </div>
       )}

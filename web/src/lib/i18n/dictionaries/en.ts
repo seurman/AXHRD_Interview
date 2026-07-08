@@ -2,11 +2,12 @@ import type { Dictionary } from "../types";
 
 export const dictionary: Dictionary = {
   meta: {
-    title: "HR_IN — Adaptive AI Mock Interview",
-    description: "IRT-based adaptive mock interviews and competency tracking",
+    title: "AXHRD — AX-Native, Data-Driven HR Total Solution",
+    description:
+      "AXHRD unifies hiring, interviews, competencies, and cohorts on one AX-native data layer.",
   },
   common: {
-    brand: "HR_IN",
+    brand: "AXHRD",
     nav: {
       dashboard: "Skills",
       discover: "Discover",
@@ -29,18 +30,21 @@ export const dictionary: Dictionary = {
     admin: {
       title: "Admin",
       content: "Content",
+      demo: "Customer demo",
       users: "Users",
       audit: "Audit log",
       orgApprove: "Organizations",
+      saasAdmin: "Organizations",
       orgBenchmark: "Benchmark",
       subscriptions: "Subscriptions",
+      permissions: "Permissions",
     },
     saas: {
-      title: "SaaS",
+      title: "Organization",
       settings: "Settings",
-      cohortDashboard: "Cohort dashboard",
-      settingsHub: "Organization settings",
-      interviewKit: "Interview kit builder",
+      cohortDashboard: "Cohort",
+      settingsHub: "Interview settings",
+      interviewKit: "Interview kit",
     },
     language: {
       label: "Language",
@@ -53,25 +57,26 @@ export const dictionary: Dictionary = {
   },
   home: {
     hero: {
-      eyebrow: "Competency-Driven Interview Platform",
-      titleLine1: "Data calibrates difficulty.",
-      titleHighlight: "Your growth becomes proof.",
+      eyebrow: "AX-Native · Data-Driven HR Total Solution",
+      brand: "AXHRD",
+      titleLine1: "Data architects the full",
+      titleHighlight: "HR lifecycle — unified",
       subtitle:
-        "Mock interviews, self-discovery, competency tracking, and cohort management — one platform for your entire job prep journey.",
+        "AXHRD connects hiring, interviews, competencies, and cohorts on one AX-native data layer — proving individual growth and organizational insight in a single total HR solution.",
       ctaStart: "Start free",
       ctaStartLoggedIn: "Start interview",
       ctaDemo: "5-min demo",
     },
     stats: {
-      competencies: "Core competencies",
-      adaptive: "Adaptive difficulty",
-      anytime: "Practice anytime",
+      competencies: "AX HR modules",
+      adaptive: "Data layer",
+      anytime: "Total solution",
     },
     modules: {
-      eyebrow: "Core Modules",
-      title: "The HR_IN job prep stack",
+      eyebrow: "Total HR Stack",
+      title: "HR modules, orchestrated by AXHRD",
       subtitle:
-        "Four modules built for NCS and IRT — from first practice to measurable growth.",
+        "Interview, discovery, competency, cohort — modular pages you load only what you need.",
     },
     features: {
       interview: {
@@ -97,8 +102,8 @@ export const dictionary: Dictionary = {
     },
     values: {
       eyebrow: "Core Values",
-      title: "Why HR_IN",
-      subtitle: "A trustworthy interview prep platform for the age of hiring AI regulation",
+      title: "Why AXHRD",
+      subtitle: "Trusted, data-centric HR infrastructure for the AX era",
       trustBadges: ["No emotion AI", "NCS official competency rubrics", "Raw answers kept private"],
       transparent: {
         title: "Transparent scoring",
@@ -167,7 +172,7 @@ export const dictionary: Dictionary = {
   },
   dashboard: {
     differentiation: {
-      title: "The HR_IN approach",
+      title: "The AXHRD approach",
       items: [
         "IRT — not the interviewer — adjusts difficulty from data",
         "Self-discovery strengths bridge naturally into competency interviews",

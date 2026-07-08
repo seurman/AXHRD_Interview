@@ -1,36 +1,49 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { loadContentBankSnapshot } from "@/lib/competency/content-bank-data";
 import {
-  canUseInterviewKitBuilder,
   MIN_ORG_KIT_QUESTIONS,
+  parseOrgKitRubricByLevel,
   parseSelectedQuestionIds,
-  platformRubricOptions,
   RECOMMENDED_ORG_KIT_QUESTIONS,
+  resolveInterviewKitAccess,
 } from "@/lib/org/interview-kit";
-import { parseRubricCriteria } from "@/lib/competency/bank";
+import { parseRubricByLevel, type RubricByLevel } from "@/lib/competency/rubric";
 import { COMPETENCY_CODES } from "@/types";
 
-export async function GET() {
+const ACCESS_ERRORS: Record<string, string> = {
+  not_admin: "기관 ADMIN 권한이 필요합니다.",
+  no_org: "대상 기관을 찾을 수 없습니다.",
+  not_enabled: "SaaS 개인화 권한이 부여되지 않은 기관입니다. 슈퍼어드민에게 문의하세요.",
+};
+
+function accessErrorResponse(reason: string) {
+  return NextResponse.json(
+    { error: ACCESS_ERRORS[reason] ?? "권한이 없습니다.", code: reason },
+    { status: 403 }
+  );
+}
+
+async function resolveAccessFromRequest(req: Request) {
   const user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    return { error: NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 }) };
   }
-
-  const access = await canUseInterviewKitBuilder(user);
+  const { searchParams } = new URL(req.url);
+  const organizationId = searchParams.get("organizationId");
+  const access = await resolveInterviewKitAccess(user, organizationId);
   if (!access.allowed) {
-    return NextResponse.json(
-      {
-        error:
-          access.reason === "not_admin"
-            ? "기관 ADMIN 또는 플랫폼 ADMIN 권한이 필요합니다."
-            : "연결된 기관이 없습니다. 프로필에서 기관을 연결하거나 기관을 생성해 주세요.",
-        code: access.reason,
-      },
-      { status: 403 }
-    );
+    return { error: accessErrorResponse(access.reason) };
   }
+  return { user, access };
+}
+
+export async function GET(req: Request) {
+  const resolved = await resolveAccessFromRequest(req);
+  if ("error" in resolved && resolved.error) return resolved.error;
+  const { access } = resolved;
 
   const organizationId = access.organizationId;
   const bank = await loadContentBankSnapshot();
@@ -42,6 +55,8 @@ export async function GET() {
 
   return NextResponse.json({
     organizationId,
+    organizationName: access.organizationName,
+    mode: access.mode,
     limits: {
       min: MIN_ORG_KIT_QUESTIONS,
       recommended: RECOMMENDED_ORG_KIT_QUESTIONS,
@@ -52,7 +67,7 @@ export async function GET() {
         code: c.code,
         nameKo: c.nameKo,
         description: c.description,
-        platformRubricOptions: platformRubricOptions(c.code, rubricByCode.get(c.code)),
+        rubricByLevel: parseRubricByLevel(rubricByCode.get(c.code)),
       })),
     questions: bank.questions.map((q) => ({
       id: q.id,
@@ -66,7 +81,7 @@ export async function GET() {
     kits: kits.map((k) => ({
       competency: k.competency,
       selectedQuestionIds: parseSelectedQuestionIds(k.selectedQuestionIds),
-      customRubricCriteria: parseRubricCriteria(k.customRubricCriteria),
+      customRubricByLevel: parseOrgKitRubricByLevel(k.customRubricCriteria),
       updatedAt: k.updatedAt.toISOString(),
     })),
     competencyCodes: [...COMPETENCY_CODES],
@@ -76,19 +91,26 @@ export async function GET() {
 type PutBody = {
   competency?: string;
   selectedQuestionIds?: string[];
-  customRubricCriteria?: string[];
+  customRubricByLevel?: RubricByLevel;
 };
 
-export async function PUT(req: Request) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+function normalizeCustomRubricByLevel(raw: unknown): RubricByLevel {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const out: RubricByLevel = {};
+  for (const [key, val] of Object.entries(raw as Record<string, unknown>)) {
+    if (!Array.isArray(val)) continue;
+    const lines = val
+      .map((s) => (typeof s === "string" ? s.trim() : ""))
+      .filter(Boolean);
+    if (lines.length > 0) out[key] = lines;
   }
+  return out;
+}
 
-  const access = await canUseInterviewKitBuilder(user);
-  if (!access.allowed) {
-    return NextResponse.json({ error: "권한이 없습니다.", code: access.reason }, { status: 403 });
-  }
+export async function PUT(req: Request) {
+  const resolved = await resolveAccessFromRequest(req);
+  if ("error" in resolved && resolved.error) return resolved.error;
+  const { user, access } = resolved;
 
   const body = (await req.json()) as PutBody;
   const competency = typeof body.competency === "string" ? body.competency.trim() : "";
@@ -99,11 +121,7 @@ export async function PUT(req: Request) {
   const selectedQuestionIds = Array.isArray(body.selectedQuestionIds)
     ? body.selectedQuestionIds.filter((id): id is string => typeof id === "string")
     : [];
-  const customRubricCriteria = Array.isArray(body.customRubricCriteria)
-    ? body.customRubricCriteria
-        .map((s) => (typeof s === "string" ? s.trim() : ""))
-        .filter(Boolean)
-    : [];
+  const customRubricByLevel = normalizeCustomRubricByLevel(body.customRubricByLevel);
 
   if (selectedQuestionIds.length > 0 && selectedQuestionIds.length < MIN_ORG_KIT_QUESTIONS) {
     return NextResponse.json(
@@ -139,12 +157,12 @@ export async function PUT(req: Request) {
       organizationId,
       competency,
       selectedQuestionIds,
-      customRubricCriteria,
+      customRubricCriteria: customRubricByLevel as unknown as Prisma.InputJsonValue,
       updatedByUserId: user.id,
     },
     update: {
       selectedQuestionIds,
-      customRubricCriteria,
+      customRubricCriteria: customRubricByLevel as unknown as Prisma.InputJsonValue,
       updatedByUserId: user.id,
     },
   });
@@ -154,23 +172,16 @@ export async function PUT(req: Request) {
     kit: {
       competency: kit.competency,
       selectedQuestionIds: parseSelectedQuestionIds(kit.selectedQuestionIds),
-      customRubricCriteria: parseRubricCriteria(kit.customRubricCriteria),
+      customRubricByLevel: parseOrgKitRubricByLevel(kit.customRubricCriteria),
       updatedAt: kit.updatedAt.toISOString(),
     },
   });
 }
 
-/** 역량별 설정 초기화 — 플랫폼 기본값으로 되돌림 */
 export async function DELETE(req: Request) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
-  }
-
-  const access = await canUseInterviewKitBuilder(user);
-  if (!access.allowed) {
-    return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
-  }
+  const resolved = await resolveAccessFromRequest(req);
+  if ("error" in resolved && resolved.error) return resolved.error;
+  const { access } = resolved;
 
   const { searchParams } = new URL(req.url);
   const competency = searchParams.get("competency")?.trim() ?? "";

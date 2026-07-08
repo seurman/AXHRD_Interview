@@ -2,7 +2,12 @@ import { prisma } from "@/lib/prisma";
 import type { PlatformRole } from "@prisma/client";
 import { parseRubricCriteria } from "@/lib/competency/bank";
 import { rubricForNcsLevel } from "@/lib/competency/ncs-rubric";
-import { isPlatformAdmin } from "@/lib/admin/auth";
+import {
+  parseRubricByLevel,
+  rubricForCompetencyLevel,
+  type RubricByLevel,
+} from "@/lib/competency/rubric";
+import { hasSuperadminAccess } from "@/lib/auth/guards";
 import {
   IRT_LEVEL_COUNT,
   MIN_CANDIDATES_PER_LEVEL,
@@ -14,9 +19,16 @@ export const RECOMMENDED_ORG_KIT_QUESTIONS =
   MIN_CANDIDATES_PER_LEVEL * IRT_LEVEL_COUNT;
 export const MIN_ORG_KIT_QUESTIONS = IRT_LEVEL_COUNT;
 
+export type InterviewKitAccessReason = "not_admin" | "no_org" | "not_enabled";
+
 export type InterviewKitAccess =
-  | { allowed: true; organizationId: string }
-  | { allowed: false; reason: "not_admin" | "no_org" };
+  | {
+      allowed: true;
+      organizationId: string;
+      organizationName: string;
+      mode: "org_admin" | "superadmin";
+    }
+  | { allowed: false; reason: InterviewKitAccessReason };
 
 type KitUser = {
   id: string;
@@ -26,40 +38,72 @@ type KitUser = {
   platformRole: PlatformRole;
 };
 
-/** 킷 저장 대상 기관 — 소속 기관 우선, 플랫폼 ADMIN은 ADMIN 소속·승인 기관 순으로 휴리스틱 폴백 */
-export async function resolveKitOrganizationId(user: KitUser): Promise<string | null> {
-  if (user.organizationId) return user.organizationId;
-
-  if (!isPlatformAdmin(user)) return null;
-
-  const asOrgAdmin = await prisma.organization.findFirst({
-    where: { members: { some: { id: user.id, orgRole: "ADMIN" } } },
-    orderBy: { createdAt: "desc" },
-    select: { id: true },
-  });
-  if (asOrgAdmin) return asOrgAdmin.id;
-
-  const approved = await prisma.organization.findFirst({
-    where: { status: "APPROVED" },
-    orderBy: { createdAt: "asc" },
-    select: { id: true },
-  });
-  return approved?.id ?? null;
+function normalizeOrgId(raw: string | null | undefined): string | null {
+  const id = raw?.trim();
+  return id ? id : null;
 }
 
-/** org ADMIN 또는 플랫폼 ADMIN(문항 관리 권한) — 구독/결제 여부는 검사하지 않음 */
-export async function canUseInterviewKitBuilder(user: KitUser): Promise<InterviewKitAccess> {
-  const platformAdmin = isPlatformAdmin(user);
+/** 인터뷰 킷 접근 — 기관 ADMIN(권한 부여된 기관만) · 슈퍼어드민(전체 기관) */
+export async function resolveInterviewKitAccess(
+  user: KitUser,
+  requestedOrganizationId?: string | null
+): Promise<InterviewKitAccess> {
+  const requested = normalizeOrgId(requestedOrganizationId);
 
-  if (platformAdmin) {
-    const organizationId = await resolveKitOrganizationId(user);
-    if (!organizationId) return { allowed: false, reason: "no_org" };
-    return { allowed: true, organizationId };
+  if (hasSuperadminAccess(user)) {
+    const orgId = requested ?? user.organizationId;
+    if (!orgId) return { allowed: false, reason: "no_org" };
+    const org = await prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { id: true, name: true },
+    });
+    if (!org) return { allowed: false, reason: "no_org" };
+    return {
+      allowed: true,
+      organizationId: org.id,
+      organizationName: org.name,
+      mode: "superadmin",
+    };
   }
 
   if (!user.organizationId) return { allowed: false, reason: "no_org" };
   if (user.orgRole !== "ADMIN") return { allowed: false, reason: "not_admin" };
-  return { allowed: true, organizationId: user.organizationId };
+  if (requested && requested !== user.organizationId) {
+    return { allowed: false, reason: "not_admin" };
+  }
+
+  const org = await prisma.organization.findUnique({
+    where: { id: user.organizationId },
+    select: {
+      id: true,
+      name: true,
+      saasPersonalizationEnabled: true,
+    },
+  });
+  if (!org) return { allowed: false, reason: "no_org" };
+  if (!org.saasPersonalizationEnabled) return { allowed: false, reason: "not_enabled" };
+
+  return {
+    allowed: true,
+    organizationId: org.id,
+    organizationName: org.name,
+    mode: "org_admin",
+  };
+}
+
+/** @deprecated resolveInterviewKitAccess 사용 */
+export async function canUseInterviewKitBuilder(
+  user: KitUser,
+  requestedOrganizationId?: string | null
+): Promise<InterviewKitAccess> {
+  return resolveInterviewKitAccess(user, requestedOrganizationId);
+}
+
+/** SaaS 설정 허브·헤더 노출 여부 */
+export async function canAccessSaasSettingsHub(user: KitUser): Promise<boolean> {
+  if (hasSuperadminAccess(user)) return true;
+  const access = await resolveInterviewKitAccess(user);
+  return access.allowed;
 }
 
 export function parseSelectedQuestionIds(raw: unknown): string[] {
@@ -93,6 +137,37 @@ export function platformRubricOptions(
   return rubricForNcsLevel(competencyCode, 3);
 }
 
+/** 플랫폼 역량·레벨 기본 루브릭 (DB rubricByLevel → NCS 폴백) */
+export function platformRubricForLevel(
+  competencyCode: string,
+  rubricByLevel: unknown,
+  level: number
+): string[] {
+  const fromDb = rubricForCompetencyLevel(rubricByLevel, level);
+  if (fromDb.length > 0) return fromDb;
+  return rubricForNcsLevel(competencyCode, level);
+}
+
+/** 기관 킷 customRubricCriteria — 레벨별 객체 또는 레거시 flat 배열 */
+export function parseOrgKitRubricByLevel(raw: unknown): RubricByLevel {
+  if (Array.isArray(raw)) {
+    const lines = parseRubricCriteria(raw);
+    if (lines.length === 0) return {};
+    return { default: lines };
+  }
+  return parseRubricByLevel(raw);
+}
+
+export function orgKitRubricForLevel(
+  customRubricByLevel: RubricByLevel,
+  level: number
+): string[] {
+  const levelKey = String(level);
+  if (customRubricByLevel[levelKey]?.length) return customRubricByLevel[levelKey];
+  if (customRubricByLevel.default?.length) return customRubricByLevel.default;
+  return [];
+}
+
 export async function getOrgInterviewKit(
   organizationId: string,
   competency: string
@@ -104,12 +179,14 @@ export async function getOrgInterviewKit(
 
 export async function getOrgKitCustomRubric(
   organizationId: string | null | undefined,
-  competency: string
+  competency: string,
+  level: number
 ): Promise<string[] | null> {
   if (!organizationId) return null;
   const kit = await getOrgInterviewKit(organizationId, competency);
   if (!kit) return null;
-  const criteria = parseRubricCriteria(kit.customRubricCriteria);
+  const byLevel = parseOrgKitRubricByLevel(kit.customRubricCriteria);
+  const criteria = orgKitRubricForLevel(byLevel, level);
   return criteria.length > 0 ? criteria : null;
 }
 
@@ -141,11 +218,12 @@ export async function filterQuestionsByOrgKit<T extends PoolQuestion & { id: str
 
 export async function resolveOrgKitRubricForUser(
   userId: string,
-  competency: string
+  competency: string,
+  level: number
 ): Promise<string[] | null> {
   const u = await prisma.user.findUnique({
     where: { id: userId },
     select: { organizationId: true },
   });
-  return getOrgKitCustomRubric(u?.organizationId, competency);
+  return getOrgKitCustomRubric(u?.organizationId, competency, level);
 }

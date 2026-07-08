@@ -4,50 +4,101 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { InterviewKitWorkspace } from "@/components/org/InterviewKitWorkspace";
 import {
+  KIT_RUBRIC_LEVELS,
   type ApiCompetency,
   type ApiKit,
   type ApiPayload,
   type ApiQuestion,
   type CompetencyDraft,
+  type LevelRubricDraft,
 } from "@/components/org/kit-workspace-types";
+import {
+  orgKitRubricForLevel,
+  platformRubricForLevel,
+} from "@/lib/org/interview-kit";
+import type { RubricByLevel } from "@/lib/competency/rubric";
+
+function kitApiBase(organizationId?: string) {
+  const base = "/api/org/interview-kit";
+  if (!organizationId) return base;
+  return `${base}?organizationId=${encodeURIComponent(organizationId)}`;
+}
+
+function platformLinesForLevel(comp: ApiCompetency, level: number): string[] {
+  return platformRubricForLevel(comp.code, comp.rubricByLevel, level);
+}
+
+function defaultLevelRubric(comp: ApiCompetency, level: number): LevelRubricDraft {
+  const platform = platformLinesForLevel(comp, level);
+  return { checkedPlatform: new Set(platform), customLines: [] };
+}
+
+function initLevelRubrics(comp: ApiCompetency, kit: ApiKit | undefined): Record<string, LevelRubricDraft> {
+  const out: Record<string, LevelRubricDraft> = {};
+  for (const lv of KIT_RUBRIC_LEVELS) {
+    const key = String(lv);
+    const platform = platformLinesForLevel(comp, lv);
+    const platformSet = new Set(platform);
+    const kitLines = kit ? orgKitRubricForLevel(kit.customRubricByLevel, lv) : [];
+    if (kitLines.length === 0) {
+      out[key] = { checkedPlatform: new Set(platform), customLines: [] };
+      continue;
+    }
+    const checkedPlatform = new Set<string>();
+    const customLines: string[] = [];
+    for (const line of kitLines) {
+      if (platformSet.has(line)) checkedPlatform.add(line);
+      else customLines.push(line);
+    }
+    if (checkedPlatform.size === 0 && platform.length > 0) {
+      for (const p of platform) checkedPlatform.add(p);
+    }
+    out[key] = { checkedPlatform, customLines };
+  }
+  return out;
+}
 
 function initDraft(comp: ApiCompetency, kit: ApiKit | undefined): CompetencyDraft {
-  const platform = comp.platformRubricOptions;
-  if (!kit || kit.selectedQuestionIds.length === 0) {
+  const hasKit =
+    kit &&
+    (kit.selectedQuestionIds.length > 0 || Object.keys(kit.customRubricByLevel).length > 0);
+  if (!hasKit) {
+    const rubricByLevel: Record<string, LevelRubricDraft> = {};
+    for (const lv of KIT_RUBRIC_LEVELS) {
+      rubricByLevel[String(lv)] = defaultLevelRubric(comp, lv);
+    }
     return {
       selectedIds: [],
-      checkedPlatformRubric: new Set(platform),
-      customRubricLines: [],
+      rubricLevel: 3,
+      rubricByLevel,
       dirty: false,
       saving: false,
       message: null,
     };
   }
-  const platformSet = new Set(platform);
-  const fromKit = kit.customRubricCriteria;
-  const checkedPlatform = new Set<string>();
-  const customLines: string[] = [];
-  for (const line of fromKit) {
-    if (platformSet.has(line)) checkedPlatform.add(line);
-    else customLines.push(line);
-  }
-  if (checkedPlatform.size === 0 && platform.length > 0) {
-    for (const p of platform) checkedPlatform.add(p);
-  }
   return {
-    selectedIds: [...kit.selectedQuestionIds],
-    checkedPlatformRubric: checkedPlatform,
-    customRubricLines: customLines,
+    selectedIds: [...(kit?.selectedQuestionIds ?? [])],
+    rubricLevel: 3,
+    rubricByLevel: initLevelRubrics(comp, kit),
     dirty: false,
     saving: false,
     message: null,
   };
 }
 
-function buildRubricCriteria(draft: CompetencyDraft, platformOrder: string[]): string[] {
-  const fromPlatform = platformOrder.filter((line) => draft.checkedPlatformRubric.has(line));
-  const custom = draft.customRubricLines.map((s) => s.trim()).filter(Boolean);
-  return [...fromPlatform, ...custom];
+function buildCustomRubricByLevel(draft: CompetencyDraft, comp: ApiCompetency): RubricByLevel {
+  const out: RubricByLevel = {};
+  for (const lv of KIT_RUBRIC_LEVELS) {
+    const key = String(lv);
+    const state = draft.rubricByLevel[key];
+    if (!state) continue;
+    const platformOrder = platformLinesForLevel(comp, lv);
+    const fromPlatform = platformOrder.filter((line) => state.checkedPlatform.has(line));
+    const custom = state.customLines.map((s) => s.trim()).filter(Boolean);
+    const criteria = [...fromPlatform, ...custom];
+    if (criteria.length > 0) out[key] = criteria;
+  }
+  return out;
 }
 
 function kitCompetenciesFromPayload(payload: ApiPayload): string[] {
@@ -56,14 +107,24 @@ function kitCompetenciesFromPayload(payload: ApiPayload): string[] {
       .filter(
         (k) =>
           k.selectedQuestionIds.length > 0 ||
-          (k.customRubricCriteria && k.customRubricCriteria.length > 0)
+          Object.keys(k.customRubricByLevel).length > 0
       )
       .map((k) => k.competency)
   );
   return payload.competencies.map((c) => c.code).filter((code) => withConfig.has(code));
 }
 
-export function InterviewKitBuilder() {
+type Props = {
+  organizationId?: string;
+  backHref?: string;
+  backLabel?: string;
+};
+
+export function InterviewKitBuilder({
+  organizationId,
+  backHref = "/org/settings",
+  backLabel = "기관 설정으로",
+}: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ApiPayload | null>(null);
@@ -73,17 +134,14 @@ export function InterviewKitBuilder() {
   const [drafts, setDrafts] = useState<Record<string, CompetencyDraft>>({});
   const [search, setSearch] = useState("");
   const [levelFilter, setLevelFilter] = useState<number | null>(null);
-  const [dragItem, setDragItem] = useState<{
-    kind: "comp" | "question";
-    label: string;
-    level?: number;
-  } | null>(null);
+
+  const apiBase = kitApiBase(organizationId);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/org/interview-kit");
+      const res = await fetch(apiBase);
       const json = await res.json();
       if (!res.ok) {
         setError(json.error ?? "불러오기에 실패했습니다.");
@@ -107,7 +165,7 @@ export function InterviewKitBuilder() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [apiBase]);
 
   useEffect(() => {
     void load();
@@ -155,9 +213,8 @@ export function InterviewKitBuilder() {
   async function resetCompetency(code: string) {
     patchDraft(code, { saving: true, message: null });
     try {
-      const res = await fetch(`/api/org/interview-kit?competency=${encodeURIComponent(code)}`, {
-        method: "DELETE",
-      });
+      const url = `${apiBase}${apiBase.includes("?") ? "&" : "?"}competency=${encodeURIComponent(code)}`;
+      const res = await fetch(url, { method: "DELETE" });
       if (!res.ok) {
         const json = await res.json();
         patchDraft(code, { saving: false, message: json.error ?? "초기화 실패" });
@@ -199,6 +256,18 @@ export function InterviewKitBuilder() {
     setPaletteCode(code);
   }
 
+  function moveQuestionInKit(code: string, questionId: string, direction: "up" | "down") {
+    const draft = drafts[code];
+    if (!draft) return;
+    const idx = draft.selectedIds.indexOf(questionId);
+    if (idx < 0) return;
+    const nextIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (nextIdx < 0 || nextIdx >= draft.selectedIds.length) return;
+    const next = [...draft.selectedIds];
+    [next[idx], next[nextIdx]] = [next[nextIdx], next[idx]];
+    patchDraft(code, { selectedIds: next });
+  }
+
   async function saveCompetency(code: string) {
     const comp = compByCode.get(code);
     const draft = drafts[code];
@@ -211,13 +280,13 @@ export function InterviewKitBuilder() {
     }
     patchDraft(code, { saving: true, message: null });
     try {
-      const res = await fetch("/api/org/interview-kit", {
+      const res = await fetch(apiBase, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           competency: code,
           selectedQuestionIds: draft.selectedIds,
-          customRubricCriteria: buildRubricCriteria(draft, comp.platformRubricOptions),
+          customRubricByLevel: buildCustomRubricByLevel(draft, comp),
         }),
       });
       const json = await res.json();
@@ -251,8 +320,8 @@ export function InterviewKitBuilder() {
     return (
       <div className="card-luxe space-y-4 p-6">
         <p className="text-sm text-red-600">{error}</p>
-        <Link href="/org/saas/settings" className="text-sm text-accent hover:underline">
-          기관 설정으로
+        <Link href={backHref} className="text-sm text-accent hover:underline">
+          {backLabel}
         </Link>
       </div>
     );
@@ -269,7 +338,6 @@ export function InterviewKitBuilder() {
       drafts={drafts}
       search={search}
       levelFilter={levelFilter}
-      dragItem={dragItem}
       questionById={questionById}
       questionsByComp={questionsByComp}
       compByCode={compByCode}
@@ -277,7 +345,6 @@ export function InterviewKitBuilder() {
       onActiveCode={setActiveCode}
       onSearch={setSearch}
       onLevelFilter={setLevelFilter}
-      onDragItem={setDragItem}
       onAddCompetency={addCompetencyToKit}
       onRemoveCompetency={removeCompetencyFromKit}
       onAddQuestion={addQuestionToKit}
@@ -286,7 +353,7 @@ export function InterviewKitBuilder() {
         if (!draft) return;
         patchDraft(code, { selectedIds: draft.selectedIds.filter((id) => id !== qid) });
       }}
-      onReorderQuestions={(code, ids) => patchDraft(code, { selectedIds: ids })}
+      onMoveQuestion={moveQuestionInKit}
       onPatchDraft={patchDraft}
       onSave={(code) => void saveCompetency(code)}
     />

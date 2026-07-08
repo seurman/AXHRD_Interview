@@ -17,6 +17,10 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { buildAnswerKeyPointFeedback } from "@/lib/interview/feedback-helpers";
 import { resolveOrgKitRubricForUser } from "@/lib/org/interview-kit";
+import {
+  appendUserTextRecord,
+  formatInterviewAnswerText,
+} from "@/lib/user-text-archive";
 import type { CompetencyState, ItemParams } from "@/types";
 
 export async function POST(req: Request) {
@@ -344,6 +348,20 @@ async function handleRespond(req: Request, userId: string) {
           sequence: session.responses.length,
         },
       }),
+      appendUserTextRecord({
+        userId,
+        kind: isFollowUpAnswer ? "INTERVIEW_FOLLOW_UP" : "INTERVIEW_ANSWER",
+        content: formatInterviewAnswerText({
+          competency: question.competency.code,
+          level: question.level,
+          question: displayedQuestion,
+          answer: isFollowUpAnswer && pending ? pending.originalTranscript ?? finalTranscript : finalTranscript,
+          followUpQuestion: isFollowUpAnswer && pending ? pending.followUpQuestion : null,
+          followUpAnswer: isFollowUpAnswer ? transcript : null,
+        }),
+        sourceType: "interview_session",
+        sourceId: sessionId,
+      }),
     ]),
     (async () => {
       await prisma.interviewSession.update({
@@ -372,7 +390,8 @@ async function handleRespond(req: Request, userId: string) {
       );
       const orgKitRubric = await resolveOrgKitRubricForUser(
         session.userId,
-        next.competency.code
+        next.competency.code,
+        next.level
       );
       // 이 시점의 next 문항은 이미 이번 턴에 문항 하나를 답한 뒤라(updatedAdministered에
       // 최소 1개 포함) 해당 역량의 2번째 이상 문항이다 — 첫 문항만 자소서로 맞춤화한다는

@@ -12,14 +12,14 @@ import { useI18n } from "@/lib/i18n/I18nProvider";
 
 type AdminLink = {
   href: string;
-  labelKey: "content" | "users" | "audit" | "orgApprove" | "orgBenchmark" | "subscriptions";
+  labelKey: "content" | "demo" | "permissions" | "users" | "audit" | "orgApprove" | "orgBenchmark" | "subscriptions";
 };
 
 type SaasLinksConfig = {
   titleKey: "saas";
   links: { href: string; labelKey: "cohortDashboard" }[];
   settingsTitleKey: "settings";
-  settingsLinks: { href: string; labelKey: "settingsHub" }[];
+  settingsLinks: { href: string; labelKey: "settingsHub" | "interviewKit" }[];
 };
 
 export function MobileNav({

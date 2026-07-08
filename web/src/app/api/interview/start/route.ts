@@ -17,6 +17,10 @@ import { summarizeResume } from "@/lib/interview/resume-summary";
 import { parseResumeSummary } from "@/lib/interview/build-question";
 import { filterAndRankQuestionPool } from "@/lib/interview/question-pool";
 import { filterQuestionsByOrgKit } from "@/lib/org/interview-kit";
+import {
+  appendUserTextRecord,
+  formatInterviewSetupText,
+} from "@/lib/user-text-archive";
 import { COMPETENCY_CODES, INDUSTRY_CODES, JOB_ROLES, COMPANY_SIZE_CODES } from "@/types";
 import type {
   CompanyContext,
@@ -234,6 +238,16 @@ export async function POST(req: Request) {
     where: { userId: user.id },
   });
 
+  const setupSelectionText = formatInterviewSetupText({
+    companyName: companyContext.name,
+    industry: industryCode,
+    jobRole: jobRoleCode,
+    companySize: sizeCode,
+    competency,
+    hasResume: !!trimmedResumeText || !!existingPlan?.resume,
+    hasJd: !!trimmedJdText,
+  });
+
   const session = await prisma.interviewSession.create({
     data: {
       userId: user.id,
@@ -245,8 +259,17 @@ export async function POST(req: Request) {
       mode: "COMPETENCY",
       status: "IN_PROGRESS",
       sessionNumber: sessionCount + 1,
+      setupSelectionText,
       startedAt: new Date(),
     },
+  });
+
+  void appendUserTextRecord({
+    userId: user.id,
+    kind: "INTERVIEW_SETUP",
+    content: setupSelectionText,
+    sourceType: "interview_session",
+    sourceId: session.id,
   });
 
   const questions = await prisma.question.findMany({

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
+import {
+  appendUserTextRecord,
+  formatSwipeSelectionText,
+} from "@/lib/user-text-archive";
 
 /** 질문 카드 Pass/Save 기록 — 채점과 무관, 열람 상태만 저장(같은 카드 재스와이프 시 갱신) */
 export async function POST(req: Request) {
@@ -24,7 +28,7 @@ export async function POST(req: Request) {
 
   const question = await prisma.realInterviewQuestion.findUnique({
     where: { id: questionId },
-    select: { id: true },
+    select: { id: true, questionText: true, industry: true, jobRole: true },
   });
   if (!question) {
     return NextResponse.json({ error: "존재하지 않는 질문입니다." }, { status: 404 });
@@ -42,6 +46,20 @@ export async function POST(req: Request) {
       action,
       ...(trimmedAnswer && { answerTranscript: trimmedAnswer, answeredAt: new Date() }),
     },
+  });
+
+  void appendUserTextRecord({
+    userId: user.id,
+    kind: trimmedAnswer ? "SWIPE_PRACTICE" : "SWIPE_SELECTION",
+    content: formatSwipeSelectionText({
+      action,
+      industry: question.industry,
+      jobRole: question.jobRole,
+      question: question.questionText,
+      practiceAnswer: trimmedAnswer,
+    }),
+    sourceType: "swipe_action",
+    sourceId: questionId,
   });
 
   return NextResponse.json({ ok: true });

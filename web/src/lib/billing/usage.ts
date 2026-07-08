@@ -1,5 +1,7 @@
-import type { PlanTier } from "@prisma/client";
+import type { PlanTier, PlatformRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isSuperadmin } from "@/lib/auth/superadmin";
+import { isUsageExemptUser } from "@/lib/auth/roles";
 import { PLANS } from "./plans";
 import { getBillingContext } from "./subscription";
 
@@ -15,6 +17,28 @@ export type UsageCheckResult =
       message: string;
       upgradeUrl: string;
     };
+
+/** 수퍼어드민 · 회사 어드민 — 월간 횟수 제한 없음 */
+async function isUsageExempt(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true, platformRole: true, orgRole: true, organizationId: true },
+  });
+  if (!user) return false;
+
+  if (isSuperadmin(user.email) && user.platformRole !== "SUPERADMIN") {
+    const { syncSuperadminPlatformRole } = await import("@/lib/auth/platform-role");
+    await syncSuperadminPlatformRole(userId, user.email);
+    return true;
+  }
+
+  return isUsageExemptUser({
+    email: user.email,
+    platformRole: user.platformRole as PlatformRole,
+    orgRole: user.orgRole,
+    organizationId: user.organizationId,
+  });
+}
 
 async function countUsage(
   userId: string,
@@ -50,6 +74,12 @@ export async function checkUsageLimit(
   kind: UsageKind
 ): Promise<UsageCheckResult> {
   const ctx = await getBillingContext(userId);
+
+  if (await isUsageExempt(userId)) {
+    const used = await countUsage(userId, kind, ctx.periodStart, ctx.periodEnd);
+    return { allowed: true, planTier: ctx.planTier, used, limit: null };
+  }
+
   const limit = limitFor(kind, ctx.planTier);
 
   if (limit === null) {
@@ -76,21 +106,28 @@ export async function checkUsageLimit(
 
 export async function getUsageSummary(userId: string) {
   const ctx = await getBillingContext(userId);
+  const exempt = await isUsageExempt(userId);
   const [interviews, discover] = await Promise.all([
     countUsage(userId, "mock_interview", ctx.periodStart, ctx.periodEnd),
     countUsage(userId, "self_discovery", ctx.periodStart, ctx.periodEnd),
   ]);
+  const interviewLimit = exempt
+    ? null
+    : PLANS[ctx.planTier].limits.mockInterviewsPerMonth;
+  const discoverLimit = exempt
+    ? null
+    : PLANS[ctx.planTier].limits.selfDiscoveryPerMonth;
   return {
     planTier: ctx.planTier,
     periodStart: ctx.periodStart.toISOString(),
     periodEnd: ctx.periodEnd.toISOString(),
     mockInterviews: {
       used: interviews,
-      limit: PLANS[ctx.planTier].limits.mockInterviewsPerMonth,
+      limit: interviewLimit,
     },
     selfDiscovery: {
       used: discover,
-      limit: PLANS[ctx.planTier].limits.selfDiscoveryPerMonth,
+      limit: discoverLimit,
     },
   };
 }

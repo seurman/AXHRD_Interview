@@ -2,78 +2,87 @@ import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { OrgReviewActions } from "@/components/admin/OrgReviewActions";
+import { OrgStatusBadge } from "@/components/admin/OrgStatusBadge";
+import {
+  Building2,
+  ChevronRight,
+  ClipboardList,
+  Sparkles,
+  Users,
+} from "lucide-react";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: "대기",
-  APPROVED: "승인됨",
-  REJECTED: "반려됨",
-};
 
 export default async function AdminOrganizationsPage() {
   await requireSuperadmin("/admin/organizations");
 
   const orgs = await prisma.organization.findMany({
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ status: "asc" }, { name: "asc" }],
     include: {
       members: {
         where: { orgRole: "ADMIN" },
         select: { name: true, email: true },
         take: 1,
       },
+      _count: { select: { members: true, interviewKits: true } },
     },
   });
 
   const pending = orgs.filter((o) => o.status === "PENDING");
-  const decided = orgs.filter((o) => o.status !== "PENDING");
+  const active = orgs.filter((o) => o.status === "APPROVED");
+  const inactive = orgs.filter((o) => o.status === "REJECTED");
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-widest text-gold">Admin</p>
-        <h1 className="mt-1 text-2xl font-bold text-foreground">기관 생성 승인 관리</h1>
-        <p className="mt-1 text-sm text-muted">
-          신규 기관은 승인 전까지 가입 코드로 학생을 받을 수 없고 코호트 대시보드도
-          열리지 않습니다.
+    <div className="mx-auto max-w-5xl space-y-10 pb-12">
+      <header>
+        <p className="text-xs font-medium uppercase tracking-widest text-gold">Admin · Tenants</p>
+        <h1 className="mt-1 text-2xl font-bold text-foreground sm:text-3xl">기관 관리</h1>
+        <p className="mt-2 max-w-2xl text-sm text-muted">
+          Greenhouse·Workday 방식의 테넌트 허브 — 기관별 승인, 팀, 코호트, 인터뷰 킷을 한곳에서
+          관리합니다.
         </p>
-        <div className="mt-2 flex flex-wrap gap-x-4">
-          <Link href="/admin/content" className="inline-block text-sm text-accent hover:underline">
-            문항 뱅크 · 역량 관리 →
+        <div className="mt-4 flex flex-wrap gap-3 text-sm">
+          <Link href="/admin/content" className="text-accent hover:underline">
+            문항 뱅크
           </Link>
-          <Link
-            href="/admin/organizations/benchmark"
-            className="inline-block text-sm text-accent hover:underline"
-          >
-            기관 간 퍼포먼스 비교 보기 →
+          <Link href="/admin/users" className="text-accent hover:underline">
+            사용자 권한
           </Link>
-          <Link href="/admin/users" className="inline-block text-sm text-accent hover:underline">
-            전체 사용자 · 권한 관리 →
+          <Link href="/admin/organizations/benchmark" className="text-accent hover:underline">
+            기관 비교
           </Link>
         </div>
-      </div>
+      </header>
 
-      <section className="space-y-3">
-        <h2 className="font-semibold text-foreground">
-          승인 대기 중 ({pending.length})
-        </h2>
-        {pending.length === 0 ? (
-          <p className="text-sm text-muted">대기 중인 요청이 없습니다.</p>
-        ) : (
+      {pending.length > 0 && (
+        <section className="space-y-4">
+          <h2 className="flex items-center gap-2 font-semibold text-foreground">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/15 text-xs text-amber-700">
+              {pending.length}
+            </span>
+            승인 대기
+          </h2>
           <div className="space-y-3">
             {pending.map((org) => {
               const admin = org.members[0];
               return (
                 <div
                   key={org.id}
-                  className="card-luxe flex flex-wrap items-center justify-between gap-4 p-5"
+                  className="card-luxe flex flex-wrap items-center justify-between gap-4 border-amber-500/20 p-5"
                 >
-                  <div>
-                    <p className="font-medium text-foreground">{org.name}</p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/admin/organizations/${org.id}`}
+                        className="font-semibold text-foreground hover:text-accent"
+                      >
+                        {org.name}
+                      </Link>
+                      <OrgStatusBadge status={org.status} />
+                    </div>
                     <p className="mt-1 text-xs text-muted">
-                      요청자: {admin ? `${admin.name} (${admin.email})` : "알 수 없음"} · 가입
-                      코드 <span className="font-mono">{org.joinCode}</span> ·{" "}
-                      {org.createdAt.toLocaleDateString("ko-KR")}
+                      {admin ? `${admin.name} · ${admin.email}` : "요청자 미상"} ·{" "}
+                      <span className="font-mono">{org.joinCode}</span>
                     </p>
                   </div>
                   <OrgReviewActions orgId={org.id} />
@@ -81,46 +90,73 @@ export default async function AdminOrganizationsPage() {
               );
             })}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      <section className="space-y-3">
-        <h2 className="font-semibold text-foreground">처리 완료</h2>
-        {decided.length === 0 ? (
-          <p className="text-sm text-muted">아직 처리된 요청이 없습니다.</p>
+      <section className="space-y-4">
+        <h2 className="font-semibold text-foreground">운영 중인 기관 ({active.length})</h2>
+        {active.length === 0 ? (
+          <p className="text-sm text-muted">승인된 기관이 없습니다.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-card-border text-xs text-muted">
-                  <th className="py-2 pr-4 font-medium">기관명</th>
-                  <th className="py-2 pr-4 font-medium">요청자</th>
-                  <th className="py-2 pr-4 font-medium">상태</th>
-                  <th className="py-2 pr-4 font-medium">처리일</th>
-                </tr>
-              </thead>
-              <tbody>
-                {decided.map((org) => {
-                  const admin = org.members[0];
-                  const decidedAt = org.approvedAt ?? org.rejectedAt ?? org.createdAt;
-                  return (
-                    <tr key={org.id} className="border-b border-card-border last:border-0">
-                      <td className="py-2 pr-4 text-foreground">{org.name}</td>
-                      <td className="py-2 pr-4 text-muted">
-                        {admin ? `${admin.name} (${admin.email})` : "—"}
-                      </td>
-                      <td className="py-2 pr-4 text-muted">{STATUS_LABEL[org.status]}</td>
-                      <td className="py-2 pr-4 text-muted">
-                        {decidedAt.toLocaleDateString("ko-KR")}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {active.map((org) => (
+              <Link
+                key={org.id}
+                href={`/admin/organizations/${org.id}`}
+                className="group card-luxe block p-5 transition hover:border-gold/30 hover:shadow-md"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0f172a] text-gold">
+                    <Building2 className="h-5 w-5" />
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted transition group-hover:translate-x-0.5 group-hover:text-gold" />
+                </div>
+                <h3 className="mt-4 font-semibold text-foreground group-hover:text-accent">
+                  {org.name}
+                </h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <OrgStatusBadge status={org.status} />
+                  {org.saasPersonalizationEnabled && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-2 py-0.5 text-[10px] font-semibold text-gold">
+                      <Sparkles className="h-3 w-3" />
+                      맞춤 설정 ON
+                    </span>
+                  )}
+                </div>
+                <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted">
+                  <span className="inline-flex items-center gap-1">
+                    <Users className="h-3.5 w-3.5" />
+                    {org._count.members}명
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <ClipboardList className="h-3.5 w-3.5" />
+                    킷 {org._count.interviewKits}
+                  </span>
+                  <span className="font-mono">{org.joinCode}</span>
+                </div>
+              </Link>
+            ))}
           </div>
         )}
       </section>
+
+      {inactive.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium text-muted">반려됨 ({inactive.length})</h2>
+          <div className="space-y-2">
+            {inactive.map((org) => (
+              <Link
+                key={org.id}
+                href={`/admin/organizations/${org.id}`}
+                className="flex items-center justify-between rounded-xl border border-card-border px-4 py-3 text-sm opacity-70 transition hover:opacity-100"
+              >
+                <span>{org.name}</span>
+                <OrgStatusBadge status={org.status} />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

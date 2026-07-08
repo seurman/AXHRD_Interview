@@ -22,7 +22,7 @@ type SaasLinksConfig = {
   settingsTitleKey: "settings";
   settingsLinks: {
     href: string;
-    labelKey: "settingsHub";
+    labelKey: "settingsHub" | "interviewKit";
   }[];
 };
 
@@ -36,7 +36,7 @@ export function MainNav({
   mainHrefs: string[];
   adminLinks: {
     href: string;
-    labelKey: "content" | "users" | "audit" | "orgApprove" | "orgBenchmark" | "subscriptions";
+    labelKey: "content" | "demo" | "permissions" | "users" | "audit" | "orgApprove" | "orgBenchmark" | "subscriptions";
   }[];
   saasLinks?: SaasLinksConfig | null;
   userName?: string;

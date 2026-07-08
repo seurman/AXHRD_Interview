@@ -1,5 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { isSuperadmin, hasSuperadminAccess } from "@/lib/auth/superadmin";
 
 export async function requirePageUser(nextPath?: string) {
   const user = await getCurrentUser();
@@ -24,39 +25,33 @@ export async function requireOrgStaff(nextPath?: string) {
   return user as typeof user & { organizationId: string };
 }
 
-/** 기관 생성자(ADMIN) 또는 플랫폼 ADMIN — 인터뷰 킷 빌더 */
-export async function requireInterviewKitUser(nextPath?: string) {
+/** 기관 ADMIN(개인화 권한 부여됨) 또는 슈퍼어드민 — 인터뷰 킷 빌더 */
+export async function requireInterviewKitUser(
+  nextPath?: string,
+  organizationId?: string | null
+) {
   const user = await requirePageUser(nextPath);
-  const { canUseInterviewKitBuilder } = await import("@/lib/org/interview-kit");
-  const access = await canUseInterviewKitBuilder(user);
+  const { resolveInterviewKitAccess } = await import("@/lib/org/interview-kit");
+  const access = await resolveInterviewKitAccess(user, organizationId);
   if (!access.allowed) notFound();
-  return { user, organizationId: access.organizationId };
+  return { user, organizationId: access.organizationId, access };
 }
 
-/** 플랫폼 슈퍼어드민(운영자) 이메일 허용 목록. 콤마로 구분해 여러 명 등록 가능. */
-function superadminEmails(): string[] {
-  return (process.env.SUPERADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
+export { isSuperadmin, hasSuperadminAccess } from "@/lib/auth/superadmin";
+
+/** 운영 문항 뱅크 CMS — 수퍼어드민 · 콘텐츠 관리자 */
+export function isProductionContentAdmin(user: { email: string; platformRole?: string }) {
+  return hasSuperadminAccess(user) || user.platformRole === "CONTENT_ADMIN";
 }
 
-export function isSuperadmin(email: string) {
-  return superadminEmails().includes(email.toLowerCase());
+/** 데모 워크스페이스 — 수퍼어드민 · 회사 어드민 */
+export function isDemoManager(user: { email: string; platformRole?: string }) {
+  return hasSuperadminAccess(user) || user.platformRole === "ADMIN";
 }
 
-/** 환경변수 SUPERADMIN_EMAILS 또는 DB platformRole=SUPERADMIN */
-export function hasSuperadminAccess(user: { email: string; platformRole?: string }) {
-  return isSuperadmin(user.email) || user.platformRole === "SUPERADMIN";
-}
-
-/** 역량·문항·루브릭 CMS 접근 — ADMIN(또는 레거시 CONTENT_ADMIN) 이상 */
+/** @deprecated 운영 CMS 또는 데모 관리자 (세분화된 isProductionContentAdmin / isDemoManager 사용 권장) */
 export function isPlatformAdmin(user: { email: string; platformRole?: string }) {
-  return (
-    hasSuperadminAccess(user) ||
-    user.platformRole === "ADMIN" ||
-    user.platformRole === "CONTENT_ADMIN"
-  );
+  return isProductionContentAdmin(user) || isDemoManager(user);
 }
 
 /** @deprecated isPlatformAdmin */
@@ -86,11 +81,23 @@ export async function requireSuperadmin(nextPath?: string) {
   return user;
 }
 
-/** 문항 뱅크 CMS — 플랫폼 ADMIN 이상 */
-export async function requirePlatformAdmin(nextPath?: string) {
+/** 운영 문항 뱅크 CMS */
+export async function requireProductionContentAdmin(nextPath?: string) {
   const user = await requirePageUser(nextPath);
-  if (!isPlatformAdmin(user)) notFound();
+  if (!isProductionContentAdmin(user)) notFound();
   return user;
+}
+
+/** 데모 워크스페이스 관리 */
+export async function requireDemoManager(nextPath?: string) {
+  const user = await requirePageUser(nextPath);
+  if (!isDemoManager(user)) notFound();
+  return user;
+}
+
+/** @deprecated requireProductionContentAdmin */
+export async function requirePlatformAdmin(nextPath?: string) {
+  return requireProductionContentAdmin(nextPath);
 }
 
 /** @deprecated requirePlatformAdmin */

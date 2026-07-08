@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { INDUSTRY_CODES, JOB_ROLES } from "@/types";
 import type { IndustryCode, JobRoleCode } from "@/types";
+import {
+  appendUserTextRecord,
+  formatProfilePreferenceText,
+} from "@/lib/user-text-archive";
 
 /** 질문 카드에서 쓸 "본인이 결정한" 산업군·직무를 저장 — UserProfile은 지금까지
  *  어디서도 실제로 쓰이지 않던 필드였는데(항상 기본값 OTHER만 표시), 이번에 처음 연결됨 */
@@ -31,6 +35,14 @@ export async function PATCH(req: Request) {
     where: { userId: user.id },
     create: { userId: user.id, desiredIndustry: industry, desiredJobRole: jobRole },
     update: { desiredIndustry: industry, desiredJobRole: jobRole },
+  });
+
+  void appendUserTextRecord({
+    userId: user.id,
+    kind: "PROFILE_PREFERENCE",
+    content: formatProfilePreferenceText({ industry, jobRole }),
+    sourceType: "user_profile",
+    sourceId: user.id,
   });
 
   return NextResponse.json({

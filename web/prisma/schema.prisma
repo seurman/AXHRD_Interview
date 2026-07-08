@@ -130,6 +130,9 @@ model Organization {
   status     OrgStatus @default(PENDING)
   approvedAt DateTime?
   rejectedAt DateTime?
+  /** 슈퍼어드민이 부여 시 기관 ADMIN이 인터뷰 킷·루브릭 개인화 가능 */
+  saasPersonalizationEnabled Boolean @default(false)
+  saasPersonalizationEnabledAt DateTime?
   createdAt  DateTime  @default(now())
 
   members       User[]
@@ -169,8 +172,34 @@ model User {
   auditRollbacks  AdminAuditLog[] @relation("AdminAuditRollback")
   subscriptions   Subscription[]
   orgInterviewKitUpdates OrgInterviewKit[] @relation("OrgInterviewKitUpdatedBy")
+  textRecords     UserTextRecord[]
 
   @@index([organizationId])
+}
+
+/** 회원 답변·선택 정보 — 분석·축적용 평문 아카이브 (append-only) */
+enum UserTextRecordKind {
+  INTERVIEW_SETUP
+  INTERVIEW_ANSWER
+  INTERVIEW_FOLLOW_UP
+  SELF_DISCOVERY_ANSWER
+  SWIPE_SELECTION
+  SWIPE_PRACTICE
+  PROFILE_PREFERENCE
+}
+
+model UserTextRecord {
+  id         String             @id @default(cuid())
+  userId     String
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind       UserTextRecordKind
+  content    String             @db.Text
+  sourceType String?
+  sourceId   String?
+  createdAt  DateTime           @default(now())
+
+  @@index([userId, kind, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 model AdminAuditLog {
@@ -378,6 +407,8 @@ model InterviewSession {
   mode            SessionMode   @default(COMPETENCY)
   status          SessionStatus @default(SETUP)
   sessionNumber   Int
+  /** 면접 시작 시 사용자 선택(산업·직무·역량 등) 평문 스냅샷 */
+  setupSelectionText String?   @db.Text
   startedAt       DateTime?
   completedAt     DateTime?
   overallTheta    Float?
@@ -642,4 +673,51 @@ model OrgInterviewKit {
 
   @@unique([organizationId, competency])
   @@index([organizationId])
+}
+
+/** 고객사 데모용 샌드박스 — 운영 문항 뱅크와 분리 */
+model DemoWorkspace {
+  id              String           @id @default(cuid())
+  name            String
+  slug            String           @unique
+  description     String?
+  createdByUserId String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  competencies    DemoCompetency[]
+  questions       DemoQuestion[]
+}
+
+model DemoCompetency {
+  id            String         @id @default(cuid())
+  workspaceId   String
+  workspace     DemoWorkspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  code          String
+  nameKo        String
+  description   String?
+  sortOrder     Int            @default(0)
+  isActive      Boolean        @default(true)
+  rubricByLevel Json           @default("{}")
+  questions     DemoQuestion[]
+
+  @@unique([workspaceId, code])
+  @@index([workspaceId])
+}
+
+model DemoQuestion {
+  id             String         @id @default(cuid())
+  workspaceId    String
+  workspace      DemoWorkspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  competencyId   String
+  competency     DemoCompetency @relation(fields: [competencyId], references: [id], onDelete: Cascade)
+  externalId     String
+  level          Int
+  template       String
+  sortOrder      Int            @default(0)
+  isActive       Boolean        @default(true)
+  rubricCriteria Json           @default("[]")
+
+  @@unique([workspaceId, externalId])
+  @@index([workspaceId])
+  @@index([competencyId])
 }

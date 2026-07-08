@@ -1,3 +1,5 @@
+import type { RubricByLevel } from "@/lib/competency/rubric";
+
 export type ApiQuestion = {
   id: string;
   externalId: string;
@@ -11,31 +13,41 @@ export type ApiCompetency = {
   code: string;
   nameKo: string;
   description: string | null;
-  platformRubricOptions: string[];
+  rubricByLevel: RubricByLevel;
 };
 
 export type ApiKit = {
   competency: string;
   selectedQuestionIds: string[];
-  customRubricCriteria: string[];
+  customRubricByLevel: RubricByLevel;
   updatedAt: string;
 };
 
 export type ApiPayload = {
+  organizationId: string;
+  organizationName: string;
+  mode: "org_admin" | "superadmin";
   limits: { min: number; recommended: number };
   competencies: ApiCompetency[];
   questions: ApiQuestion[];
   kits: ApiKit[];
 };
 
+export type LevelRubricDraft = {
+  checkedPlatform: Set<string>;
+  customLines: string[];
+};
+
 export type CompetencyDraft = {
   selectedIds: string[];
-  checkedPlatformRubric: Set<string>;
-  customRubricLines: string[];
+  rubricLevel: number;
+  rubricByLevel: Record<string, LevelRubricDraft>;
   dirty: boolean;
   saving: boolean;
   message: string | null;
 };
+
+export const KIT_RUBRIC_LEVELS = [1, 2, 3, 4, 5] as const;
 
 export function kitQuestionSortId(code: string, questionId: string) {
   return `kit-q:${code}:${questionId}`;

@@ -2,8 +2,11 @@
  * 세션 인증 — JWT httpOnly 쿠키
  */
 
+import type { PlatformRole } from "@prisma/client";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { isSuperadmin } from "@/lib/auth/superadmin";
+import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
 import {
   SESSION_COOKIE,
   createSessionToken,
@@ -38,10 +41,19 @@ export async function getCurrentUser() {
   if (!userId) return null;
 
   try {
-    return await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { profile: true },
     });
+    if (!user) return null;
+
+    if (isSuperadmin(user.email)) {
+      await syncSuperadminPlatformRole(user.id, user.email);
+      if (user.platformRole !== "SUPERADMIN") {
+        return { ...user, platformRole: "SUPERADMIN" as PlatformRole };
+      }
+    }
+    return user;
   } catch (e) {
     if (process.env.NODE_ENV === "development") {
       console.warn("[auth/session] getCurrentUser:", e);

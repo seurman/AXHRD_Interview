@@ -1,12 +1,19 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
-import { hasSuperadminAccess, isPlatformAdmin, isSuperadmin } from "@/lib/auth/guards";
+import { isSuperadmin } from "@/lib/auth/guards";
 import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
+import { buildNavigationForUser } from "@/lib/platform/nav-registry";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { getDictionary } from "@/lib/i18n";
 import { MobileNav } from "./MobileNav";
 import { MainNav } from "./MainNav";
 import { BillingPastDueBanner } from "@/components/billing/BillingPastDueBanner";
 
 export async function AppHeader() {
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
+  const brand = dict.common.brand;
+
   const sessionUser = await getCurrentUser();
   if (sessionUser && isSuperadmin(sessionUser.email)) {
     await syncSuperadminPlatformRole(sessionUser.id, sessionUser.email);
@@ -15,53 +22,19 @@ export async function AppHeader() {
     sessionUser && isSuperadmin(sessionUser.email)
       ? { ...sessionUser, platformRole: "SUPERADMIN" as const }
       : sessionUser;
-  const isOrgStaff =
-    !!user &&
-    !!user.organizationId &&
-    (user.orgRole === "STAFF" || user.orgRole === "ADMIN");
-  const isOrgAdmin = !!user && user.orgRole === "ADMIN" && !!user.organizationId;
-  const isSuperAdmin = !!user && hasSuperadminAccess(user);
-  const isPlatformAdminUser = !!user && isPlatformAdmin(user);
-  const canSaasSettings = isOrgAdmin || isPlatformAdminUser;
 
-  const mainHrefs = user
-    ? [
-        "/dashboard",
-        "/discover",
-        "/interview/setup",
-        "/practice/swipe",
-        "/profile",
-      ]
-    : [];
+  const nav = user
+    ? await buildNavigationForUser({
+        email: user.email,
+        platformRole: user.platformRole,
+        orgRole: user.orgRole,
+        organizationId: user.organizationId,
+      })
+    : null;
 
-  const saasLinks =
-    user && (isOrgStaff || isPlatformAdminUser)
-      ? {
-          titleKey: "saas" as const,
-          links: isOrgStaff
-            ? [{ href: "/org/dashboard", labelKey: "cohortDashboard" as const }]
-            : [],
-          settingsTitleKey: "settings" as const,
-          settingsLinks: canSaasSettings
-            ? [{ href: "/org/saas/settings", labelKey: "settingsHub" as const }]
-            : [],
-        }
-      : null;
-
-  const adminLinks = user
-    ? [
-        ...(isPlatformAdminUser ? [{ href: "/admin/content", labelKey: "content" as const }] : []),
-        ...(isSuperAdmin
-          ? [
-              { href: "/admin/users", labelKey: "users" as const },
-              { href: "/admin/audit", labelKey: "audit" as const },
-              { href: "/admin/organizations", labelKey: "orgApprove" as const },
-              { href: "/admin/organizations/benchmark", labelKey: "orgBenchmark" as const },
-              { href: "/admin/subscriptions", labelKey: "subscriptions" as const },
-            ]
-          : []),
-      ]
-    : [];
+  const mainHrefs = nav?.mainHrefs ?? [];
+  const saasLinks = nav?.saasLinks ?? null;
+  const adminLinks = nav?.adminLinks ?? [];
 
   return (
     <>
@@ -69,11 +42,11 @@ export async function AppHeader() {
       <header className="header-premium sticky top-0 z-40">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:py-3.5">
         <Link href="/" className="group flex min-w-0 shrink items-center gap-2.5">
-          <span className="brand-mark flex h-8 w-8 items-center justify-center rounded-full border border-gold/40 bg-gold/10 text-xs font-bold text-gold">
-            H
+          <span className="brand-mark flex h-8 w-8 items-center justify-center rounded-full border border-gold/40 bg-gold/10 text-[10px] font-bold text-gold">
+            AX
           </span>
-          <span className="brand-text keep-one-line text-sm font-semibold tracking-[0.18em] text-gold sm:text-base">
-            HR_IN
+          <span className="brand-text keep-one-line text-sm font-semibold tracking-[0.14em] text-gold sm:text-base">
+            {brand}
           </span>
         </Link>
 

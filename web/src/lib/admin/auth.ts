@@ -9,13 +9,17 @@ export function hasSuperadminAccess(user: { email: string; platformRole: Platfor
   return isSuperadmin(user.email) || user.platformRole === "SUPERADMIN";
 }
 
-/** 플랫폼 ADMIN(레거시 CONTENT_ADMIN 포함) 또는 SUPERADMIN */
+export function isProductionContentAdmin(user: { email: string; platformRole: PlatformRole }) {
+  return hasSuperadminAccess(user) || user.platformRole === "CONTENT_ADMIN";
+}
+
+export function isDemoManager(user: { email: string; platformRole: PlatformRole }) {
+  return hasSuperadminAccess(user) || user.platformRole === "ADMIN";
+}
+
+/** @deprecated isProductionContentAdmin / isDemoManager */
 export function isPlatformAdmin(user: { email: string; platformRole: PlatformRole }) {
-  return (
-    hasSuperadminAccess(user) ||
-    user.platformRole === "ADMIN" ||
-    user.platformRole === "CONTENT_ADMIN"
-  );
+  return isProductionContentAdmin(user) || isDemoManager(user);
 }
 
 /** @deprecated isPlatformAdmin 사용 */
@@ -33,15 +37,31 @@ export function canGrantPlatformRoles(user: { email: string; platformRole: Platf
   return hasSuperadminAccess(user);
 }
 
-export async function requirePlatformAdminApi(): Promise<AdminUser | NextResponse> {
+export async function requireProductionContentApi(): Promise<AdminUser | NextResponse> {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
-  if (!isPlatformAdmin(user)) {
+  if (!isProductionContentAdmin(user)) {
     return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
   }
   return user;
+}
+
+export async function requireDemoManagerApi(): Promise<AdminUser | NextResponse> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+  }
+  if (!isDemoManager(user)) {
+    return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+  }
+  return user;
+}
+
+/** @deprecated requireProductionContentApi */
+export async function requirePlatformAdminApi(): Promise<AdminUser | NextResponse> {
+  return requireProductionContentApi();
 }
 
 /** @deprecated requirePlatformAdminApi */

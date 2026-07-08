@@ -369,6 +369,14 @@ body {
   font-weight: 700;
 }
 
+.hero-blue .hero-brand-wordmark {
+  background: linear-gradient(135deg, var(--color-primary) 0%, #1e3a8a 40%, var(--color-accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.04em;
+}
+
 .hero-blue .hero-highlight {
   background: linear-gradient(120deg, var(--color-primary) 0%, var(--color-primary-light) 55%, var(--color-accent) 100%);
   -webkit-background-clip: text;

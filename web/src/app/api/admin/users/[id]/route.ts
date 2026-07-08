@@ -53,10 +53,7 @@ export async function PATCH(
     );
   }
 
-  // 레거시 CONTENT_ADMIN → ADMIN 저장
-  if (rawPlatformRole === "CONTENT_ADMIN") {
-    rawPlatformRole = "ADMIN";
-  }
+  // CONTENT_ADMIN은 별도 역할로 유지 (콘텐츠 관리자)
 
   // 자기 자신의 SUPERADMIN을 내릴 수 없음
   if (

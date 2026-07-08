@@ -2,11 +2,11 @@ import type { Dictionary } from "../types";
 
 export const dictionary: Dictionary = {
   meta: {
-    title: "HR_IN — 적응형 AI 모의 면접",
-    description: "IRT 기반 적응형 AI 모의 면접과 역량 트래킹 플랫폼",
+    title: "AXHRD — AX 기반 데이터 중심 HR 토탈 솔루션",
+    description: "AXHRD는 채용·면접·역량·코호트를 하나의 데이터 레이어로 연결하는 AX-Native HR 플랫폼입니다.",
   },
   common: {
-    brand: "HR_IN",
+    brand: "AXHRD",
     nav: {
       dashboard: "역량",
       discover: "발견",
@@ -29,18 +29,21 @@ export const dictionary: Dictionary = {
     admin: {
       title: "관리",
       content: "문항 관리",
+      demo: "고객 데모",
       users: "사용자 권한",
       audit: "감사 로그",
-      orgApprove: "기관 승인",
+      orgApprove: "기관 관리",
+      saasAdmin: "기관 관리",
       orgBenchmark: "기관 비교",
       subscriptions: "구독 관리",
+      permissions: "권한 설정",
     },
     saas: {
-      title: "SaaS",
+      title: "기관",
       settings: "설정",
-      cohortDashboard: "코호트 대시보드",
-      settingsHub: "기관 설정",
-      interviewKit: "인터뷰 킷 빌더",
+      cohortDashboard: "코호트",
+      settingsHub: "면접 설정",
+      interviewKit: "인터뷰 킷",
     },
     language: {
       label: "언어",
@@ -53,25 +56,26 @@ export const dictionary: Dictionary = {
   },
   home: {
     hero: {
-      eyebrow: "역량 기반 면접 플랫폼",
-      titleLine1: "데이터가 난이도를 맞추고,",
-      titleHighlight: "당신의 성장이 증명됩니다",
+      eyebrow: "AX-Native · Data-Driven HR Total Solution",
+      brand: "AXHRD",
+      titleLine1: "데이터가 설계하는",
+      titleHighlight: "HR 전 과정을 하나로",
       subtitle:
-        "모의면접, 자기발견, 역량 트래킹, 코호트 관리까지. 취업 준비 전 과정을 HR_IN 하나로 이어갑니다.",
+        "채용·면접·역량·코호트를 AX 기반 데이터 레이어로 통합합니다. AXHRD는 개인의 성장과 조직의 인사이트를 동시에 증명하는 토탈 HR 솔루션입니다.",
       ctaStart: "무료로 시작",
       ctaStartLoggedIn: "면접 시작",
       ctaDemo: "5분 데모 체험",
     },
     stats: {
-      competencies: "NCS 핵심 역량",
-      adaptive: "적응형 난이도",
-      anytime: "언제든 연습",
+      competencies: "AX HR 모듈",
+      adaptive: "데이터 레이어",
+      anytime: "Total Solution",
     },
     modules: {
-      eyebrow: "핵심 모듈",
-      title: "HR_IN만의 취업 준비 스택",
+      eyebrow: "Total HR Stack",
+      title: "AXHRD가 연결하는 HR 모듈",
       subtitle:
-        "NCS·IRT에 맞춘 4가지 모듈로 면접 준비의 시작부터 성장 기록까지 연결합니다.",
+        "면접·발견·역량·코호트 — 모듈형 아키텍처로 필요한 화면만 골라 쓰는 AX 기반 HR 플랫폼.",
     },
     features: {
       interview: {
@@ -97,8 +101,8 @@ export const dictionary: Dictionary = {
     },
     values: {
       eyebrow: "핵심 가치",
-      title: "왜 HR_IN인가",
-      subtitle: "채용 AI 규제 시대에 신뢰할 수 있는 면접 준비 플랫폼",
+      title: "왜 AXHRD인가",
+      subtitle: "AX 시대에 신뢰할 수 있는 데이터 중심 HR 인프라",
       trustBadges: ["감정 AI 미사용", "NCS 공식 역량 기준", "개인 답변 원문 비공개"],
       transparent: {
         title: "투명한 채점",
@@ -167,7 +171,7 @@ export const dictionary: Dictionary = {
   },
   dashboard: {
     differentiation: {
-      title: "HR_IN만의 방식",
+      title: "AXHRD만의 방식",
       items: [
         "IRT로 면접관이 아닌 데이터가 난이도를 조절합니다",
         "자기발견 강점을 역량 면접으로 자연스럽게 연결합니다",

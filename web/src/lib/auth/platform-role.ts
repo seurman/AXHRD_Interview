@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { isSuperadmin } from "@/lib/auth/guards";
+import type { PlatformRole } from "@prisma/client";
+import { isSuperadmin } from "@/lib/auth/superadmin";
 
 /** SUPERADMIN_EMAILS에 등록된 이메일이면 DB platformRole을 SUPERADMIN으로 맞춘다.
  *  Vercel 환경변수만 있고 DB가 NONE인 경우(또는 카카오 등 다른 이메일 계정) 메뉴가 안 보이는 문제를

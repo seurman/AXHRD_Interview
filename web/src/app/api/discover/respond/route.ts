@@ -5,6 +5,10 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { DISCOVER_QUESTIONS } from "@/lib/discover/questions";
 import { generateDiscoverProfile } from "@/lib/discover/profile-generator";
+import {
+  appendUserTextRecord,
+  formatSelfDiscoveryAnswerText,
+} from "@/lib/user-text-archive";
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -64,6 +68,18 @@ export async function POST(req: Request) {
       answerText: answerText.trim(),
       order: questionIndex,
     },
+  });
+
+  void appendUserTextRecord({
+    userId: user.id,
+    kind: "SELF_DISCOVERY_ANSWER",
+    content: formatSelfDiscoveryAnswerText({
+      questionCode: expected.code,
+      question: expected.text,
+      answer: answerText.trim(),
+    }),
+    sourceType: "self_discovery_session",
+    sourceId: sessionId,
   });
 
   const nextIndex = questionIndex + 1;

@@ -5,18 +5,10 @@ import { UserRoleEditor } from "@/components/admin/UserRoleEditor";
 
 export const dynamic = "force-dynamic";
 
-const ROLE_LABEL: Record<string, string> = {
-  STUDENT: "학생",
-  STAFF: "담당자",
-  ADMIN: "기관 관리자",
-};
+import { ORG_ROLE_LABEL, PLATFORM_ROLE_LABEL } from "@/lib/auth/roles";
 
-const PLATFORM_LABEL: Record<string, string> = {
-  NONE: "—",
-  ADMIN: "ADMIN",
-  CONTENT_ADMIN: "ADMIN",
-  SUPERADMIN: "SUPERADMIN",
-};
+const ROLE_LABEL = ORG_ROLE_LABEL;
+const PLATFORM_LABEL = PLATFORM_ROLE_LABEL;
 
 export default async function AdminUsersPage({
   searchParams,
@@ -52,10 +44,10 @@ export default async function AdminUsersPage({
     <div className="mx-auto max-w-4xl space-y-8">
       <div>
         <p className="text-xs font-medium uppercase tracking-widest text-gold">Superadmin</p>
-        <h1 className="mt-1 text-2xl font-bold text-foreground">플랫폼 ADMIN 권한 · 사용자 관리</h1>
-        <p className="mt-1 text-sm text-muted">
-          SUPERADMIN만 플랫폼 ADMIN 권한을 부여·회수할 수 있습니다. ADMIN은 문항 뱅크 CMS를
-          사용할 수 있으나 하드 삭제·기관 승인은 불가하며, 변경 내역은 감사 로그에 기록됩니다.
+        <h1 className="mt-1 text-2xl font-bold text-foreground">사용자 권한 관리</h1>
+        <p className="mt-1 max-w-2xl text-sm text-muted">
+          수퍼어드민만 플랫폼·기관 역할을 부여할 수 있습니다. 회사 어드민은 고객 데모·무제한
+          테스트, 콘텐츠 관리자는 운영 문항 뱅크, 기관 어드민·회사원·학생은 테넌트 역할입니다.
         </p>
         <div className="mt-2 flex flex-wrap gap-3 text-sm">
           <Link href="/admin/audit" className="text-accent hover:underline">
@@ -63,6 +55,9 @@ export default async function AdminUsersPage({
           </Link>
           <Link href="/admin/content" className="text-accent hover:underline">
             문항 뱅크 관리 →
+          </Link>
+          <Link href="/admin/demo" className="text-accent hover:underline">
+            고객 데모 관리 →
           </Link>
           <Link href="/admin/organizations" className="text-accent hover:underline">
             기관 승인 관리 →
