@@ -6,6 +6,8 @@ import {
   loadDemoWorkspaceSnapshot,
 } from "@/lib/demo/workspace";
 
+export const maxDuration = 60;
+
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: Request, { params }: Ctx) {
@@ -72,9 +74,18 @@ export async function POST(req: Request, { params }: Ctx) {
     if (!exists) {
       return NextResponse.json({ error: "데모를 찾을 수 없습니다." }, { status: 404 });
     }
-    await cloneProductionToDemoWorkspace(id);
-    const snap = await loadDemoWorkspaceSnapshot(id);
-    return NextResponse.json(snap);
+    try {
+      await cloneProductionToDemoWorkspace(id);
+      const snap = await loadDemoWorkspaceSnapshot(id);
+      return NextResponse.json(snap);
+    } catch (e) {
+      console.error("[demo/workspaces cloneFromProduction]", e);
+      const msg = e instanceof Error ? e.message : String(e);
+      return NextResponse.json(
+        { error: `운영 문항 복사 실패: ${msg.slice(0, 200)}` },
+        { status: 500 },
+      );
+    }
   }
   return NextResponse.json({ error: "지원하지 않는 action입니다." }, { status: 400 });
 }

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { parseRubricByLevel } from "@/lib/competency/rubric";
 import { parseRubricCriteria } from "@/lib/competency/bank";
+import { Prisma } from "@prisma/client";
 
 export type DemoCompetencyDto = {
   id: string;
@@ -96,45 +97,55 @@ export async function loadDemoWorkspaceBySlug(slug: string) {
   return loadDemoWorkspaceSnapshot(ws.id);
 }
 
+/** 운영 문항 뱅크 → 데모 워크스페이스로 일괄 복사 (createMany로 타임아웃 완화) */
 export async function cloneProductionToDemoWorkspace(workspaceId: string) {
   const { loadContentBankSnapshot } = await import("@/lib/competency/content-bank-data");
   const snap = await loadContentBankSnapshot();
 
   await prisma.$transaction(async (tx) => {
-    await tx.demoCompetency.deleteMany({ where: { workspaceId } });
     await tx.demoQuestion.deleteMany({ where: { workspaceId } });
+    await tx.demoCompetency.deleteMany({ where: { workspaceId } });
 
-    const compIdMap = new Map<string, string>();
-    for (const c of snap.competencies) {
-      const created = await tx.demoCompetency.create({
-        data: {
-          workspaceId,
-          code: c.code,
-          nameKo: c.nameKo,
-          description: c.description,
-          sortOrder: c.sortOrder,
-          isActive: c.isActive,
-          rubricByLevel: (c.rubricByLevel ?? {}) as object,
-        },
-      });
-      compIdMap.set(c.id, created.id);
-    }
+    if (snap.competencies.length === 0) return;
 
-    for (const q of snap.questions) {
-      const compId = compIdMap.get(q.competencyId);
-      if (!compId) continue;
-      await tx.demoQuestion.create({
-        data: {
+    await tx.demoCompetency.createMany({
+      data: snap.competencies.map((c) => ({
+        workspaceId,
+        code: c.code,
+        nameKo: c.nameKo,
+        description: c.description,
+        sortOrder: c.sortOrder,
+        isActive: c.isActive,
+        rubricByLevel: (c.rubricByLevel ?? {}) as Prisma.InputJsonValue,
+      })),
+    });
+
+    const createdComps = await tx.demoCompetency.findMany({
+      where: { workspaceId },
+      select: { id: true, code: true },
+    });
+    const codeToId = new Map(createdComps.map((c) => [c.code, c.id]));
+
+    const questionRows = snap.questions
+      .map((q) => {
+        const competencyId = codeToId.get(q.competencyCode);
+        if (!competencyId) return null;
+        return {
           workspaceId,
-          competencyId: compId,
+          competencyId,
           externalId: q.externalId,
           level: q.level,
           template: q.template,
           sortOrder: q.sortOrder,
           isActive: q.isActive,
-          rubricCriteria: q.rubricCriteria,
-        },
-      });
+          rubricCriteria: q.rubricCriteria as Prisma.InputJsonValue,
+        };
+      })
+      .filter((row): row is NonNullable<typeof row> => row !== null);
+
+    const CHUNK = 100;
+    for (let i = 0; i < questionRows.length; i += CHUNK) {
+      await tx.demoQuestion.createMany({ data: questionRows.slice(i, i + CHUNK) });
     }
   });
 }

@@ -18,26 +18,40 @@ export function DemoWorkspaceList({ initialWorkspaces }: { initialWorkspaces: Wo
   const router = useRouter();
   const [workspaces, setWorkspaces] = useState(initialWorkspaces);
   const [creating, setCreating] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [name, setName] = useState("");
+  const [cloneFromProduction, setCloneFromProduction] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const create = async () => {
-    const name = prompt("데모 이름 (예: AX대학 상담용)")?.trim();
-    if (!name) return;
+  const create = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setError("데모 이름을 입력해 주세요.");
+      return;
+    }
     setCreating(true);
+    setError(null);
     try {
       const res = await fetch("/api/admin/demo/workspaces", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, cloneFromProduction: true }),
+        body: JSON.stringify({ name: trimmed, cloneFromProduction }),
       });
+      const d = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        throw new Error(d.error ?? "생성 실패");
+        throw new Error(
+          typeof d.error === "string" ? d.error : `생성 실패 (${res.status})`,
+        );
       }
-      const { workspace } = await res.json();
+      if (typeof d.warning === "string" && d.warning) {
+        alert(d.warning);
+      }
+      const workspace = d.workspace as { id: string };
       router.push(`/admin/demo/${workspace.id}`);
       router.refresh();
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "생성 실패");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "생성 실패");
     } finally {
       setCreating(false);
     }
@@ -55,15 +69,74 @@ export function DemoWorkspaceList({ initialWorkspaces }: { initialWorkspaces: Wo
 
   return (
     <div className="space-y-4">
-      <button
-        type="button"
-        onClick={create}
-        disabled={creating}
-        className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-sm"
-      >
-        <Plus className="h-4 w-4" />
-        {creating ? "생성 중…" : "새 데모 만들기"}
-      </button>
+      {!showForm ? (
+        <button
+          type="button"
+          onClick={() => {
+            setShowForm(true);
+            setError(null);
+          }}
+          className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-sm"
+        >
+          <Plus className="h-4 w-4" />
+          새 데모 만들기
+        </button>
+      ) : (
+        <form
+          onSubmit={create}
+          className="space-y-3 rounded-xl border border-card-border bg-card p-4"
+        >
+          <label className="block text-sm font-medium text-foreground">
+            데모 이름
+            <input
+              type="text"
+              value={name}
+              onChange={(ev) => setName(ev.target.value)}
+              placeholder="예: AX대학 상담용"
+              autoFocus
+              disabled={creating}
+              className="mt-1 w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="flex items-start gap-2 text-sm text-muted">
+            <input
+              type="checkbox"
+              checked={cloneFromProduction}
+              onChange={(ev) => setCloneFromProduction(ev.target.checked)}
+              disabled={creating}
+              className="mt-0.5"
+            />
+            <span>운영 문항 뱅크(NCS 6역량)를 복사해 시작</span>
+          </label>
+          {error ? (
+            <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400">
+              {error}
+            </p>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="submit"
+              disabled={creating}
+              className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-sm"
+            >
+              <Plus className="h-4 w-4" />
+              {creating ? "생성 중… (문항 복사 포함, 최대 1분)" : "만들기"}
+            </button>
+            <button
+              type="button"
+              disabled={creating}
+              onClick={() => {
+                setShowForm(false);
+                setName("");
+                setError(null);
+              }}
+              className="btn-secondary px-4 py-2 text-sm"
+            >
+              취소
+            </button>
+          </div>
+        </form>
+      )}
 
       {workspaces.length === 0 ? (
         <p className="text-sm text-muted">고객사 미팅용 데모를 만들어 보세요.</p>
