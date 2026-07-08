@@ -40,7 +40,7 @@ export async function AppHeader() {
     <>
       <BillingPastDueBanner />
       <header className="header-premium sticky top-0 z-40">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:py-3.5">
+      <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-3 px-5 py-3 sm:px-8 sm:py-3.5">
         <Link href="/" className="group flex min-w-0 shrink items-center gap-2.5">
           <span className="brand-mark flex h-8 w-8 items-center justify-center rounded-full border border-gold/40 bg-gold/10 text-[10px] font-bold text-gold">
             AX
