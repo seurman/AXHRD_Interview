@@ -116,9 +116,13 @@ async function main() {
       });
       competencyCount += 1;
 
-      for (const [levelKey, descriptionKo] of Object.entries(comp.levels)) {
+      for (const [levelKey, descriptionRaw] of Object.entries(comp.levels)) {
         const level = Number(levelKey);
         if (!Number.isFinite(level) || level < 1 || level > 5) continue;
+
+        const descriptionKo = Array.isArray(descriptionRaw)
+          ? descriptionRaw.filter((s) => typeof s === "string" && s.trim()).join("\n")
+          : String(descriptionRaw ?? "");
 
         await prisma.globalCompetencyRubricLevel.upsert({
           where: {
@@ -139,18 +143,16 @@ async function main() {
         levelCount += 1;
       }
 
+      // Replace questions for this competency so old 2-item seeds don't linger
+      await prisma.globalCompetencyQuestion.deleteMany({
+        where: { competencyId: upsertedComp.id },
+      });
+
       for (const q of comp.questions) {
-        await prisma.globalCompetencyQuestion.upsert({
-          where: { externalId: q.externalId },
-          create: {
+        await prisma.globalCompetencyQuestion.create({
+          data: {
             competencyId: upsertedComp.id,
             externalId: q.externalId,
-            questionText: q.questionText,
-            sortOrder: q.sortOrder,
-            isActive: true,
-          },
-          update: {
-            competencyId: upsertedComp.id,
             questionText: q.questionText,
             sortOrder: q.sortOrder,
             isActive: true,

@@ -214,7 +214,7 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
         {snap.competencies.length === 0 ? (
           <p className="text-sm text-muted">아직 키트에 역량이 없습니다.</p>
         ) : (
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {snap.competencies.map((c) => {
               const active = selectedId === c.id;
               return (
@@ -222,15 +222,17 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
                   key={c.id}
                   type="button"
                   onClick={() => setSelectedId(c.id)}
-                  className={`rounded-2xl border px-4 py-3 text-left transition ${
+                  className={`rounded-xl border px-2.5 py-2 text-left transition ${
                     active
                       ? "border-gold/50 bg-gold/10 ring-1 ring-gold/30"
                       : "border-card-border bg-card hover:border-gold/30"
                   }`}
                 >
-                  <p className="font-medium text-foreground">{c.nameKo}</p>
-                  <p className="mt-0.5 text-[11px] text-muted">
-                    {c.code} · {c.questionCount}문항
+                  <p className="text-xs font-semibold leading-snug text-foreground sm:text-sm">
+                    {c.nameKo}
+                  </p>
+                  <p className="mt-0.5 truncate text-[10px] text-muted">
+                    {c.questionCount}문항
                   </p>
                 </button>
               );

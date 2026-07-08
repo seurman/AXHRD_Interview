@@ -104,7 +104,11 @@ export async function loadDemoCatalogMetadata(): Promise<{
     competencies: cl.competencies.map((c) => {
       const rubricByLevel: RubricByLevel = {};
       for (const lv of c.rubricLevels) {
-        rubricByLevel[String(lv.level)] = [lv.descriptionKo];
+        const lines = lv.descriptionKo
+          .split(/\n+/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+        rubricByLevel[String(lv.level)] = lines.length > 0 ? lines : [lv.descriptionKo];
       }
       return {
         source: "global" as const,
@@ -115,14 +119,20 @@ export async function loadDemoCatalogMetadata(): Promise<{
         clusterNameKo: cl.nameKo,
         questionCount: c.questions.length,
         rubricByLevel,
-        questions: c.questions.map((q, i) => ({
-          externalId: q.externalId,
-          // Global dictionary questions are not L1–L5 IRT-leveled; park at L3 for demo kits
-          level: 3,
-          template: q.questionText,
-          sortOrder: q.sortOrder || i,
-          rubricCriteria: [],
-        })),
+        questions: c.questions.map((q, i) => {
+          // Prefer level encoded in externalId (GLOB-CODE-L3-01); else round-robin L1–L5
+          const m = /(?:^|-)L([1-5])(?:-|$)/i.exec(q.externalId);
+          const level = m
+            ? Number(m[1])
+            : (((i % 5) + 1) as 1 | 2 | 3 | 4 | 5);
+          return {
+            externalId: q.externalId,
+            level,
+            template: q.questionText,
+            sortOrder: q.sortOrder || i,
+            rubricCriteria: rubricByLevel[String(level)] ?? [],
+          };
+        }),
       };
     }),
   }));

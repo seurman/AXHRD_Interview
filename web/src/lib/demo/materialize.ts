@@ -14,9 +14,9 @@ function difficultyForLevel(level: number): number {
 }
 
 /**
- * DemoWorkspace 역량·문항을 운영 Competency/Question에 upsert해 IRT 세션이
- * NCS 없이도 Global 코드 그대로 돌 수 있게 한다.
- * (운영 뱅크를 망가뜨리지 않도록 isActive 역량·문항만 보장, 기존 NCS는 유지)
+ * DemoWorkspace 역량·문항 → 운영 Competency/Question upsert.
+ * Supabase transaction pooler에서 interactive $transaction이 끊기는 경우가 있어
+ * 순차 upsert로 처리한다.
  */
 export async function materializeDemoKitToInterviewBank(workspaceId: string): Promise<{
   codes: string[];
@@ -33,89 +33,145 @@ export async function materializeDemoKitToInterviewBank(workspaceId: string): Pr
 
   const codes: string[] = [];
   let questionCount = 0;
+  let sortBase = 100;
 
-  await prisma.$transaction(async (tx) => {
-    let sortBase = 100;
-    for (const dc of workspace.competencies) {
-      const existing = await tx.competency.findUnique({ where: { code: dc.code } });
-      if (existing) {
-        await tx.competency.update({
-          where: { id: existing.id },
-          data: {
-            nameKo: dc.nameKo,
-            description: dc.description ?? existing.description,
-            isActive: true,
-            rubricByLevel: (dc.rubricByLevel ?? existing.rubricByLevel ?? {}) as Prisma.InputJsonValue,
-          },
-        });
-      } else {
-        await tx.competency.create({
-          data: {
-            code: dc.code,
-            nameKo: dc.nameKo,
-            description: dc.description,
-            sortOrder: sortBase++,
-            isActive: true,
-            rubricByLevel: (dc.rubricByLevel ?? {}) as Prisma.InputJsonValue,
-          },
-        });
-      }
-      codes.push(dc.code);
+  for (const dc of workspace.competencies) {
+    const existing = await prisma.competency.findUnique({ where: { code: dc.code } });
+    if (existing) {
+      await prisma.competency.update({
+        where: { id: existing.id },
+        data: {
+          nameKo: dc.nameKo,
+          description: dc.description ?? existing.description,
+          isActive: true,
+          rubricByLevel: (dc.rubricByLevel ?? existing.rubricByLevel ?? {}) as Prisma.InputJsonValue,
+        },
+      });
+    } else {
+      await prisma.competency.create({
+        data: {
+          code: dc.code,
+          nameKo: dc.nameKo,
+          description: dc.description,
+          sortOrder: sortBase++,
+          isActive: true,
+          rubricByLevel: (dc.rubricByLevel ?? {}) as Prisma.InputJsonValue,
+        },
+      });
     }
+    codes.push(dc.code);
+  }
 
-    const comps = await tx.competency.findMany({
-      where: { code: { in: codes } },
-      select: { id: true, code: true },
-    });
-    const idByCode = new Map(comps.map((c) => [c.code, c.id]));
-
-    for (const dq of workspace.questions) {
-      const demoComp = workspace.competencies.find((c) => c.id === dq.competencyId);
-      if (!demoComp) continue;
-      const competencyId = idByCode.get(demoComp.code);
-      if (!competencyId) continue;
-
-      // Prefer DEMO- external ids for isolation; fall back to raw if already unique
-      const preferredId = dq.externalId.startsWith("DEMO-")
-        ? dq.externalId
-        : `DEMO-${dq.externalId}`;
-
-      const level = Math.min(5, Math.max(1, dq.level || 3));
-      const existingQ =
-        (await tx.question.findUnique({ where: { externalId: preferredId } })) ??
-        (await tx.question.findUnique({ where: { externalId: dq.externalId } }));
-
-      if (existingQ) {
-        await tx.question.update({
-          where: { id: existingQ.id },
-          data: {
-            competencyId,
-            level,
-            template: dq.template,
-            isActive: true,
-            sortOrder: dq.sortOrder,
-            rubricCriteria: (dq.rubricCriteria ?? []) as Prisma.InputJsonValue,
-            difficulty: difficultyForLevel(level),
-          },
-        });
-      } else {
-        await tx.question.create({
-          data: {
-            externalId: preferredId,
-            competencyId,
-            level,
-            difficulty: difficultyForLevel(level),
-            discrimination: 1,
-            template: dq.template,
-            sortOrder: dq.sortOrder,
-            isActive: true,
-            rubricCriteria: (dq.rubricCriteria ?? []) as Prisma.InputJsonValue,
-          },
-        });
-      }
-      questionCount += 1;
-    }
+  // Global 사전에서 L1–L5 문항이 더 있으면(시드 확장 후) 데모 키트 2문항만 있어도 면접 풀을 채운다
+  const globalBank = await prisma.globalCompetency.findMany({
+    where: { code: { in: codes } },
+    include: {
+      questions: { where: { isActive: true }, orderBy: { sortOrder: "asc" } },
+      rubricLevels: { orderBy: { level: "asc" } },
+    },
   });
+  const globalByCode = new Map(globalBank.map((g) => [g.code, g]));
+
+  for (const code of codes) {
+    const g = globalByCode.get(code);
+    if (!g || g.questions.length === 0) continue;
+    const rubricByLevel: Record<string, string[]> = {};
+    for (const lv of g.rubricLevels) {
+      rubricByLevel[String(lv.level)] = lv.descriptionKo
+        .split(/\n+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+    await prisma.competency.update({
+      where: { code },
+      data: {
+        rubricByLevel: rubricByLevel as Prisma.InputJsonValue,
+      },
+    });
+  }
+
+  const comps = await prisma.competency.findMany({
+    where: { code: { in: codes } },
+    select: { id: true, code: true, rubricByLevel: true },
+  });
+  const idByCode = new Map(comps.map((c) => [c.code, c.id]));
+
+  type PoolQ = {
+    code: string;
+    externalId: string;
+    level: number;
+    template: string;
+    sortOrder: number;
+    rubricCriteria: string[];
+  };
+  const pool: PoolQ[] = [];
+
+  for (const dq of workspace.questions) {
+    const demoComp = workspace.competencies.find((c) => c.id === dq.competencyId);
+    if (!demoComp) continue;
+    const level = Math.min(5, Math.max(1, dq.level || 3));
+    pool.push({
+      code: demoComp.code,
+      externalId: dq.externalId.startsWith("DEMO-") ? dq.externalId : `DEMO-${dq.externalId}`,
+      level,
+      template: dq.template,
+      sortOrder: dq.sortOrder,
+      rubricCriteria: Array.isArray(dq.rubricCriteria)
+        ? (dq.rubricCriteria as unknown[]).filter((s): s is string => typeof s === "string")
+        : [],
+    });
+  }
+
+  for (const g of globalBank) {
+    const demoQsForCode = pool.filter((p) => p.code === g.code).length;
+    if (demoQsForCode >= 10) continue; // already rich kit
+    for (const q of g.questions) {
+      const m = /(?:^|-)L([1-5])(?:-|$)/i.exec(q.externalId);
+      const level = m ? Number(m[1]) : 3;
+      const ext = q.externalId.startsWith("DEMO-") ? q.externalId : `DEMO-${q.externalId}`;
+      if (pool.some((p) => p.externalId === ext || p.template === q.questionText)) continue;
+      const rubric =
+        g.rubricLevels
+          .find((lv) => lv.level === level)
+          ?.descriptionKo.split(/\n+/)
+          .map((s) => s.trim())
+          .filter(Boolean) ?? [];
+      pool.push({
+        code: g.code,
+        externalId: ext,
+        level,
+        template: q.questionText,
+        sortOrder: q.sortOrder,
+        rubricCriteria: rubric,
+      });
+    }
+  }
+
+  for (const dq of pool) {
+    const competencyId = idByCode.get(dq.code);
+    if (!competencyId) continue;
+
+    const existingQ = await prisma.question.findUnique({ where: { externalId: dq.externalId } });
+    const data = {
+      competencyId,
+      level: dq.level,
+      template: dq.template,
+      isActive: true as const,
+      sortOrder: dq.sortOrder,
+      rubricCriteria: dq.rubricCriteria as Prisma.InputJsonValue,
+      difficulty: difficultyForLevel(dq.level),
+      discrimination: 1,
+    };
+
+    if (existingQ) {
+      await prisma.question.update({ where: { id: existingQ.id }, data });
+    } else {
+      await prisma.question.create({
+        data: { externalId: dq.externalId, ...data },
+      });
+    }
+    questionCount += 1;
+  }
 
   return { codes, questionCount };
 }

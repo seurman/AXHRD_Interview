@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "source": "AXHRD original content inspired by Spencer & Spencer cluster structure",
   "clusters": [
     {
@@ -16,22 +16,122 @@
           "definition": "더 나은 방식으로 일을 해내려는 내적 기준을 갖고, 스스로 목표를 높여가는 정도",
           "sortOrder": 1,
           "levels": {
-            "1": "주어진 목표만 겨우 채운다",
-            "2": "정해진 기준은 충족한다",
-            "3": "스스로 개선점을 찾아 시도한다",
-            "4": "이전보다 나은 결과를 낼 구체적 목표를 세우고 달성한다",
-            "5": "위험을 감수하고서라도 조직에 의미 있는 성과를 만든다"
+            "1": [
+              "주어진 목표만 겨우 채운다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "정해진 기준은 충족한다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "스스로 개선점을 찾아 시도한다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "이전보다 나은 결과를 낼 구체적 목표를 세우고 달성한다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "위험을 감수하고서라도 조직에 의미 있는 성과를 만든다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-01",
-              "questionText": "목표를 초과 달성했던 경험을 구체적으로 말씀해주세요. 무엇을 다르게 시도했나요?",
+              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-L1-01",
+              "level": 1,
+              "questionText": "성취지향과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-02",
-              "questionText": "아무도 시키지 않았는데 스스로 기준을 높여 일했던 경험이 있나요?",
+              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-L1-02",
+              "level": 1,
+              "questionText": "성취지향을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-L1-03",
+              "level": 1,
+              "questionText": "성취지향 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-L2-01",
+              "level": 2,
+              "questionText": "성취지향이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-L2-02",
+              "level": 2,
+              "questionText": "성취지향 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-L2-03",
+              "level": 2,
+              "questionText": "성취지향을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-L3-01",
+              "level": 3,
+              "questionText": "목표를 초과 달성했던 경험을 구체적으로 말씀해주세요. 무엇을 다르게 시도했나요?",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-L3-02",
+              "level": 3,
+              "questionText": "아무도 시키지 않았는데 스스로 기준을 높여 일했던 경험이 있나요?",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-L3-03",
+              "level": 3,
+              "questionText": "성취지향을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-L4-01",
+              "level": 4,
+              "questionText": "성취지향 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-L4-02",
+              "level": 4,
+              "questionText": "성취지향을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-L4-03",
+              "level": 4,
+              "questionText": "성취지향이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-L5-01",
+              "level": 5,
+              "questionText": "성취지향을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 성취지향 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-ACHIEVEMENT_ORIENTATION-L5-03",
+              "level": 5,
+              "questionText": "성취지향 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         },
@@ -42,22 +142,122 @@
           "definition": "문제가 드러나기 전에 먼저 움직이는 정도",
           "sortOrder": 2,
           "levels": {
-            "1": "지시받은 일만 한다",
-            "2": "문제가 생기면 그때 대응한다",
-            "3": "눈앞의 문제를 먼저 나서서 해결한다",
-            "4": "몇 주~몇 달 앞의 문제를 예측해 미리 대비한다",
-            "5": "회사 방향 자체에 영향을 주는 장기적 기회를 스스로 만든다"
+            "1": [
+              "지시받은 일만 한다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "문제가 생기면 그때 대응한다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "눈앞의 문제를 먼저 나서서 해결한다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "몇 주~몇 달 앞의 문제를 예측해 미리 대비한다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "회사 방향 자체에 영향을 주는 장기적 기회를 스스로 만든다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-INITIATIVE-01",
-              "questionText": "문제가 커지기 전에 먼저 나서서 해결한 경험을 말씀해주세요.",
+              "externalId": "GLOB-INITIATIVE-L1-01",
+              "level": 1,
+              "questionText": "주도성과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-INITIATIVE-02",
-              "questionText": "아무도 요청하지 않았지만 스스로 시작한 일이 있나요?",
+              "externalId": "GLOB-INITIATIVE-L1-02",
+              "level": 1,
+              "questionText": "주도성을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-INITIATIVE-L1-03",
+              "level": 1,
+              "questionText": "주도성 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-INITIATIVE-L2-01",
+              "level": 2,
+              "questionText": "주도성이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-INITIATIVE-L2-02",
+              "level": 2,
+              "questionText": "주도성 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-INITIATIVE-L2-03",
+              "level": 2,
+              "questionText": "주도성을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-INITIATIVE-L3-01",
+              "level": 3,
+              "questionText": "문제가 커지기 전에 먼저 나서서 해결한 경험을 말씀해주세요.",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-INITIATIVE-L3-02",
+              "level": 3,
+              "questionText": "아무도 요청하지 않았지만 스스로 시작한 일이 있나요?",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-INITIATIVE-L3-03",
+              "level": 3,
+              "questionText": "주도성을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-INITIATIVE-L4-01",
+              "level": 4,
+              "questionText": "주도성 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-INITIATIVE-L4-02",
+              "level": 4,
+              "questionText": "주도성을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-INITIATIVE-L4-03",
+              "level": 4,
+              "questionText": "주도성이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-INITIATIVE-L5-01",
+              "level": 5,
+              "questionText": "주도성을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-INITIATIVE-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 주도성 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-INITIATIVE-L5-03",
+              "level": 5,
+              "questionText": "주도성 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         },
@@ -68,22 +268,122 @@
           "definition": "업무의 정확성·완결성을 스스로 점검하고 체계를 만드는 정도",
           "sortOrder": 3,
           "levels": {
-            "1": "실수를 지적받아야 안다",
-            "2": "마감 전 스스로 한 번 확인한다",
-            "3": "정확성을 위한 자기만의 점검 절차를 갖고 있다",
-            "4": "반복되는 실수를 막기 위한 체크리스트·프로세스를 만든다",
-            "5": "조직 전체의 품질 기준·시스템을 설계한다"
+            "1": [
+              "실수를 지적받아야 안다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "마감 전 스스로 한 번 확인한다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "정확성을 위한 자기만의 점검 절차를 갖고 있다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "반복되는 실수를 막기 위한 체크리스트·프로세스를 만든다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "조직 전체의 품질 기준·시스템을 설계한다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-CONCERN_FOR_ORDER-01",
-              "questionText": "본인이 만든 점검 절차나 체크리스트 덕분에 실수를 막았던 경험이 있나요?",
+              "externalId": "GLOB-CONCERN_FOR_ORDER-L1-01",
+              "level": 1,
+              "questionText": "질서와 품질에 대한 관심과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-CONCERN_FOR_ORDER-02",
-              "questionText": "정확성을 위해 남들보다 한 단계 더 확인했던 습관이나 사례를 말씀해주세요.",
+              "externalId": "GLOB-CONCERN_FOR_ORDER-L1-02",
+              "level": 1,
+              "questionText": "질서와 품질에 대한 관심을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-CONCERN_FOR_ORDER-L1-03",
+              "level": 1,
+              "questionText": "질서와 품질에 대한 관심 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-CONCERN_FOR_ORDER-L2-01",
+              "level": 2,
+              "questionText": "질서와 품질에 대한 관심이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-CONCERN_FOR_ORDER-L2-02",
+              "level": 2,
+              "questionText": "질서와 품질에 대한 관심 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-CONCERN_FOR_ORDER-L2-03",
+              "level": 2,
+              "questionText": "질서와 품질에 대한 관심을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-CONCERN_FOR_ORDER-L3-01",
+              "level": 3,
+              "questionText": "본인이 만든 점검 절차나 체크리스트 덕분에 실수를 막았던 경험이 있나요?",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-CONCERN_FOR_ORDER-L3-02",
+              "level": 3,
+              "questionText": "정확성을 위해 남들보다 한 단계 더 확인했던 습관이나 사례를 말씀해주세요.",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-CONCERN_FOR_ORDER-L3-03",
+              "level": 3,
+              "questionText": "질서와 품질에 대한 관심을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-CONCERN_FOR_ORDER-L4-01",
+              "level": 4,
+              "questionText": "질서와 품질에 대한 관심 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-CONCERN_FOR_ORDER-L4-02",
+              "level": 4,
+              "questionText": "질서와 품질에 대한 관심을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-CONCERN_FOR_ORDER-L4-03",
+              "level": 4,
+              "questionText": "질서와 품질에 대한 관심이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-CONCERN_FOR_ORDER-L5-01",
+              "level": 5,
+              "questionText": "질서와 품질에 대한 관심을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-CONCERN_FOR_ORDER-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 질서와 품질에 대한 관심 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-CONCERN_FOR_ORDER-L5-03",
+              "level": 5,
+              "questionText": "질서와 품질에 대한 관심 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         },
@@ -94,22 +394,122 @@
           "definition": "의사결정을 위해 다양한 경로로 정보를 파고드는 정도",
           "sortOrder": 4,
           "levels": {
-            "1": "주어진 정보만 사용한다",
-            "2": "궁금하면 한 사람에게 물어본다",
-            "3": "여러 경로(사람·자료·현장)로 직접 확인한다",
-            "4": "남들이 놓친 이면 정보까지 체계적으로 조사한다",
-            "5": "정보 수집 네트워크·프로세스 자체를 구축한다"
+            "1": [
+              "주어진 정보만 사용한다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "궁금하면 한 사람에게 물어본다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "여러 경로(사람·자료·현장)로 직접 확인한다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "남들이 놓친 이면 정보까지 체계적으로 조사한다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "정보 수집 네트워크·프로세스 자체를 구축한다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-INFORMATION_SEEKING-01",
-              "questionText": "결정을 내리기 전에 여러 경로로 직접 정보를 파고들었던 경험을 말씀해주세요.",
+              "externalId": "GLOB-INFORMATION_SEEKING-L1-01",
+              "level": 1,
+              "questionText": "정보 수집과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-INFORMATION_SEEKING-02",
-              "questionText": "다들 당연하게 여긴 걸 직접 확인해봤더니 다른 사실이 나왔던 경험이 있나요?",
+              "externalId": "GLOB-INFORMATION_SEEKING-L1-02",
+              "level": 1,
+              "questionText": "정보 수집을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-INFORMATION_SEEKING-L1-03",
+              "level": 1,
+              "questionText": "정보 수집 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-INFORMATION_SEEKING-L2-01",
+              "level": 2,
+              "questionText": "정보 수집이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-INFORMATION_SEEKING-L2-02",
+              "level": 2,
+              "questionText": "정보 수집 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-INFORMATION_SEEKING-L2-03",
+              "level": 2,
+              "questionText": "정보 수집을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-INFORMATION_SEEKING-L3-01",
+              "level": 3,
+              "questionText": "결정을 내리기 전에 여러 경로로 직접 정보를 파고들었던 경험을 말씀해주세요.",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-INFORMATION_SEEKING-L3-02",
+              "level": 3,
+              "questionText": "다들 당연하게 여긴 걸 직접 확인해봤더니 다른 사실이 나왔던 경험이 있나요?",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-INFORMATION_SEEKING-L3-03",
+              "level": 3,
+              "questionText": "정보 수집을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-INFORMATION_SEEKING-L4-01",
+              "level": 4,
+              "questionText": "정보 수집 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-INFORMATION_SEEKING-L4-02",
+              "level": 4,
+              "questionText": "정보 수집을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-INFORMATION_SEEKING-L4-03",
+              "level": 4,
+              "questionText": "정보 수집이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-INFORMATION_SEEKING-L5-01",
+              "level": 5,
+              "questionText": "정보 수집을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-INFORMATION_SEEKING-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 정보 수집 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-INFORMATION_SEEKING-L5-03",
+              "level": 5,
+              "questionText": "정보 수집 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         }
@@ -129,22 +529,122 @@
           "definition": "타인의 감정·의도·니즈를 정확히 읽어내는 정도",
           "sortOrder": 1,
           "levels": {
-            "1": "타인의 감정을 거의 신경 쓰지 않는다",
-            "2": "명백한 감정 표현만 알아챈다",
-            "3": "말로 표현 안 된 감정·의도까지 짐작한다",
-            "4": "상대의 입장에서 왜 그렇게 느끼는지 이해하고 반영한다",
-            "5": "복잡한 이해관계 속에서 각자의 숨은 동기를 파악해 조율한다"
+            "1": [
+              "타인의 감정을 거의 신경 쓰지 않는다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "명백한 감정 표현만 알아챈다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "말로 표현 안 된 감정·의도까지 짐작한다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "상대의 입장에서 왜 그렇게 느끼는지 이해하고 반영한다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "복잡한 이해관계 속에서 각자의 숨은 동기를 파악해 조율한다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-01",
-              "questionText": "동료나 고객이 말하지 않은 불만을 먼저 알아채고 대응했던 경험이 있나요?",
+              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-L1-01",
+              "level": 1,
+              "questionText": "대인이해과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-02",
-              "questionText": "입장이 다른 두 사람 사이에서 각자의 속마음을 파악해 조율한 경험을 말씀해주세요.",
+              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-L1-02",
+              "level": 1,
+              "questionText": "대인이해을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-L1-03",
+              "level": 1,
+              "questionText": "대인이해 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-L2-01",
+              "level": 2,
+              "questionText": "대인이해이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-L2-02",
+              "level": 2,
+              "questionText": "대인이해 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-L2-03",
+              "level": 2,
+              "questionText": "대인이해을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-L3-01",
+              "level": 3,
+              "questionText": "동료나 고객이 말하지 않은 불만을 먼저 알아채고 대응했던 경험이 있나요?",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-L3-02",
+              "level": 3,
+              "questionText": "입장이 다른 두 사람 사이에서 각자의 속마음을 파악해 조율한 경험을 말씀해주세요.",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-L3-03",
+              "level": 3,
+              "questionText": "대인이해을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-L4-01",
+              "level": 4,
+              "questionText": "대인이해 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-L4-02",
+              "level": 4,
+              "questionText": "대인이해을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-L4-03",
+              "level": 4,
+              "questionText": "대인이해이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-L5-01",
+              "level": 5,
+              "questionText": "대인이해을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 대인이해 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-INTERPERSONAL_UNDERSTANDING-L5-03",
+              "level": 5,
+              "questionText": "대인이해 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         },
@@ -155,22 +655,122 @@
           "definition": "고객(내부·외부)의 니즈를 실제로 해결해주려는 정도",
           "sortOrder": 2,
           "levels": {
-            "1": "요청받은 일만 처리한다",
-            "2": "고객 불만에 성실히 응대한다",
-            "3": "고객이 말하지 않은 잠재 니즈까지 찾아 해결한다",
-            "4": "장기적 관점에서 고객에게 진짜 도움이 되는 제안을 한다",
-            "5": "고객의 신뢰할 수 있는 조언자 역할을 한다"
+            "1": [
+              "요청받은 일만 처리한다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "고객 불만에 성실히 응대한다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "고객이 말하지 않은 잠재 니즈까지 찾아 해결한다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "장기적 관점에서 고객에게 진짜 도움이 되는 제안을 한다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "고객의 신뢰할 수 있는 조언자 역할을 한다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-01",
-              "questionText": "고객(또는 협업 부서)이 요청하지 않았지만 필요할 거라 판단해 먼저 제공한 게 있나요?",
+              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-L1-01",
+              "level": 1,
+              "questionText": "고객지향과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-02",
-              "questionText": "고객의 단기 요청과 장기적 이익이 부딪혔을 때 어떻게 처리했나요?",
+              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-L1-02",
+              "level": 1,
+              "questionText": "고객지향을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-L1-03",
+              "level": 1,
+              "questionText": "고객지향 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-L2-01",
+              "level": 2,
+              "questionText": "고객지향이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-L2-02",
+              "level": 2,
+              "questionText": "고객지향 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-L2-03",
+              "level": 2,
+              "questionText": "고객지향을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-L3-01",
+              "level": 3,
+              "questionText": "고객(또는 협업 부서)이 요청하지 않았지만 필요할 거라 판단해 먼저 제공한 게 있나요?",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-L3-02",
+              "level": 3,
+              "questionText": "고객의 단기 요청과 장기적 이익이 부딪혔을 때 어떻게 처리했나요?",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-L3-03",
+              "level": 3,
+              "questionText": "고객지향을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-L4-01",
+              "level": 4,
+              "questionText": "고객지향 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-L4-02",
+              "level": 4,
+              "questionText": "고객지향을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-L4-03",
+              "level": 4,
+              "questionText": "고객지향이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-L5-01",
+              "level": 5,
+              "questionText": "고객지향을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 고객지향 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-CUSTOMER_SERVICE_ORIENTATION-L5-03",
+              "level": 5,
+              "questionText": "고객지향 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         }
@@ -190,22 +790,122 @@
           "definition": "타인의 생각·행동을 원하는 방향으로 움직이게 하는 정도",
           "sortOrder": 1,
           "levels": {
-            "1": "설득 시도를 거의 안 한다",
-            "2": "직접적으로 요청·설명한다",
-            "3": "상대에 맞춰 논거·자료를 다르게 준비한다",
-            "4": "여러 사람에게 순차적으로 영향을 미쳐 분위기를 바꾼다",
-            "5": "복잡한 이해관계자 구조를 읽고 전략적으로 설득 순서를 설계한다"
+            "1": [
+              "설득 시도를 거의 안 한다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "직접적으로 요청·설명한다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "상대에 맞춰 논거·자료를 다르게 준비한다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "여러 사람에게 순차적으로 영향을 미쳐 분위기를 바꾼다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "복잡한 이해관계자 구조를 읽고 전략적으로 설득 순서를 설계한다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-IMPACT_AND_INFLUENCE-01",
-              "questionText": "본인의 의견에 회의적이던 사람을 설득해 방향을 바꾼 경험을 말씀해주세요.",
+              "externalId": "GLOB-IMPACT_AND_INFLUENCE-L1-01",
+              "level": 1,
+              "questionText": "영향력과 설득과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-IMPACT_AND_INFLUENCE-02",
-              "questionText": "상대에 따라 설득 방식을 다르게 준비했던 경험이 있나요?",
+              "externalId": "GLOB-IMPACT_AND_INFLUENCE-L1-02",
+              "level": 1,
+              "questionText": "영향력과 설득을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-IMPACT_AND_INFLUENCE-L1-03",
+              "level": 1,
+              "questionText": "영향력과 설득 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-IMPACT_AND_INFLUENCE-L2-01",
+              "level": 2,
+              "questionText": "영향력과 설득이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-IMPACT_AND_INFLUENCE-L2-02",
+              "level": 2,
+              "questionText": "영향력과 설득 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-IMPACT_AND_INFLUENCE-L2-03",
+              "level": 2,
+              "questionText": "영향력과 설득을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-IMPACT_AND_INFLUENCE-L3-01",
+              "level": 3,
+              "questionText": "본인의 의견에 회의적이던 사람을 설득해 방향을 바꾼 경험을 말씀해주세요.",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-IMPACT_AND_INFLUENCE-L3-02",
+              "level": 3,
+              "questionText": "상대에 따라 설득 방식을 다르게 준비했던 경험이 있나요?",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-IMPACT_AND_INFLUENCE-L3-03",
+              "level": 3,
+              "questionText": "영향력과 설득을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-IMPACT_AND_INFLUENCE-L4-01",
+              "level": 4,
+              "questionText": "영향력과 설득 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-IMPACT_AND_INFLUENCE-L4-02",
+              "level": 4,
+              "questionText": "영향력과 설득을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-IMPACT_AND_INFLUENCE-L4-03",
+              "level": 4,
+              "questionText": "영향력과 설득이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-IMPACT_AND_INFLUENCE-L5-01",
+              "level": 5,
+              "questionText": "영향력과 설득을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-IMPACT_AND_INFLUENCE-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 영향력과 설득 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-IMPACT_AND_INFLUENCE-L5-03",
+              "level": 5,
+              "questionText": "영향력과 설득 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         },
@@ -216,22 +916,122 @@
           "definition": "업무에 도움이 되는 인적 네트워크를 의도적으로 만들고 유지하는 정도",
           "sortOrder": 2,
           "levels": {
-            "1": "필요할 때만 연락한다",
-            "2": "업무 관계를 우호적으로 유지한다",
-            "3": "당장 필요하지 않아도 관계를 꾸준히 관리한다",
-            "4": "서로 다른 조직·부서 간 신뢰 관계를 의도적으로 만든다",
-            "5": "폭넓은 네트워크를 조직의 자산으로 연결한다"
+            "1": [
+              "필요할 때만 연락한다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "업무 관계를 우호적으로 유지한다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "당장 필요하지 않아도 관계를 꾸준히 관리한다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "서로 다른 조직·부서 간 신뢰 관계를 의도적으로 만든다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "폭넓은 네트워크를 조직의 자산으로 연결한다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-RELATIONSHIP_BUILDING-01",
-              "questionText": "당장 필요하지 않았지만 꾸준히 관계를 쌓아뒀던 사람이 나중에 도움이 된 경험이 있나요?",
+              "externalId": "GLOB-RELATIONSHIP_BUILDING-L1-01",
+              "level": 1,
+              "questionText": "관계 구축과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-RELATIONSHIP_BUILDING-02",
-              "questionText": "서로 소원했던 부서·팀 사이를 연결한 경험을 말씀해주세요.",
+              "externalId": "GLOB-RELATIONSHIP_BUILDING-L1-02",
+              "level": 1,
+              "questionText": "관계 구축을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-RELATIONSHIP_BUILDING-L1-03",
+              "level": 1,
+              "questionText": "관계 구축 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-RELATIONSHIP_BUILDING-L2-01",
+              "level": 2,
+              "questionText": "관계 구축이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-RELATIONSHIP_BUILDING-L2-02",
+              "level": 2,
+              "questionText": "관계 구축 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-RELATIONSHIP_BUILDING-L2-03",
+              "level": 2,
+              "questionText": "관계 구축을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-RELATIONSHIP_BUILDING-L3-01",
+              "level": 3,
+              "questionText": "당장 필요하지 않았지만 꾸준히 관계를 쌓아뒀던 사람이 나중에 도움이 된 경험이 있나요?",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-RELATIONSHIP_BUILDING-L3-02",
+              "level": 3,
+              "questionText": "서로 소원했던 부서·팀 사이를 연결한 경험을 말씀해주세요.",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-RELATIONSHIP_BUILDING-L3-03",
+              "level": 3,
+              "questionText": "관계 구축을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-RELATIONSHIP_BUILDING-L4-01",
+              "level": 4,
+              "questionText": "관계 구축 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-RELATIONSHIP_BUILDING-L4-02",
+              "level": 4,
+              "questionText": "관계 구축을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-RELATIONSHIP_BUILDING-L4-03",
+              "level": 4,
+              "questionText": "관계 구축이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-RELATIONSHIP_BUILDING-L5-01",
+              "level": 5,
+              "questionText": "관계 구축을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-RELATIONSHIP_BUILDING-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 관계 구축 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-RELATIONSHIP_BUILDING-L5-03",
+              "level": 5,
+              "questionText": "관계 구축 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         },
@@ -242,22 +1042,122 @@
           "definition": "조직 내 권력구조·이해관계·비공식 역학을 파악하는 정도",
           "sortOrder": 3,
           "levels": {
-            "1": "공식 조직도만 안다",
-            "2": "누가 어떤 역할인지는 안다",
-            "3": "의사결정이 실제로 어디서 이뤄지는지 파악한다",
-            "4": "부서 간 이해관계 충돌을 미리 읽고 대응한다",
-            "5": "조직 전체의 비공식 역학까지 활용해 일을 성사시킨다"
+            "1": [
+              "공식 조직도만 안다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "누가 어떤 역할인지는 안다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "의사결정이 실제로 어디서 이뤄지는지 파악한다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "부서 간 이해관계 충돌을 미리 읽고 대응한다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "조직 전체의 비공식 역학까지 활용해 일을 성사시킨다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-01",
-              "questionText": "공식 절차만으로는 안 풀리던 일을, 실제 의사결정 구조를 파악해서 풀어낸 경험이 있나요?",
+              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-L1-01",
+              "level": 1,
+              "questionText": "조직 인식과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-02",
-              "questionText": "부서 간 이해관계가 부딪힐 걸 미리 알고 대비했던 경험을 말씀해주세요.",
+              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-L1-02",
+              "level": 1,
+              "questionText": "조직 인식을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-L1-03",
+              "level": 1,
+              "questionText": "조직 인식 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-L2-01",
+              "level": 2,
+              "questionText": "조직 인식이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-L2-02",
+              "level": 2,
+              "questionText": "조직 인식 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-L2-03",
+              "level": 2,
+              "questionText": "조직 인식을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-L3-01",
+              "level": 3,
+              "questionText": "공식 절차만으로는 안 풀리던 일을, 실제 의사결정 구조를 파악해서 풀어낸 경험이 있나요?",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-L3-02",
+              "level": 3,
+              "questionText": "부서 간 이해관계가 부딪힐 걸 미리 알고 대비했던 경험을 말씀해주세요.",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-L3-03",
+              "level": 3,
+              "questionText": "조직 인식을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-L4-01",
+              "level": 4,
+              "questionText": "조직 인식 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-L4-02",
+              "level": 4,
+              "questionText": "조직 인식을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-L4-03",
+              "level": 4,
+              "questionText": "조직 인식이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-L5-01",
+              "level": 5,
+              "questionText": "조직 인식을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 조직 인식 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_AWARENESS-L5-03",
+              "level": 5,
+              "questionText": "조직 인식 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         }
@@ -277,22 +1177,122 @@
           "definition": "동료·후배의 성장을 실제로 돕는 정도",
           "sortOrder": 1,
           "levels": {
-            "1": "육성에 시간을 쓰지 않는다",
-            "2": "요청받으면 알려준다",
-            "3": "상대가 스스로 답을 찾도록 코칭한다",
-            "4": "개인별 성장 계획을 세워 꾸준히 피드백한다",
-            "5": "조직 차원의 육성 체계를 만든다"
+            "1": [
+              "육성에 시간을 쓰지 않는다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "요청받으면 알려준다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "상대가 스스로 답을 찾도록 코칭한다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "개인별 성장 계획을 세워 꾸준히 피드백한다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "조직 차원의 육성 체계를 만든다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-DEVELOPING_OTHERS-01",
-              "questionText": "후배나 동료가 스스로 답을 찾도록 코칭했던 경험을 말씀해주세요.",
+              "externalId": "GLOB-DEVELOPING_OTHERS-L1-01",
+              "level": 1,
+              "questionText": "타인 육성과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-DEVELOPING_OTHERS-02",
-              "questionText": "누군가의 성장을 위해 꾸준히 신경 쓴 구체적 사례가 있나요?",
+              "externalId": "GLOB-DEVELOPING_OTHERS-L1-02",
+              "level": 1,
+              "questionText": "타인 육성을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-DEVELOPING_OTHERS-L1-03",
+              "level": 1,
+              "questionText": "타인 육성 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-DEVELOPING_OTHERS-L2-01",
+              "level": 2,
+              "questionText": "타인 육성이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-DEVELOPING_OTHERS-L2-02",
+              "level": 2,
+              "questionText": "타인 육성 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-DEVELOPING_OTHERS-L2-03",
+              "level": 2,
+              "questionText": "타인 육성을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-DEVELOPING_OTHERS-L3-01",
+              "level": 3,
+              "questionText": "후배나 동료가 스스로 답을 찾도록 코칭했던 경험을 말씀해주세요.",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-DEVELOPING_OTHERS-L3-02",
+              "level": 3,
+              "questionText": "누군가의 성장을 위해 꾸준히 신경 쓴 구체적 사례가 있나요?",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-DEVELOPING_OTHERS-L3-03",
+              "level": 3,
+              "questionText": "타인 육성을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-DEVELOPING_OTHERS-L4-01",
+              "level": 4,
+              "questionText": "타인 육성 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-DEVELOPING_OTHERS-L4-02",
+              "level": 4,
+              "questionText": "타인 육성을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-DEVELOPING_OTHERS-L4-03",
+              "level": 4,
+              "questionText": "타인 육성이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-DEVELOPING_OTHERS-L5-01",
+              "level": 5,
+              "questionText": "타인 육성을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-DEVELOPING_OTHERS-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 타인 육성 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-DEVELOPING_OTHERS-L5-03",
+              "level": 5,
+              "questionText": "타인 육성 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         },
@@ -303,22 +1303,122 @@
           "definition": "팀의 성과를 위해 자신의 몫 이상을 기여하는 정도",
           "sortOrder": 2,
           "levels": {
-            "1": "자기 몫만 한다",
-            "2": "협조 요청에 응한다",
-            "3": "팀 성과를 위해 먼저 나서 돕는다",
-            "4": "갈등을 조율해 팀 전체가 협력하게 만든다",
-            "5": "여러 팀에 걸쳐 협업 문화를 만든다"
+            "1": [
+              "자기 몫만 한다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "협조 요청에 응한다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "팀 성과를 위해 먼저 나서 돕는다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "갈등을 조율해 팀 전체가 협력하게 만든다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "여러 팀에 걸쳐 협업 문화를 만든다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-TEAMWORK_COOPERATION-01",
-              "questionText": "본인 업무가 아닌데도 팀 성과를 위해 나서서 도운 경험이 있나요?",
+              "externalId": "GLOB-TEAMWORK_COOPERATION-L1-01",
+              "level": 1,
+              "questionText": "팀워크와 협력과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-TEAMWORK_COOPERATION-02",
-              "questionText": "팀 내 갈등을 직접 조율해서 협력을 끌어낸 경험을 말씀해주세요.",
+              "externalId": "GLOB-TEAMWORK_COOPERATION-L1-02",
+              "level": 1,
+              "questionText": "팀워크와 협력을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-TEAMWORK_COOPERATION-L1-03",
+              "level": 1,
+              "questionText": "팀워크와 협력 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-TEAMWORK_COOPERATION-L2-01",
+              "level": 2,
+              "questionText": "팀워크와 협력이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-TEAMWORK_COOPERATION-L2-02",
+              "level": 2,
+              "questionText": "팀워크와 협력 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-TEAMWORK_COOPERATION-L2-03",
+              "level": 2,
+              "questionText": "팀워크와 협력을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-TEAMWORK_COOPERATION-L3-01",
+              "level": 3,
+              "questionText": "본인 업무가 아닌데도 팀 성과를 위해 나서서 도운 경험이 있나요?",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-TEAMWORK_COOPERATION-L3-02",
+              "level": 3,
+              "questionText": "팀 내 갈등을 직접 조율해서 협력을 끌어낸 경험을 말씀해주세요.",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-TEAMWORK_COOPERATION-L3-03",
+              "level": 3,
+              "questionText": "팀워크와 협력을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-TEAMWORK_COOPERATION-L4-01",
+              "level": 4,
+              "questionText": "팀워크와 협력 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-TEAMWORK_COOPERATION-L4-02",
+              "level": 4,
+              "questionText": "팀워크와 협력을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-TEAMWORK_COOPERATION-L4-03",
+              "level": 4,
+              "questionText": "팀워크와 협력이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-TEAMWORK_COOPERATION-L5-01",
+              "level": 5,
+              "questionText": "팀워크와 협력을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-TEAMWORK_COOPERATION-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 팀워크와 협력 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-TEAMWORK_COOPERATION-L5-03",
+              "level": 5,
+              "questionText": "팀워크와 협력 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         },
@@ -329,22 +1429,122 @@
           "definition": "필요할 때 명확한 기준·기대치를 제시하고 단호하게 요구하는 정도",
           "sortOrder": 3,
           "levels": {
-            "1": "기대치를 명확히 제시하지 못한다",
-            "2": "요청하면 지시를 내린다",
-            "3": "스스로 기준을 세워 명확히 요구한다",
-            "4": "성과 미달 시 단호하게 피드백하고 개선을 요구한다",
-            "5": "조직 전체의 기준·원칙을 세우고 일관되게 관철시킨다"
+            "1": [
+              "기대치를 명확히 제시하지 못한다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "요청하면 지시를 내린다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "스스로 기준을 세워 명확히 요구한다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "성과 미달 시 단호하게 피드백하고 개선을 요구한다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "조직 전체의 기준·원칙을 세우고 일관되게 관철시킨다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-DIRECTIVENESS-01",
-              "questionText": "다른 사람에게 명확한 기준을 제시하고 그대로 지키도록 요구했던 경험이 있나요?",
+              "externalId": "GLOB-DIRECTIVENESS-L1-01",
+              "level": 1,
+              "questionText": "지시성과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-DIRECTIVENESS-02",
-              "questionText": "불편하더라도 단호하게 피드백을 줘야 했던 상황을 말씀해주세요.",
+              "externalId": "GLOB-DIRECTIVENESS-L1-02",
+              "level": 1,
+              "questionText": "지시성을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-DIRECTIVENESS-L1-03",
+              "level": 1,
+              "questionText": "지시성 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-DIRECTIVENESS-L2-01",
+              "level": 2,
+              "questionText": "지시성이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-DIRECTIVENESS-L2-02",
+              "level": 2,
+              "questionText": "지시성 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-DIRECTIVENESS-L2-03",
+              "level": 2,
+              "questionText": "지시성을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-DIRECTIVENESS-L3-01",
+              "level": 3,
+              "questionText": "다른 사람에게 명확한 기준을 제시하고 그대로 지키도록 요구했던 경험이 있나요?",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-DIRECTIVENESS-L3-02",
+              "level": 3,
+              "questionText": "불편하더라도 단호하게 피드백을 줘야 했던 상황을 말씀해주세요.",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-DIRECTIVENESS-L3-03",
+              "level": 3,
+              "questionText": "지시성을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-DIRECTIVENESS-L4-01",
+              "level": 4,
+              "questionText": "지시성 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-DIRECTIVENESS-L4-02",
+              "level": 4,
+              "questionText": "지시성을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-DIRECTIVENESS-L4-03",
+              "level": 4,
+              "questionText": "지시성이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-DIRECTIVENESS-L5-01",
+              "level": 5,
+              "questionText": "지시성을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-DIRECTIVENESS-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 지시성 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-DIRECTIVENESS-L5-03",
+              "level": 5,
+              "questionText": "지시성 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         },
@@ -355,22 +1555,122 @@
           "definition": "집단의 목표를 위해 방향을 제시하고 구성원을 이끄는 정도",
           "sortOrder": 4,
           "levels": {
-            "1": "리더 역할을 맡지 않는다",
-            "2": "맡은 역할 안에서 팀을 돕는다",
-            "3": "팀 목표·역할 분담을 정리해 이끈다",
-            "4": "팀의 비전을 제시하고 동기부여한다",
-            "5": "어려운 상황에서도 팀을 지키고 방향을 유지한다"
+            "1": [
+              "리더 역할을 맡지 않는다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "맡은 역할 안에서 팀을 돕는다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "팀 목표·역할 분담을 정리해 이끈다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "팀의 비전을 제시하고 동기부여한다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "어려운 상황에서도 팀을 지키고 방향을 유지한다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-TEAM_LEADERSHIP-01",
-              "questionText": "팀을 이끌어 목표를 달성했던 경험을 말씀해주세요(공식 직책이 아니어도 좋습니다).",
+              "externalId": "GLOB-TEAM_LEADERSHIP-L1-01",
+              "level": 1,
+              "questionText": "팀 리더십과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-TEAM_LEADERSHIP-02",
-              "questionText": "팀이 어려운 상황에 처했을 때 방향을 제시했던 경험이 있나요?",
+              "externalId": "GLOB-TEAM_LEADERSHIP-L1-02",
+              "level": 1,
+              "questionText": "팀 리더십을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-TEAM_LEADERSHIP-L1-03",
+              "level": 1,
+              "questionText": "팀 리더십 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-TEAM_LEADERSHIP-L2-01",
+              "level": 2,
+              "questionText": "팀 리더십이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-TEAM_LEADERSHIP-L2-02",
+              "level": 2,
+              "questionText": "팀 리더십 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-TEAM_LEADERSHIP-L2-03",
+              "level": 2,
+              "questionText": "팀 리더십을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-TEAM_LEADERSHIP-L3-01",
+              "level": 3,
+              "questionText": "팀을 이끌어 목표를 달성했던 경험을 말씀해주세요(공식 직책이 아니어도 좋습니다).",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-TEAM_LEADERSHIP-L3-02",
+              "level": 3,
+              "questionText": "팀이 어려운 상황에 처했을 때 방향을 제시했던 경험이 있나요?",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-TEAM_LEADERSHIP-L3-03",
+              "level": 3,
+              "questionText": "팀 리더십을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-TEAM_LEADERSHIP-L4-01",
+              "level": 4,
+              "questionText": "팀 리더십 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-TEAM_LEADERSHIP-L4-02",
+              "level": 4,
+              "questionText": "팀 리더십을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-TEAM_LEADERSHIP-L4-03",
+              "level": 4,
+              "questionText": "팀 리더십이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-TEAM_LEADERSHIP-L5-01",
+              "level": 5,
+              "questionText": "팀 리더십을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-TEAM_LEADERSHIP-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 팀 리더십 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-TEAM_LEADERSHIP-L5-03",
+              "level": 5,
+              "questionText": "팀 리더십 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         }
@@ -390,22 +1690,122 @@
           "definition": "문제를 요소로 쪼개 논리적 인과관계를 파악하는 정도",
           "sortOrder": 1,
           "levels": {
-            "1": "문제를 있는 그대로만 본다",
-            "2": "명백한 원인 하나를 찾는다",
-            "3": "여러 원인을 체계적으로 분리해 분석한다",
-            "4": "복잡한 문제를 구조화해 우선순위를 정한다",
-            "5": "데이터·모델을 활용해 복잡한 인과관계를 규명한다"
+            "1": [
+              "문제를 있는 그대로만 본다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "명백한 원인 하나를 찾는다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "여러 원인을 체계적으로 분리해 분석한다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "복잡한 문제를 구조화해 우선순위를 정한다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "데이터·모델을 활용해 복잡한 인과관계를 규명한다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-ANALYTICAL_THINKING-01",
-              "questionText": "복잡한 문제를 여러 원인으로 나눠 분석했던 경험을 말씀해주세요.",
+              "externalId": "GLOB-ANALYTICAL_THINKING-L1-01",
+              "level": 1,
+              "questionText": "분석적 사고과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-ANALYTICAL_THINKING-02",
-              "questionText": "데이터나 근거를 바탕으로 원인을 규명한 사례가 있나요?",
+              "externalId": "GLOB-ANALYTICAL_THINKING-L1-02",
+              "level": 1,
+              "questionText": "분석적 사고을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-ANALYTICAL_THINKING-L1-03",
+              "level": 1,
+              "questionText": "분석적 사고 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-ANALYTICAL_THINKING-L2-01",
+              "level": 2,
+              "questionText": "분석적 사고이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-ANALYTICAL_THINKING-L2-02",
+              "level": 2,
+              "questionText": "분석적 사고 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-ANALYTICAL_THINKING-L2-03",
+              "level": 2,
+              "questionText": "분석적 사고을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-ANALYTICAL_THINKING-L3-01",
+              "level": 3,
+              "questionText": "복잡한 문제를 여러 원인으로 나눠 분석했던 경험을 말씀해주세요.",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-ANALYTICAL_THINKING-L3-02",
+              "level": 3,
+              "questionText": "데이터나 근거를 바탕으로 원인을 규명한 사례가 있나요?",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-ANALYTICAL_THINKING-L3-03",
+              "level": 3,
+              "questionText": "분석적 사고을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-ANALYTICAL_THINKING-L4-01",
+              "level": 4,
+              "questionText": "분석적 사고 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-ANALYTICAL_THINKING-L4-02",
+              "level": 4,
+              "questionText": "분석적 사고을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-ANALYTICAL_THINKING-L4-03",
+              "level": 4,
+              "questionText": "분석적 사고이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-ANALYTICAL_THINKING-L5-01",
+              "level": 5,
+              "questionText": "분석적 사고을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-ANALYTICAL_THINKING-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 분석적 사고 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-ANALYTICAL_THINKING-L5-03",
+              "level": 5,
+              "questionText": "분석적 사고 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         },
@@ -416,22 +1816,122 @@
           "definition": "겉보기 다른 정보들 사이의 패턴·연결을 찾아내는 정도",
           "sortOrder": 2,
           "levels": {
-            "1": "정보를 개별적으로만 본다",
-            "2": "익숙한 패턴에 맞춰 판단한다",
-            "3": "여러 정보를 연결해 새로운 관점을 만든다",
-            "4": "복잡한 상황을 단순한 프레임으로 재정의한다",
-            "5": "완전히 새로운 개념·모델을 창출한다"
+            "1": [
+              "정보를 개별적으로만 본다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "익숙한 패턴에 맞춰 판단한다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "여러 정보를 연결해 새로운 관점을 만든다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "복잡한 상황을 단순한 프레임으로 재정의한다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "완전히 새로운 개념·모델을 창출한다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-CONCEPTUAL_THINKING-01",
-              "questionText": "서로 관련 없어 보이는 정보를 연결해서 새로운 아이디어를 낸 경험이 있나요?",
+              "externalId": "GLOB-CONCEPTUAL_THINKING-L1-01",
+              "level": 1,
+              "questionText": "개념적 사고과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-CONCEPTUAL_THINKING-02",
-              "questionText": "복잡한 상황을 간단한 원칙으로 정리해 팀에 설명한 사례를 말씀해주세요.",
+              "externalId": "GLOB-CONCEPTUAL_THINKING-L1-02",
+              "level": 1,
+              "questionText": "개념적 사고을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-CONCEPTUAL_THINKING-L1-03",
+              "level": 1,
+              "questionText": "개념적 사고 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-CONCEPTUAL_THINKING-L2-01",
+              "level": 2,
+              "questionText": "개념적 사고이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-CONCEPTUAL_THINKING-L2-02",
+              "level": 2,
+              "questionText": "개념적 사고 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-CONCEPTUAL_THINKING-L2-03",
+              "level": 2,
+              "questionText": "개념적 사고을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-CONCEPTUAL_THINKING-L3-01",
+              "level": 3,
+              "questionText": "서로 관련 없어 보이는 정보를 연결해서 새로운 아이디어를 낸 경험이 있나요?",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-CONCEPTUAL_THINKING-L3-02",
+              "level": 3,
+              "questionText": "복잡한 상황을 간단한 원칙으로 정리해 팀에 설명한 사례를 말씀해주세요.",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-CONCEPTUAL_THINKING-L3-03",
+              "level": 3,
+              "questionText": "개념적 사고을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-CONCEPTUAL_THINKING-L4-01",
+              "level": 4,
+              "questionText": "개념적 사고 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-CONCEPTUAL_THINKING-L4-02",
+              "level": 4,
+              "questionText": "개념적 사고을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-CONCEPTUAL_THINKING-L4-03",
+              "level": 4,
+              "questionText": "개념적 사고이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-CONCEPTUAL_THINKING-L5-01",
+              "level": 5,
+              "questionText": "개념적 사고을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-CONCEPTUAL_THINKING-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 개념적 사고 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-CONCEPTUAL_THINKING-L5-03",
+              "level": 5,
+              "questionText": "개념적 사고 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         },
@@ -442,22 +1942,122 @@
           "definition": "자기 직무 영역의 지식·기술을 깊이 갖추고 계속 갱신하는 정도",
           "sortOrder": 3,
           "levels": {
-            "1": "기본 업무 지식만 있다",
-            "2": "필요한 지식을 그때그때 찾아본다",
-            "3": "해당 분야 지식을 체계적으로 갖추고 있다",
-            "4": "남에게 지식을 전수할 정도로 깊이 안다",
-            "5": "해당 분야의 새 흐름을 만들거나 조직의 전문성 기준을 세운다"
+            "1": [
+              "기본 업무 지식만 있다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "필요한 지식을 그때그때 찾아본다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "해당 분야 지식을 체계적으로 갖추고 있다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "남에게 지식을 전수할 정도로 깊이 안다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "해당 분야의 새 흐름을 만들거나 조직의 전문성 기준을 세운다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-EXPERTISE-01",
-              "questionText": "본인 분야에서 남들이 모르는 것까지 파고들어 해결했던 경험이 있나요?",
+              "externalId": "GLOB-EXPERTISE-L1-01",
+              "level": 1,
+              "questionText": "전문성과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-EXPERTISE-02",
-              "questionText": "본인의 전문 지식을 다른 사람에게 전수하거나 표준화한 경험을 말씀해주세요.",
+              "externalId": "GLOB-EXPERTISE-L1-02",
+              "level": 1,
+              "questionText": "전문성을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-EXPERTISE-L1-03",
+              "level": 1,
+              "questionText": "전문성 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-EXPERTISE-L2-01",
+              "level": 2,
+              "questionText": "전문성이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-EXPERTISE-L2-02",
+              "level": 2,
+              "questionText": "전문성 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-EXPERTISE-L2-03",
+              "level": 2,
+              "questionText": "전문성을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-EXPERTISE-L3-01",
+              "level": 3,
+              "questionText": "본인 분야에서 남들이 모르는 것까지 파고들어 해결했던 경험이 있나요?",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-EXPERTISE-L3-02",
+              "level": 3,
+              "questionText": "본인의 전문 지식을 다른 사람에게 전수하거나 표준화한 경험을 말씀해주세요.",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-EXPERTISE-L3-03",
+              "level": 3,
+              "questionText": "전문성을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-EXPERTISE-L4-01",
+              "level": 4,
+              "questionText": "전문성 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-EXPERTISE-L4-02",
+              "level": 4,
+              "questionText": "전문성을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-EXPERTISE-L4-03",
+              "level": 4,
+              "questionText": "전문성이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-EXPERTISE-L5-01",
+              "level": 5,
+              "questionText": "전문성을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-EXPERTISE-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 전문성 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-EXPERTISE-L5-03",
+              "level": 5,
+              "questionText": "전문성 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         }
@@ -477,22 +2077,122 @@
           "definition": "압박·감정적 상황에서도 침착하게 행동을 유지하는 정도",
           "sortOrder": 1,
           "levels": {
-            "1": "압박 상황에서 감정이 그대로 드러난다",
-            "2": "감정을 억누르지만 티가 난다",
-            "3": "압박 속에서도 침착하게 대응한다",
-            "4": "스트레스 상황에서 오히려 더 건설적으로 반응한다",
-            "5": "극한 상황에서도 팀 전체를 안정시킨다"
+            "1": [
+              "압박 상황에서 감정이 그대로 드러난다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "감정을 억누르지만 티가 난다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "압박 속에서도 침착하게 대응한다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "스트레스 상황에서 오히려 더 건설적으로 반응한다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "극한 상황에서도 팀 전체를 안정시킨다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-SELF_CONTROL-01",
-              "questionText": "압박이 심한 상황에서도 침착하게 대응했던 경험을 말씀해주세요.",
+              "externalId": "GLOB-SELF_CONTROL-L1-01",
+              "level": 1,
+              "questionText": "자기통제과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-SELF_CONTROL-02",
-              "questionText": "감정적으로 힘들었던 상황에서 어떻게 스스로를 다잡았나요?",
+              "externalId": "GLOB-SELF_CONTROL-L1-02",
+              "level": 1,
+              "questionText": "자기통제을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-SELF_CONTROL-L1-03",
+              "level": 1,
+              "questionText": "자기통제 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-SELF_CONTROL-L2-01",
+              "level": 2,
+              "questionText": "자기통제이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-SELF_CONTROL-L2-02",
+              "level": 2,
+              "questionText": "자기통제 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-SELF_CONTROL-L2-03",
+              "level": 2,
+              "questionText": "자기통제을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-SELF_CONTROL-L3-01",
+              "level": 3,
+              "questionText": "압박이 심한 상황에서도 침착하게 대응했던 경험을 말씀해주세요.",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-SELF_CONTROL-L3-02",
+              "level": 3,
+              "questionText": "감정적으로 힘들었던 상황에서 어떻게 스스로를 다잡았나요?",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-SELF_CONTROL-L3-03",
+              "level": 3,
+              "questionText": "자기통제을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-SELF_CONTROL-L4-01",
+              "level": 4,
+              "questionText": "자기통제 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-SELF_CONTROL-L4-02",
+              "level": 4,
+              "questionText": "자기통제을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-SELF_CONTROL-L4-03",
+              "level": 4,
+              "questionText": "자기통제이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-SELF_CONTROL-L5-01",
+              "level": 5,
+              "questionText": "자기통제을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-SELF_CONTROL-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 자기통제 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-SELF_CONTROL-L5-03",
+              "level": 5,
+              "questionText": "자기통제 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         },
@@ -503,22 +2203,122 @@
           "definition": "변화하는 상황·요구에 접근 방식을 조정하는 정도",
           "sortOrder": 2,
           "levels": {
-            "1": "정해진 방식을 고수한다",
-            "2": "지시가 있으면 방식을 바꾼다",
-            "3": "상황에 맞춰 스스로 접근법을 조정한다",
-            "4": "다양한 이해관계자의 요구에 맞춰 유연하게 대응한다",
-            "5": "근본 전략까지 상황에 맞게 재설계한다"
+            "1": [
+              "정해진 방식을 고수한다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "지시가 있으면 방식을 바꾼다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "상황에 맞춰 스스로 접근법을 조정한다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "다양한 이해관계자의 요구에 맞춰 유연하게 대응한다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "근본 전략까지 상황에 맞게 재설계한다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-FLEXIBILITY-01",
-              "questionText": "계획이 갑자기 틀어졌을 때 접근 방식을 바꿔 대응한 경험이 있나요?",
+              "externalId": "GLOB-FLEXIBILITY-L1-01",
+              "level": 1,
+              "questionText": "유연성과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-FLEXIBILITY-02",
-              "questionText": "예상과 다른 상황에서 유연하게 방향을 바꾼 사례를 말씀해주세요.",
+              "externalId": "GLOB-FLEXIBILITY-L1-02",
+              "level": 1,
+              "questionText": "유연성을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-FLEXIBILITY-L1-03",
+              "level": 1,
+              "questionText": "유연성 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-FLEXIBILITY-L2-01",
+              "level": 2,
+              "questionText": "유연성이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-FLEXIBILITY-L2-02",
+              "level": 2,
+              "questionText": "유연성 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-FLEXIBILITY-L2-03",
+              "level": 2,
+              "questionText": "유연성을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-FLEXIBILITY-L3-01",
+              "level": 3,
+              "questionText": "계획이 갑자기 틀어졌을 때 접근 방식을 바꿔 대응한 경험이 있나요?",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-FLEXIBILITY-L3-02",
+              "level": 3,
+              "questionText": "예상과 다른 상황에서 유연하게 방향을 바꾼 사례를 말씀해주세요.",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-FLEXIBILITY-L3-03",
+              "level": 3,
+              "questionText": "유연성을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-FLEXIBILITY-L4-01",
+              "level": 4,
+              "questionText": "유연성 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-FLEXIBILITY-L4-02",
+              "level": 4,
+              "questionText": "유연성을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-FLEXIBILITY-L4-03",
+              "level": 4,
+              "questionText": "유연성이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-FLEXIBILITY-L5-01",
+              "level": 5,
+              "questionText": "유연성을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-FLEXIBILITY-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 유연성 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-FLEXIBILITY-L5-03",
+              "level": 5,
+              "questionText": "유연성 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         },
@@ -529,22 +2329,122 @@
           "definition": "스스로의 판단·능력을 믿고 도전적 상황에서도 소신을 지키는 정도",
           "sortOrder": 3,
           "levels": {
-            "1": "결정을 늘 남에게 확인받으려 한다",
-            "2": "익숙한 일에서는 자신 있게 행동한다",
-            "3": "실패 가능성이 있어도 스스로 판단해 행동한다",
-            "4": "권위 있는 사람 앞에서도 소신을 굽히지 않고 의견을 낸다",
-            "5": "실패를 겪고도 배움으로 삼아 더 큰 도전에 나선다"
+            "1": [
+              "결정을 늘 남에게 확인받으려 한다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "익숙한 일에서는 자신 있게 행동한다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "실패 가능성이 있어도 스스로 판단해 행동한다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "권위 있는 사람 앞에서도 소신을 굽히지 않고 의견을 낸다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "실패를 겪고도 배움으로 삼아 더 큰 도전에 나선다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-SELF_CONFIDENCE-01",
-              "questionText": "상급자나 전문가의 의견과 달랐지만 본인의 판단을 소신 있게 밀어붙인 경험이 있나요?",
+              "externalId": "GLOB-SELF_CONFIDENCE-L1-01",
+              "level": 1,
+              "questionText": "자기확신과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-SELF_CONFIDENCE-02",
-              "questionText": "실패했던 경험에서 무엇을 배워 다음 도전에 반영했나요?",
+              "externalId": "GLOB-SELF_CONFIDENCE-L1-02",
+              "level": 1,
+              "questionText": "자기확신을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-SELF_CONFIDENCE-L1-03",
+              "level": 1,
+              "questionText": "자기확신 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-SELF_CONFIDENCE-L2-01",
+              "level": 2,
+              "questionText": "자기확신이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-SELF_CONFIDENCE-L2-02",
+              "level": 2,
+              "questionText": "자기확신 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-SELF_CONFIDENCE-L2-03",
+              "level": 2,
+              "questionText": "자기확신을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-SELF_CONFIDENCE-L3-01",
+              "level": 3,
+              "questionText": "상급자나 전문가의 의견과 달랐지만 본인의 판단을 소신 있게 밀어붙인 경험이 있나요?",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-SELF_CONFIDENCE-L3-02",
+              "level": 3,
+              "questionText": "실패했던 경험에서 무엇을 배워 다음 도전에 반영했나요?",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-SELF_CONFIDENCE-L3-03",
+              "level": 3,
+              "questionText": "자기확신을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-SELF_CONFIDENCE-L4-01",
+              "level": 4,
+              "questionText": "자기확신 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-SELF_CONFIDENCE-L4-02",
+              "level": 4,
+              "questionText": "자기확신을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-SELF_CONFIDENCE-L4-03",
+              "level": 4,
+              "questionText": "자기확신이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-SELF_CONFIDENCE-L5-01",
+              "level": 5,
+              "questionText": "자기확신을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-SELF_CONFIDENCE-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 자기확신 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-SELF_CONFIDENCE-L5-03",
+              "level": 5,
+              "questionText": "자기확신 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         },
@@ -555,26 +2455,127 @@
           "definition": "개인의 이익보다 조직의 목표·가치를 우선하는 정도",
           "sortOrder": 4,
           "levels": {
-            "1": "조직 목표에 관심이 적다",
-            "2": "맡은 역할 안에서 조직 방침을 따른다",
-            "3": "개인적으로 손해여도 조직 목표를 우선한다",
-            "4": "조직의 가치를 팀에 전파하고 실천을 독려한다",
-            "5": "장기적으로 조직에 헌신하며 위기 상황에도 조직을 지킨다"
+            "1": [
+              "조직 목표에 관심이 적다",
+              "의도가 행동으로 거의 연결되지 않는다",
+              "피드백을 받아도 기준을 세우지 못한다"
+            ],
+            "2": [
+              "맡은 역할 안에서 조직 방침을 따른다",
+              "최소한의 기준은 지키지만 주도성이 약하다",
+              "점검·보완이 비정기적이다"
+            ],
+            "3": [
+              "개인적으로 손해여도 조직 목표를 우선한다",
+              "구체적 사례로 행동이 입증된다",
+              "결과에 대한 자기 책임이 드러난다"
+            ],
+            "4": [
+              "조직의 가치를 팀에 전파하고 실천을 독려한다",
+              "타인·조직에까지 영향을 미친다",
+              "재사용 가능한 방법·기준을 남긴다"
+            ],
+            "5": [
+              "장기적으로 조직에 헌신하며 위기 상황에도 조직을 지킨다",
+              "전략·시스템에 반영된다",
+              "장기적 가치와 위험을 균형 있게 다룬다"
+            ]
           },
           "questions": [
             {
-              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-01",
-              "questionText": "개인적으로는 손해였지만 조직(팀)을 위해 선택했던 경험이 있나요?",
+              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-L1-01",
+              "level": 1,
+              "questionText": "조직헌신과 관련해 최근에 했던 일 중 가장 기본적인 사례를 짧게 소개해 주세요.",
               "sortOrder": 1
             },
             {
-              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-02",
-              "questionText": "조직의 방향이나 가치에 스스로 공감해 앞장서 실천한 경험을 말씀해주세요.",
+              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-L1-02",
+              "level": 1,
+              "questionText": "조직헌신을(를) 발휘해야 했던 일상적인 업무 상황을 구체적으로 말해 주세요.",
               "sortOrder": 2
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-L1-03",
+              "level": 1,
+              "questionText": "조직헌신 측면에서 아직 서툴렀던 경험을 인정한다면, 무엇을 배웠나요?",
+              "sortOrder": 3
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-L2-01",
+              "level": 2,
+              "questionText": "조직헌신이(가) 필요한 상황에서 정해진 기준을 지키며 대응했던 경험을 말씀해 주세요.",
+              "sortOrder": 4
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-L2-02",
+              "level": 2,
+              "questionText": "조직헌신 관련 업무에서 실수·누락을 스스로 점검해 보완한 사례가 있나요?",
+              "sortOrder": 5
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-L2-03",
+              "level": 2,
+              "questionText": "조직헌신을(를) 발휘할 때 참고한 절차·자료·사람 자원을 어떻게 활용했나요?",
+              "sortOrder": 6
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-L3-01",
+              "level": 3,
+              "questionText": "개인적으로는 손해였지만 조직(팀)을 위해 선택했던 경험이 있나요?",
+              "sortOrder": 7
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-L3-02",
+              "level": 3,
+              "questionText": "조직의 방향이나 가치에 스스로 공감해 앞장서 실천한 경험을 말씀해주세요.",
+              "sortOrder": 8
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-L3-03",
+              "level": 3,
+              "questionText": "조직헌신을(를) 발휘하기 위해 주변과 협의하며 결과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 9
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-L4-01",
+              "level": 4,
+              "questionText": "조직헌신 관점에서 여러 이해관계자를 조율하며 성과를 낸 경험을 말씀해 주세요.",
+              "sortOrder": 10
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-L4-02",
+              "level": 4,
+              "questionText": "조직헌신을(를) 팀·부서 단위로 끌어올리기 위해 만든 절차나 기준이 있나요?",
+              "sortOrder": 11
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-L4-03",
+              "level": 4,
+              "questionText": "조직헌신이(가) 약한 동료·조직을 설득하거나 변화를 이끈 사례를 말해 주세요.",
+              "sortOrder": 12
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-L5-01",
+              "level": 5,
+              "questionText": "조직헌신을(를) 조직 전략·문화 수준에서 설계하거나 표준화한 경험이 있나요?",
+              "sortOrder": 13
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-L5-02",
+              "level": 5,
+              "questionText": "장기적 리스크를 감수하면서까지 조직헌신 기준으로 방향을 바꾼 경험을 말씀해 주세요.",
+              "sortOrder": 14
+            },
+            {
+              "externalId": "GLOB-ORGANIZATIONAL_COMMITMENT-L5-03",
+              "level": 5,
+              "questionText": "조직헌신 측면에서 조직·산업에 남긴 유의미한 변화를 구체적 근거와 함께 설명해 주세요.",
+              "sortOrder": 15
             }
           ]
         }
       ]
     }
-  ]
+  ],
+  "note": "Each competency: L1–L5 × 3 interview questions (15) + multi-criterion rubrics. Original 2 stems kept at L3."
 }
