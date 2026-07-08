@@ -138,6 +138,7 @@ model Organization {
   members       User[]
   subscriptions Subscription[]
   interviewKits OrgInterviewKit[]
+  interviewKitShares OrgInterviewKitShare[]
 }
 
 // ── User ──
@@ -172,6 +173,7 @@ model User {
   auditRollbacks  AdminAuditLog[] @relation("AdminAuditRollback")
   subscriptions   Subscription[]
   orgInterviewKitUpdates OrgInterviewKit[] @relation("OrgInterviewKitUpdatedBy")
+  orgInterviewKitSharesCreated OrgInterviewKitShare[] @relation("OrgInterviewKitShareCreatedBy")
   textRecords     UserTextRecord[]
 
   @@index([organizationId])
@@ -409,6 +411,15 @@ model InterviewSession {
   sessionNumber   Int
   /** 면접 시작 시 사용자 선택(산업·직무·역량 등) 평문 스냅샷 */
   setupSelectionText String?   @db.Text
+  /** 이 세션의 문항 필터·루브릭 커스터마이즈에 사용된 기관 — 세션을 시작한
+   *  사용자 본인 소속 기관(user.organizationId)일 수도, 공유 링크(OrgInterviewKitShare)로
+   *  들어온 비가입자의 경우 그 킷이 속한 기관일 수도 있다. 채점 시점(respond,
+   *  세션 페이지)에 "그 시점 사용자의 소속"이 아니라 "세션 시작 시점에 적용된 킷"을
+   *  그대로 참조하기 위해 세션에 스냅샷으로 남겨둔다. */
+  kitOrganizationId String?
+  /** 공유 링크로 시작된 세션이면 그 OrgInterviewKitShare — 코호트/캠페인 집계용 */
+  orgKitShareId   String?
+  orgKitShare     OrgInterviewKitShare? @relation(fields: [orgKitShareId], references: [id], onDelete: SetNull)
   startedAt       DateTime?
   completedAt     DateTime?
   overallTheta    Float?
@@ -422,6 +433,8 @@ model InterviewSession {
   @@index([userId, sessionNumber])
   @@index([planId])
   @@index([status])
+  @@index([kitOrganizationId])
+  @@index([orgKitShareId])
 }
 
 model ResponseRecord {
@@ -675,6 +688,35 @@ model OrgInterviewKit {
   @@index([organizationId])
 }
 
+/** B2B 인터뷰 킷 공개 배포 — 기관 ADMIN이 킷(OrgInterviewKit)을 코호트(캠페인) 라벨과
+ *  함께 "게시"하면 생기는 공유 슬러그. 문항·루브릭 데이터 자체를 복제하지 않고
+ *  OrgInterviewKit을 그대로 참조하는 접근 게이트 역할만 한다 — 관리자가 킷을 이후
+ *  수정하면 이미 발급된 공유 링크에도 최신 내용이 그대로 반영된다(스냅샷 아님).
+ *  이 슬러그로 들어온 사용자는 기관 가입(joinCode) 없이, 로그인만 되어 있으면
+ *  (ADMIN 권한 불필요) 이 기관의 킷 설정으로 면접 세션을 시작할 수 있다. */
+model OrgInterviewKitShare {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /** 공개 URL에 쓰이는 opaque 토큰 (/kit/[slug]) */
+  slug           String       @unique
+  /** 코호트/캠페인 이름 — 예: "2026 상반기 신입 공채" (리포트·집계용 표시 라벨) */
+  label          String
+  /** 허용할 Competency.code[] — 빈 배열이면 이 기관에 설정된 킷 전체 역량 허용 */
+  competencies   Json         @default("[]")
+  /** 관리자가 잠깐 내리고 싶을 때(삭제 없이) 끄는 스위치 */
+  isActive       Boolean      @default(true)
+  createdByUserId String?
+  createdBy      User?        @relation("OrgInterviewKitShareCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  expiresAt      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  sessions InterviewSession[]
+
+  @@index([organizationId])
+}
+
 /** 고객사 데모용 샌드박스 — 운영 문항 뱅크와 분리 */
 model DemoWorkspace {
   id              String           @id @default(cuid())
@@ -719,5 +761,74 @@ model DemoQuestion {
 
   @@unique([workspaceId, externalId])
   @@index([workspaceId])
+  @@index([competencyId])
+}
+
+// ── Global competency dictionary (Spencer-inspired, separate from IRT NCS Competency) ──
+// Used by future self/360 assessment modules — NOT wired into IRT scoring.
+
+model GlobalCompetencyCluster {
+  id          String             @id @default(cuid())
+  code        String             @unique
+  nameKo      String
+  nameEn      String
+  description String?
+  sortOrder   Int                @default(0)
+  isActive    Boolean            @default(true)
+  competencies GlobalCompetency[]
+}
+
+model GlobalCompetency {
+  id         String   @id @default(cuid())
+  clusterId  String
+  cluster    GlobalCompetencyCluster @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+  code       String   @unique
+  nameKo     String
+  nameEn     String
+  definition String   @db.Text
+  sortOrder  Int      @default(0)
+  isActive   Boolean  @default(true)
+
+  rubricLevels GlobalCompetencyRubricLevel[]
+  questions    GlobalCompetencyQuestion[]
+  benchmarks   GlobalCompetencyBenchmarkRef[]
+
+  @@index([clusterId])
+}
+
+model GlobalCompetencyRubricLevel {
+  id            String           @id @default(cuid())
+  competencyId  String
+  competency    GlobalCompetency @relation(fields: [competencyId], references: [id], onDelete: Cascade)
+  level         Int
+  descriptionKo String           @db.Text
+
+  @@unique([competencyId, level])
+  @@index([competencyId])
+}
+
+model GlobalCompetencyQuestion {
+  id           String           @id @default(cuid())
+  competencyId String
+  competency   GlobalCompetency @relation(fields: [competencyId], references: [id], onDelete: Cascade)
+  externalId   String           @unique
+  questionText String           @db.Text
+  sortOrder    Int              @default(0)
+  isActive     Boolean          @default(true)
+
+  @@index([competencyId])
+}
+
+model GlobalCompetencyBenchmarkRef {
+  id             String           @id @default(cuid())
+  competencyId   String
+  competency     GlobalCompetency @relation(fields: [competencyId], references: [id], onDelete: Cascade)
+  frameworkName  String
+  refLabel       String
+  refDefinition  String           @db.Text
+  sourceUrl      String
+  licenseNote    String           @db.Text
+  sortOrder      Int              @default(0)
+
   @@index([competencyId])
 }

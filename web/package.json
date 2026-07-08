@@ -14,6 +14,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:real": "tsx prisma/seed-real-questions.ts",
     "db:seed:rubrics": "tsx prisma/seed-rubrics.ts",
+    "db:seed:global": "tsx prisma/seed-global-competencies.ts",
     "db:grant-role": "tsx scripts/grant-platform-role.ts",
     "db:studio": "prisma studio",
     "test": "vitest run",

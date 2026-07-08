@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "frameworkName": "UK Civil Service Behaviours",
+  "sourceUrl": "https://www.gov.uk/government/publications/success-profiles/success-profiles-civil-service-behaviours",
+  "licenseNote": "© Crown copyright. Success Profiles: Civil Service behaviours, Cabinet Office. Open Government Licence v3.0. First published 2024-10-09, last updated 2025-01-29.",
+  "items": [
+    {
+      "refLabel": "Seeing the big picture (큰 그림 이해)",
+      "refDefinition": "Understand how your role fits with and supports organisational objectives. Recognise the wider Civil Service priorities and ensure work is in the national interest.",
+      "competencyCodes": ["ORGANIZATIONAL_AWARENESS"]
+    },
+    {
+      "refLabel": "Changing and improving (변화와 개선)",
+      "refDefinition": "Seek out opportunities to create effective change and suggest innovative ideas for improvement. Review ways of working, including seeking and providing feedback.",
+      "competencyCodes": ["INITIATIVE", "CONCEPTUAL_THINKING"]
+    },
+    {
+      "refLabel": "Making effective decisions (효과적 의사결정)",
+      "refDefinition": "Use evidence and knowledge to support accurate, expert decisions and advice. Carefully consider alternative options, implications and risks of decisions.",
+      "competencyCodes": ["ANALYTICAL_THINKING"]
+    },
+    {
+      "refLabel": "Leadership (리더십)",
+      "refDefinition": "Show pride and passion for public service. Create and engage others in delivering a shared vision. Value difference, diversity and inclusion, ensuring fairness and opportunity for all.",
+      "competencyCodes": ["TEAM_LEADERSHIP"]
+    },
+    {
+      "refLabel": "Communicating and influencing (소통과 영향력)",
+      "refDefinition": "Communicate purpose and direction with clarity, integrity and enthusiasm. Respect the needs, responses and opinions of others.",
+      "competencyCodes": ["IMPACT_AND_INFLUENCE"]
+    },
+    {
+      "refLabel": "Working together (협업)",
+      "refDefinition": "Form effective partnerships and relationships with people both internally and externally, from a range of diverse backgrounds, sharing information, resources and support.",
+      "competencyCodes": ["TEAMWORK_COOPERATION", "RELATIONSHIP_BUILDING"]
+    },
+    {
+      "refLabel": "Developing self and others (자신과 타인의 성장)",
+      "refDefinition": "Focus on continuous learning and development for self, others and the organisation as a whole.",
+      "competencyCodes": ["DEVELOPING_OTHERS"]
+    },
+    {
+      "refLabel": "Managing a quality service (품질 관리)",
+      "refDefinition": "Deliver service objectives with professional excellence, expertise and efficiency, taking account of diverse customer needs.",
+      "competencyCodes": ["CUSTOMER_SERVICE_ORIENTATION", "CONCERN_FOR_ORDER"]
+    },
+    {
+      "refLabel": "Delivering at pace (신속한 실행)",
+      "refDefinition": "Take responsibility for delivering timely and quality results with focus and drive.",
+      "competencyCodes": ["ACHIEVEMENT_ORIENTATION"]
+    }
+  ]
+}

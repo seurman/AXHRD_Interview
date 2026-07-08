@@ -1,4 +1,4 @@
-# 현재 상태 (2026-07-07 기준)
+# 현재 상태 (2026-07-08 기준)
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
@@ -12,6 +12,43 @@
 - 소셜 로그인: 카카오 로그인 정상 작동 (단, 이메일 동의항목 미승인 상태라 `kakao_숫자@oauth.hr-in.local` 형태의 임시 이메일로 가입됨 — 실제 이메일 필요해지면 카카오 개발자 콘솔에서 이메일 동의항목 추가 신청 필요)
 
 ## 완료된 주요 기능
+
+- **글로벌 역량사전 (Spencer & Spencer 구조 참고, IRT NCS와 분리)** (2026-07-08):
+  - **근거**: Spencer & Spencer *Competence at Work*(1993)의 6클러스터·20역량 **구조만** 참고해 AXHRD가 정의·L1–L5 루브릭·질문을 자체 저작. 교차검증으로 SHL Great Eight·Korn Ferry 구조 중첩 확인. 영국 Civil Service Behaviours 9항목 **정의 원문**은 OGL v3.0로 인용·출처표시(Crown copyright, gov.uk). 미국 OPM ECQ 2025 개정판은 제외.
+  - **원칙**: 기존 `Competency`/`Question`(NCS 6·IRT)는 **미연결**. 향후 자기평가/360 모듈용 콘텐츠 레이어.
+  - **스키마**: `GlobalCompetencyCluster`, `GlobalCompetency`, `GlobalCompetencyRubricLevel`, `GlobalCompetencyQuestion`, `GlobalCompetencyBenchmarkRef`. 마이그레이션 `20260709010000_add_global_competency_dictionary`.
+  - **시드**: `seed/global-competencies.json`(6군·20역량·역량당 질문 2개=40문항), `seed/global-competency-benchmarks.json`(9항목 → multi-code 펼치면 12행). `npm run db:seed:global` → `prisma/seed-global-competencies.ts`.
+  - **20역량 코드**: ACHIEVEMENT_ORIENTATION, INITIATIVE, CONCERN_FOR_ORDER, INFORMATION_SEEKING, INTERPERSONAL_UNDERSTANDING, CUSTOMER_SERVICE_ORIENTATION, IMPACT_AND_INFLUENCE, RELATIONSHIP_BUILDING, ORGANIZATIONAL_AWARENESS, DEVELOPING_OTHERS, TEAMWORK_COOPERATION, DIRECTIVENESS, TEAM_LEADERSHIP, ANALYTICAL_THINKING, CONCEPTUAL_THINKING, EXPERTISE, SELF_CONTROL, FLEXIBILITY, SELF_CONFIDENCE, ORGANIZATIONAL_COMMITMENT.
+  - **CMS**: `/admin/content` 하단에 `GlobalCompetencyDictionaryPanel` — 군 아코디언·정의/루브릭/질문 편집·벤치마크 OGL 출처. API `/api/admin/global-competencies*` + `logAdminAudit`(`global_competency` 등).
+  - **로컬 반영**:
+    ```
+    cd web
+    npx prisma migrate deploy   # 또는 migrate dev
+    npx prisma generate
+    npm run db:seed:global
+    ```
+
+- **B2B 인터뷰 킷 공유 링크(코호트 배포) + 비가입자 공개 세션 시작** (2026-07-08):
+  - **배경/갭**: 기존 `OrgInterviewKit`(역량별 문항·루브릭 커스터마이즈)은 "게시" 개념 없이 기관 소속(가입 코드로 조인) 사용자에게 항상 즉시 적용되는 구조였다. 코호트별로 나눠 배포하거나, 기관에 가입하지 않은 사람(B2C 후보자·채용 캠페인 대상)이 그 기관의 킷으로 연습해볼 방법이 없었다.
+  - **스키마**: 신규 모델 `OrgInterviewKitShare`(organizationId, slug unique, label, competencies Json[], isActive, expiresAt, createdByUserId) — `OrgInterviewKit` 데이터를 복제하지 않고 그대로 참조하는 "접근 게이트 + 코호트 라벨". `InterviewSession`에 `kitOrganizationId`(세션 시작 시점에 적용된 킷 소유 기관 스냅샷)·`orgKitShareId`(공유 링크 참조, `onDelete: SetNull`) 추가. 마이그레이션 `20260708230000_add_org_interview_kit_share` (수기 작성 — 이 세션 환경에서 `prisma migrate dev`가 네트워크 제약으로 실행 불가했음, 아래 "알려진 제약" 참고).
+  - **세션 시작 로직 리팩터**: `lib/interview/start-session.ts`에 `/api/interview/start`의 로직을 `startInterviewSession(user, body, opts)`로 추출 — `opts.kitOrganizationId`/`allowedCompetencies`/`orgKitShareId`를 넘기면 사용자 본인 소속 기관이 아닌 다른 기관의 킷을 적용해 세션을 만들 수 있다. `/api/interview/start`(본인 세션)와 `/api/kit/[slug]/start`(공유 링크 세션)가 이 함수를 공유.
+  - **루브릭 조회 버그 수정**: `resolveOrgKitRubricForUser(userId, ...)`가 "채점하는 시점의 사용자 소속"으로 커스텀 루브릭을 찾던 방식(공유 링크로 들어온 비가입자에게는 원천적으로 안 맞음)을 `getOrgKitCustomRubric(session.kitOrganizationId, ...)`로 교체 — 세션 시작 시점에 적용된 킷을 그대로 참조(`respond/route.ts`, `interview/[sessionId]/page.tsx`).
+  - **API**: `GET/POST /api/org/interview-kit/share`(목록/발급), `PATCH/DELETE /api/org/interview-kit/share/[id]`(수정·활성화 토글·삭제, 기존 `resolveInterviewKitAccess` 재사용 — ADMIN/슈퍼어드민만), `GET /api/kit/[slug]`(공개 메타데이터), `POST /api/kit/[slug]/start`(공개 세션 시작 — 로그인만 필요, ADMIN 권한·기관 가입 불필요).
+  - **UI**: `components/org/KitShareManager.tsx` — `/org/settings/interview-kit`(기관 ADMIN)와 `/admin/organizations/[id]/interview-kit`(슈퍼어드민)에 장착. 코호트 이름 + 역량 체크 → 링크 발급, 복사·활성화 토글·삭제. `app/kit/[slug]/page.tsx` + `components/kit/KitStartClient.tsx` — 공개 랜딩(기관명·코호트명·역량 카드) → 로그인 사용자는 바로 시작, 비로그인은 `/auth/login?next=/kit/[slug]`로 유도.
+  - **원칙**: 공유 링크는 스냅샷이 아니라 라이브 참조 — 관리자가 킷을 이후 수정하면 이미 배포된 링크에도 반영됨. 삭제해도 이미 생성된 `InterviewSession.orgKitShareId`는 SetNull로 보존(리포트·집계 유지).
+  - **알려진 제약(이 작업 세션 환경)**: 코드 작성은 완료했지만 이 Cowork 세션의 리눅스 실행 샌드박스에서 (1) Prisma 엔진 바이너리 CDN(`binaries.prisma.sh`)이 네트워크 정책상 403으로 막혀 있어 `npx prisma generate`/`migrate dev`를 이 세션에서 실행할 수 없었고, (2) 일부 파일(`interview/start/route.ts` 등 여러 번 연속 수정한 파일)에서 bash 마운트 뷰가 실제 파일 내용과 다르게(스테일/손상) 보이는 현상이 있어 `npx tsc --noEmit`/`npm run build`를 이 세션에서 신뢰성 있게 실행하지 못했다. **로컬(Cursor/터미널)에서 반드시 재검증 필요**:
+    ```
+    cd web
+    npx prisma generate
+    npx prisma migrate dev   # 로컬 DB 반영(또는 위 마이그레이션 폴더가 이미 있으니 dev 재적용)
+    npx tsc --noEmit
+    npm run build
+    ```
+    운영 DB 반영 시(로컬 검증 후):
+    ```
+    cd web
+    npx prisma migrate deploy
+    ```
 
 - **자기발견 인터뷰(Self-Discovery Interview)** (신규 모드 — IRT/채점과 완전 분리):
   - 벤치마킹: BEI(McClelland 1973)의 "구체적 사건 서술" 철학을 평가가 아닌 자기이해 목적으로 적용, McAdams Life Story Interview(인생 챕터·전환점), Reflected Best Self Exercise(가장 나다웠던 순간). 리포트 태깅은 VIA 24강점(6덕목) + Schwartz 10가치 + NCS 6역량 연결 신호, Holland RIASEC는 보조 힌트
