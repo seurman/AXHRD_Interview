@@ -11,6 +11,8 @@ import { LoadingRitual } from "@/components/ux/LoadingRitual";
 import { ClipDynamic } from "@/components/ui/ClipDynamic";
 import { competencyLabel } from "@/lib/labels";
 import { displayQuestionText } from "@/lib/interview/build-question";
+import { ttsCacheKeyForQuestion } from "@/lib/interview/tts-cache-key";
+import { cn } from "@/lib/cn";
 import type {
   AnswerFeedback,
   ChipEvent,
@@ -19,11 +21,21 @@ import type {
   InterviewSessionState,
 } from "@/types";
 
+const VOICE_MODE_STORAGE_KEY = "axhrd_voice_mode";
+
 interface InterviewSessionProps {
   sessionId: string;
   initialState: InterviewSessionState;
   focusCompetency?: string;
   maxItems?: number;
+}
+
+function readVoiceModeEnabled(): boolean {
+  if (typeof window === "undefined") return true;
+  const stored = window.localStorage.getItem(VOICE_MODE_STORAGE_KEY);
+  if (stored === "off") return false;
+  if (stored === "on") return true;
+  return true;
 }
 
 export function InterviewSession({
@@ -37,10 +49,36 @@ export function InterviewSession({
   const [processing, setProcessing] = useState(false);
   const [lastFeedback, setLastFeedback] = useState<AnswerFeedback | null>(null);
   const [ttsStatus, setTtsStatus] = useState<"idle" | "synthesizing" | "playing">("idle");
+  const [voiceModeEnabled, setVoiceModeEnabled] = useState(true);
 
   const ttsCacheRef = useRef<Map<string, string>>(new Map());
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null);
   const pasteDetectedRef = useRef(false);
   const tabSwitchCountRef = useRef(0);
+
+  useEffect(() => {
+    setVoiceModeEnabled(readVoiceModeEnabled());
+  }, []);
+
+  const stopActiveAudio = useCallback(() => {
+    const audio = activeAudioRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+    activeAudioRef.current = null;
+  }, []);
+
+  const toggleVoiceMode = useCallback(() => {
+    setVoiceModeEnabled((prev) => {
+      const next = !prev;
+      window.localStorage.setItem(VOICE_MODE_STORAGE_KEY, next ? "on" : "off");
+      if (!next) {
+        stopActiveAudio();
+        setTtsStatus("idle");
+      }
+      return next;
+    });
+  }, [stopActiveAudio]);
 
   useEffect(() => {
     const onVis = () => {
@@ -52,8 +90,8 @@ export function InterviewSession({
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
-  const prefetchQuestionTts = useCallback(async (questionId: string, text: string) => {
-    if (!text.trim() || ttsCacheRef.current.has(questionId)) return;
+  const prefetchQuestionTts = useCallback(async (cacheKey: string, text: string) => {
+    if (!text.trim() || ttsCacheRef.current.has(cacheKey)) return;
     try {
       const res = await fetch("/api/interview/tts", {
         method: "POST",
@@ -63,20 +101,23 @@ export function InterviewSession({
       });
       if (!res.ok) return;
       const blob = await res.blob();
-      ttsCacheRef.current.set(questionId, URL.createObjectURL(blob));
+      ttsCacheRef.current.set(cacheKey, URL.createObjectURL(blob));
     } catch {
       /* TTS 프리페치 실패는 무시 — 재생 시 재시도 */
     }
-  }, []);
+  }, [sessionId]);
 
-  const playQuestionTts = useCallback(async (questionId: string, text: string) => {
+  const playQuestionTts = useCallback(async (cacheKey: string, text: string) => {
     if (!text.trim()) return;
 
-    const cached = ttsCacheRef.current.get(questionId);
+    stopActiveAudio();
+
+    const cached = ttsCacheRef.current.get(cacheKey);
     if (cached) {
       setTtsStatus("playing");
       try {
         const audio = new Audio(cached);
+        activeAudioRef.current = audio;
         await audio.play();
         await new Promise<void>((resolve) => {
           audio.onended = () => resolve();
@@ -84,6 +125,7 @@ export function InterviewSession({
       } catch {
         /* 재생 실패 */
       } finally {
+        activeAudioRef.current = null;
         setTtsStatus("idle");
       }
       return;
@@ -100,8 +142,9 @@ export function InterviewSession({
       if (res.ok) {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
-        ttsCacheRef.current.set(questionId, url);
+        ttsCacheRef.current.set(cacheKey, url);
         const audio = new Audio(url);
+        activeAudioRef.current = audio;
         setTtsStatus("playing");
         await audio.play();
         await new Promise<void>((resolve) => {
@@ -111,16 +154,25 @@ export function InterviewSession({
     } catch {
       // TTS 없으면 텍스트만 표시
     } finally {
+      activeAudioRef.current = null;
       setTtsStatus("idle");
     }
-  }, []);
+  }, [sessionId, stopActiveAudio]);
 
   useEffect(() => {
     const q = state.currentQuestion;
-    if (!q) return;
+    if (!q || !voiceModeEnabled) return;
     const text = displayQuestionText(q);
-    if (text) void playQuestionTts(q.id, text);
-  }, [state.currentQuestion?.id, playQuestionTts, state.currentQuestion]);
+    if (text) void playQuestionTts(ttsCacheKeyForQuestion(q, text), text);
+  }, [
+    state.currentQuestion?.id,
+    state.currentQuestion?.isFollowUp,
+    state.currentQuestion?.personalizedText,
+    voiceModeEnabled,
+    playQuestionTts,
+  ]);
+
+  useEffect(() => () => stopActiveAudio(), [stopActiveAudio]);
 
   const handleAnswer = async (transcript: string, durationSec?: number) => {
     if (!state.currentQuestion || processing) return;
@@ -151,8 +203,9 @@ export function InterviewSession({
       const data = await res.json();
 
       const nextQuestion = data.nextQuestion as InterviewQuestion | null;
-      if (nextQuestion?.id) {
-        void prefetchQuestionTts(nextQuestion.id, displayQuestionText(nextQuestion));
+      if (nextQuestion?.id && voiceModeEnabled) {
+        const nextText = displayQuestionText(nextQuestion);
+        void prefetchQuestionTts(ttsCacheKeyForQuestion(nextQuestion, nextText), nextText);
       }
 
       if (data.answerFeedback) {
@@ -195,13 +248,14 @@ export function InterviewSession({
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
       <div className="space-y-6">
         <div className="card-luxe p-6">
-          <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted">
-            {ttsStatus === "synthesizing" && (
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted">
+            {voiceModeEnabled && ttsStatus === "synthesizing" && (
               <span className="keep-one-line flex items-center gap-1 text-accent">
                 <IconVolume className="h-3 w-3 animate-pulse" /> 음성 준비 중…
               </span>
             )}
-            {ttsStatus === "playing" && (
+            {voiceModeEnabled && ttsStatus === "playing" && (
               <span className="keep-one-line flex items-center gap-1 text-accent">
                 <IconVolume className="h-3 w-3 animate-pulse" /> 질문 재생 중
               </span>
@@ -245,6 +299,20 @@ export function InterviewSession({
                 <span>{competencyLabel(q.competency)}</span>
               </ClipDynamic>
             )}
+            </div>
+            <button
+              type="button"
+              onClick={toggleVoiceMode}
+              className={cn(
+                "shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition",
+                voiceModeEnabled
+                  ? "border-accent/30 bg-accent/10 text-accent hover:bg-accent/15"
+                  : "border-card-border bg-background text-muted hover:text-foreground"
+              )}
+              aria-pressed={voiceModeEnabled}
+            >
+              {voiceModeEnabled ? "보이스 모드 켜짐" : "보이스 모드 꺼짐"}
+            </button>
           </div>
           <h2 className="text-xl font-semibold leading-relaxed text-foreground">
             {q ? displayQuestionText(q) : "질문을 불러오는 중…"}
@@ -297,6 +365,7 @@ export function InterviewSession({
               onTranscript={handleAnswer}
               disabled={!q}
               allowTextFallback
+              voiceInputEnabled={voiceModeEnabled}
               onPasteDetected={() => {
                 pasteDetectedRef.current = true;
               }}

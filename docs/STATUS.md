@@ -2,6 +2,18 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 자소서 첨삭 + TTS/어드민 (2026-07-09)
+
+- **자소서 첨삭 (ResumeReview)**:
+  - **스키마**: `TargetCompany.jdRequirements`, `ResumeReview` 모델. 마이그레이션 `20260709060000_add_resume_review`.
+  - **JD 확장**: `deriveInterviewStyleFromJD` 동일 호출에 `requirements: { skills, keywords }` 추가 → 세션 시작 시 `jdRequirements` 저장.
+  - **매칭**: `lib/interview/resume-review.ts` — `matchKeywords`(코드), `generateResumeReviewNarrative`(Gemini 1회, 버튼 클릭 시만).
+  - **API**: `POST /api/resume/review`, `GET /api/resume/review/[id]` (rate-limit 5/min).
+  - **UI**: `/interview/setup` 「자소서 첨삭 받기」, `/resume-review` 허브, `/resume-review/[id]` 4단 리포트 + 「이 역량으로 면접 시작」 CTA. 내비 「면접 준비 ▾」에 자소서 첨삭.
+- **TTS 꼬리질문 버그**: 클라이언트 TTS 캐시 키를 `questionId+followup+텍스트`로 분리 (`lib/interview/tts-cache-key.ts`). 보이스 모드 ON/OFF 토글(`axhrd_voice_mode`).
+- **슈퍼어드민 면접 로그**: `/admin/sessions`, `/admin/sessions/[sessionId]` — 응답·꼬리질문·무결성 신호·IRT JSON.
+- **운영 DB**: `cd web && npx prisma migrate deploy` (위 마이그레이션 포함).
+
 ## 최근 작업 — 한글 줄바꿈 (2026-07-09)
 
 - **동적 텍스트 말줄임**: `.clip-dynamic` + `ClipDynamic` 컴포넌트 — 사용자명·기관명·페르소나 라벨 등 `title` 툴팁.

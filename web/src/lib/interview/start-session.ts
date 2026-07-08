@@ -142,6 +142,7 @@ export async function startInterviewSession(
   }
   let interviewStyle: CompanyContext["interviewStyle"] = companyContext.interviewStyle;
   let resolvedSize: CompanySizeCode = companyContext.size;
+  let jdRequirements: { skills: string[]; keywords: string[] } | null = null;
   if (!opts.demoMode && trimmedJdText) {
     const derived = await deriveInterviewStyleFromJD({
       jdText: trimmedJdText,
@@ -150,6 +151,7 @@ export async function startInterviewSession(
     if (derived) {
       interviewStyle = derived.interviewStyle;
       if (derived.companySize) resolvedSize = derived.companySize;
+      jdRequirements = derived.requirements;
     }
   } else if (existingPlan?.targetCompany?.interviewStyle) {
     interviewStyle = existingPlan.targetCompany.interviewStyle as CompanyContext["interviewStyle"];
@@ -166,6 +168,7 @@ export async function startInterviewSession(
         size: resolvedSize,
         interviewStyle,
         persona,
+        jdRequirements: jdRequirements ?? undefined,
         enrichedAt: new Date(),
       },
     });
@@ -179,6 +182,7 @@ export async function startInterviewSession(
         size: resolvedSize,
         interviewStyle,
         persona,
+        jdRequirements: jdRequirements ?? undefined,
         enrichedAt: new Date(),
       },
     });

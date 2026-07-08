@@ -26,6 +26,9 @@ export default async function AdminAuditPage() {
           <Link href="/admin/users" className="text-accent hover:underline">
             ADMIN 권한 부여 →
           </Link>
+          <Link href="/admin/sessions" className="text-accent hover:underline">
+            면접 세션 로그 →
+          </Link>
           <Link href="/admin/content" className="text-accent hover:underline">
             문항 뱅크 →
           </Link>

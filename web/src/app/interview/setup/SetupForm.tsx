@@ -43,6 +43,7 @@ export function SetupForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
+  const [reviewLoading, setReviewLoading] = useState(false);
   const [parsingFile, setParsingFile] = useState(false);
   const [industry, setIndustry] = useState<string>("");
   const [companySize, setCompanySize] = useState<CompanySizeCode>("MID");
@@ -282,6 +283,43 @@ export function SetupForm({
     } catch (e) {
       alert(e instanceof Error ? e.message : "면접 시작에 실패했습니다.");
       setLoading(false);
+    }
+  };
+
+  const requestResumeReview = async () => {
+    const resumeText = manualText.trim() || fileResumeText;
+    if (resumeText.length < 20) {
+      alert(s.resumeReview.needResume);
+      return;
+    }
+    if (!industry) {
+      alert(s.selectIndustry);
+      return;
+    }
+
+    setReviewLoading(true);
+    try {
+      const res = await fetch("/api/resume/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeText,
+          resumeFileName: uploadedFileName,
+          industry,
+          jobRole,
+          jdText,
+          jdUrl: jdUrl.trim() || undefined,
+          companyName,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? "첨삭 생성 실패");
+      }
+      router.push(`/resume-review/${data.id}`);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "첨삭 생성에 실패했습니다.");
+      setReviewLoading(false);
     }
   };
 
@@ -575,6 +613,20 @@ export function SetupForm({
             파일 대신 텍스트로 직접 입력
           </button>
         )}
+        <button
+          type="button"
+          onClick={requestResumeReview}
+          disabled={reviewLoading || loading || parsingFile || parsingJdFile || !industry}
+          className="btn-secondary w-full py-2.5 text-sm"
+        >
+          {reviewLoading ? (
+            <>
+              <IconLoader /> {s.resumeReview.preparing}
+            </>
+          ) : (
+            s.resumeReview.button
+          )}
+        </button>
       </section>
 
       <button

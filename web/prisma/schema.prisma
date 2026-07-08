@@ -173,6 +173,7 @@ model User {
   profile         UserProfile?
   targetCompanies TargetCompany[]
   resumes         Resume[]
+  resumeReviews   ResumeReview[]
   sessions        InterviewSession[]
   competencyLogs  CompetencySnapshot[]
   interviewPlans  InterviewPlan[]
@@ -283,11 +284,14 @@ model TargetCompany {
   /** 산업군+직무를 합쳐 결정한 지원자 페르소나 { id, name, description, toneHint, focusCompetencies }
    *  — 채점에는 영향 없음, 화면 뱃지·리포트 코칭 문구 전용 (lib/interview/persona-archetype.ts) */
   persona      Json?
+  /** JD 원문에서 뽑은 요구 스킬/키워드 — deriveInterviewStyleFromJD 1회 호출 결과 */
+  jdRequirements Json?     // { skills: string[], keywords: string[] }
   enrichedAt   DateTime?
   createdAt    DateTime    @default(now())
 
-  sessions InterviewSession[]
-  plans    InterviewPlan[]
+  sessions       InterviewSession[]
+  plans          InterviewPlan[]
+  resumeReviews  ResumeReview[]
 
   @@index([userId])
 }
@@ -306,8 +310,35 @@ model Resume {
 
   sessions InterviewSession[]
   plans    InterviewPlan[]
+  reviews  ResumeReview[]
 
   @@index([userId])
+}
+
+/** 자소서 첨삭 리포트 — 공고 대사(있으면) 또는 산업군/직무 프리셋(없으면) 기준 */
+model ResumeReview {
+  id                String         @id @default(cuid())
+  userId            String
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeId          String
+  resume            Resume         @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  targetCompanyId   String?
+  targetCompany     TargetCompany? @relation(fields: [targetCompanyId], references: [id], onDelete: SetNull)
+  /** "jd" | "industry_preset" */
+  matchSource       String
+  overallSummary    String         @db.Text
+  /** [{ quote, issue, suggestion }] */
+  paragraphFeedback Json
+  /** { matchScore, matched: string[], missing: string[] } */
+  jdMatch           Json
+  /** [{ gapLabel, suggestion }] */
+  improvementPlan   Json
+  /** NCS 역량 코드 — 다음 모의면접 추천에 사용 */
+  suggestedCompetencies Json       @default("[]")
+  createdAt         DateTime       @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([resumeId])
 }
 
 // ── Interview plan (역량별 진행 트랙) ──

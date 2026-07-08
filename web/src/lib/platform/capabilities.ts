@@ -17,6 +17,7 @@ export type CapabilityId =
   | "product.dashboard"
   | "product.discover"
   | "product.interview"
+  | "product.resume_review"
   | "product.practice"
   | "product.profile"
   | "tenant.cohort"
@@ -29,6 +30,7 @@ export type CapabilityId =
   | "platform.demo"
   | "platform.subscriptions"
   | "platform.audit"
+  | "platform.sessions"
   | "platform.benchmark";
 
 export type CapabilityDef = {
@@ -70,6 +72,15 @@ export const CAPABILITY_REGISTRY: Record<CapabilityId, CapabilityDef> = {
     descriptionKo: "모의면접 세션",
     href: "/interview/setup",
     designNote: "자소서 근거 인용 · 세션당 1회 꼬리질문 · STAR 인용 채점",
+  },
+  "product.resume_review": {
+    id: "product.resume_review",
+    category: "product",
+    labelKo: "자소서 첨삭",
+    labelEn: "Resume review",
+    descriptionKo: "공고 대사·첨삭 리포트",
+    href: "/resume-review",
+    designNote: "JD/프리셋 대사 → 부족 역량을 모의면접으로 이어짐",
   },
   "product.practice": {
     id: "product.practice",
@@ -179,6 +190,15 @@ export const CAPABILITY_REGISTRY: Record<CapabilityId, CapabilityDef> = {
     href: "/admin/audit",
     designNote: "CMS 변경 감사·롤백",
   },
+  "platform.sessions": {
+    id: "platform.sessions",
+    category: "platform_ops",
+    labelKo: "면접 세션",
+    labelEn: "Interview sessions",
+    descriptionKo: "실행 면접 로그·응답 DB",
+    href: "/admin/sessions",
+    designNote: "후보 면접 실행 기록·응답 원문 조회",
+  },
   "platform.benchmark": {
     id: "platform.benchmark",
     category: "platform_ops",
@@ -215,6 +235,7 @@ export const ROLE_CAPABILITY_MATRIX: Record<PlatformRoleKey, CapabilityId[]> = {
     "product.dashboard",
     "product.discover",
     "product.interview",
+    "product.resume_review",
     "product.practice",
     "product.profile",
     "platform.demo",
@@ -223,6 +244,7 @@ export const ROLE_CAPABILITY_MATRIX: Record<PlatformRoleKey, CapabilityId[]> = {
     "product.dashboard",
     "product.discover",
     "product.interview",
+    "product.resume_review",
     "product.practice",
     "product.profile",
     "platform.content",
@@ -231,6 +253,7 @@ export const ROLE_CAPABILITY_MATRIX: Record<PlatformRoleKey, CapabilityId[]> = {
     "product.dashboard",
     "product.discover",
     "product.interview",
+    "product.resume_review",
     "product.practice",
     "product.profile",
     "tenant.cohort",
@@ -241,6 +264,7 @@ export const ROLE_CAPABILITY_MATRIX: Record<PlatformRoleKey, CapabilityId[]> = {
     "product.dashboard",
     "product.discover",
     "product.interview",
+    "product.resume_review",
     "product.practice",
     "product.profile",
     "tenant.cohort",
@@ -249,6 +273,7 @@ export const ROLE_CAPABILITY_MATRIX: Record<PlatformRoleKey, CapabilityId[]> = {
     "product.dashboard",
     "product.discover",
     "product.interview",
+    "product.resume_review",
     "product.practice",
     "product.profile",
   ],

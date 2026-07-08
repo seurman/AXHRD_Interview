@@ -7,6 +7,8 @@ import { cn } from "@/lib/cn";
 interface VoiceRecorderProps {
   onTranscript: (text: string, durationSec?: number) => void;
   disabled?: boolean;
+  /** false면 마이크 UI 없이 텍스트 입력만 제공 */
+  voiceInputEnabled?: boolean;
   /** 음성 인식 실패 시 직접 입력 폴백 */
   allowTextFallback?: boolean;
   /** 텍스트 붙여넣기 감지(채점 차단 없음) */
@@ -29,6 +31,7 @@ function speechErrorMessage(code: string): string {
 export function VoiceRecorder({
   onTranscript,
   disabled,
+  voiceInputEnabled = true,
   allowTextFallback = true,
   onPasteDetected,
 }: VoiceRecorderProps) {
@@ -36,7 +39,7 @@ export function VoiceRecorder({
   const [transcript, setTranscript] = useState("");
   const [supported, setSupported] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showTextInput, setShowTextInput] = useState(false);
+  const [showTextInput, setShowTextInput] = useState(!voiceInputEnabled);
   const [textDraft, setTextDraft] = useState("");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
@@ -49,6 +52,16 @@ export function VoiceRecorder({
   }, [transcript]);
 
   useEffect(() => {
+    setShowTextInput(!voiceInputEnabled);
+    if (!voiceInputEnabled) {
+      setListening(false);
+      setError(null);
+    }
+  }, [voiceInputEnabled]);
+
+  useEffect(() => {
+    if (!voiceInputEnabled) return;
+
     const SR =
       typeof window !== "undefined"
         ? window.SpeechRecognition || window.webkitSpeechRecognition
@@ -104,7 +117,7 @@ export function VoiceRecorder({
     };
 
     recognitionRef.current = recognition;
-  }, []);
+  }, [voiceInputEnabled]);
 
   const submitText = useCallback(
     (text: string, durationSec?: number) => {
@@ -158,6 +171,21 @@ export function VoiceRecorder({
   const submitDraft = () => {
     submitText(textDraft);
   };
+
+  if (!voiceInputEnabled) {
+    return (
+      <div className="space-y-4">
+        <p className="text-center text-sm text-muted">텍스트로 답변을 입력해 주세요.</p>
+        <TextFallback
+          value={textDraft}
+          onChange={setTextDraft}
+          onSubmit={submitDraft}
+          disabled={disabled}
+          onPasteDetected={onPasteDetected}
+        />
+      </div>
+    );
+  }
 
   if (!supported) {
     return (

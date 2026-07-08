@@ -8,12 +8,13 @@ export type NavLabelKey =
   | "demo"
   | "users"
   | "audit"
+  | "sessions"
   | "orgApprove"
   | "orgBenchmark"
   | "subscriptions"
   | "permissions";
 
-export type PrepareLabelKey = "interview" | "discover" | "cards";
+export type PrepareLabelKey = "interview" | "discover" | "cards" | "resumeReview";
 
 export type AdminSectionKey = "content" | "tenants" | "security" | "billing";
 
@@ -41,6 +42,12 @@ const PLATFORM_NAV_ORDER: AdminNavItem[] = [
   },
   { href: "/admin/users", labelKey: "users", capability: "platform.users", section: "security" },
   {
+    href: "/admin/sessions",
+    labelKey: "sessions",
+    capability: "platform.sessions",
+    section: "security",
+  },
+  {
     href: "/admin/permissions",
     labelKey: "permissions",
     capability: "platform.permissions",
@@ -59,6 +66,7 @@ const ADMIN_SECTION_ORDER: AdminSectionKey[] = ["content", "tenants", "security"
 
 const PREPARE_HREFS: { href: string; labelKey: PrepareLabelKey; capability: CapabilityId }[] = [
   { href: "/interview/setup", labelKey: "interview", capability: "product.interview" },
+  { href: "/resume-review", labelKey: "resumeReview", capability: "product.resume_review" },
   { href: "/discover", labelKey: "discover", capability: "product.discover" },
   { href: "/practice/swipe", labelKey: "cards", capability: "product.practice" },
 ];

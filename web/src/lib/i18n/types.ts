@@ -16,6 +16,7 @@ export type Dictionary = {
       prepare: string;
       discover: string;
       interview: string;
+      resumeReview: string;
       cards: string;
       profile: string;
     };
@@ -24,6 +25,7 @@ export type Dictionary = {
       prepare: string;
       discover: string;
       interview: string;
+      resumeReview: string;
       cards: string;
       profile: string;
     };
@@ -38,6 +40,7 @@ export type Dictionary = {
       demo: string;
       users: string;
       audit: string;
+      sessions: string;
       orgApprove: string;
       saasAdmin: string;
       orgBenchmark: string;
@@ -252,6 +255,7 @@ export type Dictionary = {
     persona: { eyebrow: string };
     competency: { title: string; hint: string; plan: string; recommended: string; done: string; inProgress: string; notStarted: string };
     resume: { title: string; hint: string; upload: string; parsing: string; manual: string; placeholder: string };
+    resumeReview: { button: string; preparing: string; needResume: string };
     start: string;
     preparing: string;
     selectIndustry: string;
