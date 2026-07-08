@@ -1,4 +1,4 @@
-const CACHE = "axhrd-shell-v2";
+const CACHE = "axhrd-shell-v3";
 const OFFLINE_SHELL = ["/manifest.json", "/icons/icon-192.svg", "/icons/icon-512.svg"];
 
 self.addEventListener("install", (event) => {
@@ -14,9 +14,24 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) =>
+        Promise.all(
+          keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)),
+        ),
+      )
+      .then(async () => {
+        const cache = await caches.open(CACHE);
+        const home = await cache.match("/");
+        if (home) await cache.delete("/");
+      })
       .then(() => self.clients.claim()),
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    void self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {
@@ -26,17 +41,9 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // 홈(/)은 네트워크 우선 — 히어로 프리뷰 등 최신 UI가 캐시에 가려지지 않게
+  // 홈 HTML은 절대 캐시하지 않음 — 구버전 PWA 셸이 히어로 UI를 가리는 문제 방지
   if (url.pathname === "/") {
-    event.respondWith(
-      fetch(request)
-        .then((res) => {
-          const copy = res.clone();
-          void caches.open(CACHE).then((cache) => cache.put(request, copy));
-          return res;
-        })
-        .catch(() => caches.match(request)),
-    );
+    event.respondWith(fetch(request));
     return;
   }
 

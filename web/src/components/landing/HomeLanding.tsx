@@ -54,7 +54,7 @@ export function HomeLanding() {
         </div>
 
         <div className="lp-shell lp-hero-grid">
-          <div className="lp-hero-copy">
+          <div className="lp-hero-copy lp-hero-copy--intro">
             <p className="lp-kicker">{h.hero.eyebrow}</p>
             <p className="lp-brand">{h.hero.brand}</p>
             <h1 className="lp-display">
@@ -63,6 +63,11 @@ export function HomeLanding() {
               <em className="lp-display-em">{h.hero.titleHighlight}</em>
             </h1>
             <p className="lp-lead">{h.hero.subtitle}</p>
+          </div>
+
+          <LandingProductPreview />
+
+          <div className="lp-hero-copy lp-hero-copy--actions">
             <ul className="lp-bullets">
               {h.hero.bullets.map((b) => (
                 <li key={b}>
@@ -83,8 +88,6 @@ export function HomeLanding() {
               </Link>
             </div>
           </div>
-
-          <LandingProductPreview />
         </div>
       </section>
 

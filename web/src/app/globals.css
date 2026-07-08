@@ -847,14 +847,46 @@ body {
   position: relative;
   z-index: 2;
   display: grid;
-  gap: 2.75rem;
+  gap: 2rem;
   align-items: center;
+  grid-template-areas:
+    "intro"
+    "visual"
+    "actions";
+}
+
+.lp-hero-copy--intro {
+  grid-area: intro;
+}
+
+.lp-hero-visual {
+  grid-area: visual;
+}
+
+.lp-hero-copy--actions {
+  grid-area: actions;
+}
+
+.lp-hero-copy--actions .lp-bullets {
+  margin-top: 0;
 }
 
 @media (min-width: 960px) {
   .lp-hero-grid {
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-    gap: 3.25rem;
+    grid-template-areas:
+      "intro visual"
+      "actions visual";
+    gap: 2rem 3.25rem;
+    align-items: start;
+  }
+
+  .lp-hero-copy--actions .lp-bullets {
+    margin-top: 1.75rem;
+  }
+
+  .lp-hero-visual {
+    align-self: center;
   }
 }
 
@@ -1377,13 +1409,18 @@ body:has(.lp) .header-premium .lang-switch {
 }
 
 @media (max-width: 959px) {
+  .lp-hero {
+    min-height: auto;
+    padding: 3rem 0 3.25rem;
+  }
+
   .lp-hero-visual {
-    margin-top: 0.5rem;
+    margin-top: 0;
   }
 
   .lp-product-stage {
-    min-height: 430px;
-    max-width: min(100%, 22rem);
+    min-height: 380px;
+    max-width: min(100%, 20rem);
   }
 
   .lp-product-frame--main {
