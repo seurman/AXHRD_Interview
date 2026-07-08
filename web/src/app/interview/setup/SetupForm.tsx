@@ -48,6 +48,10 @@ export function SetupForm({
   const [companySize, setCompanySize] = useState<CompanySizeCode>("MID");
   const [companyName, setCompanyName] = useState("");
   const [jdText, setJdText] = useState("");
+  const [jdUrl, setJdUrl] = useState("");
+  const [jdUrlStatus, setJdUrlStatus] = useState<string | null>(null);
+  const [jdUrlError, setJdUrlError] = useState<string | null>(null);
+  const [fetchingJdUrl, setFetchingJdUrl] = useState(false);
   const [jdFileName, setJdFileName] = useState<string | null>(null);
   const [jdFileError, setJdFileError] = useState<string | null>(null);
   const [parsingJdFile, setParsingJdFile] = useState(false);
@@ -202,6 +206,36 @@ export function SetupForm({
     }
   };
 
+  const fetchJdFromUrl = async () => {
+    const url = jdUrl.trim();
+    if (!url) {
+      setJdUrlError(s.jd.urlRequired);
+      return;
+    }
+    setFetchingJdUrl(true);
+    setJdUrlError(null);
+    setJdUrlStatus(null);
+    try {
+      const res = await fetch("/api/jd/fetch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to fetch JD");
+      setJdText(typeof data.text === "string" ? data.text : "");
+      setShowJdManualInput(true);
+      setJdUrlStatus(
+        `${s.jd.urlSuccess}${data.title ? ` · ${data.title}` : ""} (${data.chars ?? data.text?.length ?? 0}자)`,
+      );
+      if (typeof data.url === "string" && data.url !== url) setJdUrl(data.url);
+    } catch (e) {
+      setJdUrlError(e instanceof Error ? e.message : "채용공고를 가져오지 못했습니다.");
+    } finally {
+      setFetchingJdUrl(false);
+    }
+  };
+
   const startInterview = async () => {
     if (!industry) {
       alert(s.selectIndustry);
@@ -226,6 +260,7 @@ export function SetupForm({
           planId,
           focusCompetency,
           jdText,
+          jdUrl: jdUrl.trim() || undefined,
         }),
       });
 
@@ -310,6 +345,37 @@ export function SetupForm({
 
         <div className="space-y-2">
           <p className="text-xs leading-relaxed text-muted">{s.jd.hint}</p>
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-foreground">{s.jd.urlLabel}</label>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                type="url"
+                value={jdUrl}
+                onChange={(e) => {
+                  setJdUrl(e.target.value);
+                  setJdUrlError(null);
+                  setJdUrlStatus(null);
+                }}
+                placeholder={s.jd.urlPlaceholder}
+                className="input-luxe min-w-0 flex-1 text-sm"
+                disabled={fetchingJdUrl}
+              />
+              <button
+                type="button"
+                onClick={() => void fetchJdFromUrl()}
+                disabled={fetchingJdUrl || !jdUrl.trim()}
+                className="btn-secondary shrink-0 px-4 py-2 text-sm disabled:opacity-50"
+              >
+                {fetchingJdUrl ? s.jd.urlFetching : s.jd.urlFetch}
+              </button>
+            </div>
+            {jdUrlStatus && <p className="text-sm text-success">✓ {jdUrlStatus}</p>}
+            {jdUrlError && (
+              <p className="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+                {jdUrlError}
+              </p>
+            )}
+          </div>
           <label
             className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed p-5 transition ${
               parsingJdFile

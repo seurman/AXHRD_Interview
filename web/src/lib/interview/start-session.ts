@@ -37,6 +37,8 @@ export type StartSessionBody = {
   planId?: string;
   focusCompetency?: string;
   jdText?: string;
+  /** 채용공고 URL — jdText가 짧거나 비어 있으면 서버에서 본문을 가져온다 */
+  jdUrl?: string;
   companySize?: string;
 };
 
@@ -89,6 +91,7 @@ export async function startInterviewSession(
     planId,
     focusCompetency,
     jdText,
+    jdUrl: jdUrlBody,
     companySize,
   } = body;
 
@@ -124,7 +127,15 @@ export async function startInterviewSession(
       })
     : null;
 
-  const trimmedJdText: string = typeof jdText === "string" ? jdText.trim() : "";
+  const trimmedJdTextInput: string = typeof jdText === "string" ? jdText.trim() : "";
+  const jdUrl = typeof jdUrlBody === "string" ? jdUrlBody.trim() : "";
+
+  let trimmedJdText = trimmedJdTextInput;
+  if ((!trimmedJdText || trimmedJdText.length < 40) && jdUrl) {
+    const { resolveJdText } = await import("@/lib/company/fetch-jd-url");
+    const resolved = await resolveJdText({ jdText: trimmedJdTextInput, jdUrl });
+    if (resolved.text) trimmedJdText = resolved.text;
+  }
   let interviewStyle: CompanyContext["interviewStyle"] = companyContext.interviewStyle;
   let resolvedSize: CompanySizeCode = companyContext.size;
   if (trimmedJdText) {
