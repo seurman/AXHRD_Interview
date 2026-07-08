@@ -681,3 +681,407 @@ body {
   }
 }
 
+/* ── Marketing landing (Greenhouse-style full-bleed) ── */
+.landing-page {
+  margin: 0;
+  color: var(--color-foreground);
+}
+
+.landing-shell {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 72rem;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .landing-shell {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.landing-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.landing-eyebrow--on-dark {
+  color: rgb(199 210 254);
+}
+
+.landing-brand {
+  margin-top: 1rem;
+  font-size: clamp(2.75rem, 8vw, 5.5rem);
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  color: #fff;
+  animation: landing-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.landing-h1 {
+  margin-top: 1.25rem;
+  max-width: 18ch;
+  font-size: clamp(1.75rem, 4.2vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.18;
+  color: #fff;
+  animation: landing-rise 0.95s 0.08s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.landing-h1-accent {
+  color: #c7d2fe;
+}
+
+.landing-h2 {
+  margin-top: 0.75rem;
+  font-size: clamp(1.65rem, 3vw, 2.35rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  color: var(--color-foreground);
+}
+
+.landing-h2--on-dark {
+  color: #fff;
+}
+
+.landing-lede {
+  margin-top: 0.85rem;
+  max-width: 40rem;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: var(--color-muted);
+}
+
+.landing-hero {
+  position: relative;
+  isolation: isolate;
+  min-height: min(92vh, 820px);
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  background: #0b1224;
+}
+
+.landing-hero-img {
+  z-index: 0;
+  transform: scale(1.04);
+  animation: landing-kenburns 18s ease-out forwards;
+}
+
+.landing-hero-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(105deg, rgb(8 14 32 / 0.88) 0%, rgb(8 14 32 / 0.62) 42%, rgb(8 14 32 / 0.28) 100%),
+    linear-gradient(0deg, rgb(8 14 32 / 0.72) 0%, transparent 48%);
+}
+
+.landing-hero-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 5rem 1.25rem 4.5rem;
+}
+
+@media (min-width: 640px) {
+  .landing-hero-inner {
+    padding: 6.5rem 2rem 5.5rem;
+  }
+}
+
+.landing-hero-sub {
+  margin-top: 1.25rem;
+  max-width: 28rem;
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: rgb(226 232 255 / 0.88);
+  animation: landing-rise 1s 0.14s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.landing-hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 2rem;
+  animation: landing-rise 1.05s 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.landing-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(255 255 255 / 0.35);
+  background: rgb(255 255 255 / 0.06);
+  padding: 0.95rem 1.6rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  backdrop-filter: blur(8px);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.landing-btn-ghost:hover {
+  background: rgb(255 255 255 / 0.12);
+  border-color: rgb(255 255 255 / 0.55);
+}
+
+.landing-proof {
+  border-bottom: 1px solid var(--color-card-border);
+  background: #fff;
+  padding: 3.5rem 0;
+}
+
+.landing-proof-title {
+  margin-top: 0.75rem;
+  max-width: 36rem;
+  font-size: clamp(1.25rem, 2.2vw, 1.65rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  color: var(--color-foreground);
+}
+
+.landing-proof-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.5rem;
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.landing-proof-list li {
+  position: relative;
+  padding-left: 0.9rem;
+}
+
+.landing-proof-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.45em;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 9999px;
+  background: var(--color-primary);
+}
+
+.landing-proof-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+  max-width: 36rem;
+}
+
+.landing-proof-stat-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--color-primary);
+}
+
+.landing-proof-stat-label {
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.landing-section {
+  padding: 5rem 0;
+}
+
+.landing-section--muted {
+  background: linear-gradient(180deg, #f4f6fc 0%, #eef1fa 100%);
+}
+
+.landing-feature {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  border-radius: 1.25rem;
+  border: 1px solid var(--color-card-border);
+  background: #fff;
+  padding: 1.75rem;
+  box-shadow: 0 10px 40px -28px rgb(16 26 51 / 0.35);
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+.landing-feature:hover {
+  border-color: rgb(47 95 238 / 0.28);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 44px -28px rgb(47 95 238 / 0.35);
+}
+
+.landing-feature-icon {
+  display: flex;
+  height: 2.75rem;
+  width: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.85rem;
+  border: 1px solid rgb(47 95 238 / 0.18);
+  background: rgb(47 95 238 / 0.06);
+  color: var(--color-primary);
+}
+
+.landing-chip {
+  border-radius: 9999px;
+  border: 1px solid var(--color-card-border);
+  background: #f7f8fc;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.landing-spotlight {
+  padding: 5rem 0;
+  background: #fff;
+}
+
+.landing-spotlight-grid {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .landing-spotlight-grid {
+    grid-template-columns: 1.05fr 1fr;
+    gap: 4rem;
+  }
+}
+
+.landing-spotlight-photo {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  box-shadow: 0 28px 60px -36px rgb(16 26 51 / 0.55);
+}
+
+.landing-value {
+  height: 100%;
+  border-radius: 1.15rem;
+  border: 1px solid var(--color-card-border);
+  background: #fff;
+  padding: 1.5rem;
+}
+
+.landing-value-icon {
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgb(47 95 238 / 0.18);
+  background: rgb(47 95 238 / 0.07);
+  color: var(--color-primary);
+}
+
+.landing-trust-badge {
+  display: inline-flex;
+  border-radius: 9999px;
+  border: 1px solid rgb(47 95 238 / 0.18);
+  background: #fff;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.landing-enterprise {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #312e81 100%);
+  padding: 5rem 0;
+}
+
+.landing-enterprise-grid {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .landing-enterprise-grid {
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 3.5rem;
+  }
+}
+
+.landing-enterprise-photo {
+  position: relative;
+  aspect-ratio: 5 / 4;
+  overflow: hidden;
+  border-radius: 1.35rem;
+  box-shadow: 0 24px 50px -28px rgb(0 0 0 / 0.65);
+  border: 1px solid rgb(255 255 255 / 0.12);
+}
+
+.landing-closing {
+  padding: 5.5rem 0 6rem;
+  background: linear-gradient(180deg, #fbfcfe 0%, #eef2ff 100%);
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes landing-kenburns {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-brand,
+  .landing-h1,
+  .landing-hero-sub,
+  .landing-hero-cta,
+  .landing-hero-img {
+    animation: none;
+  }
+}
+
+/* Non-marketing routes keep the previous constrained canvas */
+.app-shell {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 72rem;
+  padding: 1.5rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .app-shell {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+}
+
+

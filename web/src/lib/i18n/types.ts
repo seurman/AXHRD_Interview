@@ -68,11 +68,17 @@ export type Dictionary = {
       ctaStart: string;
       ctaStartLoggedIn: string;
       ctaDemo: string;
+      imageAlt: string;
     };
     stats: {
       competencies: string;
       adaptive: string;
       anytime: string;
+    };
+    proof: {
+      eyebrow: string;
+      title: string;
+      items: string[];
     };
     modules: {
       eyebrow: string;
@@ -84,6 +90,14 @@ export type Dictionary = {
       discover: { title: string; desc: string; chips: string[] };
       tracking: { title: string; desc: string; chips: string[] };
       cards: { title: string; desc: string; chips: string[] };
+    };
+    spotlight: {
+      eyebrow: string;
+      title: string;
+      desc: string;
+      points: string[];
+      cta: string;
+      imageAlt: string;
     };
     values: {
       eyebrow: string;
@@ -101,6 +115,7 @@ export type Dictionary = {
       title: string;
       desc: string;
       cta: string;
+      imageAlt: string;
     };
     cta: {
       title: string;

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -8,25 +9,25 @@ import {
   Sparkles,
   Shield,
   Layers,
-  Users,
   ChevronRight,
-  Zap,
   Target,
   TrendingUp,
   Scale,
+  Check,
 } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
+const HERO_IMG =
+  "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=2400&q=80";
+const SPOTLIGHT_IMG =
+  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1600&q=80";
+const ENTERPRISE_IMG =
+  "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1600&q=80";
+
 export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
   const { dict } = useI18n();
   const h = dict.home;
-
-  const stats = [
-    { value: "AX", label: h.stats.competencies },
-    { value: "360°", label: h.stats.adaptive },
-    { value: "Total", label: h.stats.anytime },
-  ];
 
   const features = [
     { icon: Mic2, ...h.features.interview, href: "/interview/setup" },
@@ -42,158 +43,235 @@ export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
     { icon: Scale, ...h.values.ncs },
   ];
 
+  const stats = [
+    { value: "6", label: h.stats.competencies },
+    { value: "IRT", label: h.stats.adaptive },
+    { value: "SaaS", label: h.stats.anytime },
+  ];
+
   return (
-    <div className="space-y-0">
-      <section className="hero-blue relative px-6 py-20 sm:px-12 md:py-28">
-        <div className="relative mx-auto max-w-4xl text-center">
-          <p className="section-eyebrow hero-eyebrow">{h.hero.eyebrow}</p>
-
-          <p className="hero-brand-wordmark mt-4 text-[2.75rem] font-black leading-none tracking-tighter sm:text-6xl lg:text-7xl">
-            {h.hero.brand}
-          </p>
-
-          <h1 className="mt-4 text-3xl font-extrabold leading-[1.2] tracking-tight text-foreground sm:text-4xl lg:text-[2.75rem]">
+    <div className="landing-page">
+      {/* Full-bleed photo hero — Greenhouse-style marketing surface */}
+      <section className="landing-hero">
+        <Image
+          src={HERO_IMG}
+          alt={h.hero.imageAlt}
+          fill
+          priority
+          sizes="100vw"
+          className="landing-hero-img object-cover"
+        />
+        <div className="landing-hero-scrim" aria-hidden />
+        <div className="landing-hero-inner">
+          <p className="landing-eyebrow landing-eyebrow--on-dark">{h.hero.eyebrow}</p>
+          <p className="landing-brand">{h.hero.brand}</p>
+          <h1 className="landing-h1">
             {h.hero.titleLine1}
             <br />
-            <span className="hero-highlight">{h.hero.titleHighlight}</span>
+            <span className="landing-h1-accent">{h.hero.titleHighlight}</span>
           </h1>
-
-          <p className="mx-auto mt-6 max-w-xl text-base leading-[1.75] text-muted sm:text-lg">
-            {h.hero.subtitle}
-          </p>
-
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <Link href={loggedIn ? "/interview/setup" : "/auth/register"} className="btn-primary px-8 py-4 text-base">
+          <p className="landing-hero-sub">{h.hero.subtitle}</p>
+          <div className="landing-hero-cta">
+            <Link
+              href={loggedIn ? "/interview/setup" : "/auth/register"}
+              className="btn-primary px-8 py-4 text-base"
+            >
               {loggedIn ? h.hero.ctaStartLoggedIn : h.hero.ctaStart}
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link href="/demo" className="btn-outline-primary">
+            <Link href="/demo" className="landing-btn-ghost">
               {h.hero.ctaDemo}
             </Link>
           </div>
+        </div>
+      </section>
 
-          <div className="mx-auto mt-14 grid max-w-lg grid-cols-3 gap-3">
+      {/* Proof strip */}
+      <section className="landing-proof">
+        <div className="landing-shell">
+          <p className="landing-eyebrow">{h.proof.eyebrow}</p>
+          <h2 className="landing-proof-title">{h.proof.title}</h2>
+          <ul className="landing-proof-list">
+            {h.proof.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+          <div className="landing-proof-stats">
             {stats.map((s) => (
-              <div key={s.label} className="hero-stat rounded-2xl px-3 py-4">
-                <p className="hero-stat-value text-2xl font-bold">{s.value}</p>
-                <p className="hero-stat-label mt-0.5 text-[0.7rem] font-medium leading-snug">
-                  {s.label}
-                </p>
+              <div key={s.label} className="landing-proof-stat">
+                <p className="landing-proof-stat-value">{s.value}</p>
+                <p className="landing-proof-stat-label">{s.label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-20">
-        <Reveal className="text-center">
-          <p className="section-eyebrow">{h.modules.eyebrow}</p>
-          <h2 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">{h.modules.title}</h2>
-          <p className="mx-auto mt-3 max-w-lg leading-relaxed text-muted">{h.modules.subtitle}</p>
-        </Reveal>
+      {/* Modules */}
+      <section className="landing-section">
+        <div className="landing-shell">
+          <Reveal className="text-center">
+            <p className="landing-eyebrow">{h.modules.eyebrow}</p>
+            <h2 className="landing-h2">{h.modules.title}</h2>
+            <p className="landing-lede mx-auto">{h.modules.subtitle}</p>
+          </Reveal>
 
-        <div className="mt-12 grid gap-5 sm:grid-cols-2">
-          {features.map((f, i) => (
-            <Reveal key={f.title} delay={i * 0.05}>
-              <Link href={f.href} className="feature-card-premium group flex h-full flex-col">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-gold/20 bg-gold/8">
-                    <f.icon className="h-6 w-6 text-gold" />
-                  </div>
-                  <span className="flex items-center gap-1 text-xs font-semibold text-primary opacity-0 transition group-hover:opacity-100">
-                    {dict.common.explore} <ChevronRight className="h-3.5 w-3.5" />
-                  </span>
-                </div>
-                <h3 className="mt-5 text-xl font-bold text-foreground">{f.title}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">{f.desc}</p>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {f.chips.map((chip) => (
-                    <span key={chip} className="stat-chip">
-                      {chip}
+          <div className="mt-14 grid gap-6 sm:grid-cols-2">
+            {features.map((f, i) => (
+              <Reveal key={f.title} delay={i * 0.04}>
+                <Link href={f.href} className="landing-feature group">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="landing-feature-icon">
+                      <f.icon className="h-5 w-5" />
+                    </div>
+                    <span className="flex items-center gap-1 text-xs font-semibold text-primary opacity-0 transition group-hover:opacity-100">
+                      {dict.common.explore} <ChevronRight className="h-3.5 w-3.5" />
                     </span>
-                  ))}
-                </div>
-              </Link>
-            </Reveal>
-          ))}
+                  </div>
+                  <h3 className="mt-5 text-xl font-bold tracking-tight text-foreground">
+                    {f.title}
+                  </h3>
+                  <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">{f.desc}</p>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {f.chips.map((chip) => (
+                      <span key={chip} className="landing-chip">
+                        {chip}
+                      </span>
+                    ))}
+                  </div>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
-      <Reveal>
-        <section className="hero-blue px-8 py-14 sm:px-12">
-          <div className="relative text-center">
-            <p className="section-eyebrow hero-eyebrow">{h.values.eyebrow}</p>
-            <h2 className="mt-3 text-2xl font-bold text-foreground sm:text-3xl">{h.values.title}</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted">
-              {h.values.subtitle}
-            </p>
-            <div className="mx-auto mt-5 flex max-w-2xl flex-wrap justify-center gap-2">
+      {/* Spotlight with photography */}
+      <section className="landing-spotlight">
+        <div className="landing-shell landing-spotlight-grid">
+          <Reveal>
+            <div className="landing-spotlight-photo">
+              <Image
+                src={SPOTLIGHT_IMG}
+                alt={h.spotlight.imageAlt}
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover"
+              />
+            </div>
+          </Reveal>
+          <Reveal delay={0.06}>
+            <div>
+              <p className="landing-eyebrow">{h.spotlight.eyebrow}</p>
+              <h2 className="landing-h2 mt-3">{h.spotlight.title}</h2>
+              <p className="landing-lede mt-4">{h.spotlight.desc}</p>
+              <ul className="mt-8 space-y-3">
+                {h.spotlight.points.map((point) => (
+                  <li key={point} className="flex gap-3 text-sm leading-relaxed text-foreground">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <Check className="h-3 w-3" strokeWidth={3} />
+                    </span>
+                    <span>{point}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href={loggedIn ? "/interview/setup" : "/auth/register"}
+                className="btn-primary mt-10 inline-flex px-7 py-3.5 text-sm"
+              >
+                {h.spotlight.cta}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Values */}
+      <section className="landing-section landing-section--muted">
+        <div className="landing-shell">
+          <Reveal className="text-center">
+            <p className="landing-eyebrow">{h.values.eyebrow}</p>
+            <h2 className="landing-h2">{h.values.title}</h2>
+            <p className="landing-lede mx-auto">{h.values.subtitle}</p>
+            <div className="mx-auto mt-6 flex max-w-2xl flex-wrap justify-center gap-2">
               {h.values.trustBadges.map((badge) => (
-                <span key={badge} className="hero-trust-badge">
+                <span key={badge} className="landing-trust-badge">
                   {badge}
                 </span>
               ))}
             </div>
-          </div>
-          <div className="relative mx-auto mt-10 grid max-w-5xl gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {values.map((v) => (
-              <div
-                key={v.title}
-                className="hero-value-card rounded-2xl p-6 text-center"
-              >
-                <div className="hero-value-icon mx-auto flex h-11 w-11 items-center justify-center rounded-full">
-                  <v.icon className="h-5 w-5" />
+          </Reveal>
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {values.map((v, i) => (
+              <Reveal key={v.title} delay={i * 0.04}>
+                <div className="landing-value">
+                  <div className="landing-value-icon">
+                    <v.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-4 font-semibold text-foreground">{v.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">{v.desc}</p>
                 </div>
-                <h3 className="mt-4 font-semibold text-foreground">{v.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted">{v.desc}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
-          <div className="relative mx-auto mt-8 grid max-w-lg grid-cols-3 gap-3">
+          <div className="mx-auto mt-10 grid max-w-lg grid-cols-3 gap-4">
             {h.values.miniStats.map((s) => (
-              <div key={s.label} className="hero-stat rounded-2xl px-3 py-3">
-                <p className="hero-stat-value text-xl font-bold">{s.value}</p>
-                <p className="hero-stat-label mt-0.5 text-[0.68rem] font-medium leading-snug">
-                  {s.label}
-                </p>
+              <div key={s.label} className="text-center">
+                <p className="text-2xl font-bold tracking-tight text-primary">{s.value}</p>
+                <p className="mt-1 text-[0.7rem] font-medium text-muted">{s.label}</p>
               </div>
             ))}
           </div>
-        </section>
-      </Reveal>
-
-      <section className="py-20">
-        <Reveal>
-          <div className="feature-card-premium flex flex-col items-center gap-8 p-10 sm:flex-row sm:p-12">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-gold/20 bg-gold/8">
-              <Users className="h-8 w-8 text-gold" />
-            </div>
-            <div className="flex-1 text-center sm:text-left">
-              <p className="section-eyebrow">{h.enterprise.eyebrow}</p>
-              <h3 className="mt-2 text-2xl font-bold text-foreground">{h.enterprise.title}</h3>
-              <p className="mt-2 leading-relaxed text-muted">{h.enterprise.desc}</p>
-            </div>
-            <Link href="/org/setup" className="btn-gold shrink-0">
-              {h.enterprise.cta}
-              <Zap className="h-4 w-4" />
-            </Link>
-          </div>
-        </Reveal>
+        </div>
       </section>
 
-      <Reveal>
-        <section className="hero-blue mb-8 px-6 py-16 text-center sm:px-10">
-          <h2 className="text-3xl font-extrabold text-foreground sm:text-4xl">{h.cta.title}</h2>
-          <p className="mx-auto mt-3 max-w-md leading-relaxed text-muted">{h.cta.subtitle}</p>
-          <Link
-            href={loggedIn ? "/dashboard" : "/auth/register"}
-            className="btn-primary mt-8 px-10 py-4 text-base"
-          >
-            {loggedIn ? h.cta.buttonLoggedIn : h.cta.button}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </section>
-      </Reveal>
+      {/* Enterprise band with photo */}
+      <section className="landing-enterprise">
+        <div className="landing-shell landing-enterprise-grid">
+          <Reveal>
+            <div>
+              <p className="landing-eyebrow landing-eyebrow--on-dark">{h.enterprise.eyebrow}</p>
+              <h2 className="landing-h2 landing-h2--on-dark mt-3">{h.enterprise.title}</h2>
+              <p className="mt-4 max-w-xl text-base leading-relaxed text-white/75">
+                {h.enterprise.desc}
+              </p>
+              <Link href="/org/setup" className="btn-gold mt-8 inline-flex">
+                {h.enterprise.cta}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <div className="landing-enterprise-photo">
+              <Image
+                src={ENTERPRISE_IMG}
+                alt={h.enterprise.imageAlt}
+                fill
+                sizes="(max-width: 1024px) 100vw, 42vw"
+                className="object-cover"
+              />
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Closing CTA */}
+      <section className="landing-closing">
+        <div className="landing-shell text-center">
+          <Reveal>
+            <h2 className="landing-h2">{h.cta.title}</h2>
+            <p className="landing-lede mx-auto mt-3">{h.cta.subtitle}</p>
+            <Link
+              href={loggedIn ? "/dashboard" : "/auth/register"}
+              className="btn-primary mt-8 px-10 py-4 text-base"
+            >
+              {loggedIn ? h.cta.buttonLoggedIn : h.cta.button}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Reveal>
+        </div>
+      </section>
     </div>
   );
 }
