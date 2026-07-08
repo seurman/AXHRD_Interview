@@ -59,6 +59,11 @@ export const dictionary: Dictionary = {
       ko: "한국어",
       en: "English",
     },
+    theme: {
+      label: "Theme",
+      light: "Light mode",
+      dark: "Dark mode",
+    },
     explore: "Explore",
     menu: "Menu",
     userSuffix: "",
@@ -73,12 +78,74 @@ export const dictionary: Dictionary = {
         "Universities and companies design interviews on the web; candidates practice on web and mobile. Questions grounded in your resume and your answers — AXHRD i.",
       ctaStart: "Get started",
       ctaStartLoggedIn: "Start interview",
-      imageAlt: "Confident professional portrait",
+      ctaPersonal: "Start as individual",
+      ctaEnterprise: "Talk to us — organizations",
+      imageAlt: "AXHRD product UI preview",
       bullets: [
         "Questions pull only from lines in your resume",
         "One follow-up per session, built only from what you said",
         "Scores arrive next to quotes from your answer",
       ],
+    },
+    preview: {
+      interview: {
+        label: "Structured AI interview",
+        competency: "Communication",
+        level: "L3",
+        question:
+          "In your resume you mentioned improving payment API latency — how did you find the bottleneck?",
+        chips: ["Resume quote", "1 follow-up", "STAR"],
+      },
+      dashboard: {
+        label: "Competency skill tree",
+        rows: [
+          { label: "Communication", pct: 72 },
+          { label: "Problem solving", pct: 58 },
+          { label: "Collaboration", pct: 41 },
+        ],
+      },
+    },
+    gallery: {
+      ariaLabel: "Product screen previews",
+      items: [
+        {
+          kicker: "Interview",
+          title: "Resume-grounded questions",
+          desc: "Structured interview that quotes only your lines",
+          mock: ["L2 · Communication", "Voice ON"],
+        },
+        {
+          kicker: "IRT",
+          title: "Adaptive difficulty",
+          desc: "Next item adjusts to your answers",
+          mock: ["θ +0.4", "L3 → L4"],
+        },
+        {
+          kicker: "Skills",
+          title: "Competency skill tree",
+          desc: "Only measured skills shown honestly",
+          mock: ["6 NCS", "Growth curve"],
+        },
+        {
+          kicker: "Evidence",
+          title: "Evidence-based scoring",
+          desc: "Scores sit next to your answer quotes",
+          mock: ["3 quotes", "Rubric match"],
+        },
+      ],
+    },
+    spotlightVisual: {
+      scoreLabel: "Competency score",
+      score: "3.8",
+      scoreUnit: "/ 5",
+      dimensions: [
+        { label: "Situation", pct: 85 },
+        { label: "Action", pct: 78 },
+        { label: "Result", pct: 72 },
+      ],
+      quote:
+        "Profiling revealed N+1 DB queries; I introduced a cache layer and shipped it.",
+      quoteSource: "Quoted from your answer · Communication L3",
     },
     stats: {
       competencies: "Competency system",
@@ -236,11 +303,17 @@ export const dictionary: Dictionary = {
       hint: "Interview style varies by enterprise, mid-size, startup, or public sector.",
     },
     jd: {
-      hint: "Upload a JD or values statement to tailor tone and focus areas. (optional)",
+      hint: "Add a JD URL, file, or paste to tailor tone and focus areas. (optional)",
       upload: "Upload PDF · Word · TXT",
       parsing: "Extracting text…",
       manual: "Paste text instead",
       placeholder: "Paste job description or values keywords…",
+      urlLabel: "Job posting URL",
+      urlPlaceholder: "https://… public job posting link",
+      urlFetch: "Fetch",
+      urlFetching: "Fetching posting…",
+      urlSuccess: "Job posting text applied",
+      urlRequired: "Please enter a URL.",
     },
     job: { title: "2. Target role" },
     persona: { eyebrow: "Your interview persona" },

@@ -1,6 +1,13 @@
-# 현재 상태 (2026-07-08 기준)
+# 현재 상태 (2026-07-09 기준)
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
+
+## 최근 작업 — UI (2026-07-09)
+
+- **랜딩 히어로/갤러리 스톡 사진 제거** → CSS 제품 UI 프리뷰(면접 세션·역량 스킬 트리·근거 채점 모사) + 메시 그라디언트·오브 비주얼. `LandingProductPreview`, `LandingGalleryTiles`, `LandingSpotlightVisual`.
+- **다크 모드**: `html.dark` 토큰 오버라이드, `ThemeSwitcher`(헤더·LanguageSwitcher 옆), `hr_in_theme` 쿠키 + `POST /api/theme`, FOUC 방지 인라인 스크립트.
+- **히어로 CTA 분기**: 「개인으로 시작하기」+ 「기관 도입 문의」(`/org/setup`) 나란히 배치. i18n `ctaPersonal`/`ctaEnterprise`.
+- 검증: `npx tsc --noEmit` ✓, `npx next build` ✓ (prisma generate는 dev 서버 잠금 시 EPERM 가능).
 
 ## 배포 현황
 
@@ -37,7 +44,7 @@
   - **근거**: Spencer & Spencer *Competence at Work*(1993)의 6클러스터·20역량 **구조만** 참고해 AXHRD가 정의·L1–L5 루브릭·질문을 자체 저작. 교차검증으로 SHL Great Eight·Korn Ferry 구조 중첩 확인. 영국 Civil Service Behaviours 9항목 **정의 원문**은 OGL v3.0로 인용·출처표시(Crown copyright, gov.uk). 미국 OPM ECQ 2025 개정판은 제외.
   - **원칙**: 기존 `Competency`/`Question`(NCS 6·IRT)는 **미연결**. 향후 자기평가/360 모듈용 콘텐츠 레이어.
   - **스키마**: `GlobalCompetencyCluster`, `GlobalCompetency`, `GlobalCompetencyRubricLevel`, `GlobalCompetencyQuestion`, `GlobalCompetencyBenchmarkRef`. 마이그레이션 `20260709010000_add_global_competency_dictionary`.
-  - **시드**: `seed/global-competencies.json`(6군·20역량·역량당 질문 2개=40문항), `seed/global-competency-benchmarks.json`(9항목 → multi-code 펼치면 12행). `npm run db:seed:global` → `prisma/seed-global-competencies.ts`.
+  - **시드**: `seed/global-competencies.json` **v2** — 6군·20역량·**역량당 L1–L5×3=15문항**(총 300)·레벨별 다중 루브릭. `seed/global-competency-benchmarks.json`. `npm run db:seed:global`. 데모 재료화는 pooler용 순차 upsert(interactive `$transaction` 제거).
   - **20역량 코드**: ACHIEVEMENT_ORIENTATION, INITIATIVE, CONCERN_FOR_ORDER, INFORMATION_SEEKING, INTERPERSONAL_UNDERSTANDING, CUSTOMER_SERVICE_ORIENTATION, IMPACT_AND_INFLUENCE, RELATIONSHIP_BUILDING, ORGANIZATIONAL_AWARENESS, DEVELOPING_OTHERS, TEAMWORK_COOPERATION, DIRECTIVENESS, TEAM_LEADERSHIP, ANALYTICAL_THINKING, CONCEPTUAL_THINKING, EXPERTISE, SELF_CONTROL, FLEXIBILITY, SELF_CONFIDENCE, ORGANIZATIONAL_COMMITMENT.
   - **CMS**: `/admin/content` 하단에 `GlobalCompetencyDictionaryPanel` — 군 아코디언·정의/루브릭/질문 편집·벤치마크 OGL 출처. API `/api/admin/global-competencies*` + `logAdminAudit`(`global_competency` 등).
   - **로컬 반영**:

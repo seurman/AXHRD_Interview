@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { LogoutButton } from "./LogoutButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 import { getMobileNavLabel } from "./MainNav";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import type { AdminNavSection, PrepareLabelKey } from "@/lib/platform/nav-registry";
@@ -138,8 +139,9 @@ export function MobileNav({
           </button>
         </div>
 
-        <div className="mb-4">
+        <div className="mb-4 flex items-center gap-2">
           <LanguageSwitcher compact />
+          <ThemeSwitcher compact />
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto text-sm">

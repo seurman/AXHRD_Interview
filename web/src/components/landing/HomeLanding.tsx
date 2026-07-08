@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -17,31 +16,9 @@ import {
 } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
 import { useI18n } from "@/lib/i18n/I18nProvider";
-
-const HERO_MAIN =
-  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1600&q=80";
-const HERO_SIDE =
-  "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1200&q=80";
-const SPOTLIGHT_IMG =
-  "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1600&q=80";
-const GALLERY = [
-  {
-    src: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80",
-    alt: "team collaboration",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80",
-    alt: "campus career",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1200&q=80",
-    alt: "professional interview",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80",
-    alt: "workshop briefing",
-  },
-];
+import { LandingProductPreview } from "@/components/landing/LandingProductPreview";
+import { LandingGalleryTiles } from "@/components/landing/LandingGalleryTiles";
+import { LandingSpotlightVisual } from "@/components/landing/LandingSpotlightVisual";
 
 export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
   const { dict } = useI18n();
@@ -61,11 +38,18 @@ export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
     { icon: Scale, ...h.values.ncs },
   ];
 
+  const personalHref = loggedIn ? "/interview/setup" : "/auth/register";
+  const personalLabel = loggedIn ? h.hero.ctaStartLoggedIn : h.hero.ctaPersonal;
+
   return (
     <div className="lp">
-      {/* Full-viewport branded hero — edge to edge, no inset card */}
       <section className="lp-hero">
         <div className="lp-hero-mesh" aria-hidden />
+        <div className="lp-hero-orbs" aria-hidden>
+          <span className="lp-hero-orb lp-hero-orb--a" />
+          <span className="lp-hero-orb lp-hero-orb--b" />
+          <span className="lp-hero-orb lp-hero-orb--c" />
+        </div>
 
         <div className="lp-shell lp-hero-grid">
           <div className="lp-hero-copy">
@@ -88,49 +72,21 @@ export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
               ))}
             </ul>
             <div className="lp-hero-actions">
-              <Link
-                href={loggedIn ? "/interview/setup" : "/auth/register"}
-                className="lp-btn-primary"
-              >
-                {loggedIn ? h.hero.ctaStartLoggedIn : h.hero.ctaStart}
+              <Link href={personalHref} className="lp-btn-primary">
+                {personalLabel}
                 <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/org/setup" className="lp-btn-ghost">
+                {h.hero.ctaEnterprise}
               </Link>
             </div>
           </div>
 
-          <div className="lp-hero-visual" aria-hidden>
-            <div className="lp-hero-photo lp-hero-photo--a">
-              <Image
-                src={HERO_MAIN}
-                alt=""
-                fill
-                sizes="(max-width: 960px) 90vw, 42vw"
-                priority
-                className="object-cover"
-              />
-            </div>
-            <div className="lp-hero-photo lp-hero-photo--b">
-              <Image
-                src={HERO_SIDE}
-                alt=""
-                fill
-                sizes="(max-width: 960px) 55vw, 22vw"
-                priority
-                className="object-cover"
-              />
-            </div>
-          </div>
+          <LandingProductPreview />
         </div>
       </section>
 
-      {/* Photo strip — real humans, not empty cards */}
-      <section className="lp-gallery">
-        {GALLERY.map((g, i) => (
-          <div key={g.src} className={`lp-gallery-cell lp-gallery-cell--${i + 1}`}>
-            <Image src={g.src} alt={g.alt} fill sizes="25vw" className="object-cover" />
-          </div>
-        ))}
-      </section>
+      <LandingGalleryTiles />
 
       <section className="lp-section">
         <div className="lp-shell">
@@ -180,15 +136,7 @@ export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
       <section className="lp-spotlight">
         <div className="lp-shell lp-spotlight-grid">
           <Reveal>
-            <div className="lp-spotlight-photo">
-              <Image
-                src={SPOTLIGHT_IMG}
-                alt={h.spotlight.imageAlt}
-                fill
-                sizes="(max-width: 1024px) 100vw, 48vw"
-                className="object-cover"
-              />
-            </div>
+            <LandingSpotlightVisual />
           </Reveal>
           <Reveal delay={0.06}>
             <div>
@@ -206,7 +154,7 @@ export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
                 ))}
               </ul>
               <Link
-                href={loggedIn ? "/interview/setup" : "/auth/register"}
+                href={personalHref}
                 className="lp-btn-primary lp-btn-ink mt-8"
               >
                 {h.spotlight.cta}

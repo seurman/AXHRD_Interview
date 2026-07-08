@@ -62,6 +62,11 @@ export type Dictionary = {
       ko: string;
       en: string;
     };
+    theme: {
+      label: string;
+      light: string;
+      dark: string;
+    };
     explore: string;
     menu: string;
     userSuffix: string;
@@ -75,8 +80,40 @@ export type Dictionary = {
       subtitle: string;
       ctaStart: string;
       ctaStartLoggedIn: string;
+      ctaPersonal: string;
+      ctaEnterprise: string;
       imageAlt: string;
       bullets: string[];
+    };
+    preview: {
+      interview: {
+        label: string;
+        competency: string;
+        level: string;
+        question: string;
+        chips: string[];
+      };
+      dashboard: {
+        label: string;
+        rows: { label: string; pct: number }[];
+      };
+    };
+    gallery: {
+      ariaLabel: string;
+      items: {
+        kicker: string;
+        title: string;
+        desc: string;
+        mock: string[];
+      }[];
+    };
+    spotlightVisual: {
+      scoreLabel: string;
+      score: string;
+      scoreUnit: string;
+      dimensions: { label: string; pct: number }[];
+      quote: string;
+      quoteSource: string;
     };
     stats: {
       competencies: string;
@@ -184,7 +221,19 @@ export type Dictionary = {
     subtitle: string;
     industry: { title: string; hint: string; placeholder: string; companyPlaceholder: string };
     companySize: { title: string; hint: string };
-    jd: { hint: string; upload: string; parsing: string; manual: string; placeholder: string };
+    jd: {
+      hint: string;
+      upload: string;
+      parsing: string;
+      manual: string;
+      placeholder: string;
+      urlLabel: string;
+      urlPlaceholder: string;
+      urlFetch: string;
+      urlFetching: string;
+      urlSuccess: string;
+      urlRequired: string;
+    };
     job: { title: string };
     persona: { eyebrow: string };
     competency: { title: string; hint: string; plan: string; recommended: string; done: string; inProgress: string; notStarted: string };

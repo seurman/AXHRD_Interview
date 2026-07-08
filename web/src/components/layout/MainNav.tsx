@@ -6,6 +6,7 @@ import { LogoutButton } from "./LogoutButton";
 import { NavDropdownMenu } from "./NavDropdownMenu";
 import { SaasNavMenu } from "./SaasNavMenu";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import type { AdminNavSection, PrepareLabelKey } from "@/lib/platform/nav-registry";
 
@@ -47,6 +48,7 @@ export function MainNav({
           Pricing
         </Link>
         <LanguageSwitcher />
+        <ThemeSwitcher />
         <Link href="/auth/login" className="nav-pill">
           {c.auth.login}
         </Link>
@@ -124,6 +126,7 @@ export function MainNav({
       />
 
       <LanguageSwitcher />
+      <ThemeSwitcher />
       <LogoutButton variant="nav" label={c.auth.logout} />
     </nav>
   );
