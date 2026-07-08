@@ -376,16 +376,36 @@ export async function startInterviewSession(
     priorTheta[competency] = priorSnapshots[0].theta;
   }
 
-  const irtResult = await initIrtSession({
-    sessionId: session.id,
-    competencies: [competency],
-    itemPool,
-    priorTheta,
-    focusCompetency: competency,
-    mode: "competency",
-    minItems: 2,
-    maxItems: 3,
-  });
+  let irtResult;
+  try {
+    irtResult = await initIrtSession({
+      sessionId: session.id,
+      competencies: [competency],
+      itemPool,
+      priorTheta,
+      focusCompetency: competency,
+      mode: "competency",
+      minItems: 2,
+      maxItems: 3,
+    });
+  } catch (e) {
+    console.error("[start-session] IRT init failed:", e);
+    await prisma.interviewSession.delete({ where: { id: session.id } }).catch(() => {});
+    const prevStatus = progressRow?.status ?? "NOT_STARTED";
+    await prisma.competencyProgress.updateMany({
+      where: { planId: plan.id, competency, status: "IN_PROGRESS" },
+      data: { status: prevStatus },
+    });
+    return {
+      ok: false,
+      status: 503,
+      body: {
+        error:
+          "적응형 면접 엔진을 준비하지 못했습니다. 1분 정도 후 다시 시도해 주세요. (첫 요청은 최대 1분 걸릴 수 있습니다.)",
+        code: "IRT_UNAVAILABLE",
+      },
+    };
+  }
 
   await prisma.interviewSession.update({
     where: { id: session.id },

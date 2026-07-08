@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { synthesizeSpeech } from "@/lib/gemini/tts";
+import { synthesizeSpeechWithMeta } from "@/lib/gemini/tts";
 import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -27,16 +27,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Text required" }, { status: 400 });
   }
 
-  const audio = await synthesizeSpeech(text);
+  const started = Date.now();
+  const { audio, cacheHit } = await synthesizeSpeechWithMeta(text);
+  const elapsedMs = Date.now() - started;
 
   if (!audio) {
     // No API key — return empty so client uses text-only
-    return new NextResponse(null, { status: 204 });
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        "X-TTS-Cache": cacheHit ? "HIT" : "MISS",
+        "X-TTS-Elapsed-Ms": String(elapsedMs),
+      },
+    });
   }
 
   return new NextResponse(audio, {
     headers: {
       "Content-Type": "audio/wav",
+      "X-TTS-Cache": cacheHit ? "HIT" : "MISS",
+      "X-TTS-Elapsed-Ms": String(elapsedMs),
     },
   });
 }

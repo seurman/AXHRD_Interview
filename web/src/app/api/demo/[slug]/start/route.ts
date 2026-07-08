@@ -7,6 +7,8 @@ import { loadDemoWorkspaceBySlug } from "@/lib/demo/workspace";
 import { materializeDemoKitToInterviewBank } from "@/lib/demo/materialize";
 import { startInterviewSession } from "@/lib/interview/start-session";
 
+export const maxDuration = 60;
+
 type Ctx = { params: Promise<{ slug: string }> };
 
 /**

@@ -9,6 +9,7 @@ import { LogoutButton } from "./LogoutButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { getMobileNavLabel } from "./MainNav";
+import { ClipDynamic } from "@/components/ui/ClipDynamic";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import type { AdminNavSection, PrepareLabelKey } from "@/lib/platform/nav-registry";
 
@@ -123,9 +124,9 @@ export function MobileNav({
       <div className="absolute right-0 top-0 flex h-full w-[min(18rem,88vw)] flex-col bg-card p-5 shadow-luxe">
         <div className="mb-4 flex min-w-0 items-center justify-between gap-2">
           {userName ? (
-            <span className="truncate font-medium text-foreground">
+            <ClipDynamic as="span" className="font-medium text-foreground" title={locale === "ko" ? `${userName}${c.userSuffix}` : userName}>
               {locale === "ko" ? `${userName}${c.userSuffix}` : userName}
-            </span>
+            </ClipDynamic>
           ) : (
             <span className="font-medium text-foreground">{c.menu}</span>
           )}

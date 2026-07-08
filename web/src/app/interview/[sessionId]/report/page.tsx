@@ -67,7 +67,7 @@ export default async function ReportPage({ params }: PageProps) {
         <>
           <section className="card-luxe flex flex-col items-center gap-6 p-6 sm:flex-row">
             <ScoreGauge value={avgScore} label="종합 점수" />
-            <p className="flex-1 text-center leading-relaxed text-foreground sm:text-left">
+            <p className="flex-1 text-center leading-relaxed text-foreground report-prose sm:text-left">
               {report.summary}
             </p>
           </section>
@@ -96,7 +96,7 @@ export default async function ReportPage({ params }: PageProps) {
                   </p>
                 </div>
               </div>
-              <p className="mt-3 text-sm text-muted">{delivery.note}</p>
+              <p className="mt-3 text-sm text-muted report-prose">{delivery.note}</p>
             </section>
           )}
 
@@ -116,12 +116,12 @@ export default async function ReportPage({ params }: PageProps) {
                 </div>
                 <p className="text-sm text-muted report-prose">{s.content}</p>
                 {s.highlight && (
-                  <p className="mt-3 border-l-2 border-gold pl-3 text-sm italic text-foreground">
+                  <p className="mt-3 border-l-2 border-gold pl-3 text-sm italic text-foreground report-prose">
                     “{s.highlight}”
                   </p>
                 )}
                 {s.suggestions && (
-                  <ul className="mt-3 list-inside list-disc text-xs text-muted">
+                  <ul className="mt-3 list-inside list-disc text-xs text-muted report-prose">
                     {s.suggestions.map((sg, i) => (
                       <li key={i}>{sg}</li>
                     ))}
@@ -135,7 +135,7 @@ export default async function ReportPage({ params }: PageProps) {
             <h2 className="mb-3 font-semibold text-foreground">다음 단계</h2>
             <ul className="space-y-2">
               {report.nextSteps.map((step, i) => (
-                <li key={i} className="flex gap-2 text-sm text-foreground">
+                <li key={i} className="flex gap-2 text-sm text-foreground report-prose">
                   <span className="font-medium text-accent">{i + 1}.</span>
                   {step}
                 </li>
@@ -187,7 +187,7 @@ function ListCard({
   return (
     <div className="card-luxe p-5">
       <h3 className={`mb-3 font-medium ${color}`}>{title}</h3>
-      <ul className="space-y-2 text-sm text-muted">
+      <ul className="space-y-2 text-sm text-muted report-prose">
         {items.map((item, i) => (
           <li key={i}>· {item}</li>
         ))}

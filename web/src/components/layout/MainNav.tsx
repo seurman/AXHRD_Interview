@@ -7,6 +7,7 @@ import { NavDropdownMenu } from "./NavDropdownMenu";
 import { SaasNavMenu } from "./SaasNavMenu";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ThemeSwitcher } from "./ThemeSwitcher";
+import { ClipDynamic } from "@/components/ui/ClipDynamic";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import type { AdminNavSection, PrepareLabelKey } from "@/lib/platform/nav-registry";
 
@@ -64,9 +65,13 @@ export function MainNav({
   return (
     <nav className="hidden items-center gap-1.5 lg:gap-2 sm:flex">
       {userName && (
-        <span className="mr-1 hidden text-xs font-medium text-white/50 user-greeting xl:inline">
+        <ClipDynamic
+          as="span"
+          className="mr-1 hidden max-w-[9rem] text-xs font-medium user-greeting xl:inline xl:max-w-[11rem]"
+          title={locale === "ko" ? `${userName}${c.userSuffix}` : userName}
+        >
           {locale === "ko" ? `${userName}${c.userSuffix}` : userName}
-        </span>
+        </ClipDynamic>
       )}
 
       {dashboardHref && (

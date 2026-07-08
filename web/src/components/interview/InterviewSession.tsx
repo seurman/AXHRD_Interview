@@ -8,6 +8,7 @@ import { CompetencyBar } from "./CompetencyBar";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { AnswerFeedbackPanel } from "./AnswerFeedbackPanel";
 import { LoadingRitual } from "@/components/ux/LoadingRitual";
+import { ClipDynamic } from "@/components/ui/ClipDynamic";
 import { competencyLabel } from "@/lib/labels";
 import { displayQuestionText } from "@/lib/interview/build-question";
 import type {
@@ -214,21 +215,33 @@ export function InterviewSession({
               </span>
             )}
             {q?.pressureTier === "TOUGH" && (
-              <span className="keep-one-line rounded-full bg-danger/15 px-2 py-0.5 text-danger">
+              <ClipDynamic
+                as="span"
+                className="keep-one-line max-w-[min(100%,14rem)] rounded-full bg-danger/15 px-2 py-0.5 text-danger sm:max-w-none"
+                title={`🔥 ${q.personaLabel ?? "임원 압박면접 모드"}`}
+              >
                 🔥 {q.personaLabel ?? "임원 압박면접 모드"}
-              </span>
+              </ClipDynamic>
             )}
             {q?.pressureTier === "GENTLE" && (
-              <span className="keep-one-line rounded-full bg-success/15 px-2 py-0.5 text-success">
+              <ClipDynamic
+                as="span"
+                className="keep-one-line max-w-[min(100%,14rem)] rounded-full bg-success/15 px-2 py-0.5 text-success sm:max-w-none"
+                title={`🙂 ${q.personaLabel ?? "편안한 분위기"}`}
+              >
                 🙂 {q.personaLabel ?? "편안한 분위기"}
-              </span>
+              </ClipDynamic>
             )}
             {q && (
-              <span className="keep-one-line text-muted">
+              <ClipDynamic
+                as="span"
+                className="keep-one-line max-w-[min(100%,12rem)] text-muted sm:max-w-none"
+                title={`L${q.level} · ${competencyLabel(q.competency)}`}
+              >
                 <span>L{q.level}</span>
                 <span className="mx-1">·</span>
                 <span>{competencyLabel(q.competency)}</span>
-              </span>
+              </ClipDynamic>
             )}
           </div>
           <h2 className="text-xl font-semibold leading-relaxed text-foreground">

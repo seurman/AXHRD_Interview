@@ -2,6 +2,24 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 한글 줄바꿈 (2026-07-09)
+
+- **동적 텍스트 말줄임**: `.clip-dynamic` + `ClipDynamic` 컴포넌트 — 사용자명·기관명·페르소나 라벨 등 `title` 툴팁.
+- **리포트 본문**: `report-prose`를 요약·역량 분석·강점/개선·다음 단계·데모 질문/피드백에 확장 (`word-break: keep-all`).
+- **데모 면접 실행(모바일)**: `GET /api/irt/warm` 선행 핑, IRT 타임아웃 55s·재시도, `maxDuration=60` on start routes, 로그인 CTA·전폭 버튼, `window.location.assign` 이동, 역량 선택을 시작 버튼 위로 재배치, 게스트 체험 문항 레벨 폴백.
+- **히어로 프리뷰 유지**: 3레이어(면접·스킬트리·피드백) UI — PWA `sw.js` 홈(`/`) 네트워크 우선 캐시(`v2`), 모바일 `lp-product-*` 레이아웃 보강.
+
+## 최근 작업 — 성능 (2026-07-09)
+
+- **next/font 자체 호스팅**: Pretendard Variable(`src/fonts/`), IBM Plex Sans KR, Outfit — CDN·Google Fonts `<link>` 제거, `lib/fonts.ts` + `layout.tsx` `fontVariables`.
+- **루트 `force-dynamic` 제거**: 헤더 네비를 `GET /api/nav` + 클라이언트 `NavSessionProvider`/`AppHeader`로 분리. 홈·요금제는 서버에서 `getCurrentUser()` 제거 → 정적 렌더 가능.
+- **TTS 서버 캐시**: `lib/gemini/tts.ts` 인메모리 LRU(최대 48문장), `X-TTS-Cache`/`X-TTS-Elapsed-Ms` 응답 헤더. 클라이언트 blob 프리페치와 병행.
+- **IRT 콜드스타트 (미적용 — 옵션만)**:
+  - **A. Render 크론 핑** (`*/10 * * * *` → `/health`) — Free tier 유지, 슬립 완화. 월 트래픽·크론 한도 확인 필요.
+  - **B. Render Starter ($7/월)** — 슬립 없음, 첫 IRT 요청 30~60s 지연 제거.
+  - **C. 유료 티어 전용 워밍** — Pro/기관 구독 시에만 IRT pre-warm API 호출(비용·공정성 정책 결정 후).
+  - 현재 운영: Singapore Free, 15분 미사용 시 슬립. **사용자 결정 전 크론/유료 전환 코드는 넣지 않음.**
+
 ## 최근 작업 — 기능 (2026-07-09)
 
 - **PDF 인쇄**: `PrintButton` + `@media print` — 면접 리포트·인증서(`/profile/certificate`, `/c/[slug]`)에서 브라우저 인쇄→PDF.

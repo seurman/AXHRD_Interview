@@ -17,7 +17,7 @@
   --color-success: #059669;
   --color-warning: #d97706;
   --color-danger: #dc2626;
-  --font-sans: "IBM Plex Sans KR", "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", system-ui, sans-serif;
+  --font-sans: var(--font-ibm-plex), var(--font-pretendard), "Apple SD Gothic Neo", system-ui, sans-serif;
   --shadow-luxe: 0 4px 24px -4px rgb(16 26 51 / 0.1), 0 2px 8px -2px rgb(16 26 51 / 0.05);
 }
 
@@ -55,6 +55,16 @@ body {
 
 /* 네비·버튼·짧은 라벨은 한 줄 유지 */
 .keep-one-line {
+  white-space: nowrap;
+}
+
+/* 사용자·기관명 등 동적 텍스트 — nowrap + 말줄임 + title 툴팁용 */
+.clip-dynamic {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -709,8 +719,8 @@ body {
   --lp-paper: #f6f8fc;
   --lp-accent: #3b6ef5;
   --lp-accent-soft: #c6d4ff;
-  --font-display: "Outfit", "IBM Plex Sans KR", "Pretendard Variable", Pretendard, system-ui, sans-serif;
-  --font-body: "IBM Plex Sans KR", "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", system-ui, sans-serif;
+  --font-display: var(--font-outfit), var(--font-ibm-plex), var(--font-pretendard), system-ui, sans-serif;
+  --font-body: var(--font-ibm-plex), var(--font-pretendard), "Apple SD Gothic Neo", system-ui, sans-serif;
   margin: 0;
   color: var(--lp-ink);
   background: #fff;
@@ -1359,11 +1369,47 @@ body:has(.lp) .header-premium .lang-switch {
 
 .lp-product-stage {
   position: relative;
-  min-height: 340px;
+  min-height: 400px;
   width: 100%;
   max-width: 520px;
   margin-inline: auto;
   aspect-ratio: 4 / 5.2;
+}
+
+@media (max-width: 959px) {
+  .lp-hero-visual {
+    margin-top: 0.5rem;
+  }
+
+  .lp-product-stage {
+    min-height: 430px;
+    max-width: min(100%, 22rem);
+  }
+
+  .lp-product-frame--main {
+    inset: 0 6% 24% 0;
+  }
+
+  .lp-product-frame--back {
+    width: 70%;
+    left: 2%;
+    opacity: 0.96;
+  }
+
+  .lp-product-frame--side {
+    width: 64%;
+    right: 0;
+    bottom: 0;
+  }
+
+  .lp-product-question,
+  .lp-product-resume-quote,
+  .lp-product-feedback-quote,
+  .lp-product-feedback-note {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    white-space: normal;
+  }
 }
 
 @media (min-width: 960px) {
@@ -1549,6 +1595,7 @@ body:has(.lp) .header-premium .lang-switch {
   line-height: 1.58;
   color: rgb(241 245 255 / 0.96);
   word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .lp-product-resume {
@@ -1571,6 +1618,7 @@ body:has(.lp) .header-premium .lang-switch {
   line-height: 1.5;
   color: rgb(241 245 255 / 0.82);
   word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .lp-product-chip-row {
@@ -1610,6 +1658,7 @@ body:has(.lp) .header-premium .lang-switch {
   line-height: 1.5;
   color: rgb(241 245 255 / 0.9);
   word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .lp-product-feedback-note {

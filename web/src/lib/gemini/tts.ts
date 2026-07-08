@@ -11,8 +11,44 @@ const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const SAMPLE_RATE = 24000;
 const CHANNELS = 1;
 const BITS_PER_SAMPLE = 16;
+const TTS_CACHE_MAX = 48;
+
+/** 동일 문장 재합성 방지 — 서버 프로세스 인메모리 (짧은 면접 문항 위주) */
+const ttsCache = new Map<string, ArrayBuffer>();
+
+export type TtsSynthesisResult = {
+  audio: ArrayBuffer | null;
+  cacheHit: boolean;
+};
+
+function ttsCacheKey(text: string): string {
+  return text.trim().slice(0, 500);
+}
 
 export async function synthesizeSpeech(text: string): Promise<ArrayBuffer | null> {
+  const result = await synthesizeSpeechWithMeta(text);
+  return result.audio;
+}
+
+export async function synthesizeSpeechWithMeta(text: string): Promise<TtsSynthesisResult> {
+  const key = ttsCacheKey(text);
+  const cached = ttsCache.get(key);
+  if (cached) {
+    return { audio: cached, cacheHit: true };
+  }
+
+  const audio = await synthesizeSpeechUncached(text);
+  if (audio) {
+    if (ttsCache.size >= TTS_CACHE_MAX) {
+      const oldest = ttsCache.keys().next().value;
+      if (oldest !== undefined) ttsCache.delete(oldest);
+    }
+    ttsCache.set(key, audio);
+  }
+  return { audio, cacheHit: false };
+}
+
+async function synthesizeSpeechUncached(text: string): Promise<ArrayBuffer | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.warn("[Gemini TTS] API key not configured — skipping synthesis");

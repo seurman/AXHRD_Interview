@@ -3,8 +3,6 @@ import Link from "next/link";
 import { loadDemoWorkspaceBySlug } from "@/lib/demo/workspace";
 import { DemoShowcase } from "@/components/demo/DemoShowcase";
 
-export const dynamic = "force-dynamic";
-
 type Props = { params: Promise<{ slug: string }> };
 
 export default async function PublicDemoPage({ params }: Props) {

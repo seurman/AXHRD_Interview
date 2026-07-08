@@ -19,8 +19,10 @@ import { useI18n } from "@/lib/i18n/I18nProvider";
 import { LandingProductPreview } from "@/components/landing/LandingProductPreview";
 import { LandingGalleryTiles } from "@/components/landing/LandingGalleryTiles";
 import { LandingSpotlightVisual } from "@/components/landing/LandingSpotlightVisual";
+import { useLoggedIn } from "@/components/layout/NavSessionProvider";
 
-export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
+export function HomeLanding() {
+  const loggedIn = useLoggedIn();
   const { dict } = useI18n();
   const h = dict.home;
 

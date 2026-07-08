@@ -62,7 +62,7 @@ export function CertificateView({ data }: { data: CertificateData }) {
       )}
 
       <div className="mt-10 border-t border-card-border pt-6 text-center">
-        <p className="text-xs leading-relaxed text-muted">
+        <p className="text-xs leading-relaxed text-muted report-prose">
           본 인증서는 IRT(2PL, 문항반응이론) 기반 적응형 평가 엔진으로 산출된 자기계발용 모의 면접
           결과이며, 채용 절차상 공식 자격이나 심사 결과를 증명하지 않습니다.
           <br />

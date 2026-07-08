@@ -6,14 +6,22 @@ import type {
   SessionSummary,
   SubmitResponseResult,
 } from "@/types";
+import { fetchWithTimeout } from "@/lib/http/fetch-with-timeout";
 
 const IRT_BASE = process.env.IRT_ENGINE_URL ?? "http://localhost:8000";
 
+/** Render Free tier 슬립 후 첫 요청은 30~60초 걸릴 수 있음 */
+const IRT_TIMEOUT_MS = 55_000;
+const IRT_RETRIES = 2;
+
 async function irtFetch<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${IRT_BASE}/api/v1${path}`, {
+  const res = await fetchWithTimeout(`${IRT_BASE}/api/v1${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    timeoutMs: IRT_TIMEOUT_MS,
+    retries: IRT_RETRIES,
+    retryDelayMs: 800,
   });
 
   if (!res.ok) {
@@ -89,11 +97,21 @@ export async function getIrtSessionSummary(params: {
 
 export async function checkIrtHealth(): Promise<boolean> {
   try {
-    const res = await fetch(`${IRT_BASE}/api/v1/health`);
+    const res = await fetchWithTimeout(`${IRT_BASE}/api/v1/health`, {
+      timeoutMs: IRT_TIMEOUT_MS,
+      retries: IRT_RETRIES,
+      retryDelayMs: 800,
+    });
     return res.ok;
   } catch {
     return false;
   }
+}
+
+export async function warmIrtEngine(): Promise<{ ok: boolean; elapsedMs: number }> {
+  const started = Date.now();
+  const ok = await checkIrtHealth();
+  return { ok, elapsedMs: Date.now() - started };
 }
 
 export type { CompetencySummary };
