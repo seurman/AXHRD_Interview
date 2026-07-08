@@ -15,7 +15,7 @@ import {
 import {
   orgKitRubricForLevel,
   platformRubricForLevel,
-} from "@/lib/org/interview-kit";
+} from "@/lib/org/kit-rubric";
 import type { RubricByLevel } from "@/lib/competency/rubric";
 
 function kitApiBase(organizationId?: string) {

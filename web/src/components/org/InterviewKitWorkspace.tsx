@@ -22,7 +22,7 @@ import {
   type CompetencyDraft,
   type LevelRubricDraft,
 } from "@/components/org/kit-workspace-types";
-import { platformRubricForLevel } from "@/lib/org/interview-kit";
+import { platformRubricForLevel } from "@/lib/org/kit-rubric";
 import { rubricForCompetencyLevel } from "@/lib/competency/rubric";
 
 const COMP_STYLES: Record<string, { bar: string; glow: string }> = {

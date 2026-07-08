@@ -1,18 +1,24 @@
 import { prisma } from "@/lib/prisma";
 import type { PlatformRole } from "@prisma/client";
-import { parseRubricCriteria } from "@/lib/competency/bank";
-import { rubricForNcsLevel } from "@/lib/competency/ncs-rubric";
-import {
-  parseRubricByLevel,
-  rubricForCompetencyLevel,
-  type RubricByLevel,
-} from "@/lib/competency/rubric";
-import { hasSuperadminAccess } from "@/lib/auth/guards";
+import { hasSuperadminAccess } from "@/lib/auth/superadmin";
 import {
   IRT_LEVEL_COUNT,
   MIN_CANDIDATES_PER_LEVEL,
   type PoolQuestion,
 } from "@/lib/interview/question-pool";
+import {
+  orgKitRubricForLevel,
+  parseOrgKitRubricByLevel,
+  parseSelectedQuestionIds,
+} from "@/lib/org/kit-rubric";
+
+export {
+  orgKitRubricForLevel,
+  parseOrgKitRubricByLevel,
+  parseSelectedQuestionIds,
+  platformRubricForLevel,
+  platformRubricOptions,
+} from "@/lib/org/kit-rubric";
 
 /** level당 MIN_CANDIDATES_PER_LEVEL(2) × 5레벨 = 10 권장, 최소 5(레벨당 1개 수준) */
 export const RECOMMENDED_ORG_KIT_QUESTIONS =
@@ -104,68 +110,6 @@ export async function canAccessSaasSettingsHub(user: KitUser): Promise<boolean> 
   if (hasSuperadminAccess(user)) return true;
   const access = await resolveInterviewKitAccess(user);
   return access.allowed;
-}
-
-export function parseSelectedQuestionIds(raw: unknown): string[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.filter((id): id is string => typeof id === "string" && id.length > 0);
-}
-
-/** 플랫폼 기본 루브릭 후보(역량 rubricByLevel 전 레벨 합집합, 없으면 NCS L3) */
-export function platformRubricOptions(
-  competencyCode: string,
-  rubricByLevel: unknown
-): string[] {
-  const map =
-    rubricByLevel && typeof rubricByLevel === "object" && !Array.isArray(rubricByLevel)
-      ? (rubricByLevel as Record<string, unknown>)
-      : {};
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const val of Object.values(map)) {
-    if (!Array.isArray(val)) continue;
-    for (const line of val) {
-      if (typeof line !== "string" || !line.trim()) continue;
-      const t = line.trim();
-      if (!seen.has(t)) {
-        seen.add(t);
-        out.push(t);
-      }
-    }
-  }
-  if (out.length > 0) return out;
-  return rubricForNcsLevel(competencyCode, 3);
-}
-
-/** 플랫폼 역량·레벨 기본 루브릭 (DB rubricByLevel → NCS 폴백) */
-export function platformRubricForLevel(
-  competencyCode: string,
-  rubricByLevel: unknown,
-  level: number
-): string[] {
-  const fromDb = rubricForCompetencyLevel(rubricByLevel, level);
-  if (fromDb.length > 0) return fromDb;
-  return rubricForNcsLevel(competencyCode, level);
-}
-
-/** 기관 킷 customRubricCriteria — 레벨별 객체 또는 레거시 flat 배열 */
-export function parseOrgKitRubricByLevel(raw: unknown): RubricByLevel {
-  if (Array.isArray(raw)) {
-    const lines = parseRubricCriteria(raw);
-    if (lines.length === 0) return {};
-    return { default: lines };
-  }
-  return parseRubricByLevel(raw);
-}
-
-export function orgKitRubricForLevel(
-  customRubricByLevel: RubricByLevel,
-  level: number
-): string[] {
-  const levelKey = String(level);
-  if (customRubricByLevel[levelKey]?.length) return customRubricByLevel[levelKey];
-  if (customRubricByLevel.default?.length) return customRubricByLevel.default;
-  return [];
 }
 
 export async function getOrgInterviewKit(
