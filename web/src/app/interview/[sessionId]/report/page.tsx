@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
 import { competencyLabel } from "@/lib/utils";
 import { ScoreGauge } from "@/components/report/ScoreGauge";
+import { PrintButton } from "@/components/ui/PrintButton";
+import { SessionIntegrityNotice } from "@/components/interview/SessionIntegrityNotice";
 import { computeDeliveryStats } from "@/lib/interview/feedback-helpers";
 import type { SessionReportData } from "@/types";
 
@@ -45,13 +47,21 @@ export default async function ReportPage({ params }: PageProps) {
   );
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 pb-16">
-      <div>
-        <p className="text-sm font-medium text-accent">{session.sessionNumber}차 면접 리포트</p>
-        <h1 className="mt-1 text-2xl font-bold text-foreground">
-          {session.targetCompany?.name ?? "모의 면접"} 피드백
-        </h1>
+    <div className="print-root mx-auto max-w-3xl space-y-8 pb-16">
+      <div className="print-hide flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-accent">{session.sessionNumber}차 면접 리포트</p>
+          <h1 className="mt-1 text-2xl font-bold text-foreground">
+            {session.targetCompany?.name ?? "모의 면접"} 피드백
+          </h1>
+        </div>
+        <PrintButton />
       </div>
+
+      <SessionIntegrityNotice
+        pasteDetected={session.pasteDetected}
+        tabSwitchCount={session.tabSwitchCount}
+      />
 
       {report ? (
         <>
@@ -104,7 +114,7 @@ export default async function ReportPage({ params }: PageProps) {
                     <span className="text-sm font-medium text-accent">{s.score}%</span>
                   )}
                 </div>
-                <p className="text-sm text-muted">{s.content}</p>
+                <p className="text-sm text-muted report-prose">{s.content}</p>
                 {s.highlight && (
                   <p className="mt-3 border-l-2 border-gold pl-3 text-sm italic text-foreground">
                     “{s.highlight}”
@@ -153,7 +163,7 @@ export default async function ReportPage({ params }: PageProps) {
         </div>
       </section>
 
-      <div className="flex gap-4">
+      <div className="print-hide flex gap-4">
         <Link href="/dashboard" className="btn-primary">
           역량 트래킹
         </Link>

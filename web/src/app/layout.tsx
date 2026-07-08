@@ -6,6 +6,7 @@ import "./globals.css";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { AppShell } from "@/components/layout/AppShell";
 import { I18nProvider } from "@/lib/i18n/I18nProvider";
+import { PwaRegister } from "@/components/PwaRegister";
 
 /** 로그인·기관 역할에 따라 헤더(SaaS 메뉴 등)가 달라지므로 항상 동적 렌더 */
 export const dynamic = "force-dynamic";
@@ -39,6 +40,9 @@ export default async function RootLayout({
     <html lang={locale} className={htmlClass} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#2f5fee" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -52,6 +56,7 @@ export default async function RootLayout({
       </head>
       <body className="antialiased">
         <I18nProvider locale={locale}>
+          <PwaRegister />
           <AppHeader />
           <main className="min-w-0">
             <AppShell>{children}</AppShell>

@@ -52,7 +52,8 @@ export async function POST(req: Request) {
 }
 
 async function handleRespond(req: Request, userId: string) {
-  const { sessionId, questionId, transcript, durationSec } = await req.json();
+  const body = await req.json();
+  const { sessionId, questionId, transcript, durationSec, pasteDetected, tabSwitchCount } = body;
 
   if (!transcript || typeof transcript !== "string" || !transcript.trim()) {
     return NextResponse.json(
@@ -78,6 +79,19 @@ async function handleRespond(req: Request, userId: string) {
   // 세션 소유권 검증 — 다른 사용자의 세션에 응답을 제출하지 못하도록 차단
   if (session.userId !== userId) {
     return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+  }
+
+  if (pasteDetected === true || (typeof tabSwitchCount === "number" && tabSwitchCount > 0)) {
+    await prisma.interviewSession.update({
+      where: { id: sessionId },
+      data: {
+        pasteDetected: session.pasteDetected || pasteDetected === true,
+        tabSwitchCount:
+          typeof tabSwitchCount === "number"
+            ? Math.max(session.tabSwitchCount, tabSwitchCount)
+            : session.tabSwitchCount,
+      },
+    });
   }
 
   const question = await prisma.question.findUnique({

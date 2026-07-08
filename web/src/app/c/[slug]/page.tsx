@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCertificateData } from "@/lib/candidate/certificate";
 import { CertificateView } from "@/components/profile/CertificateView";
+import { PrintButton } from "@/components/ui/PrintButton";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +27,13 @@ export default async function PublicCertificatePage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <CertificateView data={data} />
-      <p className="text-center text-xs text-muted">
+      <div className="print-hide flex justify-end">
+        <PrintButton />
+      </div>
+      <div className="print-root">
+        <CertificateView data={data} />
+      </div>
+      <p className="print-hide text-center text-xs text-muted">
         <Link href="/" className="text-accent hover:underline">
           HR_IN Solution
         </Link>

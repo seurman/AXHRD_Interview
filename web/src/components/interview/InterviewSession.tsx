@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconVolume } from "@/components/ui/icons";
 import { LevelChip } from "./LevelChip";
@@ -35,11 +35,58 @@ export function InterviewSession({
   const [state, setState] = useState(initialState);
   const [processing, setProcessing] = useState(false);
   const [lastFeedback, setLastFeedback] = useState<AnswerFeedback | null>(null);
-  // Gemini TTS는 합성 자체에 시간이 걸릴 수 있어 "합성 중"과 "재생 중"을 구분해서 보여준다.
-  // 구분 없이 재생 중 배지만 있으면 그 사이에는 아무 피드백이 없어 멈춘 것처럼 보인다.
   const [ttsStatus, setTtsStatus] = useState<"idle" | "synthesizing" | "playing">("idle");
 
-  const playQuestionTts = useCallback(async (text: string) => {
+  const ttsCacheRef = useRef<Map<string, string>>(new Map());
+  const pasteDetectedRef = useRef(false);
+  const tabSwitchCountRef = useRef(0);
+
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === "hidden") {
+        tabSwitchCountRef.current += 1;
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
+  const prefetchQuestionTts = useCallback(async (questionId: string, text: string) => {
+    if (!text.trim() || ttsCacheRef.current.has(questionId)) return;
+    try {
+      const res = await fetch("/api/interview/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) return;
+      const blob = await res.blob();
+      ttsCacheRef.current.set(questionId, URL.createObjectURL(blob));
+    } catch {
+      /* TTS 프리페치 실패는 무시 — 재생 시 재시도 */
+    }
+  }, []);
+
+  const playQuestionTts = useCallback(async (questionId: string, text: string) => {
+    if (!text.trim()) return;
+
+    const cached = ttsCacheRef.current.get(questionId);
+    if (cached) {
+      setTtsStatus("playing");
+      try {
+        const audio = new Audio(cached);
+        await audio.play();
+        await new Promise<void>((resolve) => {
+          audio.onended = () => resolve();
+        });
+      } catch {
+        /* 재생 실패 */
+      } finally {
+        setTtsStatus("idle");
+      }
+      return;
+    }
+
     setTtsStatus("synthesizing");
     try {
       const res = await fetch("/api/interview/tts", {
@@ -50,13 +97,13 @@ export function InterviewSession({
       if (res.ok) {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
+        ttsCacheRef.current.set(questionId, url);
         const audio = new Audio(url);
         setTtsStatus("playing");
         await audio.play();
         await new Promise<void>((resolve) => {
           audio.onended = () => resolve();
         });
-        URL.revokeObjectURL(url);
       }
     } catch {
       // TTS 없으면 텍스트만 표시
@@ -66,8 +113,10 @@ export function InterviewSession({
   }, []);
 
   useEffect(() => {
-    const text = displayQuestionText(state.currentQuestion);
-    if (text) playQuestionTts(text);
+    const q = state.currentQuestion;
+    if (!q) return;
+    const text = displayQuestionText(q);
+    if (text) void playQuestionTts(q.id, text);
   }, [state.currentQuestion?.id, playQuestionTts, state.currentQuestion]);
 
   const handleAnswer = async (transcript: string, durationSec?: number) => {
@@ -84,6 +133,8 @@ export function InterviewSession({
           questionId: state.currentQuestion.id,
           transcript,
           durationSec,
+          pasteDetected: pasteDetectedRef.current,
+          tabSwitchCount: tabSwitchCountRef.current,
         }),
       });
 
@@ -96,6 +147,11 @@ export function InterviewSession({
 
       const data = await res.json();
 
+      const nextQuestion = data.nextQuestion as InterviewQuestion | null;
+      if (nextQuestion?.id) {
+        void prefetchQuestionTts(nextQuestion.id, displayQuestionText(nextQuestion));
+      }
+
       if (data.answerFeedback) {
         setLastFeedback(data.answerFeedback as AnswerFeedback);
       }
@@ -103,15 +159,13 @@ export function InterviewSession({
       setState((prev) => ({
         ...prev,
         competencyStates: data.competencyStates,
-        // 꼬리질문을 내는 턴에는 아직 채점이 확정되지 않아 chipEvent가 없다 —
-        // 꼬리질문 답변까지 받아 최종 확정된 턴에만 칩을 추가한다.
         chipHistory: data.chipEvent
           ? [...prev.chipHistory, data.chipEvent as ChipEvent]
           : prev.chipHistory,
         administeredIds: data.administeredIds,
         totalItems: data.totalItems,
         shouldTerminate: data.shouldTerminate,
-        currentQuestion: data.nextQuestion as InterviewQuestion | null,
+        currentQuestion: nextQuestion,
         status: data.shouldTerminate ? "completed" : "in_progress",
       }));
 
@@ -202,7 +256,6 @@ export function InterviewSession({
           )}
         </div>
 
-        {/* Chip history — musical notes */}
         {state.chipHistory.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {state.chipHistory.map((chip, i) => (
@@ -225,7 +278,14 @@ export function InterviewSession({
               competencyCode={q?.competency ?? focusCompetency}
             />
           ) : (
-            <VoiceRecorder onTranscript={handleAnswer} disabled={!q} allowTextFallback />
+            <VoiceRecorder
+              onTranscript={handleAnswer}
+              disabled={!q}
+              allowTextFallback
+              onPasteDetected={() => {
+                pasteDetectedRef.current = true;
+              }}
+            />
           )}
         </div>
 

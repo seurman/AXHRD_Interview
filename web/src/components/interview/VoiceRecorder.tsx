@@ -9,6 +9,8 @@ interface VoiceRecorderProps {
   disabled?: boolean;
   /** 음성 인식 실패 시 직접 입력 폴백 */
   allowTextFallback?: boolean;
+  /** 텍스트 붙여넣기 감지(채점 차단 없음) */
+  onPasteDetected?: () => void;
 }
 
 const SPEECH_ERROR_MESSAGES: Record<string, string> = {
@@ -28,6 +30,7 @@ export function VoiceRecorder({
   onTranscript,
   disabled,
   allowTextFallback = true,
+  onPasteDetected,
 }: VoiceRecorderProps) {
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -169,6 +172,7 @@ export function VoiceRecorder({
             onChange={setTextDraft}
             onSubmit={submitDraft}
             disabled={disabled}
+            onPasteDetected={onPasteDetected}
           />
         )}
       </div>
@@ -241,6 +245,7 @@ export function VoiceRecorder({
               onChange={setTextDraft}
               onSubmit={submitDraft}
               disabled={disabled}
+              onPasteDetected={onPasteDetected}
             />
           )}
         </div>
@@ -254,17 +259,20 @@ function TextFallback({
   onChange,
   onSubmit,
   disabled,
+  onPasteDetected,
 }: {
   value: string;
   onChange: (v: string) => void;
   onSubmit: () => void;
   disabled?: boolean;
+  onPasteDetected?: () => void;
 }) {
   return (
     <div className="space-y-2">
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onPaste={() => onPasteDetected?.()}
         placeholder="답변을 직접 입력하세요…"
         rows={4}
         disabled={disabled}

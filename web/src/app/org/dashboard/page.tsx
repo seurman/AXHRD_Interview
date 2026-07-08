@@ -84,7 +84,7 @@ export default async function OrgDashboardPage() {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="card-luxe p-5 text-center">
           <p className="text-3xl font-bold text-foreground">{data.memberCount}</p>
           <p className="mt-1 text-xs text-muted">소속 학생 수</p>
@@ -98,6 +98,15 @@ export default async function OrgDashboardPage() {
             {data.overallAvgPercentile != null ? `${data.overallAvgPercentile}` : "—"}
           </p>
           <p className="mt-1 text-xs text-muted">전체 평균 백분위</p>
+        </div>
+        <div className="card-luxe p-5 text-center">
+          <p className="text-3xl font-bold text-foreground">{data.integritySignalSessions}</p>
+          <p className="mt-1 text-xs text-muted">
+            주의 신호 세션
+            <span className="mt-0.5 block font-normal text-muted/80">
+              붙여넣기·탭이탈 3회+
+            </span>
+          </p>
         </div>
       </div>
 

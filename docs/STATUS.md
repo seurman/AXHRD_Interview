@@ -2,6 +2,15 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 기능 (2026-07-09)
+
+- **PDF 인쇄**: `PrintButton` + `@media print` — 면접 리포트·인증서(`/profile/certificate`, `/c/[slug]`)에서 브라우저 인쇄→PDF.
+- **TTS 프리페치**: `InterviewSession` — respond 응답 직후 다음 문항 TTS blob 캐시, 재생 시 캐시 우선.
+- **무결성 신호**: `pasteDetected`/`tabSwitchCount` (`InterviewSession` 마이그레이션 `20260709030000`) — 붙여넣기·탭이탈 기록, 리포트·코호트 대시보드에 주의 신호만 표시(채점 무관).
+- **비로그인 데모 체험**: `POST /api/demo/[slug]/try` — 1문항 STAR 휴리스틱 피드백, DB 저장 없음. `DemoShowcase` UI.
+- **PWA 최소**: `public/manifest.json`, 아이콘 SVG, `sw.js` 정적 셸 캐시, `PwaRegister`.
+- 검증: `npx tsc --noEmit` ✓, `npx next build` ✓. 운영 DB: `npx prisma migrate deploy`.
+
 ## 최근 작업 — UI (2026-07-09)
 
 - **랜딩 히어로/갤러리 스톡 사진 제거** → CSS 제품 UI 프리뷰(면접 세션·역량 스킬 트리·근거 채점 모사) + 메시 그라디언트·오브 비주얼. `LandingProductPreview`, `LandingGalleryTiles`, `LandingSpotlightVisual`.

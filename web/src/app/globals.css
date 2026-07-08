@@ -1758,3 +1758,44 @@ html.dark .lp-proof-row {
   }
 }
 
+/* ── Print / PDF 저장 ── */
+@media print {
+  .print-hide,
+  .header-premium,
+  header,
+  nav,
+  footer,
+  .btn-primary,
+  .btn-secondary {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .print-root {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .card-luxe,
+  .print-root .rounded-3xl {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    break-inside: avoid;
+  }
+
+  .report-prose {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+}
+
+.report-prose {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+

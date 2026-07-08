@@ -24,6 +24,7 @@ export interface CohortData {
   status: OrgStatus;
   memberCount: number;
   totalCompletedSessions: number;
+  integritySignalSessions: number;
   overallAvgPercentile: number | null;
   competencies: CohortCompetencyRow[]; // avgPercentile 오름차순 — 취약 역량이 먼저
   members: CohortMemberRow[];
@@ -49,6 +50,7 @@ export async function getCohortData(organizationId: string): Promise<CohortData 
       status: org.status,
       memberCount: 0,
       totalCompletedSessions: 0,
+      integritySignalSessions: 0,
       overallAvgPercentile: null,
       competencies: [],
       members: [],
@@ -58,7 +60,7 @@ export async function getCohortData(organizationId: string): Promise<CohortData 
   const [sessions, snapshots] = await Promise.all([
     prisma.interviewSession.findMany({
       where: { userId: { in: studentIds }, status: "COMPLETED" },
-      select: { userId: true, completedAt: true },
+      select: { userId: true, completedAt: true, pasteDetected: true, tabSwitchCount: true },
     }),
     prisma.competencySnapshot.findMany({
       where: { userId: { in: studentIds } },
@@ -135,12 +137,17 @@ export async function getCohortData(organizationId: string): Promise<CohortData 
       )
     : null;
 
+  const integritySignalSessions = sessions.filter(
+    (s) => s.pasteDetected || s.tabSwitchCount >= 3,
+  ).length;
+
   return {
     organizationName: org.name,
     joinCode: org.joinCode,
     status: org.status,
     memberCount: students.length,
     totalCompletedSessions: sessions.length,
+    integritySignalSessions,
     overallAvgPercentile,
     competencies,
     members,

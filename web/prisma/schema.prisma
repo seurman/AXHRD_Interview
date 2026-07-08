@@ -424,6 +424,10 @@ model InterviewSession {
   completedAt     DateTime?
   overallTheta    Float?
   irtState        Json?
+  /** 답변 입력 시 붙여넣기 감지(채점 무관, 신호만) */
+  pasteDetected   Boolean       @default(false)
+  /** 면접 중 탭 이탈 횟수(채점 무관) */
+  tabSwitchCount  Int           @default(0)
   createdAt       DateTime      @default(now())
 
   responses ResponseRecord[]

@@ -29,6 +29,15 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
   const [jobRole, setJobRole] = useState("OTHER");
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
+  const [guestAnswer, setGuestAnswer] = useState("");
+  const [guestTrying, setGuestTrying] = useState(false);
+  const [guestFeedback, setGuestFeedback] = useState<{
+    score: number;
+    coaching: string;
+    quote: string;
+    summary: string;
+  } | null>(null);
+  const [guestError, setGuestError] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialSnap) {
@@ -90,6 +99,39 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
     } catch (e) {
       setStartError(e instanceof Error ? e.message : "면접을 시작하지 못했습니다.");
       setStarting(false);
+    }
+  };
+
+  const tryOneQuestion = async () => {
+    if (!snap || !comp) return;
+    const answer = guestAnswer.trim();
+    if (answer.length < 15) {
+      setGuestError("15자 이상 답변을 입력해 주세요.");
+      return;
+    }
+    setGuestTrying(true);
+    setGuestError(null);
+    setGuestFeedback(null);
+    const publicSlug = snap.workspace.slug ?? slug;
+    try {
+      const res = await fetch(`/api/demo/${encodeURIComponent(publicSlug)}/try`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          answer,
+          competencyCode: comp.code,
+          level,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(typeof data.error === "string" ? data.error : "체험에 실패했습니다.");
+      }
+      setGuestFeedback(data.feedback);
+    } catch (e) {
+      setGuestError(e instanceof Error ? e.message : "체험에 실패했습니다.");
+    } finally {
+      setGuestTrying(false);
     }
   };
 
@@ -207,6 +249,53 @@ export function DemoShowcase({ slug, initialSnap = null }: Props) {
           </p>
         ) : null}
       </section>
+
+      {/* Guest try — 로그인 없이 1문항 체험 */}
+      {comp && levelQuestions[0] && (
+        <section className="rounded-2xl border border-accent/25 bg-accent/5 p-5 sm:p-6">
+          <h2 className="text-base font-semibold text-foreground">로그인 없이 1문항 체험</h2>
+          <p className="mt-1 text-sm text-muted">
+            아래 질문에 답해 보시면 STAR 기반 즉석 피드백을 받을 수 있습니다. (저장되지 않음)
+          </p>
+          <p className="mt-3 rounded-xl border border-card-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground">
+            {levelQuestions[0].template}
+          </p>
+          <textarea
+            value={guestAnswer}
+            onChange={(e) => setGuestAnswer(e.target.value)}
+            rows={4}
+            placeholder="답변을 입력하세요…"
+            className="input-luxe mt-3 w-full text-sm"
+            disabled={guestTrying}
+          />
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => void tryOneQuestion()}
+              disabled={guestTrying || guestAnswer.trim().length < 15}
+              className="btn-primary text-sm disabled:opacity-50"
+            >
+              {guestTrying ? "피드백 생성 중…" : "즉석 피드백 받기"}
+            </button>
+            <span className="text-xs text-muted">L{level} · {comp.nameKo}</span>
+          </div>
+          {guestError && (
+            <p className="mt-3 text-sm text-danger">{guestError}</p>
+          )}
+          {guestFeedback && (
+            <div className="mt-4 space-y-2 rounded-xl border border-card-border bg-card p-4 text-sm">
+              <p className="font-semibold text-foreground">
+                체험 점수 {guestFeedback.score}/5
+              </p>
+              <p className="text-muted">{guestFeedback.coaching}</p>
+              <p className="border-l-2 border-gold pl-3 italic text-foreground">
+                「{guestFeedback.quote}」
+              </p>
+              <p className="text-xs text-muted">{guestFeedback.summary}</p>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Competency chips */}
       <section>
