@@ -552,7 +552,7 @@ export function ContentBankEditor({
         }}
       >
         <div className="grid gap-6 lg:grid-cols-12">
-          {/* 역량 사이드바 — HireVue Builder의 competency 패널 */}
+          {/* 역량 사이드바 — AX 콘텐츠 뱅크 competency 패널 */}
           <aside className="space-y-3 lg:col-span-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground">역량</h2>

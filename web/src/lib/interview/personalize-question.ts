@@ -15,20 +15,23 @@ import { generateGeminiText } from "@/lib/gemini/client";
 import type { ResumeSummary } from "@/lib/interview/resume-summary";
 
 const PERSONALIZE_SYSTEM = `당신은 한국 기업 면접관입니다.
-기본 질문을 지원자 자소서 내용에 맞게 **한 문장**으로 다시 쓰고, 이 질문을 채점할 루브릭도 만듭니다.
+기본 질문을 지원자 자소서에 **실제로 적힌 사실만** 인용해 한 문장으로 다시 쓰고, 채점 루브릭도 만듭니다.
 
-규칙:
-- 질문: 자소서에 나온 프로젝트·회사·역할·성과·숫자 중 **최소 2가지를 구체적으로 인용**, 지원 회사/직무와 연결, 존댓말, 90자 내외
-- "면접 스타일"이 주어지면 그 톤에 맞게 질문 어투를 조정하고, 중점 평가 역량과 관련된 자소서
-  내용을 우선 인용하세요.
-- 루브릭: 이 질문에 대한 좋은 답변이 갖춰야 할 기준 3~4개(지원자에게는 보여주지 않고 채점에만 사용). "면접 스타일"의 중점 평가 역량이 있으면 루브릭에 반영하세요.
-- JSON만: {"question":"...", "rubric":["기준1","기준2","기준3"]}`;
+절대 규칙 (위반 시 무효):
+- 자소서 핵심 문장에 **없는** 프로젝트명·회사명·수치·역할을 지어내지 마세요.
+- 질문 한 문장 안에 제공된 「자소서 핵심 문장」에서 가져온 **고유 명사 또는 구절을 최소 1개** 큰따옴표 또는 「」로 그대로 넣으세요.
+- 기본 질문의 평가 의도(역량)는 유지하되, 막연한 "자소서에 적으신 경험" 같은 표현만으로는 부족합니다.
+- 존댓말, 90자 이내 권장.
+- 루브릭 3~4개: 자소서에서 인용한 그 경험을 검증하는 기준을 포함.
+- JSON만: {"question":"...","rubric":["기준1","기준2","기준3"],"citedPhrase":"질문에 넣은 자소서 구절"}`;
 
 export interface PersonalizeResult {
   text: string;
   rubric: string[];
   /** 이번에 실제로 인용에 사용한 자소서 문장 — 세션의 used-highlight 목록에 누적시켜야 함 */
   usedHighlight?: string;
+  /** UI에 보여줄 자소서 근거 구절(질문과 연결 증명) */
+  resumeAnchors?: string[];
 }
 
 /** JD/인재상 매핑으로 뽑힌(또는 프리셋의) 면접 스타일 — 질문 톤·루브릭에 반영 */
@@ -92,20 +95,73 @@ export async function personalizeQuestion(params: {
       },
       highlights
     );
-    if (llm) {
+    if (llm && isQuestionGroundedInHighlights(llm.question, highlights)) {
+      const anchors = pickDisplayedAnchors(highlights, llm.citedPhrase);
       return {
         text: llm.question,
         rubric: llm.rubric.length > 0 ? llm.rubric : heuristicRubric(params.competency, highlights),
         usedHighlight: anchor,
+        resumeAnchors: anchors,
       };
     }
   }
 
+  // LLM이 자소서와 무관한 질문을 만들면(환각) 명시적 「」 인용이 있는 휴리스틱으로 폴백
+  const heuristicText = heuristicPersonalize(
+    params.template,
+    highlights,
+    params.companyName,
+    params.jobRole
+  );
   return {
-    text: heuristicPersonalize(params.template, highlights, params.companyName, params.jobRole),
+    text: heuristicText,
     rubric: heuristicRubric(params.competency, highlights),
     usedHighlight: anchor,
+    resumeAnchors: pickDisplayedAnchors(highlights),
   };
+}
+
+/** 질문 텍스트가 highlights에서 온 구체 토큰을 포함하는지 (환각 방지) */
+function isQuestionGroundedInHighlights(question: string, highlights: string[]): boolean {
+  const q = question.replace(/\s+/g, "");
+  for (const h of highlights) {
+    const tokens = extractGroundingTokens(h);
+    if (tokens.some((t) => q.includes(t.replace(/\s+/g, "")))) return true;
+  }
+  // 「…」 또는 "…" 인용이 있고, 그 내용이 highlight 부분문자열이면 OK
+  const quoted = [...question.matchAll(/[「"]([^」"]{4,40})[」"]/g)].map((m) => m[1]);
+  for (const quote of quoted) {
+    if (highlights.some((h) => h.includes(quote) || quote.length >= 6 && h.replace(/\s+/g, "").includes(quote.replace(/\s+/g, "")))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function extractGroundingTokens(highlight: string): string[] {
+  const tokens: string[] = [];
+  const metrics = highlight.match(/\d+(\.\d+)?\s*(%|퍼센트|명|건|억|만\s?원|배|회)/g);
+  if (metrics) tokens.push(...metrics.map((m) => m.replace(/\s+/g, "")));
+  // 2글자 이상 한글·영문 연속 구 (조사 많은 짧은 단어 제외)
+  const words = highlight.match(/[A-Za-z][A-Za-z0-9_+-]{2,}|[가-힣]{3,}/g) ?? [];
+  tokens.push(...words.filter((w) => !/^(그리고|하지만|그래서|했습니다|하였습니다|입니다)$/.test(w)));
+  return [...new Set(tokens)].slice(0, 8);
+}
+
+function pickDisplayedAnchors(highlights: string[], citedPhrase?: string | null): string[] {
+  const out: string[] = [];
+  if (citedPhrase?.trim()) {
+    const c = citedPhrase.trim();
+    out.push(c.length > 72 ? `${c.slice(0, 70)}…` : c);
+  }
+  for (const h of highlights) {
+    const short = h.length > 72 ? `${h.slice(0, 70)}…` : h;
+    if (!out.some((a) => a === short || h.includes(a) || a.includes(h.slice(0, 20)))) {
+      out.push(short);
+    }
+    if (out.length >= 2) break;
+  }
+  return out;
 }
 
 /** 정리된 경험 목록(요약 단계에서 이미 뽑아둔 것) 중 이 역량과 관련성 높은 것을 앞으로 정렬 */
@@ -126,23 +182,26 @@ async function personalizeWithGemini(
     interviewStyle?: InterviewStyleHint;
   },
   highlights: string[]
-): Promise<{ question: string; rubric: string[] } | null> {
+): Promise<{ question: string; rubric: string[]; citedPhrase?: string } | null> {
   const userPrompt = `
 역량: ${competencyLabel(params.competency)}
 지원 회사: ${params.companyName ?? "미정"}
 지원 직무: ${params.jobRole ? jobRoleLabel(params.jobRole) : "미정"}
 ${params.interviewStyle ? `면접 스타일: ${params.interviewStyle.tone} (중점 평가 역량: ${params.interviewStyle.focus.join(", ")})` : ""}
-기본 질문: ${params.template}
-자소서 핵심 문장(이번에 인용 가능한 것만): ${highlights.join(" / ")}
+기본 질문(평가 의도 유지): ${params.template}
 
-자소서 요약(정리된 내용 — 원문 그대로가 아님):
+★ 반드시 아래에서만 인용하세요. 아래에 없는 사실은 질문·citedPhrase에 넣지 마세요.
+자소서 핵심 문장:
+${highlights.map((h, i) => `${i + 1}. ${h}`).join("\n")}
+
+자소서 요약(참고용 — 핵심 문장에 없는 사실은 쓰지 말 것):
 ${params.resumeContext}
 `.trim();
 
   const content = await generateGeminiText({
     systemInstruction: PERSONALIZE_SYSTEM,
     userPrompt,
-    temperature: 0.35,
+    temperature: 0.2,
     maxOutputTokens: 320,
     timeoutMs: 6000,
   });
@@ -151,11 +210,16 @@ ${params.resumeContext}
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       try {
-        const parsed = JSON.parse(jsonMatch[0]) as { question?: string; rubric?: string[] };
+        const parsed = JSON.parse(jsonMatch[0]) as {
+          question?: string;
+          rubric?: string[];
+          citedPhrase?: string;
+        };
         if (parsed.question?.trim()) {
           return {
             question: parsed.question.trim(),
             rubric: Array.isArray(parsed.rubric) ? parsed.rubric.filter(Boolean) : [],
+            citedPhrase: typeof parsed.citedPhrase === "string" ? parsed.citedPhrase : undefined,
           };
         }
       } catch (e) {

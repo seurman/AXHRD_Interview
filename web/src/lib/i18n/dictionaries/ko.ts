@@ -2,8 +2,8 @@ import type { Dictionary } from "../types";
 
 export const dictionary: Dictionary = {
   meta: {
-    title: "AXHRD — AX 기반 데이터 중심 HR 토탈 솔루션",
-    description: "AXHRD는 채용·면접·역량·코호트를 하나의 데이터 레이어로 연결하는 AX-Native HR 플랫폼입니다.",
+    title: "AXHRD i — AI 시대 새로운 면접의 기준",
+    description: "SaaS 기반 면접 솔루션 AXHRD i. AI 시대의 새로운 면접 기준을 제시합니다.",
   },
   common: {
     brand: "AXHRD",
@@ -56,12 +56,11 @@ export const dictionary: Dictionary = {
   },
   home: {
     hero: {
-      eyebrow: "AX-Native · Data-Driven HR Total Solution",
+      eyebrow: "AXHRD i",
       brand: "AXHRD",
-      titleLine1: "데이터가 설계하는",
-      titleHighlight: "HR 전 과정을 하나로",
-      subtitle:
-        "채용·면접·역량·코호트를 AX 기반 데이터 레이어로 통합합니다. AXHRD는 개인의 성장과 조직의 인사이트를 동시에 증명하는 토탈 HR 솔루션입니다.",
+      titleLine1: "AI 시대 새로운 면접의",
+      titleHighlight: "기준을 제시하다",
+      subtitle: "SaaS 기반 면접 솔루션 AXHRD i",
       ctaStart: "무료로 시작",
       ctaStartLoggedIn: "면접 시작",
       ctaDemo: "5분 데모 체험",
@@ -173,9 +172,9 @@ export const dictionary: Dictionary = {
     differentiation: {
       title: "AXHRD만의 방식",
       items: [
-        "IRT로 면접관이 아닌 데이터가 난이도를 조절합니다",
-        "자기발견 강점을 역량 면접으로 자연스럽게 연결합니다",
-        "장기 θ 추적으로 성장 스토리를 숫자로 증명합니다",
+        "자소서에 실제 적힌 구절만 인용해 질문을 만들고, 화면에 근거를 보여줍니다",
+        "꼬리질문은 세션당 1회·본인 발화만 근거로 이어집니다",
+        "점수는 답변 인용과 함께 제시하고, IRT로 난이도를 조절합니다",
       ],
       link: "강점 카드 더 모으기 →",
     },

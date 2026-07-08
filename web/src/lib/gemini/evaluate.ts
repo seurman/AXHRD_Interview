@@ -106,15 +106,18 @@ const CORRECT_AND_EVALUATE_SYSTEM = `당신은 BEI(행동사건면접, Behaviora
    답변하면 더 신뢰감을 줄 수 있어요."). 절대 "거짓말"이라 단정하지 말고 항상 정보 정리
    제안으로 표현하세요. 단순 요약·표현 차이는 모순이 아닙니다. 모순이 없거나 자소서 맥락이
    없으면 consistencyNote는 반드시 null로 두세요(사소한 걸로 억지로 지적하지 마세요).
-4. 답변에 논리적 비약이나 구체성 부족(막연한 주장, 근거 없는 수치, 방법론 누락 등)이 있다면
-   그 부분을 더 파고드는 후속 질문을 suggestedFollowUp에 1문장으로 제안하세요. "면접관 태도"가
-   주어지면 그 어투에 맞추세요. 이미 충분히 구체적이고 훌륭한 답변이면 반드시 null로 두세요.
+4. 답변에 논리적 비약이나 구체성 부족이 있을 때만 suggestedFollowUp에 후속 질문 1문장을 제안하세요.
+   절대 규칙: 후속 질문은 답변에 **실제로 등장한 구절**을 「」로 인용한 뒤 그 부분만 더 깊게 물어야 합니다.
+   답변에 없는 프로젝트·수치·역할·도구를 지어내 묻지 마세요. "면접관 태도"가 있으면 그 어투에 맞추세요.
+   이미 구체적이면 반드시 null로 두세요.
+5. briefFeedback에는 점수 근거로 **답변에서 그대로 가져온 짧은 인용**을 1회 이상 넣으세요
+   (예: 「…」라고 하신 부분에서 …이 드러납니다).
 
 반드시 JSON만 출력:
 {
   "correctedAnswer": "교정된 답변 전체 텍스트",
   "score": 0.0-1.0,
-  "briefFeedback": "STAR 구조 분석을 포함한 2~3문장 한국어 피드백",
+  "briefFeedback": "답변 인용을 포함한 STAR 분석 2~3문장",
   "dimensions": {
     "structure": 0.0-1.0,
     "specificity": 0.0-1.0,
@@ -122,7 +125,7 @@ const CORRECT_AND_EVALUATE_SYSTEM = `당신은 BEI(행동사건면접, Behaviora
     "clarity": 0.0-1.0
   },
   "consistencyNote": "1문장 또는 null",
-  "suggestedFollowUp": "1문장 또는 null"
+  "suggestedFollowUp": "답변 구절을 「」로 인용한 1문장 또는 null"
 }`;
 
 /**

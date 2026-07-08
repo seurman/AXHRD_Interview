@@ -64,7 +64,7 @@ export function PlatformConsoleSidebar({ items }: { items: Item[] }) {
           })}
         </nav>
         <p className="mt-4 px-2 text-[10px] leading-relaxed text-muted">
-          Greenhouse Configure · HireVue Admin 패턴
+          AX Configure · 모듈별 권한 스트라이프
         </p>
       </div>
     </aside>

@@ -17,12 +17,26 @@ const CHIP_STYLE: Record<ChipType, string> = {
 };
 
 export function AnswerFeedbackPanel({ feedback }: { feedback: AnswerFeedback }) {
+  const scorePct =
+    typeof feedback.score === "number" ? Math.round(feedback.score * 100) : null;
+  const evidence =
+    feedback.evidence && feedback.evidence.length > 0
+      ? feedback.evidence
+      : feedback.quote
+        ? [{ quote: feedback.quote, supports: "평가에 사용한 대표 발화" }]
+        : [];
+
   return (
     <div className="space-y-4 rounded-2xl border border-primary/15 bg-primary/5 p-5">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-bold uppercase tracking-wide text-primary">
           {feedback.isInterim ? "답변 코칭 (꼬리질문 전)" : "답변 핵심 피드백"}
         </span>
+        {scorePct != null && (
+          <span className="rounded-full border border-primary/25 bg-white/70 px-2.5 py-0.5 text-xs font-semibold text-primary">
+            {scorePct}점
+          </span>
+        )}
         {feedback.chipType && feedback.level != null && !feedback.isInterim && (
           <span
             className={cn(
@@ -40,10 +54,23 @@ export function AnswerFeedbackPanel({ feedback }: { feedback: AnswerFeedback }) 
 
       <p className="text-sm leading-relaxed text-foreground">{feedback.summary}</p>
 
-      {feedback.quote && (
-        <blockquote className="border-l-2 border-primary/30 pl-3 text-sm italic text-muted">
-          &ldquo;{feedback.quote}&rdquo;
-        </blockquote>
+      {evidence.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+            답변 근거
+          </p>
+          {evidence.map((item) => (
+            <figure
+              key={`${item.supports}-${item.quote.slice(0, 24)}`}
+              className="rounded-xl border border-primary/10 bg-white/50 px-3 py-2.5"
+            >
+              <blockquote className="border-l-2 border-primary/30 pl-3 text-sm italic text-foreground">
+                &ldquo;{item.quote}&rdquo;
+              </blockquote>
+              <figcaption className="mt-1.5 text-xs text-muted">{item.supports}</figcaption>
+            </figure>
+          ))}
+        </div>
       )}
 
       {feedback.keyPoints.length > 0 && (

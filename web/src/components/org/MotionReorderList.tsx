@@ -9,7 +9,7 @@ type Props = {
   renderItem: (id: string, index: number) => React.ReactNode;
 };
 
-/** framer-motion Reorder — Greenhouse/HireVue 스타일 세로 드래그 정렬 */
+/** framer-motion Reorder — AX 인터뷰 킷 세로 드래그 정렬 */
 export function MotionReorderList({ ids, onReorder, renderItem }: Props) {
   if (ids.length === 0) {
     return (

@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IconLoader, IconVolume } from "@/components/ui/icons";
+import { IconVolume } from "@/components/ui/icons";
 import { LevelChip } from "./LevelChip";
 import { CompetencyBar } from "./CompetencyBar";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { AnswerFeedbackPanel } from "./AnswerFeedbackPanel";
+import { LoadingRitual } from "@/components/ux/LoadingRitual";
 import { competencyLabel } from "@/lib/labels";
 import { displayQuestionText } from "@/lib/interview/build-question";
 import type {
@@ -179,6 +180,18 @@ export function InterviewSession({
           <h2 className="text-xl font-semibold leading-relaxed text-foreground">
             {q ? displayQuestionText(q) : "질문을 불러오는 중…"}
           </h2>
+          {isPersonalized && q?.resumeAnchors && q.resumeAnchors.length > 0 && (
+            <div className="mt-3 rounded-xl border border-gold/20 bg-gold/5 px-3 py-2.5">
+              <p className="text-xs font-semibold text-gold">자소서 근거</p>
+              <ul className="mt-1.5 space-y-1">
+                {q.resumeAnchors.map((anchor) => (
+                  <li key={anchor} className="text-xs leading-relaxed text-muted">
+                    「{anchor}」
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {q?.rationale && (
             <details className="mt-3 text-xs text-muted">
               <summary className="cursor-pointer select-none text-accent hover:underline">
@@ -207,11 +220,10 @@ export function InterviewSession({
 
         <div className="card-luxe p-8">
           {processing ? (
-            <div className="flex flex-col items-center gap-3 py-8 text-muted">
-              <IconLoader className="h-8 w-8 text-accent" />
-              <p>답변을 평가하고 IRT 난이도를 조정하는 중…</p>
-              <p className="text-xs">STAR 구조·루브릭 기준으로 핵심 피드백을 준비합니다</p>
-            </div>
+            <LoadingRitual
+              variant={state.shouldTerminate ? "report" : "interview"}
+              competencyCode={q?.competency ?? focusCompetency}
+            />
           ) : (
             <VoiceRecorder onTranscript={handleAnswer} disabled={!q} allowTextFallback />
           )}

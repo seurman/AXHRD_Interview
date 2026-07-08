@@ -2,9 +2,9 @@ import type { Dictionary } from "../types";
 
 export const dictionary: Dictionary = {
   meta: {
-    title: "AXHRD — AX-Native, Data-Driven HR Total Solution",
+    title: "AXHRD i — A new standard for interviews in the AI era",
     description:
-      "AXHRD unifies hiring, interviews, competencies, and cohorts on one AX-native data layer.",
+      "AXHRD i is a SaaS interview solution that sets a new bar for interviews in the AI era.",
   },
   common: {
     brand: "AXHRD",
@@ -57,12 +57,11 @@ export const dictionary: Dictionary = {
   },
   home: {
     hero: {
-      eyebrow: "AX-Native · Data-Driven HR Total Solution",
+      eyebrow: "AXHRD i",
       brand: "AXHRD",
-      titleLine1: "Data architects the full",
-      titleHighlight: "HR lifecycle — unified",
-      subtitle:
-        "AXHRD connects hiring, interviews, competencies, and cohorts on one AX-native data layer — proving individual growth and organizational insight in a single total HR solution.",
+      titleLine1: "Setting a new standard for interviews",
+      titleHighlight: "in the AI era",
+      subtitle: "SaaS interview solution — AXHRD i",
       ctaStart: "Start free",
       ctaStartLoggedIn: "Start interview",
       ctaDemo: "5-min demo",
@@ -174,9 +173,9 @@ export const dictionary: Dictionary = {
     differentiation: {
       title: "The AXHRD approach",
       items: [
-        "IRT — not the interviewer — adjusts difficulty from data",
-        "Self-discovery strengths bridge naturally into competency interviews",
-        "Long-term θ tracking turns growth into a measurable story",
+        "Questions cite only phrases actually in your resume — and we show that evidence on screen",
+        "Follow-ups are capped at one per session and must quote your own words",
+        "Scores come with answer citations; IRT adapts difficulty from data",
       ],
       link: "Collect more strength cards →",
     },

@@ -66,11 +66,7 @@ export function PermissionMatrix() {
         {roleMeta && (
           <div className="rounded-xl border border-gold/20 bg-gold/5 px-4 py-3">
             <h2 className="text-base font-semibold text-foreground">{roleMeta.labelKo}</h2>
-            <p className="mt-1 text-sm text-muted">
-              Greenhouse: <span className="text-foreground">{roleMeta.greenhouseAnalog}</span>
-              {" · "}
-              HireVue: <span className="text-foreground">{roleMeta.hirevueAnalog}</span>
-            </p>
+            <p className="mt-1 text-sm text-muted">{roleMeta.scopeNote}</p>
           </div>
         )}
 
@@ -81,7 +77,7 @@ export function PermissionMatrix() {
             <section key={category} className="rounded-xl border border-card-border bg-card p-4">
               <h3 className="text-sm font-semibold text-foreground">{label.ko}</h3>
               <p className="mb-4 text-xs text-muted">
-                Permission stripes — 모듈별 페이지 lazy-load
+                AX 권한 스트라이프 — 모듈별 페이지 lazy-load
               </p>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {ids.map((id) => {
@@ -104,6 +100,7 @@ export function PermissionMatrix() {
                       <div className="min-w-0">
                         <p className="font-medium text-foreground">{def.labelKo}</p>
                         <p className="text-xs text-muted">{def.descriptionKo}</p>
+                        <p className="mt-1 text-[11px] leading-snug text-gold/90">{def.designNote}</p>
                         {def.href && (
                           <p className="mt-1 font-mono text-[10px] text-muted">{def.href}</p>
                         )}

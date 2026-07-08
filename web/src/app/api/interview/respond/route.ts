@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { submitIrtResponse, getIrtSessionSummary } from "@/lib/irt-client";
 import { correctAndEvaluateAnswer, type CorrectedRubricResult } from "@/lib/gemini/evaluate";
 import { parseIrtState, serializeIrtState, type StoredIrtState } from "@/lib/irt-state";
-import { shouldTriggerFollowUp, pickFollowUpQuestion } from "@/lib/interview/follow-up";
+import { shouldTriggerFollowUp, pickFollowUpQuestion, acceptGroundedSuggestedFollowUp } from "@/lib/interview/follow-up";
 import { buildPersonalizedQuestion, parseResumeSummary } from "@/lib/interview/build-question";
 import { buildQuestionRationale } from "@/lib/interview/rationale";
 import { pressureTierFromLevel, pressureTierLabel } from "@/lib/interview/persona";
@@ -113,9 +113,7 @@ async function handleRespond(req: Request, userId: string) {
     stored.competencies[question.competency.code]?.current_level ?? 2
   );
 
-  // 역량당 첫 문항인지 — 압박 꼬리질문 고도화(LLM 기반 즉석 후속 질문)는 비용 원칙상
-  // 첫 문항(자소서 개인화 대상)에만 적용하고, 나머지는 무료 키워드 기반으로 유지한다.
-  const isFirstItem = stored.administeredIds.length === 0;
+  // 꼬리질문은 세션당 최대 1회 — administeredIds와 무관하게 followUpUsed로 제어한다.
 
   // 진행 중인 꼬리질문에 대한 답변인지 확인 — 서버 상태(irtState.pendingFollowUp)가
   // 기준이며 클라이언트는 별도 플래그를 보낼 필요가 없다.
@@ -167,16 +165,18 @@ async function handleRespond(req: Request, userId: string) {
     rubric = combined;
     correctedAnswer = combined.correctedAnswer;
 
-    if (shouldTriggerFollowUp(rubric, currentTier)) {
-      // 첫 문항이고 LLM이 답변 내용을 근거로 만든 압박 꼬리질문이 있으면 그걸 쓰고,
-      // 아니면(2번째 이상 문항, 또는 mock/API 실패로 제안이 없을 때) 무료 키워드 기반으로 대체한다.
+    if (shouldTriggerFollowUp(rubric, currentTier) && !stored.followUpUsed) {
+      // LLM 제안은 답변에 실제 등장한 구절을 인용할 때만 채택. 아니면 발화 인용 템플릿.
+      const groundedLlm = acceptGroundedSuggestedFollowUp(
+        rubric.suggestedFollowUp,
+        correctedAnswer
+      );
       const followUpQuestion =
-        isFirstItem && rubric.suggestedFollowUp
-          ? rubric.suggestedFollowUp
-          : pickFollowUpQuestion(question.followUpHints, correctedAnswer, currentTier);
+        groundedLlm ?? pickFollowUpQuestion(question.followUpHints, correctedAnswer, currentTier);
 
       const updatedState: StoredIrtState = {
         ...stored,
+        followUpUsed: true,
         pendingFollowUp: {
           questionId,
           followUpQuestion,
@@ -208,6 +208,7 @@ async function handleRespond(req: Request, userId: string) {
             level: question.level,
             competency: question.competency.code,
             isInterim: true,
+            score: rubric.score,
           }),
           score: rubric.score,
           level: question.level,
@@ -221,7 +222,8 @@ async function handleRespond(req: Request, userId: string) {
           level: question.level,
           text: question.template,
           personalizedText: followUpQuestion,
-          rationale: "답변을 조금 더 구체화하기 위한 후속 질문입니다.",
+          rationale:
+            "방금 하신 말씀 중 한 구절을 근거로, 세션당 한 번만 이어지는 구체화 질문입니다.",
           isFollowUp: true,
           pressureTier: currentTier,
           personaLabel: pressureTierLabel(currentTier),
@@ -311,6 +313,7 @@ async function handleRespond(req: Request, userId: string) {
     planId,
     personalizedQuestions: stored.personalizedQuestions,
     usedHighlights: stored.usedHighlights,
+    followUpUsed: stored.followUpUsed || isFollowUpAnswer,
   };
 
   // 응답 기록(ResponseRecord/ChipEvent)은 다음 질문 준비(세션 상태 저장 → 개인화)와
@@ -453,6 +456,7 @@ async function handleRespond(req: Request, userId: string) {
         level: irtResult.chip_event.level,
         nextLevel: nextQuestion?.level,
         competency: irtResult.chip_event.competency,
+        score: rubric.score,
       }),
       score: rubric.score,
       chipType: irtResult.chip_event.chip_type,

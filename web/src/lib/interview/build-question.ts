@@ -114,6 +114,7 @@ export async function buildPersonalizedQuestion(
         personalizedText: cached.text,
         rationale,
         resumePersonalized: !!cached.resumePersonalized,
+        resumeAnchors: cached.resumeAnchors,
       },
       options?.pressureTier,
       seed
@@ -170,12 +171,14 @@ export async function buildPersonalizedQuestion(
         ? adminRubric
         : result.rubric;
 
+  const resumePersonalized = result.text !== question.template;
   const personalizedQuestions = {
     ...stored.personalizedQuestions,
     [question.externalId]: {
       text: result.text,
       rubric,
-      resumePersonalized: result.text !== question.template,
+      resumePersonalized,
+      resumeAnchors: resumePersonalized ? result.resumeAnchors : undefined,
     },
   };
 
@@ -203,7 +206,8 @@ export async function buildPersonalizedQuestion(
       text: question.template,
       personalizedText: result.text,
       rationale,
-      resumePersonalized: result.text !== question.template,
+      resumePersonalized,
+      resumeAnchors: resumePersonalized ? result.resumeAnchors : undefined,
     },
     options?.pressureTier,
     seed

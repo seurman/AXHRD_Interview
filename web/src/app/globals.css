@@ -585,3 +585,99 @@ body {
   width: 0.6rem;
   border-radius: 9999px;
 }
+
+/* ── LoadingRitual — 정지되지 않는 대기 UX ── */
+.loading-ritual-hourglass {
+  position: relative;
+  width: 2.75rem;
+  height: 3.25rem;
+  border: 2px solid var(--color-primary);
+  border-radius: 0.35rem 0.35rem 0.85rem 0.85rem;
+  background: linear-gradient(
+    180deg,
+    rgb(47 95 238 / 0.08) 0%,
+    rgb(199 154 90 / 0.12) 100%
+  );
+  animation: ritual-hourglass-tilt 2.4s ease-in-out infinite;
+}
+
+.loading-ritual-sand {
+  position: absolute;
+  left: 50%;
+  top: 0.35rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-left: -0.45rem;
+  border-radius: 50% 50% 40% 40%;
+  background: var(--color-gold);
+  opacity: 0.85;
+  animation: ritual-sand-fall 2.4s ease-in-out infinite;
+}
+
+.loading-ritual-card {
+  animation: ritual-card-in 0.45s ease-out;
+}
+
+@keyframes ritual-hourglass-tilt {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+  90% {
+    transform: rotate(180deg);
+  }
+}
+
+@keyframes ritual-sand-fall {
+  0% {
+    top: 0.35rem;
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  45% {
+    top: 1.6rem;
+    opacity: 0.5;
+    transform: scale(0.65);
+  }
+  50% {
+    top: 0.35rem;
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  95% {
+    top: 1.6rem;
+    opacity: 0.5;
+    transform: scale(0.65);
+  }
+  100% {
+    top: 0.35rem;
+    opacity: 0.9;
+    transform: scale(1);
+  }
+}
+
+@keyframes ritual-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-ritual-hourglass,
+  .loading-ritual-sand,
+  .loading-ritual-card {
+    animation: none;
+  }
+}
+

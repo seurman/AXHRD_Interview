@@ -29,12 +29,16 @@ interface Snapshot {
   sessionNumber: number;
 }
 
+type CompetencyLatest = {
+  theta: number;
+  percentile: number;
+  levelEst: number;
+  assessed: boolean;
+};
+
 interface DashboardProps {
   snapshots: Snapshot[];
-  latestByCompetency: Record<
-    string,
-    { theta: number; percentile: number; levelEst: number }
-  >;
+  latestByCompetency: Record<string, CompetencyLatest>;
   sessionCount: number;
   quests: QuestItem[];
   totalXp: number;
@@ -69,20 +73,22 @@ export function CompetencyDashboard({
   const diff = dict.dashboard.differentiation;
   const st = dict.dashboard.stats;
 
+  const assessed = Object.entries(latestByCompetency).filter(([, v]) => v.assessed);
+
+  // 레이더는 전체 6역량을 보여 주되, 미시작은 0점으로 표시 (빈 축이 보이게)
   const radarData = Object.entries(latestByCompetency).map(([code, v]) => ({
     competency: competencyLabel(code),
-    score: v.percentile,
+    score: v.assessed ? v.percentile : 0,
     code,
   }));
 
   const timelineData = buildTimeline(snapshots);
   const avgPercentile =
-    Object.values(latestByCompetency).reduce((s, v) => s + v.percentile, 0) /
-    Math.max(Object.keys(latestByCompetency).length, 1);
+    assessed.length === 0
+      ? 0
+      : assessed.reduce((s, [, v]) => s + v.percentile, 0) / assessed.length;
 
-  const sorted = Object.entries(latestByCompetency).sort(
-    (a, b) => b[1].percentile - a[1].percentile
-  );
+  const sorted = [...assessed].sort((a, b) => b[1].percentile - a[1].percentile);
   const strongest = sorted[0];
   const weakest = sorted[sorted.length - 1];
 
@@ -179,28 +185,34 @@ function CompetencySkillBar({
   levelEst,
   percentile,
   theta,
+  assessed,
 }: {
   code: string;
   levelEst: number;
   percentile: number;
   theta: number;
+  assessed: boolean;
 }) {
-  const color = LEVEL_COLORS[Math.min(levelEst, 5)] ?? LEVEL_COLORS[0];
+  const color = assessed
+    ? (LEVEL_COLORS[Math.min(levelEst, 5)] ?? LEVEL_COLORS[0])
+    : LEVEL_COLORS[0];
 
   return (
-    <div className="rounded-xl bg-background p-4">
+    <div className={`rounded-xl bg-background p-4 ${!assessed ? "opacity-70" : ""}`}>
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium text-foreground">{competencyLabel(code)}</span>
-        <span className={`font-bold ${color}`}>L{levelEst}</span>
+        <span className={`font-bold ${color}`}>{assessed ? `L${levelEst}` : "미시작"}</span>
       </div>
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-primary/10">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-primary to-gold transition-all"
-          style={{ width: `${percentile}%` }}
+          className={`h-full rounded-full transition-all ${
+            assessed ? "bg-gradient-to-r from-primary to-gold" : "bg-muted/40"
+          }`}
+          style={{ width: `${assessed ? percentile : 0}%` }}
         />
       </div>
       <p className="mt-1 text-xs text-muted">
-        {percentile}% · θ {theta.toFixed(2)}
+        {assessed ? `${Math.round(percentile)}% · θ ${theta.toFixed(2)}` : "0% · 아직 측정하지 않음"}
       </p>
     </div>
   );

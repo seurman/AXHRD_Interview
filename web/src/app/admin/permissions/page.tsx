@@ -13,36 +13,24 @@ export default async function AdminPermissionsPage() {
         <p className="text-xs font-medium uppercase tracking-widest text-gold">Configure</p>
         <h1 className="mt-1 text-2xl font-bold text-foreground">권한 설정</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
-          Greenhouse <em>Configure → Permissions</em> 및 HireVue <em>Admin → Roles</em> 패턴을
-          따릅니다. 역할별로 접근 가능한 모듈(capability)을 확인하고, 사용자에게 역할을 부여하려면{" "}
+          AXHRD 역할×모듈 매트릭스입니다. 페이지를 capability로 격리해 필요 모듈만 로드하고,
+          사용자 역할 부여는{" "}
           <Link href="/admin/users" className="text-accent hover:underline">
             사용자 권한
           </Link>
-          으로 이동하세요.
+          에서 합니다.
         </p>
       </div>
 
       <PermissionMatrix />
 
-      <section className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-card-border bg-card p-4">
-          <h2 className="text-sm font-semibold text-foreground">Greenhouse 참고</h2>
-          <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted">
-            <li>Site Admin — 전사 설정 (≈ 수퍼어드민)</li>
-            <li>Job Admin — 채용별 권한 스트라이프 (≈ 기관 어드민)</li>
-            <li>Basic — 제한된 뷰 (≈ 학생)</li>
-            <li>User-specific permissions — 역할 위 추가 권한</li>
-          </ul>
-        </div>
-        <div className="rounded-xl border border-card-border bg-card p-4">
-          <h2 className="text-sm font-semibold text-foreground">HireVue 참고</h2>
-          <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted">
-            <li>Admin — 계정·통합·문항 세트</li>
-            <li>Recruiter / Collaborator — 담당 포지션만</li>
-            <li>Evaluator — 평가만</li>
-            <li>SSO SAML 그룹 → 역할 매핑 (로드맵)</li>
-          </ul>
-        </div>
+      <section className="rounded-xl border border-card-border bg-card p-4">
+        <h2 className="text-sm font-semibold text-foreground">AX 차별점</h2>
+        <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted">
+          <li>외부 ATS 역할명을 베끼지 않고, 제품 데이터 레이어(면접·역량·코호트)에 맞춘 6역할</li>
+          <li>수퍼/회사 어드민은 사용량 면제 · 데모 샌드박스는 영업 데이터 격리</li>
+          <li>학생·기관 권한은 개인 원문 비공개 원칙과 함께 설계</li>
+        </ul>
       </section>
     </div>
   );

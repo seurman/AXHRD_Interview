@@ -38,7 +38,7 @@ export default async function AdminOrganizationsPage() {
         <p className="text-xs font-medium uppercase tracking-widest text-gold">Admin · Tenants</p>
         <h1 className="mt-1 text-2xl font-bold text-foreground sm:text-3xl">기관 관리</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted">
-          Greenhouse·Workday 방식의 테넌트 허브 — 기관별 승인, 팀, 코호트, 인터뷰 킷을 한곳에서
+          AXHRD 테넌트 허브 — 기관별 승인, 팀, 코호트, 인터뷰 킷을 한곳에서
           관리합니다.
         </p>
         <div className="mt-4 flex flex-wrap gap-3 text-sm">

@@ -90,6 +90,75 @@ const STAR_LABELS: Record<keyof StarCoverage, string> = {
   result: "결과(수치)",
 };
 
+export interface FeedbackEvidenceItem {
+  quote: string;
+  supports: string;
+}
+
+/** 점수·차원과 답변 인용을 짝지은 근거 목록 (추가 LLM 없음). */
+export function buildEvidenceFromAnswer(params: {
+  answer: string;
+  dimensions?: {
+    structure: number;
+    specificity: number;
+    relevance: number;
+    clarity: number;
+  };
+  score?: number;
+}): FeedbackEvidenceItem[] {
+  const sentences = splitSentences(params.answer);
+  const evidence: FeedbackEvidenceItem[] = [];
+  const primary = extractQuote(params.answer, 100);
+  if (primary.trim()) {
+    const scorePct =
+      typeof params.score === "number" ? Math.round(params.score * 100) : null;
+    evidence.push({
+      quote: primary,
+      supports:
+        scorePct != null
+          ? `종합 ${scorePct}점의 주요 근거로 사용한 발화`
+          : "평가에 사용한 대표 발화",
+    });
+  }
+
+  if (params.dimensions) {
+    const dimLabels: Record<string, string> = {
+      structure: "구조",
+      specificity: "구체성",
+      relevance: "역량 연관",
+      clarity: "명확성",
+    };
+    const sorted = Object.entries(params.dimensions).sort((a, b) => b[1] - a[1]);
+    const best = sorted[0];
+    const weak = sorted[sorted.length - 1];
+
+    const metricSentence = sentences.find((s) =>
+      /\d+%?|\d+명|\d+억|\d+건|\d+배/.test(s)
+    );
+    if (best && best[1] >= 0.6 && metricSentence && metricSentence !== primary) {
+      evidence.push({
+        quote: metricSentence.length > 90 ? `${metricSentence.slice(0, 89)}…` : metricSentence,
+        supports: `${dimLabels[best[0]] ?? best[0]} ${Math.round(best[1] * 100)}% — 구체 지표가 드러난 구간`,
+      });
+    }
+
+    const actionSentence = sentences.find(
+      (s) => STAR_KEYWORDS.action.test(s) && s !== primary && s !== metricSentence
+    );
+    if (weak && weak[1] < 0.55) {
+      const fallback = actionSentence ?? sentences.find((s) => s !== primary) ?? primary;
+      if (fallback && !evidence.some((e) => e.quote === fallback)) {
+        evidence.push({
+          quote: fallback.length > 90 ? `${fallback.slice(0, 89)}…` : fallback,
+          supports: `${dimLabels[weak[0]] ?? weak[0]} ${Math.round(weak[1] * 100)}% — 이 발화만으로는 보강이 필요함`,
+        });
+      }
+    }
+  }
+
+  return evidence.slice(0, 3);
+}
+
 /** 답변 직후 UI에 보여줄 핵심 포인트·IRT 코멘트를 만든다(추가 LLM 호출 없음). */
 export function buildAnswerKeyPointFeedback(params: {
   answer: string;
@@ -105,11 +174,13 @@ export function buildAnswerKeyPointFeedback(params: {
   competency?: string;
   nextLevel?: number;
   isInterim?: boolean;
+  score?: number;
 }): {
   summary: string;
   keyPoints: string[];
   irtNote: string;
   quote: string;
+  evidence: FeedbackEvidenceItem[];
 } {
   const coverage = detectStarCoverage(params.answer);
   const keyPoints: string[] = [];
@@ -137,11 +208,16 @@ export function buildAnswerKeyPointFeedback(params: {
   }
 
   const quote = extractQuote(params.answer);
+  const evidence = buildEvidenceFromAnswer({
+    answer: params.answer,
+    dimensions: params.dimensions,
+    score: params.score,
+  });
 
   let irtNote = "";
   if (params.isInterim) {
     irtNote =
-      "답변 구체성을 더 확인하기 위해 꼬리질문이 이어집니다. 꼬리질문까지 답하면 난이도 조정이 확정됩니다.";
+      "방금 말씀하신 부분을 한 번 더 구체화하는 꼬리질문이 이어집니다(세션당 1회). 답하시면 난이도 조정이 확정됩니다.";
   } else if (params.chipType && params.level != null) {
     const lv = params.level;
     const next = params.nextLevel;
@@ -162,6 +238,7 @@ export function buildAnswerKeyPointFeedback(params: {
     keyPoints,
     irtNote,
     quote,
+    evidence,
   };
 }
 

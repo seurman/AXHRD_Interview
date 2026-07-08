@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { CompetencyDashboard } from "@/components/dashboard/CompetencyDashboard";
 import { WelcomeBanner } from "@/components/auth/WelcomeBanner";
-import { thetaToLevel } from "@/lib/utils";
 import { competencyLabel } from "@/lib/labels";
 import { COMPETENCY_CODES } from "@/types";
 import { getUserStrengthDeck } from "@/lib/discover/user-strengths";
@@ -48,7 +47,7 @@ export default async function DashboardPage() {
 
   const latestByCompetency: Record<
     string,
-    { theta: number; percentile: number; levelEst: number }
+    { theta: number; percentile: number; levelEst: number; assessed: boolean }
   > = {};
 
   for (const log of [...full.competencyLogs].reverse()) {
@@ -57,23 +56,25 @@ export default async function DashboardPage() {
         theta: log.theta,
         percentile: log.percentile,
         levelEst: log.levelEst,
+        assessed: true,
       };
     }
   }
 
+  // 미시도는 IRT prior(θ=0 → 50%)가 아니라 UI상 0% · L0 · 미시작
   for (const code of COMPETENCY_CODES) {
     if (!latestByCompetency[code]) {
       latestByCompetency[code] = {
         theta: 0,
-        percentile: 50,
-        levelEst: thetaToLevel(0),
+        percentile: 0,
+        levelEst: 0,
+        assessed: false,
       };
     }
   }
 
-  const weakest = Object.entries(latestByCompetency).sort(
-    (a, b) => a[1].percentile - b[1].percentile
-  )[0];
+  const assessedEntries = Object.entries(latestByCompetency).filter(([, v]) => v.assessed);
+  const weakest = assessedEntries.sort((a, b) => a[1].percentile - b[1].percentile)[0];
 
   const { quests, totalXp, level } = buildCareerQuests({
     sessionCount: full.sessions.length,

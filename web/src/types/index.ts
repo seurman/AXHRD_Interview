@@ -69,11 +69,20 @@ export interface ChipEvent {
 }
 
 /** 문항 답변 직후 클라이언트에 보여주는 핵심 피드백 */
+export interface AnswerEvidence {
+  /** 점수/차원과 연결된 실제 답변 인용 */
+  quote: string;
+  /** 이 인용이 뒷받침하는 평가 포인트 (예: "구체성 높음", "결과 수치 부족") */
+  supports: string;
+}
+
 export interface AnswerFeedback {
   summary: string;
   keyPoints: string[];
   irtNote: string;
   quote?: string;
+  /** 점수 옆에 붙는 근거 인용 목록 (답변에서만 추출) */
+  evidence?: AnswerEvidence[];
   score?: number;
   chipType?: ChipType;
   level?: number;
@@ -132,6 +141,8 @@ export interface InterviewQuestion {
    *  (personalizedText가 text와 다르다고 해서 자소서 인용이라는 뜻은 아님 — 압박 톤 프리픽스나
    *  꼬리질문도 다르게 나오므로 이 필드로 명시적으로 구분한다) */
   resumePersonalized?: boolean;
+  /** 자소서에서 질문에 인용한 근거 구절 — UI에 "자소서 근거"로 표시 */
+  resumeAnchors?: string[];
 }
 
 export interface InterviewSessionState {

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconLoader } from "@/components/ui/icons";
 import { VoiceRecorder } from "@/components/interview/VoiceRecorder";
+import { LoadingRitual } from "@/components/ux/LoadingRitual";
 
 export interface DiscoverQuestionState {
   code: string;
@@ -122,11 +123,13 @@ export function DiscoverSession({
           disabled={processing || !textAnswer.trim()}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {processing ? (
+          {processing && questionIndex + 1 < totalQuestions ? (
             <>
               <IconLoader className="h-4 w-4 animate-spin" />
               저장 중…
             </>
+          ) : processing ? (
+            "리포트로 이동 중…"
           ) : questionIndex + 1 >= totalQuestions ? (
             "마지막 답변 제출하고 결과 보기"
           ) : (
@@ -134,6 +137,15 @@ export function DiscoverSession({
           )}
         </button>
       </section>
+
+      {processing && (
+        <section className="card-luxe px-4 pb-2 pt-1">
+          <LoadingRitual
+            variant={questionIndex + 1 >= totalQuestions ? "report" : "discover"}
+            compact
+          />
+        </section>
+      )}
 
       <p className="text-center text-xs text-muted">
         이 대화는 평가·채점되지 않습니다. 솔직한 이야기일수록 더 의미 있는 발견이 됩니다.

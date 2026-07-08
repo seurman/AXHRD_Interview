@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconLoader, IconUpload } from "@/components/ui/icons";
+import { LoadingRitual } from "@/components/ux/LoadingRitual";
 import { jobRoleLabel, competencyLabel, industryLabel } from "@/lib/labels";
 import { COMPETENCY_CODES, INDUSTRY_CODES, COMPANY_SIZE_CODES } from "@/types";
 import type { IndustryCode, JobRoleCode, CompanySizeCode } from "@/types";
@@ -524,6 +525,12 @@ export function SetupForm({
           `${competencyLabel(focusCompetency || "COMMUNICATION")} ${s.start}`
         )}
       </button>
+
+      {loading && (
+        <div className="card-luxe mt-4 px-3">
+          <LoadingRitual variant="setup" competencyCode={focusCompetency} compact />
+        </div>
+      )}
     </div>
   );
 }
