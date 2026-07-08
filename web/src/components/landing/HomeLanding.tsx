@@ -102,44 +102,8 @@ export function HomeLanding({ loggedIn }: { loggedIn: boolean }) {
                 {loggedIn ? h.hero.ctaStartLoggedIn : h.hero.ctaStart}
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="#lp-demo" className="lp-btn-ghost">
-                {h.hero.ctaDemo}
-              </Link>
             </div>
           </div>
-
-          <aside id="lp-demo" className="lp-demo-card">
-            <h2 className="lp-demo-title">{h.hero.demoTitle}</h2>
-            <p className="lp-demo-hint">{h.hero.demoHint}</p>
-            <form
-              className="lp-demo-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                window.location.href = "/demo";
-              }}
-            >
-              <label className="lp-field">
-                <span>{h.hero.demoFirst}</span>
-                <input name="first" autoComplete="given-name" required />
-              </label>
-              <label className="lp-field">
-                <span>{h.hero.demoLast}</span>
-                <input name="last" autoComplete="family-name" />
-              </label>
-              <label className="lp-field lp-field--full">
-                <span>{h.hero.demoEmail}</span>
-                <input name="email" type="email" autoComplete="email" required />
-              </label>
-              <label className="lp-field lp-field--full">
-                <span>{h.hero.demoOrg}</span>
-                <input name="org" autoComplete="organization" />
-              </label>
-              <button type="submit" className="lp-btn-primary lp-btn-block">
-                {h.hero.demoSubmit}
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </form>
-          </aside>
         </div>
       </section>
 

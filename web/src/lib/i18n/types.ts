@@ -67,16 +67,8 @@ export type Dictionary = {
       subtitle: string;
       ctaStart: string;
       ctaStartLoggedIn: string;
-      ctaDemo: string;
       imageAlt: string;
       bullets: string[];
-      demoTitle: string;
-      demoHint: string;
-      demoFirst: string;
-      demoLast: string;
-      demoEmail: string;
-      demoOrg: string;
-      demoSubmit: string;
     };
     stats: {
       competencies: string;
