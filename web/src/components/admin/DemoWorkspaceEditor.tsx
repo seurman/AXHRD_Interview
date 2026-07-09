@@ -20,6 +20,14 @@ import type { DemoCompetencyDto, DemoQuestionDto } from "@/lib/demo/workspace";
 
 type Step = "kit" | "questions" | "rubrics";
 
+type CatalogQuestion = {
+  externalId: string;
+  level: number;
+  template: string;
+  sortOrder: number;
+  rubricCriteria: string[];
+};
+
 type CatalogComp = {
   source: "ncs" | "global";
   code: string;
@@ -28,6 +36,8 @@ type CatalogComp = {
   questionCount: number;
   clusterCode?: string;
   clusterNameKo?: string;
+  rubricByLevel?: RubricByLevel;
+  questions?: CatalogQuestion[];
 };
 
 type CatalogCluster = {
@@ -48,6 +58,35 @@ type Props = {
 const LEVELS = [1, 2, 3, 4, 5] as const;
 const DND_TYPE = "application/x-axhrd-demo-comp";
 
+function buildOptimisticFromCatalog(
+  item: CatalogComp,
+  sortOrder: number,
+): { comp: DemoCompetencyDto; questions: DemoQuestionDto[] } {
+  const compId = `pending-${item.source}-${item.code}`;
+  const comp: DemoCompetencyDto = {
+    id: compId,
+    code: item.code,
+    nameKo: item.nameKo,
+    description: item.description,
+    sortOrder,
+    isActive: true,
+    questionCount: item.questions?.length ?? item.questionCount,
+    rubricByLevel: item.rubricByLevel ?? {},
+  };
+  const questions: DemoQuestionDto[] = (item.questions ?? []).map((q, i) => ({
+    id: `pending-q-${item.code}-${i}`,
+    externalId: q.externalId,
+    competencyId: compId,
+    competencyCode: item.code,
+    level: q.level,
+    template: q.template,
+    sortOrder: q.sortOrder,
+    isActive: true,
+    rubricCriteria: q.rubricCriteria ?? [],
+  }));
+  return { comp, questions };
+}
+
 export function DemoWorkspaceEditor({
   workspaceId,
   workspaceSlug,
@@ -59,6 +98,8 @@ export function DemoWorkspaceEditor({
   const [questions, setQuestions] = useState(initialQuestions);
   const [selectedCompId, setSelectedCompId] = useState(initialCompetencies[0]?.id ?? "");
   const [busy, setBusy] = useState(false);
+  const [addingCodes, setAddingCodes] = useState<Set<string>>(() => new Set());
+  const [materializing, setMaterializing] = useState(false);
   const [catalog, setCatalog] = useState<CatalogCluster[]>([]);
   const [catalogTotals, setCatalogTotals] = useState({ ncs: 0, global: 0 });
   const [catalogError, setCatalogError] = useState<string | null>(null);
@@ -108,6 +149,26 @@ export function DemoWorkspaceEditor({
   }, [base, selectedCompId]);
 
   useEffect(() => {
+    setStep("kit");
+    setCompetencies(initialCompetencies);
+    setQuestions(initialQuestions);
+    setSelectedCompId(initialCompetencies[0]?.id ?? "");
+    setMessage(null);
+    setAddingCodes(new Set());
+  }, [workspaceId, initialCompetencies, initialQuestions]);
+
+  const findCatalogComp = useCallback(
+    (source: "ncs" | "global", code: string): CatalogComp | null => {
+      for (const cl of catalog) {
+        const found = cl.competencies.find((c) => c.source === source && c.code === code);
+        if (found) return found;
+      }
+      return null;
+    },
+    [catalog],
+  );
+
+  useEffect(() => {
     let cancelled = false;
     (async () => {
       setCatalogLoading(true);
@@ -151,8 +212,30 @@ export function DemoWorkspaceEditor({
       setMessage("이미 키트에 있는 역량입니다.");
       return;
     }
-    setBusy(true);
     setMessage(null);
+    const codesBeingAdded = fresh.map((s) => s.code);
+    setAddingCodes((prev) => new Set([...prev, ...codesBeingAdded]));
+
+    const prevComps = competencies;
+    const prevQs = questions;
+    let sortBase = competencies.reduce((m, c) => Math.max(m, c.sortOrder), -1) + 1;
+    const optimisticComps: DemoCompetencyDto[] = [];
+    const optimisticQs: DemoQuestionDto[] = [];
+
+    for (const sel of fresh) {
+      const item = findCatalogComp(sel.source, sel.code);
+      if (!item) continue;
+      const { comp, questions: qs } = buildOptimisticFromCatalog(item, sortBase++);
+      optimisticComps.push(comp);
+      optimisticQs.push(...qs);
+    }
+
+    if (optimisticComps.length > 0) {
+      setCompetencies((prev) => [...prev, ...optimisticComps]);
+      setQuestions((prev) => [...prev, ...optimisticQs]);
+      setSelectedCompId(optimisticComps[0].id);
+    }
+
     try {
       const res = await fetch(`${base}/competencies`, {
         method: "POST",
@@ -161,25 +244,77 @@ export function DemoWorkspaceEditor({
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d.error ?? "추가 실패");
-      await refresh();
+
+      const serverComps = (d.competencies as DemoCompetencyDto[] | undefined) ?? [];
+      const serverQs = (d.questions as DemoQuestionDto[] | undefined) ?? [];
+      if (serverComps.length > 0) {
+        const codes = new Set(codesBeingAdded);
+        setCompetencies((prevComps) => {
+          const keptComps = prevComps.filter(
+            (c) => !(codes.has(c.code) && c.id.startsWith("pending-")),
+          );
+          const merged = [...keptComps];
+          for (const sc of serverComps) {
+            const idx = merged.findIndex((c) => c.code === sc.code);
+            if (idx >= 0) merged[idx] = sc;
+            else merged.push(sc);
+          }
+          return merged.sort((a, b) => a.sortOrder - b.sortOrder);
+        });
+        setQuestions((prevQs) => {
+          const keptQs = prevQs.filter(
+            (q) => !(codes.has(q.competencyCode) && q.id.startsWith("pending-q-")),
+          );
+          const existingIds = new Set(keptQs.map((q) => q.id));
+          const toAdd = serverQs.filter((q) => !existingIds.has(q.id));
+          return [...keptQs, ...toAdd];
+        });
+        setSelectedCompId(serverComps[0].id);
+      } else {
+        await refresh();
+      }
+
       const added = (d.added as string[]) ?? [];
       setMessage(
         `${added.length}개 역량을 키트에 넣었습니다.` +
           (d.skipped?.length ? ` (건너뜀: ${d.skipped.join(", ")})` : ""),
       );
-      // select first newly referenced code after refresh
-      const res2 = await fetch(base);
-      if (res2.ok) {
-        const snap = await res2.json();
-        const pick = snap.competencies.find((c: DemoCompetencyDto) =>
-          added.includes(c.code),
-        );
-        if (pick) setSelectedCompId(pick.id);
-      }
     } catch (e) {
+      setCompetencies(prevComps);
+      setQuestions(prevQs);
       setMessage(e instanceof Error ? e.message : "추가 실패");
     } finally {
-      setBusy(false);
+      setAddingCodes((prev) => {
+        const next = new Set(prev);
+        for (const code of codesBeingAdded) next.delete(code);
+        return next;
+      });
+    }
+  };
+
+  const materializeToProduction = async () => {
+    if (competencies.length === 0) {
+      setMessage("키트에 역량이 없습니다. 먼저 역량을 추가하세요.");
+      return;
+    }
+    if (!confirm("이 데모 키트를 운영 문항 뱅크(역량·문항·평가)에 반영할까요?")) return;
+    setMaterializing(true);
+    setMessage(null);
+    try {
+      const res = await fetch(base, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "materializeToProduction" }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error ?? "반영 실패");
+      setMessage(
+        `운영 뱅크에 반영했습니다. 역량 ${(d.codes as string[])?.length ?? 0}개, 문항 ${d.questionCount ?? 0}개 — /admin/content 에서 확인하세요.`,
+      );
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "운영 뱅크 반영 실패");
+    } finally {
+      setMaterializing(false);
     }
   };
 
@@ -262,20 +397,61 @@ export function DemoWorkspaceEditor({
   };
 
   const addQuestion = async (level: number) => {
-    if (!selectedCompId) return;
+    if (!selectedCompId || !selectedComp) return;
+    if (selectedCompId.startsWith("pending-")) {
+      setMessage("역량이 서버에 저장될 때까지 잠시만 기다려 주세요.");
+      return;
+    }
     const template = prompt(`L${level} 질문 문구`)?.trim();
     if (!template) return;
-    setBusy(true);
+    const tempId = `pending-q-${Date.now()}`;
+    const sortOrder = (questionsByLevel.get(level)?.length ?? 0);
+    const optimistic: DemoQuestionDto = {
+      id: tempId,
+      externalId: `TEMP-${tempId}`,
+      competencyId: selectedCompId,
+      competencyCode: selectedComp.code,
+      level,
+      template,
+      sortOrder,
+      isActive: true,
+      rubricCriteria: [],
+    };
+    setQuestions((prev) => [...prev, optimistic]);
     try {
       const res = await fetch(`${base}/questions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ competencyId: selectedCompId, level, template }),
       });
-      if (!res.ok) throw new Error("추가 실패");
-      await refresh();
-    } finally {
-      setBusy(false);
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error ?? "추가 실패");
+      const q = d.question as DemoQuestionDto;
+      setQuestions((prev) =>
+        prev.map((x) =>
+          x.id === tempId
+            ? {
+                id: q.id,
+                externalId: q.externalId,
+                competencyId: q.competencyId,
+                competencyCode: selectedComp.code,
+                level: q.level,
+                template: q.template,
+                sortOrder: q.sortOrder,
+                isActive: q.isActive,
+                rubricCriteria: Array.isArray(q.rubricCriteria) ? q.rubricCriteria : [],
+              }
+            : x,
+        ),
+      );
+      setCompetencies((prev) =>
+        prev.map((c) =>
+          c.id === selectedCompId ? { ...c, questionCount: c.questionCount + 1 } : c,
+        ),
+      );
+    } catch (e) {
+      setQuestions((prev) => prev.filter((x) => x.id !== tempId));
+      setMessage(e instanceof Error ? e.message : "문항 추가 실패");
     }
   };
 
@@ -446,6 +622,15 @@ export function DemoWorkspaceEditor({
             시연 URL (로그인 불필요) <ExternalLink className="h-3 w-3" />
           </a>
         ) : null}
+        <button
+          type="button"
+          disabled={materializing || competencies.length === 0}
+          onClick={() => void materializeToProduction()}
+          className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white hover:bg-white/10 disabled:opacity-50"
+          title="데모 키트를 운영 CMS(역량·문항·평가)에 동기화"
+        >
+          {materializing ? "운영 뱅크 반영 중…" : "운영 뱅크에 반영"}
+        </button>
       </div>
       </div>
 
@@ -506,34 +691,38 @@ export function DemoWorkspaceEditor({
                       <ul className="mb-2 space-y-0.5 pl-1">
                         {cl.competencies.map((c) => {
                           const inKit = kitCodes.has(c.code);
+                          const adding = addingCodes.has(c.code);
                           return (
                             <li key={`${c.source}-${c.code}`}>
                               <div
+                                draggable={!inKit && !adding}
+                                onDragStart={(e) => {
+                                  if (inKit || adding) {
+                                    e.preventDefault();
+                                    return;
+                                  }
+                                  onDragStart(e, c);
+                                }}
+                                onDragEnd={onDragEnd}
                                 className={`group flex items-start gap-1 rounded-md border px-1.5 py-1.5 text-xs ${
                                   inKit
                                     ? "border-transparent bg-primary/5 opacity-60"
                                     : draggingCode === c.code
                                       ? "border-accent bg-accent/10"
-                                      : "border-transparent hover:border-card-border hover:bg-background"
+                                      : adding
+                                        ? "border-accent/40 bg-accent/5"
+                                        : "cursor-grab border-transparent hover:border-card-border hover:bg-background active:cursor-grabbing"
                                 }`}
                                 title={c.description ?? c.code}
                               >
-                                {!inKit ? (
-                                  <span
-                                    draggable={!busy}
-                                    onDragStart={(e) => onDragStart(e, c)}
-                                    onDragEnd={onDragEnd}
-                                    className="mt-0.5 cursor-grab touch-none text-muted/80 active:cursor-grabbing"
-                                    aria-label={`${c.nameKo} 드래그`}
-                                  >
-                                    <GripVertical className="h-3.5 w-3.5" />
-                                  </span>
-                                ) : (
-                                  <GripVertical className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted/30" />
-                                )}
+                                <GripVertical
+                                  className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${
+                                    inKit ? "text-muted/30" : "text-muted/80"
+                                  }`}
+                                />
                                 <button
                                   type="button"
-                                  disabled={inKit || busy}
+                                  disabled={inKit || adding}
                                   onClick={() => {
                                     if (!inKit) void addFromCatalog([{ source: c.source, code: c.code }]);
                                   }}
@@ -541,6 +730,11 @@ export function DemoWorkspaceEditor({
                                 >
                                   <p className="font-medium leading-snug text-foreground">
                                     {c.nameKo}
+                                    {adding ? (
+                                      <span className="ml-1 text-[10px] font-normal text-accent">
+                                        추가 중…
+                                      </span>
+                                    ) : null}
                                   </p>
                                   <p className="truncate text-[10px] text-muted">
                                     {c.source === "global" ? "Global" : "NCS"} · {c.code} ·{" "}
@@ -552,11 +746,12 @@ export function DemoWorkspaceEditor({
                                 ) : (
                                   <button
                                     type="button"
-                                    disabled={busy}
-                                    onClick={() =>
-                                      void addFromCatalog([{ source: c.source, code: c.code }])
-                                    }
-                                    className="shrink-0 rounded p-0.5 text-muted hover:text-accent"
+                                    disabled={adding}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      void addFromCatalog([{ source: c.source, code: c.code }]);
+                                    }}
+                                    className="shrink-0 rounded p-0.5 text-muted hover:text-accent disabled:opacity-40"
                                     aria-label="키트에 추가"
                                   >
                                     <Plus className="h-3.5 w-3.5" />

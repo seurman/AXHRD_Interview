@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     const description =
       typeof body.description === "string" ? body.description.trim() || null : null;
     const slugRaw = typeof body.slug === "string" ? body.slug.trim() : "";
-    const cloneFromProduction = body.cloneFromProduction !== false;
+    const cloneFromProduction = body.cloneFromProduction === true;
 
     if (!name) {
       return NextResponse.json({ error: "데모 이름을 입력해 주세요." }, { status: 400 });

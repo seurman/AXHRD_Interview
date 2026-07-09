@@ -354,21 +354,38 @@ export function ContentBankEditor({
     if (!code?.trim()) return;
     const nameKo = prompt("한글 역량명");
     if (!nameKo?.trim()) return;
+    const normalizedCode = code.trim().toUpperCase();
+    const tempId = `pending-${Date.now()}`;
+    const sortOrder = competencies.length;
+    const optimistic = {
+      id: tempId,
+      code: normalizedCode,
+      nameKo: nameKo.trim(),
+      description: null as string | null,
+      sortOrder,
+      isActive: true,
+      questionCount: 0,
+      rubricByLevel: {} as RubricByLevel,
+    };
+    setCompetencies((prev) => [...prev, optimistic]);
+    setSelectedId(tempId);
     const res = await fetch("/api/admin/competencies", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: code.trim(), nameKo: nameKo.trim() }),
+      body: JSON.stringify({ code: normalizedCode, nameKo: nameKo.trim() }),
     });
     const data = await res.json();
     if (!res.ok) {
+      setCompetencies((prev) => prev.filter((c) => c.id !== tempId));
       alert(data.error ?? "추가 실패");
       return;
     }
     const c = data.competency;
-    setCompetencies((prev) => [
-      ...prev,
-      { ...c, questionCount: 0 },
-    ]);
+    setCompetencies((prev) =>
+      prev.map((x) =>
+        x.id === tempId ? { ...c, questionCount: 0, rubricByLevel: x.rubricByLevel ?? {} } : x,
+      ),
+    );
     setSelectedId(c.id);
   };
 

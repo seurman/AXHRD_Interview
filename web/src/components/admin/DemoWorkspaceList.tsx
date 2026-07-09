@@ -20,7 +20,7 @@ export function DemoWorkspaceList({ initialWorkspaces }: { initialWorkspaces: Wo
   const [creating, setCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
-  const [cloneFromProduction, setCloneFromProduction] = useState(true);
+  const [cloneFromProduction, setCloneFromProduction] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const create = async (e: React.FormEvent) => {
@@ -74,6 +74,8 @@ export function DemoWorkspaceList({ initialWorkspaces }: { initialWorkspaces: Wo
           type="button"
           onClick={() => {
             setShowForm(true);
+            setName("");
+            setCloneFromProduction(false);
             setError(null);
           }}
           className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-sm"
@@ -106,7 +108,9 @@ export function DemoWorkspaceList({ initialWorkspaces }: { initialWorkspaces: Wo
               disabled={creating}
               className="mt-0.5"
             />
-            <span>운영 문항 뱅크(NCS 6역량)를 복사해 시작</span>
+            <span>
+              운영 문항 뱅크(NCS 6역량)를 복사해 시작 (끄면 빈 키트에서 시작합니다)
+            </span>
           </label>
           {error ? (
             <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400">
@@ -120,7 +124,11 @@ export function DemoWorkspaceList({ initialWorkspaces }: { initialWorkspaces: Wo
               className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-sm"
             >
               <Plus className="h-4 w-4" />
-              {creating ? "생성 중… (문항 복사 포함, 최대 1분)" : "만들기"}
+              {creating
+                ? cloneFromProduction
+                  ? "생성 중… (문항 복사 포함, 최대 1분)"
+                  : "생성 중…"
+                : "만들기"}
             </button>
             <button
               type="button"

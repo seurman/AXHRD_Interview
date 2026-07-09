@@ -1,7 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { parseRubricByLevel, type RubricByLevel } from "@/lib/competency/rubric";
 import { parseRubricCriteria } from "@/lib/competency/bank";
+import { loadDemoWorkspaceSnapshot } from "@/lib/demo/workspace";
 import { Prisma } from "@prisma/client";
+
+const CATALOG_CACHE_TTL_MS = 60_000;
+let catalogCache: {
+  at: number;
+  data: Awaited<ReturnType<typeof loadDemoCatalogMetadataUncached>>;
+} | null = null;
 
 export type DemoCatalogSource = "ncs" | "global";
 
@@ -35,6 +42,19 @@ export type DemoCatalogCluster = {
 
 /** Business Objects식 좌측 메타데이터 팔레트 — NCS 6 + Global 20 */
 export async function loadDemoCatalogMetadata(): Promise<{
+  clusters: DemoCatalogCluster[];
+  totals: { ncs: number; global: number };
+}> {
+  const now = Date.now();
+  if (catalogCache && now - catalogCache.at < CATALOG_CACHE_TTL_MS) {
+    return catalogCache.data;
+  }
+  const data = await loadDemoCatalogMetadataUncached();
+  catalogCache = { at: now, data };
+  return data;
+}
+
+async function loadDemoCatalogMetadataUncached(): Promise<{
   clusters: DemoCatalogCluster[];
   totals: { ncs: number; global: number };
 }> {
@@ -236,5 +256,16 @@ export async function addCatalogCompetenciesToDemo(
     }
   });
 
-  return { added, skipped };
+  if (added.length === 0) {
+    return { added, skipped, competencies: [], questions: [] };
+  }
+
+  const snap = await loadDemoWorkspaceSnapshot(workspaceId);
+  const addedSet = new Set(added);
+  return {
+    added,
+    skipped,
+    competencies: snap?.competencies.filter((c) => addedSet.has(c.code)) ?? [],
+    questions: snap?.questions.filter((q) => addedSet.has(q.competencyCode)) ?? [],
+  };
 }

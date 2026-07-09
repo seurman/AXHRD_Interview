@@ -37,6 +37,7 @@ export default async function AdminDemoEditPage({ params }: Props) {
         </p>
       </div>
       <DemoWorkspaceEditor
+        key={snap.workspace.id}
         workspaceId={snap.workspace.id}
         workspaceSlug={snap.workspace.slug}
         initialCompetencies={snap.competencies}

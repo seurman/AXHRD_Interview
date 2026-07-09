@@ -5,6 +5,7 @@ import {
   cloneProductionToDemoWorkspace,
   loadDemoWorkspaceSnapshot,
 } from "@/lib/demo/workspace";
+import { materializeDemoKitToInterviewBank } from "@/lib/demo/materialize";
 import { ensureWorkspacePresenterKey } from "@/lib/demo/presenter";
 
 export const maxDuration = 60;
@@ -75,6 +76,23 @@ export async function POST(req: Request, { params }: Ctx) {
 
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
+  if (body.action === "materializeToProduction") {
+    const exists = await prisma.demoWorkspace.findUnique({ where: { id }, select: { id: true } });
+    if (!exists) {
+      return NextResponse.json({ error: "데모를 찾을 수 없습니다." }, { status: 404 });
+    }
+    try {
+      const result = await materializeDemoKitToInterviewBank(id);
+      return NextResponse.json(result);
+    } catch (e) {
+      console.error("[demo/workspaces materializeToProduction]", e);
+      const msg = e instanceof Error ? e.message : String(e);
+      return NextResponse.json(
+        { error: `운영 뱅크 반영 실패: ${msg.slice(0, 200)}` },
+        { status: 500 },
+      );
+    }
+  }
   if (body.action === "cloneFromProduction") {
     const exists = await prisma.demoWorkspace.findUnique({ where: { id }, select: { id: true } });
     if (!exists) {
