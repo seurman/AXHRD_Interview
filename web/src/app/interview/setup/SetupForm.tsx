@@ -1,5 +1,6 @@
 "use client";
 
+import { FilePenLine } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconLoader, IconUpload } from "@/components/ui/icons";
@@ -624,31 +625,47 @@ export function SetupForm({
             파일 대신 텍스트로 직접 입력
           </button>
         )}
-        <button
-          type="button"
-          onClick={requestResumeReview}
-          disabled={!canRequestReview}
-          className="btn-secondary w-full py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {reviewLoading ? (
-            <>
-              <IconLoader /> {s.resumeReview.preparing}
-            </>
-          ) : (
-            s.resumeReview.button
+        <div className="rounded-xl border border-accent/25 bg-gradient-to-br from-accent/10 via-transparent to-transparent p-4 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/15">
+              <FilePenLine className="h-5 w-5 text-accent" aria-hidden />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">AI 자소서 첨삭</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-muted">
+                공고·산업 기준 총평, 문단별 피드백, 키워드 매칭을 한 번에 받을 수 있습니다.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={requestResumeReview}
+            disabled={!canRequestReview}
+            className="btn-review"
+          >
+            {reviewLoading ? (
+              <>
+                <IconLoader /> {s.resumeReview.preparing}
+              </>
+            ) : (
+              <>
+                <FilePenLine className="h-4 w-4" aria-hidden />
+                {s.resumeReview.button}
+              </>
+            )}
+          </button>
+          {!canRequestReview && !reviewLoading && (
+            <p className="text-center text-xs text-muted">
+              {!industry
+                ? s.resumeReview.needIndustry
+                : resumeDraft.length < 20
+                  ? s.resumeReview.needResume
+                  : parsingFile
+                    ? s.resume.parsing
+                    : null}
+            </p>
           )}
-        </button>
-        {!canRequestReview && !reviewLoading && (
-          <p className="text-center text-xs text-muted">
-            {!industry
-              ? s.resumeReview.needIndustry
-              : resumeDraft.length < 20
-                ? s.resumeReview.needResume
-                : parsingFile
-                  ? s.resume.parsing
-                  : null}
-          </p>
-        )}
+        </div>
       </section>
 
       <section className="card-luxe space-y-2 p-5">

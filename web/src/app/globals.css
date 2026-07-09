@@ -149,6 +149,37 @@ body {
   color: var(--color-foreground);
 }
 
+.btn-review {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  white-space: nowrap;
+  border-radius: 0.75rem;
+  border: 1.5px solid rgb(47 95 238 / 0.45);
+  background: linear-gradient(135deg, rgb(47 95 238 / 0.16) 0%, rgb(47 95 238 / 0.06) 100%);
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--color-accent);
+  transition: opacity 0.15s, transform 0.1s, background 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 14px -6px rgb(47 95 238 / 0.35);
+}
+
+.btn-review:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgb(47 95 238 / 0.22) 0%, rgb(47 95 238 / 0.1) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px -6px rgb(47 95 238 / 0.4);
+}
+
+.btn-review:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 @keyframes note-pop {
   0% {
     transform: scale(0) translateY(10px);

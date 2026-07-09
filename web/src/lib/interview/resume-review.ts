@@ -110,7 +110,7 @@ const REVIEW_SYSTEM = `당신은 한국 채용 시장의 자기소개서 첨삭 
 
 JSON 형식:
 {
-  "overallSummary": "3~5문장 총평",
+  "overallSummary": "6~8문장 총평. (1) 첫 문장: 지원자에게 직접 말하듯 한 줄 핵심 평가. (2) 2~3문장: 자소서에서 잘 드러난 강점·설득력 있는 경험. (3) 2~3문장: 공고/직무 대비 보완이 필요한 핵심 약점. (4) 마지막 1~2문장: 우선 수정할 액션과 면접 연결 전략. 단편적 나열이 아니라 하나의 흐름 있는 종합 평가로 작성.",
   "paragraphFeedback": [{ "quote": "...", "issue": "...", "suggestion": "..." }],
   "improvementPlan": [{ "gapLabel": "...", "suggestion": "..." }],
   "suggestedCompetencies": ["COMMUNICATION"]
@@ -173,7 +173,7 @@ ${sanitizeResumeForLlm(resumeRawText).slice(0, 2500)}
     systemInstruction: REVIEW_SYSTEM,
     userPrompt,
     temperature: 0.35,
-    maxOutputTokens: 1800,
+    maxOutputTokens: 2400,
     timeoutMs: 20000,
   });
 

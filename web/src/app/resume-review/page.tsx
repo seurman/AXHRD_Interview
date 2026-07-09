@@ -36,7 +36,7 @@ export default async function ResumeReviewHubPage() {
       </Link>
 
       {reviews.length > 0 && (
-        <section className="card-luxe space-y-3 p-6">
+        <section className="card-luxe space-y-4 p-6">
           <h2 className="font-semibold text-foreground">최근 첨삭</h2>
           <ul className="space-y-3">
             {reviews.map((r) => {
@@ -49,11 +49,23 @@ export default async function ResumeReviewHubPage() {
                     href={`/resume-review/${r.id}`}
                     className="block rounded-xl border border-card-border p-4 transition hover:border-accent/40 hover:bg-background/50"
                   >
-                    <p className="text-xs text-muted">
-                      {r.createdAt.toLocaleString("ko-KR")} ·{" "}
-                      {r.matchSource === "jd" ? "공고 기준" : "산업·직무 기준"}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs text-muted">
+                        {r.createdAt.toLocaleString("ko-KR")}
+                      </p>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          r.matchSource === "jd"
+                            ? "bg-accent/15 text-accent"
+                            : "bg-gold/15 text-gold"
+                        }`}
+                      >
+                        {r.matchSource === "jd" ? "공고 기준" : "산업·직무 기준"}
+                      </span>
+                    </div>
+                    <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-foreground">
+                      {r.overallSummary}
                     </p>
-                    <p className="mt-1 line-clamp-2 text-sm text-foreground">{r.overallSummary}</p>
                     {comps[0] && (
                       <p className="mt-2 text-xs text-accent">
                         추천 역량: {competencyLabel(comps[0])}
