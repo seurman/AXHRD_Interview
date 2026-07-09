@@ -378,6 +378,10 @@ export const dictionary: Dictionary = {
       title: "Triple feedback mode (optional)",
       hint: "After each answer, see coaching cards from large enterprise, public sector, and startup lenses. IRT score stays single; uses more tokens. Off by default.",
     },
+    jdBonus: {
+      title: "Add job-posting bonus question (optional)",
+      hint: "After the competency interview, answer one extra question grounded in the job posting. Reference only — not included in IRT score or level. Requires a job description.",
+    },
   },
   discover: {
     eyebrow: "Self-Discovery Interview",

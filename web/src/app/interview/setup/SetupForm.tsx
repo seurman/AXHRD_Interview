@@ -65,6 +65,7 @@ export function SetupForm({
   const [fileError, setFileError] = useState<string | null>(null);
   const [focusCompetency, setFocusCompetency] = useState<string>("");
   const [tripleFeedbackMode, setTripleFeedbackMode] = useState(false);
+  const [jdBonusEnabled, setJdBonusEnabled] = useState(false);
   // 역량 카드를 직접 클릭했는지 여부 — 산업/직무를 고를 때 자동으로 역량을 바꿔주되,
   // 사용자가 이미 직접 골랐다면(또는 URL의 ?competency=로 왔다면) 덮어쓰지 않기 위한 플래그.
   const competencyManuallyChanged = useRef(false);
@@ -264,6 +265,7 @@ export function SetupForm({
           jdText,
           jdUrl: jdUrl.trim() || undefined,
           tripleFeedbackMode,
+          jdBonusEnabled: jdBonusEnabled && (!!jdText.trim() || !!jdUrl.trim()),
         }),
       });
 
@@ -664,6 +666,22 @@ export function SetupForm({
             </span>
           </span>
         </label>
+        {(jdText.trim().length > 0 || jdUrl.trim().length > 0) && (
+          <label className="flex cursor-pointer gap-3 rounded-xl border border-border/60 bg-surface/40 p-4 transition hover:border-gold/40">
+            <input
+              type="checkbox"
+              checked={jdBonusEnabled}
+              onChange={(e) => setJdBonusEnabled(e.target.checked)}
+              className="mt-1"
+            />
+            <span>
+              <span className="block font-semibold text-foreground">{s.jdBonus.title}</span>
+              <span className="mt-1 block text-xs leading-relaxed text-muted">
+                {s.jdBonus.hint}
+              </span>
+            </span>
+          </label>
+        )}
       </section>
 
       <button

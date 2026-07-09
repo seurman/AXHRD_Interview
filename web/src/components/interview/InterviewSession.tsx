@@ -8,10 +8,12 @@ import { CompetencyBar } from "./CompetencyBar";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { AnswerFeedbackPanel } from "./AnswerFeedbackPanel";
 import { TripleFeedbackPanel } from "./TripleFeedbackPanel";
+import { QuestionRationaleTooltip } from "./QuestionRationaleTooltip";
 import { LoadingRitual } from "@/components/ux/LoadingRitual";
 import { ClipDynamic } from "@/components/ui/ClipDynamic";
 import { competencyLabel } from "@/lib/labels";
 import { displayQuestionText } from "@/lib/interview/build-question";
+import { COMPETENCY_SESSION_MAX_ITEMS } from "@/lib/interview/session-limits";
 import { ttsCacheKeyForQuestion } from "@/lib/interview/tts-cache-key";
 import { cn } from "@/lib/cn";
 import type {
@@ -44,7 +46,7 @@ export function InterviewSession({
   sessionId,
   initialState,
   focusCompetency,
-  maxItems = 3,
+  maxItems = COMPETENCY_SESSION_MAX_ITEMS,
   tripleFeedbackMode = false,
 }: InterviewSessionProps) {
   const router = useRouter();
@@ -268,9 +270,9 @@ export function InterviewSession({
                 자소서 맞춤 질문
               </span>
             )}
-            {q?.isFollowUp && (
-              <span className="keep-one-line rounded-full bg-accent/15 px-2 py-0.5 text-accent">
-                꼬리질문
+            {q?.isBonusQuestion && (
+              <span className="keep-one-line rounded-full bg-muted/20 px-2 py-0.5 text-muted">
+                공고 맞춤 보너스 · 점수 미반영
               </span>
             )}
             {q?.pressureTier === "TOUGH" && (
@@ -332,14 +334,7 @@ export function InterviewSession({
               </ul>
             </div>
           )}
-          {q?.rationale && (
-            <details className="mt-3 text-xs text-muted">
-              <summary className="cursor-pointer select-none text-accent hover:underline">
-                왜 이 질문인가요?
-              </summary>
-              <p className="mt-1 leading-relaxed">{q.rationale}</p>
-            </details>
-          )}
+          {q?.rationale && <QuestionRationaleTooltip rationale={q.rationale} />}
         </div>
 
         {state.chipHistory.length > 0 && (
@@ -388,9 +383,9 @@ export function InterviewSession({
         ) : null}
 
         <p className="text-center text-xs text-muted">
-          문항 {state.totalItems + 1}/{maxItems}
-          {focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}
-          {" · "}역량별 적응형 IRT
+          {q?.isBonusQuestion
+            ? `보너스 질문 (참고용)${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`
+            : `문항 ${state.totalItems + 1}/${maxItems}${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""} · 역량별 적응형 IRT`}
         </p>
       </div>
 

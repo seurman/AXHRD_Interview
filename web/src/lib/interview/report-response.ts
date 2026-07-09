@@ -1,7 +1,9 @@
 /** 리포트·역량 피드백 LLM 입력용 — DB ResponseRecord → 프롬프트 payload */
 
 export type ReportResponseRow = {
-  question: { template: string };
+  question: { template: string } | null;
+  isBonusQuestion?: boolean;
+  bonusQuestionText?: string | null;
   competency: string;
   transcript: string;
   correctedTranscript: string | null;
@@ -26,8 +28,11 @@ export type SessionReportResponsePayload = FeedbackResponsePayload & {
 
 export function mapResponseForReport(r: ReportResponseRow): SessionReportResponsePayload {
   const hadFollowUp = !!(r.followUpQuestion && r.followUpTranscript);
+  const questionText = r.isBonusQuestion
+    ? (r.bonusQuestionText ?? "")
+    : (r.question?.template ?? "");
   return {
-    question: r.question.template,
+    question: questionText,
     answer: r.correctedTranscript ?? r.transcript,
     score: r.rubricScore,
     competency: r.competency,

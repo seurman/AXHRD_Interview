@@ -8,6 +8,7 @@ import { rubricForNcsLevel } from "@/lib/competency/ncs-rubric";
 import type { ResumeSummary } from "@/lib/interview/resume-summary";
 import { parseRubricCriteria } from "@/lib/competency/bank";
 import { rubricForCompetencyLevel } from "@/lib/competency/rubric";
+import { parseJdRequirements } from "@/lib/company/jd-mapper";
 import {
   applyPressureTone,
   pressureTierLabel,
@@ -41,7 +42,7 @@ type SessionContext = {
   irtState: unknown;
   jobRole: string;
   resume?: { rawText: string; parsedTags?: unknown } | null;
-  targetCompany?: { name: string; interviewStyle?: unknown } | null;
+  targetCompany?: { name: string; interviewStyle?: unknown; jdRequirements?: unknown } | null;
 };
 
 /** Resume.parsedTags(Json)를 안전하게 ResumeSummary로 파싱한다 — 아직 요약이 없는
@@ -121,8 +122,7 @@ export async function buildPersonalizedQuestion(
     );
   }
 
-  // 역량당 첫 문항만 자소서 인용(Gemini 호출)으로 맞춤화하고, 나머지 문항은 일반
-  // 질문으로 처리해 턴당 지연을 줄인다. 채점 루브릭은 일반 기준으로 캐싱해 둔다.
+  // skipPersonalization이 true일 때만 Gemini 미호출 — 기본은 매 문항 개인화 시도
   if (options?.skipPersonalization) {
     const rubric = rubricForQuestion(question, options.orgKitRubric);
     const personalizedQuestions = {
@@ -160,6 +160,8 @@ export async function buildPersonalizedQuestion(
     resumeSummary: parseResumeSummary(session.resume?.parsedTags),
     legacyResumeText: session.resume?.rawText,
     excludeHighlights: stored.usedHighlights ?? [],
+    excludeJdTerms: stored.usedJdTerms ?? [],
+    jdRequirements: parseJdRequirements(session.targetCompany?.jdRequirements),
     interviewStyle: parseInterviewStyle(session.targetCompany?.interviewStyle),
   });
 
@@ -185,6 +187,9 @@ export async function buildPersonalizedQuestion(
   const usedHighlights = result.usedHighlight
     ? [...new Set([...(stored.usedHighlights ?? []), result.usedHighlight])]
     : stored.usedHighlights;
+  const usedJdTerms = result.usedJdTerm
+    ? [...new Set([...(stored.usedJdTerms ?? []), result.usedJdTerm])]
+    : stored.usedJdTerms;
 
   await prisma.interviewSession.update({
     where: { id: session.id },
@@ -193,6 +198,7 @@ export async function buildPersonalizedQuestion(
         ...stored,
         personalizedQuestions,
         usedHighlights,
+        usedJdTerms,
       }),
     },
   });

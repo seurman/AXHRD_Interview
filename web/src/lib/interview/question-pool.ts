@@ -77,6 +77,7 @@ async function excludeRecentlyAskedQuestions(
   // questionId별 "가장 최근 시도"만 남긴다(history는 session.sessionNumber 내림차순 정렬됨)
   const lastAttempt = new Map<string, { score: number; sessionNumber: number }>();
   for (const r of history) {
+    if (!r.questionId) continue;
     if (!lastAttempt.has(r.questionId)) {
       lastAttempt.set(r.questionId, {
         score: r.rubricScore,

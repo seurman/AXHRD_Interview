@@ -142,6 +142,8 @@ export interface InterviewQuestion {
    *  (personalizedText가 text와 다르다고 해서 자소서 인용이라는 뜻은 아님 — 압박 톤 프리픽스나
    *  꼬리질문도 다르게 나오므로 이 필드로 명시적으로 구분한다) */
   resumePersonalized?: boolean;
+  /** JD 전용 보너스 질문 — theta/점수 미반영 */
+  isBonusQuestion?: boolean;
   /** 자소서에서 질문에 인용한 근거 구절 — UI에 "자소서 근거"로 표시 */
   resumeAnchors?: string[];
 }

@@ -35,6 +35,15 @@ export interface StoredIrtState {
   personalizedQuestions?: Record<string, PersonalizedQuestionEntry>;
   /** 세션 전체에서 이미 질문에 인용된 자소서 문장 — 동일 사례 반복 인용을 막기 위해 추적 */
   usedHighlights?: string[];
+  /** 세션 전체에서 이미 질문에 인용된 JD 키워드/스킬 */
+  usedJdTerms?: string[];
+  /** JD 보너스 질문 대기 중(정규 문항 종료 후) */
+  pendingBonusQuestion?: {
+    question: string;
+    groundedRequirement: string;
+  };
+  /** 보너스 질문을 이미 제시했는지 */
+  bonusQuestionOffered?: boolean;
   /** 진행 중인 꼬리질문이 있으면 채워짐, 없으면 undefined */
   pendingFollowUp?: PendingFollowUp;
   /** 세션에서 이미 꼬리질문을 한 번 썼는지 — 세션당 최대 1회 */
@@ -75,6 +84,9 @@ export function parseIrtState(raw: unknown): StoredIrtState {
       planId: obj.planId as string | undefined,
       personalizedQuestions: normalizePersonalizedQuestions(obj.personalizedQuestions),
       usedHighlights: (obj.usedHighlights as string[]) ?? [],
+      usedJdTerms: (obj.usedJdTerms as string[]) ?? [],
+      pendingBonusQuestion: obj.pendingBonusQuestion as StoredIrtState["pendingBonusQuestion"],
+      bonusQuestionOffered: obj.bonusQuestionOffered === true,
       pendingFollowUp: obj.pendingFollowUp as PendingFollowUp | undefined,
       followUpUsed: obj.followUpUsed === true,
     };
@@ -94,6 +106,9 @@ export function serializeIrtState(state: StoredIrtState): object {
     planId: state.planId,
     personalizedQuestions: state.personalizedQuestions,
     usedHighlights: state.usedHighlights,
+    usedJdTerms: state.usedJdTerms,
+    pendingBonusQuestion: state.pendingBonusQuestion,
+    bonusQuestionOffered: state.bonusQuestionOffered,
     pendingFollowUp: state.pendingFollowUp,
     followUpUsed: state.followUpUsed,
   };

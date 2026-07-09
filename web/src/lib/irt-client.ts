@@ -1,3 +1,7 @@
+import {
+  COMPETENCY_SESSION_MAX_ITEMS,
+  COMPETENCY_SESSION_MIN_ITEMS,
+} from "@/lib/interview/session-limits";
 import type {
   CompetencyState,
   CompetencySummary,
@@ -60,8 +64,8 @@ export async function initIrtSession(
       prior_theta: params.priorTheta ?? {},
       focus_competency: params.focusCompetency,
       mode: params.mode ?? "competency",
-      min_items: params.minItems ?? 2,
-      max_items: params.maxItems ?? 3,
+      min_items: params.minItems ?? COMPETENCY_SESSION_MIN_ITEMS,
+      max_items: params.maxItems ?? COMPETENCY_SESSION_MAX_ITEMS,
     }),
     timeoutMs,
     retries,

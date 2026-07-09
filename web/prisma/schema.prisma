@@ -515,6 +515,8 @@ model InterviewSession {
   demoWorkspaceId String?
   /** 트리플 피드백(대기업·공공·스타트업 3관점) — 옵션, 기본 OFF */
   tripleFeedbackMode Boolean    @default(false)
+  /** 공고 맞춤 보너스 질문 — JD가 있을 때만, 기본 OFF */
+  jdBonusEnabled  Boolean       @default(false)
   createdAt       DateTime      @default(now())
 
   responses ResponseRecord[]
@@ -532,8 +534,14 @@ model ResponseRecord {
   id          String           @id @default(cuid())
   sessionId   String
   session     InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  questionId  String
-  question    Question         @relation(fields: [questionId], references: [id])
+  questionId  String?
+  question    Question?        @relation(fields: [questionId], references: [id])
+  /** true면 IRT theta 계산에서 제외 — JD 전용 보너스 질문 */
+  isBonusQuestion Boolean      @default(false)
+  /** 보너스 질문 문구(은행 FK 없음) */
+  bonusQuestionText String?    @db.Text
+  bonusGroundedRequirement String?
+  bonusBriefFeedback String?   @db.Text
   competency  String
   level       Int
   transcript  String           @db.Text

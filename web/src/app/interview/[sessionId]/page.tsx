@@ -4,6 +4,11 @@ import { resolveInterviewActor } from "@/lib/auth/interview-access";
 import { InterviewSession } from "@/components/interview/InterviewSession";
 import { parseIrtState, defaultCompetencyStates } from "@/lib/irt-state";
 import { buildPersonalizedQuestion } from "@/lib/interview/build-question";
+import {
+  BONUS_QUESTION_ID,
+  COMPETENCY_SESSION_MAX_ITEMS,
+  FULL_SESSION_MAX_ITEMS,
+} from "@/lib/interview/session-limits";
 import { getOrgKitCustomRubric } from "@/lib/org/interview-kit";
 import { buildQuestionRationale } from "@/lib/interview/rationale";
 import { pressureTierFromLevel } from "@/lib/interview/persona";
@@ -46,30 +51,37 @@ export default async function InterviewPage({ params }: PageProps) {
   const nextExternalId = stored.nextItemId;
 
   if (nextExternalId && session.status !== "COMPLETED") {
+    if (nextExternalId === BONUS_QUESTION_ID && stored.pendingBonusQuestion) {
+      const bonus = stored.pendingBonusQuestion;
+      const comp = session.focusCompetency ?? "JOB_FIT";
+      currentQuestion = {
+        id: BONUS_QUESTION_ID,
+        externalId: BONUS_QUESTION_ID,
+        competency: comp,
+        level: 0,
+        text: bonus.question,
+        personalizedText: bonus.question,
+        rationale: `채용공고 요구사항 「${bonus.groundedRequirement}」 기반 참고용 보너스 질문입니다.`,
+        isBonusQuestion: true,
+      };
+    } else {
     const q = await prisma.question.findUnique({
       where: { externalId: nextExternalId },
       include: { competency: true },
     });
     if (q) {
-      // 역량당 첫 문항만 자소서 인용으로 맞춤화한다 — 이미 답변한 문항이 있으면
-      // (새로고침 등으로 이 페이지가 다시 렌더링된 경우) 일반 질문으로 처리한다.
-      const isFirstItem = stored.administeredIds.length === 0;
-      // 압박 강도 적응형 조절 — 현재까지 추정된 역량 레벨(current_level)을 그대로
-      // 면접관 톤에도 재사용한다. 세션 시작 직후는 기본값(레벨 2, NEUTRAL)이다.
       const currentLevel = stored.competencies[q.competency.code]?.current_level ?? 2;
-      // 세션 시작 시점에 적용된 기관 킷(kitOrganizationId) 기준 — 공유 링크로 시작한
-      // 비가입자 세션도 정확히 반영된다(사용자 본인의 현재 소속 여부와 무관).
       const orgKitRubric = await getOrgKitCustomRubric(session.kitOrganizationId, q.competency.code, q.level);
       currentQuestion = await buildPersonalizedQuestion(
         session,
         q,
         buildQuestionRationale({ level: q.level }),
         {
-          skipPersonalization: !isFirstItem,
           pressureTier: pressureTierFromLevel(currentLevel),
           orgKitRubric,
         }
       );
+    }
     }
   }
 
@@ -131,12 +143,16 @@ export default async function InterviewPage({ params }: PageProps) {
           </span>
         </p>
       )}
-      <p className="mb-6 text-sm text-muted">역량당 2~3문항 · 자소서 맞춤 · 완료 후 피드백</p>
+      <p className="mb-6 text-sm text-muted">역량당 3~5문항 · 자소서·공고 맞춤 · 완료 후 피드백</p>
       <InterviewSession
         sessionId={sessionId}
         initialState={initialState}
         focusCompetency={session.focusCompetency ?? undefined}
-        maxItems={session.mode === "COMPETENCY" ? 3 : 18}
+        maxItems={
+          session.mode === "COMPETENCY"
+            ? COMPETENCY_SESSION_MAX_ITEMS
+            : FULL_SESSION_MAX_ITEMS
+        }
         tripleFeedbackMode={session.tripleFeedbackMode}
       />
     </div>

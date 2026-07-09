@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
 import { competencyLabel } from "@/lib/utils";
 import { ScoreGauge } from "@/components/report/ScoreGauge";
+import { ReportCompetencyAnalysis } from "@/components/report/ReportCompetencyAnalysis";
+import { BonusQuestionSection } from "@/components/report/BonusQuestionSection";
+import { Logo } from "@/components/brand/Logo";
 import { PrintButton } from "@/components/ui/PrintButton";
 import { SessionIntegrityNotice } from "@/components/interview/SessionIntegrityNotice";
 import { computeDeliveryStats } from "@/lib/interview/feedback-helpers";
@@ -14,6 +17,11 @@ export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ sessionId: string }>;
+}
+
+function formatReportDate(iso: Date | string | null | undefined): string {
+  const d = iso ? new Date(iso) : new Date();
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export default async function ReportPage({ params }: PageProps) {
@@ -40,15 +48,35 @@ export default async function ReportPage({ params }: PageProps) {
           Math.max(report.sections.length, 1)
       )
     : 0;
+  const bonusResponse = session.responses.find((r) => r.isBonusQuestion) ?? null;
   const delivery = computeDeliveryStats(
-    session.responses.map((r) => ({
+    session.responses
+      .filter((r) => !r.isBonusQuestion)
+      .map((r) => ({
       answer: r.correctedTranscript ?? r.transcript,
       durationSec: r.durationSec,
     }))
   );
 
   return (
-    <div className="print-root mx-auto max-w-3xl space-y-8 pb-16">
+    <div className="report-print-wrap print-root mx-auto max-w-3xl space-y-8 pb-16">
+      <div
+        className="report-print-letterhead hidden print:mb-6 print:block"
+        aria-hidden
+      >
+        <div className="flex items-center justify-between border-b-2 border-double border-gold/50 pb-4">
+          <Logo size={28} color="var(--color-foreground)" variant="mono" />
+          <div className="text-right">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold">
+              AXHRD Interview Report
+            </p>
+            <p className="mt-1 text-sm text-muted">
+              발급일 {formatReportDate(session.completedAt ?? session.startedAt)}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="print-hide flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-accent">{session.sessionNumber}차 면접 리포트</p>
@@ -66,8 +94,13 @@ export default async function ReportPage({ params }: PageProps) {
 
       {report ? (
         <>
-          <section className="card-luxe flex flex-col items-center gap-6 p-6 sm:flex-row">
-            <ScoreGauge value={avgScore} label="종합 점수" />
+          <section className="card-luxe flex flex-col items-center gap-6 border-double border-gold/40 p-6 sm:flex-row">
+            <div className="flex w-full flex-col items-center gap-4 sm:w-auto">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold">
+                AXHRD Interview Report
+              </p>
+              <ScoreGauge value={avgScore} label="종합 점수" variant="gold" />
+            </div>
             <p className="flex-1 text-center leading-relaxed text-foreground report-prose sm:text-left">
               {report.summary}
             </p>
@@ -101,36 +134,9 @@ export default async function ReportPage({ params }: PageProps) {
             </section>
           )}
 
-          <section className="space-y-4">
-            <h2 className="font-semibold text-foreground">역량별 분석</h2>
-            {report.sections.map((s) => (
-              <div key={s.title} className="card-luxe p-5">
-                <div className="mb-2 flex items-center justify-between">
-                  <h3 className="font-medium text-foreground">
-                    {competencyLabel(s.title) !== s.title
-                      ? competencyLabel(s.title)
-                      : s.title}
-                  </h3>
-                  {s.score != null && (
-                    <span className="text-sm font-medium text-accent">{s.score}%</span>
-                  )}
-                </div>
-                <p className="text-sm text-muted report-prose">{s.content}</p>
-                {s.highlight && (
-                  <p className="mt-3 border-l-2 border-gold pl-3 text-sm italic text-foreground report-prose">
-                    “{s.highlight}”
-                  </p>
-                )}
-                {s.suggestions && (
-                  <ul className="mt-3 list-inside list-disc text-xs text-muted report-prose">
-                    {s.suggestions.map((sg, i) => (
-                      <li key={i}>{sg}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </section>
+          <ReportCompetencyAnalysis sections={report.sections} />
+
+          <BonusQuestionSection response={bonusResponse} />
 
           <section className="rounded-2xl border border-gold-light/60 bg-gold-light/10 p-6">
             <h2 className="mb-3 font-semibold text-foreground">다음 단계</h2>
@@ -149,7 +155,7 @@ export default async function ReportPage({ params }: PageProps) {
       )}
 
       {/* Chip timeline */}
-      <section>
+      <section className="card-luxe p-6">
         <h2 className="mb-4 font-semibold text-foreground">세션 타임라인</h2>
         <div className="flex flex-wrap gap-2">
           {session.chipEvents.map((e, i) => (

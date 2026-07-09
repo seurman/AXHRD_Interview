@@ -18,6 +18,10 @@ import {
   appendUserTextRecord,
   formatInterviewSetupText,
 } from "@/lib/user-text-archive";
+import {
+  COMPETENCY_SESSION_MAX_ITEMS,
+  COMPETENCY_SESSION_MIN_ITEMS,
+} from "@/lib/interview/session-limits";
 import { COMPETENCY_CODES, INDUSTRY_CODES, JOB_ROLES, COMPANY_SIZE_CODES } from "@/types";
 import type {
   CompanyContext,
@@ -42,6 +46,8 @@ export type StartSessionBody = {
   jdUrl?: string;
   companySize?: string;
   tripleFeedbackMode?: boolean;
+  /** 공고 맞춤 보너스 질문 — JD가 있을 때만, 기본 OFF */
+  jdBonusEnabled?: boolean;
 };
 
 /** 공유 링크(OrgInterviewKitShare)로 들어온 세션 등, 사용자 본인 소속 기관과
@@ -100,6 +106,7 @@ export async function startInterviewSession(
     jdUrl: jdUrlBody,
     companySize,
     tripleFeedbackMode,
+    jdBonusEnabled,
   } = body;
 
   const industryCode: IndustryCode = INDUSTRY_CODES.includes(industry as IndustryCode)
@@ -336,6 +343,7 @@ export async function startInterviewSession(
       isPresenterDemo: opts.isPresenterDemo ?? false,
       demoWorkspaceId: opts.demoWorkspaceId ?? null,
       tripleFeedbackMode: tripleFeedbackMode === true,
+      jdBonusEnabled: jdBonusEnabled === true && !!jdRequirements,
     },
   });
 
@@ -402,8 +410,8 @@ export async function startInterviewSession(
         priorTheta,
         focusCompetency: competency,
         mode: "competency",
-        minItems: 2,
-        maxItems: 3,
+        minItems: COMPETENCY_SESSION_MIN_ITEMS,
+        maxItems: COMPETENCY_SESSION_MAX_ITEMS,
       },
       opts.demoMode ? { timeoutMs: 28_000, retries: 1 } : undefined,
     );

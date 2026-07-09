@@ -160,9 +160,15 @@ export default async function AdminSessionDetailPage({
                   <span>초기 {scorePct(r.initialRubricScore)}</span>
                 )}
                 {r.durationSec != null && <span>{r.durationSec}초</span>}
-                <span className="font-mono">{r.question.externalId}</span>
+                {r.isBonusQuestion ? (
+                  <span className="rounded bg-gold/15 px-1.5 text-gold">보너스</span>
+                ) : (
+                  <span className="font-mono">{r.question?.externalId ?? "—"}</span>
+                )}
               </div>
-              <p className="mb-3 text-xs text-muted">{r.question.template}</p>
+              <p className="mb-3 text-xs text-muted">
+                {r.isBonusQuestion ? r.bonusQuestionText : r.question?.template}
+              </p>
               <div className="space-y-3">
                 <div>
                   <p className="text-xs font-semibold text-foreground">답변</p>

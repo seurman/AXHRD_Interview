@@ -2,6 +2,29 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 세션 길이 확장 + JD 보너스 질문 (2026-07-09)
+
+- **A. COMPETENCY 세션 3~5문항**: `session-limits.ts` 상수(`min 3 / max 5`) — `start-session.ts`·`respond/route.ts`·`page.tsx`·`irt-client.ts` 동기화. L2→L5 도달 가능.
+- **문항뱅크 150개**: `seed/questions.json` 레벨별 5개(004·005 추가), `npx prisma db seed`로 DB 반영.
+- **B-1. 개인화 확장**: `personalize-question.ts` — 매 문항 자소서/JD 그라운딩, `usedHighlights`·`usedJdTerms` 추적. 은행 문항 IRT 파라미터 유지.
+- **B-2. JD 보너스 질문**: `jdBonusEnabled`(SetupForm 토글, 기본 OFF), `ResponseRecord.isBonusQuestion`, `jd-bonus-question.ts`. 정규 세션 종료 후 1문항 추가, IRT 제외, BARS 홀리스틱 채점만.
+- **리포트 UI**: `BonusQuestionSection` — 역량 피드백·세션 리포트에 「참고용 · 점수 미반영」 박스.
+- **마이그레이션**: `20260709150735_add_jd_bonus_question`
+- **문서**: `docs/IRT.md` COMPETENCY(3/5) vs FULL(8/18) 구분.
+- 검증: `npx next build` ✓
+
+## 최근 작업 — 면접 리포트 프리미엄 폴리시 (2026-07-09)
+
+- **리포트 요약 카드**: 인증서와 통일된 eyebrow(`AXHRD Interview Report`), `border-double border-gold/40`, `ScoreGauge` 골드 variant.
+- **역량별 분석**: `ReportCompetencyAnalysis` — 상단 레이더 차트(240px, CSS 변수) + 역량 카드 아코디언(framer-motion, 레이더는 항상 노출).
+- **mockReport 폴백**: θ 원시 노출 제거, 백분위 구간별 자연어 content·결정론적 suggestions(역량 코드 시드), nextSteps에 최약체 역량명 삽입.
+- **세션 타임라인**: `card-luxe p-6` 래핑으로 다른 섹션과 통일.
+- **질문 근거 UI**: `QuestionRationaleTooltip` — Info 아이콘 + 호버/클릭 말풍선 (`InterviewSession`).
+- **대시보드 레이더**: 미시도 역량 `AssessedRadarDot` — muted·점선·낮은 opacity.
+- **PDF 인쇄 레터헤드**: `report-print-letterhead` + `report-print-wrap` — 로고·발급일·얇은 더블 골드 보더 (`@media print`).
+- **변경 파일**: `report/page.tsx`, `ReportCompetencyAnalysis.tsx`, `QuestionRationaleTooltip.tsx`, `ScoreGauge.tsx`, `lib/claude/report.ts`, `InterviewSession.tsx`, `CompetencyDashboard.tsx`, `globals.css`.
+- 검증: `npx next build` ✓ (`npm run build`는 dev 서버 잠금 시 prisma EPERM 가능).
+
 ## 최근 작업 — 자소서 첨삭 + TTS/어드민 (2026-07-09)
 
 - **자소서 첨삭 (ResumeReview)**:

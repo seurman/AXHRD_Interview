@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { submitIrtResponse, getIrtSessionSummary } from "@/lib/irt-client";
 import { correctAndEvaluateAnswer, type CorrectedRubricResult } from "@/lib/gemini/evaluate";
@@ -26,7 +26,16 @@ import {
   appendUserTextRecord,
   formatInterviewAnswerText,
 } from "@/lib/user-text-archive";
-import type { CompetencyState, ItemParams } from "@/types";
+import {
+  COMPETENCY_SESSION_MAX_ITEMS,
+  COMPETENCY_SESSION_MIN_ITEMS,
+  BONUS_QUESTION_ID,
+  FULL_SESSION_MAX_ITEMS,
+  FULL_SESSION_MIN_ITEMS,
+} from "@/lib/interview/session-limits";
+import { generateJdBonusQuestion } from "@/lib/interview/jd-bonus-question";
+import { parseJdRequirements } from "@/lib/company/jd-mapper";
+import type { CompetencyState, ItemParams, InterviewQuestion } from "@/types";
 
 export async function POST(req: Request) {
   try {
@@ -91,6 +100,18 @@ async function handleRespond(req: Request, userId: string) {
     return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
   }
 
+  const stored = parseIrtState(session.irtState);
+
+  if (questionId === BONUS_QUESTION_ID) {
+    return handleBonusRespond({
+      session,
+      stored,
+      transcript,
+      durationSec,
+      userId,
+    });
+  }
+
   if (pasteDetected === true || (typeof tabSwitchCount === "number" && tabSwitchCount > 0)) {
     await prisma.interviewSession.update({
       where: { id: sessionId },
@@ -113,7 +134,6 @@ async function handleRespond(req: Request, userId: string) {
     return NextResponse.json({ error: "Question not found" }, { status: 404 });
   }
 
-  const stored = parseIrtState(session.irtState);
   const displayedQuestion =
     stored.personalizedQuestions?.[question.externalId]?.text ?? question.template;
   const rubricCriteria = stored.personalizedQuestions?.[question.externalId]?.rubric;
@@ -129,7 +149,9 @@ async function handleRespond(req: Request, userId: string) {
   const focusCompetency =
     session.focusCompetency ?? question.competency.code;
   const isCompetencyMode = session.mode === "COMPETENCY";
-  const maxItemsPerCompetency = isCompetencyMode ? 3 : 18;
+  const maxItemsPerCompetency = isCompetencyMode
+    ? COMPETENCY_SESSION_MAX_ITEMS
+    : FULL_SESSION_MAX_ITEMS;
 
   // 압박 강도 적응형 조절 — 이 문항이 출제된 시점의 추정 레벨을 그대로 면접관 톤에
   // 재사용한다(이번 턴에 대한 꼬리질문 판단/문구에 적용, 채점 자체에는 영향 없음).
@@ -292,6 +314,7 @@ async function handleRespond(req: Request, userId: string) {
     ...new Set([
       ...stored.administeredIds,
       ...session.responses
+        .filter((r) => !r.isBonusQuestion)
         .map((r) => questions.find((q) => q.id === r.questionId)?.externalId ?? "")
         .filter(Boolean),
     ]),
@@ -307,8 +330,8 @@ async function handleRespond(req: Request, userId: string) {
     competencyStates: irtState,
     focusCompetency: isCompetencyMode ? focusCompetency : undefined,
     mode: isCompetencyMode ? "competency" : "full",
-    minItems: isCompetencyMode ? 2 : 8,
-    maxItems: isCompetencyMode ? 3 : 18,
+    minItems: isCompetencyMode ? COMPETENCY_SESSION_MIN_ITEMS : FULL_SESSION_MIN_ITEMS,
+    maxItems: isCompetencyMode ? COMPETENCY_SESSION_MAX_ITEMS : FULL_SESSION_MAX_ITEMS,
   });
 
   const chipTypeMap: Record<string, "PASS" | "ATTEMPT" | "DOWNGRADE"> = {
@@ -339,7 +362,8 @@ async function handleRespond(req: Request, userId: string) {
     tripleFeedbackJson = triple as unknown as Prisma.InputJsonValue;
   }
 
-  const updatedState = {
+  const updatedState: StoredIrtState = {
+    ...stored,
     competencies: irtResult.competency_states,
     nextItemId: irtResult.next_item?.item_id,
     administeredIds: updatedAdministered,
@@ -347,6 +371,7 @@ async function handleRespond(req: Request, userId: string) {
     planId,
     personalizedQuestions: stored.personalizedQuestions,
     usedHighlights: stored.usedHighlights,
+    usedJdTerms: stored.usedJdTerms,
     followUpUsed: stored.followUpUsed || isFollowUpAnswer,
   };
 
@@ -440,15 +465,30 @@ async function handleRespond(req: Request, userId: string) {
         { ...session, irtState: serializeIrtState(updatedState) },
         next,
         rationale,
-        { skipPersonalization: true, pressureTier: nextTier, orgKitRubric }
+        { pressureTier: nextTier, orgKitRubric }
       );
     })(),
   ]);
 
   let redirectUrl: string | null = null;
   let nextCompetency: string | null = null;
+  let shouldTerminate = irtResult.should_terminate;
+  let bonusNextQuestion: InterviewQuestion | null = null;
 
   if (irtResult.should_terminate) {
+    const bonusOffer = await tryOfferBonusQuestion({
+      session,
+      stored: updatedState,
+      focusCompetency,
+      competencyStates: irtResult.competency_states,
+    });
+    if (bonusOffer) {
+      shouldTerminate = false;
+      bonusNextQuestion = bonusOffer;
+    }
+  }
+
+  if (shouldTerminate) {
     if (isCompetencyMode && planId && focusCompetency) {
       redirectUrl = await finalizeCompetencySession({
         sessionId,
@@ -502,15 +542,203 @@ async function handleRespond(req: Request, userId: string) {
       isInterim: false,
       ...(tripleFeedbackJson ? { tripleFeedback: tripleFeedbackJson } : {}),
     },
-    nextQuestion,
-    shouldTerminate: irtResult.should_terminate,
+    nextQuestion: bonusNextQuestion ?? nextQuestion,
+    shouldTerminate,
     totalItems: irtResult.total_items,
     administeredIds: updatedAdministered,
     redirectUrl,
     planId,
     focusCompetency,
     nextCompetency,
-    maxItemsPerCompetency: isCompetencyMode ? 3 : 18,
+    maxItemsPerCompetency: isCompetencyMode
+      ? COMPETENCY_SESSION_MAX_ITEMS
+      : FULL_SESSION_MAX_ITEMS,
+  });
+}
+
+type SessionWithRelations = Prisma.InterviewSessionGetPayload<{
+  include: { resume: true; targetCompany: true; responses: true; plan: true };
+}>;
+
+function buildBonusInterviewQuestion(
+  bonus: { question: string; groundedRequirement: string },
+  competency: string
+): InterviewQuestion {
+  return {
+    id: BONUS_QUESTION_ID,
+    externalId: BONUS_QUESTION_ID,
+    competency,
+    level: 0,
+    text: bonus.question,
+    personalizedText: bonus.question,
+    rationale: `채용공고 요구사항 「${bonus.groundedRequirement}」을 바탕으로 한 참고용 보너스 질문입니다. 점수에는 반영되지 않습니다.`,
+    isBonusQuestion: true,
+    resumePersonalized: false,
+  };
+}
+
+async function tryOfferBonusQuestion(params: {
+  session: SessionWithRelations;
+  stored: StoredIrtState;
+  focusCompetency: string;
+  competencyStates: Record<string, CompetencyState>;
+}): Promise<InterviewQuestion | null> {
+  if (!params.session.jdBonusEnabled || params.stored.bonusQuestionOffered) return null;
+
+  const jdReq = parseJdRequirements(params.session.targetCompany?.jdRequirements);
+  if (!jdReq) return null;
+
+  const bonus =
+    params.stored.pendingBonusQuestion ??
+    (await generateJdBonusQuestion({
+      jdRequirements: jdReq,
+      competency: params.focusCompetency,
+    }));
+
+  if (!bonus) return null;
+
+  const nextState: StoredIrtState = {
+    ...params.stored,
+    competencies: params.competencyStates,
+    pendingBonusQuestion: bonus,
+    nextItemId: BONUS_QUESTION_ID,
+    bonusQuestionOffered: true,
+  };
+
+  await prisma.interviewSession.update({
+    where: { id: params.session.id },
+    data: { irtState: serializeIrtState(nextState) },
+  });
+
+  return buildBonusInterviewQuestion(bonus, params.focusCompetency);
+}
+
+async function handleBonusRespond(params: {
+  session: SessionWithRelations;
+  stored: StoredIrtState;
+  transcript: string;
+  durationSec?: number;
+  userId: string;
+}) {
+  const { session, stored, transcript, durationSec, userId } = params;
+  const pending = stored.pendingBonusQuestion;
+  if (!pending) {
+    return NextResponse.json({ error: "보너스 질문이 없습니다." }, { status: 400 });
+  }
+
+  const focusCompetency = session.focusCompetency ?? "JOB_FIT";
+  const resumeSummary = parseResumeSummary(session.resume?.parsedTags);
+  const resumeContext = resumeSummary
+    ? [resumeSummary.summary, ...resumeSummary.experiences].filter(Boolean).join(" ")
+    : session.resume?.rawText;
+
+  const rubric = await correctAndEvaluateAnswer({
+    question: pending.question,
+    rawAnswer: transcript,
+    competency: focusCompetency,
+    resumeContext,
+    rubricCriteria: undefined,
+    pressureTier: "NEUTRAL",
+  });
+
+  const correctedAnswer = rubric.correctedAnswer;
+  const finalDurationSec = typeof durationSec === "number" ? Math.round(durationSec) : null;
+
+  await prisma.responseRecord.create({
+    data: {
+      sessionId: session.id,
+      questionId: null,
+      isBonusQuestion: true,
+      bonusQuestionText: pending.question,
+      bonusGroundedRequirement: pending.groundedRequirement,
+      bonusBriefFeedback: rubric.briefFeedback,
+      competency: focusCompetency,
+      level: 0,
+      transcript,
+      correctedTranscript: correctedAnswer !== transcript ? correctedAnswer : null,
+      rubricScore: rubric.score,
+      durationSec: finalDurationSec,
+    },
+  });
+
+  void appendUserTextRecord({
+    userId,
+    kind: "INTERVIEW_ANSWER",
+    content: formatInterviewAnswerText({
+      competency: focusCompetency,
+      level: 0,
+      question: pending.question,
+      answer: correctedAnswer,
+    }),
+    sourceType: "interview_session",
+    sourceId: session.id,
+  });
+
+  const clearedState: StoredIrtState = {
+    ...stored,
+    pendingBonusQuestion: undefined,
+    nextItemId: undefined,
+  };
+  await prisma.interviewSession.update({
+    where: { id: session.id },
+    data: { irtState: serializeIrtState(clearedState) },
+  });
+
+  const planId = stored.planId ?? session.planId ?? undefined;
+  let redirectUrl: string | null = null;
+  let nextCompetency: string | null = null;
+
+  if (session.mode === "COMPETENCY" && planId && focusCompetency) {
+    redirectUrl = await finalizeCompetencySession({
+      sessionId: session.id,
+      planId,
+      focusCompetency,
+      states: stored.competencies,
+      userId: session.userId,
+      companyName: session.targetCompany?.name,
+      jobRole: session.jobRole,
+      persona: session.targetCompany?.persona as
+        | { name: string; description: string }
+        | null
+        | undefined,
+    });
+  } else {
+    await finalizeFullSession(session.id, stored.competencies);
+    redirectUrl = `/interview/${session.id}/report`;
+  }
+
+  if (planId && redirectUrl?.includes("/feedback")) {
+    const progress = await prisma.competencyProgress.findMany({ where: { planId } });
+    const pendingProgress = progress.find((p) => p.status !== "COMPLETED");
+    nextCompetency = pendingProgress?.competency ?? null;
+  }
+
+  return NextResponse.json({
+    competencyStates: stored.competencies,
+    chipEvent: null,
+    answerFeedback: {
+      ...buildAnswerKeyPointFeedback({
+        answer: correctedAnswer,
+        briefFeedback: rubric.briefFeedback,
+        dimensions: rubric.dimensions,
+        level: 0,
+        competency: focusCompetency,
+        score: rubric.score,
+      }),
+      score: rubric.score,
+      level: 0,
+      competency: focusCompetency,
+      isInterim: false,
+    },
+    nextQuestion: null,
+    shouldTerminate: true,
+    totalItems: stored.administeredIds.length,
+    administeredIds: stored.administeredIds,
+    redirectUrl,
+    planId,
+    focusCompetency,
+    nextCompetency,
+    maxItemsPerCompetency: COMPETENCY_SESSION_MAX_ITEMS,
   });
 }
 
@@ -584,10 +812,11 @@ async function finalizeCompetencySession(params: {
     },
   });
 
+  const regularResponses = session.responses.filter((r) => !r.isBonusQuestion && r.question);
   const feedbackData = await generateCompetencyFeedback({
     competency: params.focusCompetency,
     summary: compSummary,
-    responses: mapResponsesForCompetencyFeedback(session.responses),
+    responses: mapResponsesForCompetencyFeedback(regularResponses),
     companyName: params.companyName,
     jobRole: params.jobRole,
     persona: params.persona ?? undefined,
@@ -664,11 +893,12 @@ async function finalizeFullSession(
   }
 
   const { generateSessionReport } = await import("@/lib/claude/report");
+  const regularResponses = session.responses.filter((r) => !r.isBonusQuestion && r.question);
   const reportData = await generateSessionReport({
     companyName: session.targetCompany?.name,
     jobRole: session.jobRole,
     competencies: summary.competencies,
-    responses: session.responses.map((r) => mapResponseForReport(r)),
+    responses: regularResponses.map((r) => mapResponseForReport(r)),
   });
 
   await prisma.sessionReport.create({
