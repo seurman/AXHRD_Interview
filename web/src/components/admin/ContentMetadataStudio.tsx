@@ -27,6 +27,7 @@ import {
 import type { CatalogCluster } from "@/components/admin/kit-studio/types";
 import { MotionReorderList } from "@/components/org/MotionReorderList";
 import type { RubricByLevel } from "@/lib/competency/rubric";
+import { competencyLabel } from "@/lib/labels";
 
 const LEVELS = [1, 2, 3, 4, 5] as const;
 const DND_QUESTION = "application/x-axhrd-bank-question";
@@ -38,6 +39,12 @@ const SOURCE_LABEL: Record<string, string> = {
   GLOBAL: "Global",
   CUSTOM: "Custom",
 };
+
+/** CMS 드롭다운·테이블 — 한국어 표시명 + 시스템 code */
+function competencyOptionLabel(c: { code: string; nameKo?: string | null }): string {
+  const ko = c.nameKo?.trim() || competencyLabel(c.code);
+  return ko === c.code ? c.code : `${ko} (${c.code})`;
+}
 
 type Props = {
   initialClusters: BankCluster[];
@@ -100,13 +107,16 @@ export function ContentMetadataStudio({
       if (qCompFilter !== "all" && item.competencyId !== qCompFilter) return false;
       if (qLevelFilter !== "all" && item.level !== qLevelFilter) return false;
       if (!q) return true;
+      const compKo = compById.get(item.competencyId)?.nameKo ?? "";
       return (
         (item.template ?? "").toLowerCase().includes(q) ||
         (item.externalId ?? "").toLowerCase().includes(q) ||
-        (item.competencyCode ?? "").toLowerCase().includes(q)
+        (item.competencyCode ?? "").toLowerCase().includes(q) ||
+        compKo.toLowerCase().includes(q) ||
+        competencyLabel(item.competencyCode).toLowerCase().includes(q)
       );
     });
-  }, [questions, qSearch, qCompFilter, qLevelFilter]);
+  }, [questions, qSearch, qCompFilter, qLevelFilter, compById]);
 
   const rubricCompetencies: RubricCompetency[] = useMemo(
     () => mapCompetencyRubrics(competencies),
@@ -557,7 +567,7 @@ export function ContentMetadataStudio({
                         className="rounded border border-card-border px-2 py-0.5 text-[11px] disabled:opacity-40"
                         onClick={() => void importFromCatalog(c.source, c.code)}
                       >
-                        {c.code}
+                        {competencyOptionLabel(c)}
                         {inBank ? " ✓" : ""}
                       </button>
                     );
@@ -589,7 +599,7 @@ export function ContentMetadataStudio({
               <option value="all">모든 역량</option>
               {visibleCompetencies.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.code} ({SOURCE_LABEL[c.source]})
+                  {competencyOptionLabel(c)} · {SOURCE_LABEL[c.source]}
                 </option>
               ))}
             </select>
@@ -635,7 +645,7 @@ export function ContentMetadataStudio({
                       >
                         {competencies.map((c) => (
                           <option key={c.id} value={c.id}>
-                            {c.code}
+                            {competencyOptionLabel(c)}
                           </option>
                         ))}
                       </select>
@@ -723,7 +733,7 @@ export function ContentMetadataStudio({
           {selected ? (
             <div className="card-luxe space-y-3 p-4">
               <div className="flex justify-between gap-2">
-                <h3 className="font-bold">{selected.code}</h3>
+                <h3 className="font-bold">{competencyOptionLabel(selected)}</h3>
                 <div className="flex gap-2">
                   <button
                     type="button"
