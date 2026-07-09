@@ -112,7 +112,8 @@ export function MobileNav({
     s.links.some((l) => pathname === l.href || pathname.startsWith(`${l.href}/`))
   );
 
-  const prepareLabelKey: Record<PrepareLabelKey, "interview" | "discover" | "cards" | "resumeReview"> = {
+  const prepareLabelKey: Record<PrepareLabelKey, PrepareLabelKey> = {
+    trialInterview: "trialInterview",
     interview: "interview",
     resumeReview: "resumeReview",
     discover: "discover",

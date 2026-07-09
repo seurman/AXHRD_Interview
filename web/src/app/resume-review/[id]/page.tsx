@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
+import { requireProductCapability } from "@/lib/platform/page-guards";
 import { prisma } from "@/lib/prisma";
 import { competencyLabel } from "@/lib/labels";
 import { Reveal } from "@/components/ui/Reveal";
@@ -16,6 +17,7 @@ export default async function ResumeReviewDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireProductCapability("product.resume_review", "/resume-review");
   const user = await requirePageUser();
   const { id } = await params;
 

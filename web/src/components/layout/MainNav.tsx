@@ -139,7 +139,7 @@ export function MainNav({
 
 /** 모바일용 긴 라벨 */
 export function getMobileNavLabel(
-  key: "dashboard" | "discover" | "interview" | "resumeReview" | "cards" | "profile",
+  key: "dashboard" | "discover" | "interview" | "resumeReview" | "cards" | "trialInterview" | "profile",
   dict: ReturnType<typeof useI18n>["dict"]
 ): string {
   return dict.common.navLong[key];

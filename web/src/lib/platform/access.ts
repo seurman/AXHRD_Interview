@@ -1,3 +1,4 @@
+import type { PlanTier } from "@prisma/client";
 import {
   ALL_CAPABILITY_IDS,
   CAPABILITY_REGISTRY,
@@ -14,10 +15,12 @@ import {
   isStudentUser,
   type RoleUser,
 } from "@/lib/auth/roles";
+import { isPersonalTrialOnlyUser } from "@/lib/auth/personal-access";
 
 export type AccessContext = {
   /** 기관 개인화(saasPersonalizationEnabled) — tenant.settings / interview_kit */
   tenantPersonalizationEnabled?: boolean;
+  billingTier?: PlanTier;
 };
 
 function primaryPlatformRole(user: RoleUser): PlatformRoleKey {
@@ -35,6 +38,10 @@ export function resolveUserCapabilities(
   user: RoleUser,
   context: AccessContext = {}
 ): Set<CapabilityId> {
+  if (isPersonalTrialOnlyUser(user, context)) {
+    return new Set(["product.demo_trial"]);
+  }
+
   const role = primaryPlatformRole(user);
   let caps = new Set(ROLE_CAPABILITY_MATRIX[role]);
 

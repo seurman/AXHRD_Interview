@@ -118,7 +118,7 @@ export function OrgSaasPermissionPanel() {
                 {org.saasPersonalizationEnabled ? "개인화 ON" : "개인화 OFF"}
               </button>
               <Link
-                href={`/admin/saas/interview-kit?organizationId=${encodeURIComponent(org.id)}`}
+                href={`/admin/organizations/${encodeURIComponent(org.id)}/interview-kit`}
                 className="btn-secondary flex items-center gap-1 py-2 text-sm"
               >
                 <ClipboardList className="h-4 w-4" />

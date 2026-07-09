@@ -15,7 +15,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const a = dict.auth;
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = searchParams.get("next") ?? "/demo";
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

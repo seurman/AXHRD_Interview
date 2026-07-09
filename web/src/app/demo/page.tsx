@@ -16,6 +16,10 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
+import {
+  isPersonalTrialOnlyUser,
+  loadPersonalAccessContext,
+} from "@/lib/auth/personal-access";
 import { competencyLabel } from "@/lib/labels";
 import { COMPETENCY_CODES } from "@/types";
 import { Reveal } from "@/components/ui/Reveal";
@@ -68,6 +72,12 @@ const FAQS = [
 
 export default async function DemoPage() {
   const user = await getCurrentUser();
+  const trialOnly = user
+    ? isPersonalTrialOnlyUser(user, await loadPersonalAccessContext(user.id))
+    : false;
+  const interviewHref = trialOnly ? "/demo" : "/interview/setup";
+  const secondaryHref = trialOnly ? "/pricing" : user ? "/dashboard" : "/auth/login";
+  const secondaryLabel = trialOnly ? "Pro 업그레이드" : user ? "내 역량 보기" : "로그인";
 
   return (
     <div className="space-y-20">
@@ -95,8 +105,8 @@ export default async function DemoPage() {
           </p>
           <div className="flex flex-wrap gap-4">
             {user ? (
-              <Link href="/interview/setup" className="btn-primary">
-                면접 시작하기
+              <Link href={interviewHref} className="btn-primary">
+                {trialOnly ? "5분 체험 계속하기" : "면접 시작하기"}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             ) : (
@@ -105,9 +115,9 @@ export default async function DemoPage() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
             )}
-            <Link href={user ? "/dashboard" : "/auth/login"} className="btn-secondary">
+            <Link href={secondaryHref} className="btn-secondary">
               <BarChart3 className="h-4 w-4" />
-              {user ? "내 역량 보기" : "로그인"}
+              {secondaryLabel}
             </Link>
           </div>
         </Reveal>
@@ -233,10 +243,10 @@ export default async function DemoPage() {
           <div className="mt-6">
             {user ? (
               <Link
-                href="/interview/setup"
+                href={interviewHref}
                 className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-primary transition hover:bg-white/90"
               >
-                면접 시작하기
+                {trialOnly ? "5분 체험 계속하기" : "면접 시작하기"}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             ) : (

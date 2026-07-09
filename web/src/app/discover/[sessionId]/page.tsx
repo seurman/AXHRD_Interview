@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
+import { requireProductCapability } from "@/lib/platform/page-guards";
 import { DISCOVER_QUESTIONS } from "@/lib/discover/questions";
 import { DiscoverSession } from "@/components/discover/DiscoverSession";
 
@@ -12,6 +13,7 @@ export default async function DiscoverSessionPage({
   params: Promise<{ sessionId: string }>;
 }) {
   const { sessionId } = await params;
+  await requireProductCapability("product.discover", `/discover/${sessionId}`);
   const user = await requirePageUser(`/discover/${sessionId}`);
 
   const session = await prisma.selfDiscoverySession.findUnique({

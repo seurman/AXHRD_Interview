@@ -9,6 +9,7 @@ import { useNavSession } from "@/components/layout/NavSessionProvider";
 export function PricingContent() {
   const nav = useNavSession();
   const loggedIn = nav?.loggedIn ?? false;
+  const trialOnly = nav?.trialOnly ?? false;
   const isOrgAdmin =
     loggedIn && nav?.orgRole === "ADMIN" && !!nav?.organizationId;
 
@@ -60,10 +61,10 @@ export function PricingContent() {
                 </ul>
                 {tier === "FREE" ? (
                   <Link
-                    href={loggedIn ? "/interview/setup" : "/auth/register"}
+                    href={loggedIn ? (trialOnly ? "/demo" : "/interview/setup") : "/auth/register"}
                     className="btn-outline-primary mt-6 block w-full py-2.5 text-center text-sm"
                   >
-                    {loggedIn ? "면접 시작" : "무료 가입"}
+                    {loggedIn ? (trialOnly ? "5분 체험하기" : "면접 시작") : "무료 가입"}
                   </Link>
                 ) : (
                   <PlanSubscribeButton

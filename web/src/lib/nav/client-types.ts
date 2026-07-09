@@ -12,6 +12,8 @@ export type NavPayload = {
   userName: string | null;
   orgRole: string | null;
   organizationId: string | null;
+  /** FREE 개인 사용자 — 5분 면접 체험만 허용 */
+  trialOnly: boolean;
   canPresentDemo: boolean;
   dashboardHref: string | null;
   prepareLinks: { href: string; labelKey: PrepareLabelKey }[];
@@ -25,6 +27,7 @@ export const GUEST_NAV: NavPayload = {
   userName: null,
   orgRole: null,
   organizationId: null,
+  trialOnly: false,
   canPresentDemo: false,
   dashboardHref: null,
   prepareLinks: [],

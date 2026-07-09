@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
+import { blockPersonalTrialApi } from "@/lib/auth/personal-access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { DISCOVER_QUESTIONS } from "@/lib/discover/questions";
 import { generateDiscoverProfile } from "@/lib/discover/profile-generator";
@@ -18,6 +19,9 @@ export async function POST(req: Request) {
       { status: 401 }
     );
   }
+
+  const trialBlock = await blockPersonalTrialApi(user);
+  if (trialBlock) return trialBlock;
 
   const rl = checkRateLimit(`discover:respond:${user.id}`, 30, 5 * 60 * 1000);
   if (!rl.allowed) {

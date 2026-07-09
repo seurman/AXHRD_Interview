@@ -20,6 +20,7 @@ export type CapabilityId =
   | "product.resume_review"
   | "product.practice"
   | "product.profile"
+  | "product.demo_trial"
   | "tenant.cohort"
   | "tenant.settings"
   | "tenant.interview_kit"
@@ -99,6 +100,15 @@ export const CAPABILITY_REGISTRY: Record<CapabilityId, CapabilityDef> = {
     descriptionKo: "계정·소속 설정",
     href: "/profile",
     designNote: "계정·소속·선호를 한 프로필 레이어로",
+  },
+  "product.demo_trial": {
+    id: "product.demo_trial",
+    category: "product",
+    labelKo: "5분 면접 체험",
+    labelEn: "5-min trial",
+    descriptionKo: "데모 키트 기반 짧은 모의면접",
+    href: "/demo",
+    designNote: "FREE 개인 사용자 전용 — 역량 2~3문항 체험",
   },
   "tenant.cohort": {
     id: "tenant.cohort",

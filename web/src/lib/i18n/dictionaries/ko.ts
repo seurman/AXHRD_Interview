@@ -14,6 +14,7 @@ export const dictionary: Dictionary = {
       interview: "모의면접 시작",
       resumeReview: "자소서 첨삭",
       cards: "질문카드 연습",
+      trialInterview: "5분 면접 체험",
       profile: "프로필",
     },
     navLong: {
@@ -23,6 +24,7 @@ export const dictionary: Dictionary = {
       interview: "모의면접 시작",
       resumeReview: "자소서 첨삭",
       cards: "질문카드 연습",
+      trialInterview: "5분 면접 체험",
       profile: "프로필",
     },
     auth: {

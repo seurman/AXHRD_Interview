@@ -2,24 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  closestCorners,
-  useDroppable,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragStartEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  arrayMove,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Trash2, ClipboardList, LayoutGrid } from "lucide-react";
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  GripVertical,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import {
   CompetencyRubricPanel,
   mapCompetencyRubrics,
@@ -35,7 +24,7 @@ export type BankCompetency = {
   sortOrder: number;
   isActive: boolean;
   questionCount: number;
-  rubricByLevel?: unknown;
+  rubricByLevel?: RubricByLevel | unknown;
 };
 
 export type BankQuestion = {
@@ -53,344 +42,330 @@ export type BankQuestion = {
   sortOrder: number;
 };
 
-type Props = {
-  initialCompetencies: BankCompetency[];
-  initialQuestions: BankQuestion[];
-  canManagePermissions: boolean;
+type Step = "kit" | "questions" | "rubrics";
+
+type CatalogQuestion = {
+  externalId: string;
+  level: number;
+  template: string;
+  sortOrder: number;
+  rubricCriteria: string[];
 };
 
-function SortableCompetencyRow({
-  comp,
-  selected,
-  onSelect,
-  onToggleActive,
-}: {
-  comp: BankCompetency;
-  selected: boolean;
-  onSelect: () => void;
-  onToggleActive: () => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: `comp-${comp.id}`,
-    data: { type: "competency", competency: comp },
-  });
+type CatalogComp = {
+  source: "ncs" | "global";
+  code: string;
+  nameKo: string;
+  description: string | null;
+  questionCount: number;
+  clusterCode?: string;
+  clusterNameKo?: string;
+  rubricByLevel?: RubricByLevel;
+  questions?: CatalogQuestion[];
+};
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
+type CatalogCluster = {
+  source: "ncs" | "global";
+  code: string;
+  nameKo: string;
+  description: string | null;
+  competencies: CatalogComp[];
+};
+
+const LEVELS = [1, 2, 3, 4, 5] as const;
+const DND_TYPE = "application/x-axhrd-demo-comp";
+
+function buildOptimisticFromCatalog(
+  item: CatalogComp,
+  sortOrder: number,
+): { comp: BankCompetency; questions: BankQuestion[] } {
+  const compId = `pending-${item.source}-${item.code}`;
+  const comp: BankCompetency = {
+    id: compId,
+    code: item.code,
+    nameKo: item.nameKo,
+    description: item.description,
+    sortOrder,
+    isActive: true,
+    questionCount: item.questions?.length ?? item.questionCount,
+    rubricByLevel: item.rubricByLevel ?? {},
   };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`flex flex-nowrap items-center gap-2 rounded-lg border px-2 py-2 text-sm ${
-        selected ? "border-primary bg-primary/5" : "border-card-border bg-card"
-      } ${!comp.isActive ? "opacity-50" : ""}`}
-    >
-      <button type="button" className="cursor-grab text-muted" {...attributes} {...listeners}>
-        <GripVertical className="h-4 w-4" />
-      </button>
-      <button type="button" onClick={onSelect} className="min-w-0 flex-1 text-left">
-        <p className="font-medium text-foreground">{comp.nameKo}</p>
-        <p className="truncate text-xs text-muted">{comp.code} · {comp.questionCount}문항</p>
-      </button>
-      <button
-        type="button"
-        onClick={onToggleActive}
-        className="shrink-0 text-xs text-muted hover:text-primary"
-        title={comp.isActive ? "비활성화" : "활성화"}
-      >
-        {comp.isActive ? "ON" : "OFF"}
-      </button>
-    </div>
-  );
-}
-
-function QuestionCard({
-  q,
-  onEdit,
-  dragHandle,
-}: {
-  q: BankQuestion;
-  onEdit: () => void;
-  dragHandle?: React.ReactNode;
-}) {
-  return (
-    <div
-      className={`rounded-lg border border-card-border bg-card p-3 text-sm shadow-sm ${
-        !q.isActive ? "opacity-50" : ""
-      }`}
-    >
-      <div className="mb-2 flex items-start gap-2">
-        {dragHandle}
-        <div className="min-w-0 flex-1">
-          <p className="text-xs text-muted">{q.externalId}</p>
-          <button type="button" onClick={onEdit} className="mt-1 text-left hover:text-primary">
-            <p className="line-clamp-3 leading-relaxed [overflow-wrap:anywhere]">{q.template}</p>
-          </button>
-          {q.rubricCriteria.length > 0 && (
-            <p className="mt-1 text-xs text-gold">루브릭 {q.rubricCriteria.length}개</p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SortableQuestionCard({
-  q,
-  onEdit,
-}: {
-  q: BankQuestion;
-  onEdit: () => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: `q-${q.id}`,
-    data: { type: "question", question: q },
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.4 : 1,
-      }}
-    >
-      <QuestionCard
-        q={q}
-        onEdit={onEdit}
-        dragHandle={
-          <button type="button" className="cursor-grab text-muted" {...attributes} {...listeners}>
-            <GripVertical className="h-4 w-4 shrink-0" />
-          </button>
-        }
-      />
-    </div>
-  );
+  const questions: BankQuestion[] = (item.questions ?? []).map((q, i) => ({
+    id: `pending-q-${item.code}-${i}`,
+    externalId: q.externalId,
+    competencyId: compId,
+    competencyCode: item.code,
+    level: q.level,
+    template: q.template,
+    sortOrder: q.sortOrder,
+    isActive: true,
+    rubricCriteria: q.rubricCriteria ?? [],
+    difficulty: 0,
+    discrimination: 1,
+    followUpHints: [],
+  }));
+  return { comp, questions };
 }
 
 export function ContentBankEditor({
   initialCompetencies,
   initialQuestions,
-}: Props) {
+}: {
+  initialCompetencies: BankCompetency[];
+  initialQuestions: BankQuestion[];
+  canManagePermissions?: boolean;
+}) {
+  const [step, setStep] = useState<Step>("kit");
   const [competencies, setCompetencies] = useState(initialCompetencies);
   const [questions, setQuestions] = useState(initialQuestions);
-  const [selectedId, setSelectedId] = useState(initialCompetencies[0]?.id ?? "");
+  const [selectedCompId, setSelectedCompId] = useState(initialCompetencies[0]?.id ?? "");
+  const [busy, setBusy] = useState(false);
+  const [addingCodes, setAddingCodes] = useState<Set<string>>(() => new Set());
   const [editing, setEditing] = useState<BankQuestion | null>(null);
-  const [activeDrag, setActiveDrag] = useState<BankQuestion | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [viewMode, setViewMode] = useState<"questions" | "rubrics">("questions");
+  const [catalog, setCatalog] = useState<CatalogCluster[]>([]);
+  const [catalogTotals, setCatalogTotals] = useState({ ncs: 0, global: 0 });
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [openClusters, setOpenClusters] = useState<Set<string>>(new Set(["NCS_IRT"]));
+  const [filter, setFilter] = useState("");
+  const [dropActive, setDropActive] = useState(false);
+  const [draggingCode, setDraggingCode] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [openLevels, setOpenLevels] = useState<Set<number>>(() => new Set([1, 2, 3, 4, 5]));
+
+  const base = "/api/admin";
+  const selectedComp = competencies.find((c) => c.id === selectedCompId);
+  const kitCodes = useMemo(() => new Set(competencies.map((c) => c.code)), [competencies]);
+
+  const questionsByLevel = useMemo(() => {
+    const map = new Map<number, BankQuestion[]>();
+    for (const lv of LEVELS) map.set(lv, []);
+    for (const q of questions) {
+      if (q.competencyId !== selectedCompId) continue;
+      map.get(q.level)?.push(q);
+    }
+    for (const lv of LEVELS) {
+      map.get(lv)?.sort((a, b) => a.sortOrder - b.sortOrder);
+    }
+    return map;
+  }, [questions, selectedCompId]);
 
   const rubricCompetencies: RubricCompetency[] = useMemo(
     () => mapCompetencyRubrics(competencies),
-    [competencies]
+    [competencies],
   );
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
-
-  const selected = competencies.find((c) => c.id === selectedId) ?? competencies[0];
-
-  const questionsByLevel = useMemo(() => {
-    const map: Record<number, BankQuestion[]> = { 1: [], 2: [], 3: [], 4: [], 5: [] };
-    if (!selected) return map;
-    for (const q of questions) {
-      if (q.competencyId === selected.id && q.level >= 1 && q.level <= 5) {
-        map[q.level].push(q);
-      }
-    }
-    for (const lv of [1, 2, 3, 4, 5]) {
-      map[lv].sort((a, b) => a.sortOrder - b.sortOrder);
-    }
-    return map;
-  }, [questions, selected]);
-
-  const persistQuestionMoves = useCallback(
-    async (nextQuestions: BankQuestion[]) => {
-      const byComp = selected;
-      if (!byComp) return;
-      const moves = nextQuestions
-        .filter((q) => q.competencyId === byComp.id)
-        .flatMap((q) => {
-          const levelQs = nextQuestions.filter(
-            (x) => x.competencyId === byComp.id && x.level === q.level
-          );
-          levelQs.sort((a, b) => a.sortOrder - b.sortOrder);
-          return levelQs.map((item, idx) => ({
-            id: item.id,
-            competencyId: item.competencyId,
-            level: item.level,
-            sortOrder: idx,
-          }));
-        });
-      const unique = [...new Map(moves.map((m) => [m.id, m])).values()];
-      await fetch("/api/admin/questions", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ moves: unique }),
-      });
-    },
-    [selected]
-  );
-
-  const handleDragStart = (e: DragStartEvent) => {
-    const q = e.active.data.current?.question as BankQuestion | undefined;
-    if (q) setActiveDrag(q);
-  };
-
-  const handleDragEnd = async (e: DragEndEvent) => {
-    setActiveDrag(null);
-    const activeId = String(e.active.id);
-    const overId = e.over?.id ? String(e.over.id) : null;
-    if (!overId || activeId === overId) return;
-    if (!activeId.startsWith("q-")) return;
-
-    const qId = activeId.replace("q-", "");
-    const dragged = questions.find((q) => q.id === qId);
-    if (!dragged || !selected) return;
-
-    setSaving(true);
-    try {
-      let next = [...questions];
-      const qIndex = next.findIndex((q) => q.id === qId);
-
-      if (overId.startsWith("comp-")) {
-        const targetCompId = overId.replace("comp-", "");
-        if (targetCompId === dragged.competencyId) return;
-        next[qIndex] = { ...dragged, competencyId: targetCompId };
-        setQuestions(next);
-        await fetch("/api/admin/questions", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            moves: [{ id: qId, competencyId: targetCompId, level: dragged.level, sortOrder: 999 }],
-          }),
-        });
-        return;
-      }
-
-      if (overId.startsWith("level-")) {
-        const [, compId, levelStr] = overId.split("-");
-        const level = parseInt(levelStr, 10);
-        const targetCompId = competencies.find((c) => c.id === compId)?.id ?? selected.id;
-        const levelQs = next.filter((q) => q.competencyId === targetCompId && q.level === level);
-        next[qIndex] = { ...dragged, competencyId: targetCompId, level, sortOrder: levelQs.length };
-        setQuestions(next);
-        await persistQuestionMoves(next);
-        return;
-      }
-
-      if (overId.startsWith("q-")) {
-        const overQId = overId.replace("q-", "");
-        const overQ = next.find((q) => q.id === overQId);
-        if (!overQ || overQ.competencyId !== dragged.competencyId || overQ.level !== dragged.level) {
-          if (overQ) {
-            next[qIndex] = { ...dragged, competencyId: overQ.competencyId, level: overQ.level };
-            const same = next.filter(
-              (q) => q.competencyId === overQ.competencyId && q.level === overQ.level
-            );
-            const oldIdx = same.findIndex((q) => q.id === qId);
-            const newIdx = same.findIndex((q) => q.id === overQId);
-            if (oldIdx >= 0 && newIdx >= 0) {
-              const reordered = arrayMove(same, oldIdx, newIdx);
-              reordered.forEach((item, i) => {
-                const gi = next.findIndex((q) => q.id === item.id);
-                next[gi] = { ...item, sortOrder: i };
-              });
-            }
-          }
-        } else {
-          const same = next.filter(
-            (q) => q.competencyId === dragged.competencyId && q.level === dragged.level
-          );
-          const oldIdx = same.findIndex((q) => q.id === qId);
-          const newIdx = same.findIndex((q) => q.id === overQId);
-          const reordered = arrayMove(same, oldIdx, newIdx);
-          reordered.forEach((item, i) => {
-            const gi = next.findIndex((q) => q.id === item.id);
-            next[gi] = { ...item, sortOrder: i };
-          });
-        }
-        setQuestions(next);
-        await persistQuestionMoves(next);
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const reorderCompetencies = async (activeId: string, overId: string) => {
-    const oldIdx = competencies.findIndex((c) => `comp-${c.id}` === activeId);
-    const newIdx = competencies.findIndex((c) => `comp-${c.id}` === overId);
-    if (oldIdx < 0 || newIdx < 0) return;
-    const reordered = arrayMove(competencies, oldIdx, newIdx).map((c, i) => ({
-      ...c,
-      sortOrder: i,
-    }));
-    setCompetencies(reordered);
-    await fetch("/api/admin/competencies", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        items: reordered.map((c) => ({ id: c.id, sortOrder: c.sortOrder })),
-      }),
-    });
-  };
-
-  const onCompetencyDragEnd = (e: DragEndEvent) => {
-    const activeId = String(e.active.id);
-    const overId = e.over?.id ? String(e.over.id) : null;
-    if (!overId || activeId === overId) return;
-    if (activeId.startsWith("comp-") && overId.startsWith("comp-")) {
-      reorderCompetencies(activeId, overId);
-    }
-  };
-
-  const addCompetency = async () => {
-    const code = prompt("역량 코드 (예: TEAMWORK)");
-    if (!code?.trim()) return;
-    const nameKo = prompt("한글 역량명");
-    if (!nameKo?.trim()) return;
-    const normalizedCode = code.trim().toUpperCase();
-    const tempId = `pending-${Date.now()}`;
-    const sortOrder = competencies.length;
-    const optimistic = {
-      id: tempId,
-      code: normalizedCode,
-      nameKo: nameKo.trim(),
-      description: null as string | null,
-      sortOrder,
-      isActive: true,
-      questionCount: 0,
-      rubricByLevel: {} as RubricByLevel,
-    };
-    setCompetencies((prev) => [...prev, optimistic]);
-    setSelectedId(tempId);
-    const res = await fetch("/api/admin/competencies", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: normalizedCode, nameKo: nameKo.trim() }),
-    });
+  const refresh = useCallback(async () => {
+    const res = await fetch(`${base}/content-bank`);
+    if (!res.ok) throw new Error("새로고침 실패");
     const data = await res.json();
-    if (!res.ok) {
-      setCompetencies((prev) => prev.filter((c) => c.id !== tempId));
-      alert(data.error ?? "추가 실패");
+    setCompetencies(data.competencies);
+    setQuestions(data.questions);
+    if (!data.competencies.some((c: BankCompetency) => c.id === selectedCompId)) {
+      setSelectedCompId(data.competencies[0]?.id ?? "");
+    }
+  }, [base, selectedCompId]);
+
+  useEffect(() => {
+    setStep("kit");
+    setCompetencies(initialCompetencies);
+    setQuestions(initialQuestions);
+    setSelectedCompId(initialCompetencies[0]?.id ?? "");
+    setMessage(null);
+    setAddingCodes(new Set());
+  }, [initialCompetencies, initialQuestions]);
+
+  const findCatalogComp = useCallback(
+    (source: "ncs" | "global", code: string): CatalogComp | null => {
+      for (const cl of catalog) {
+        const found = cl.competencies.find((c) => c.source === source && c.code === code);
+        if (found) return found;
+      }
+      return null;
+    },
+    [catalog],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setCatalogLoading(true);
+      setCatalogError(null);
+      try {
+        const res = await fetch("/api/admin/content/catalog");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "카탈로그 로드 실패");
+        if (cancelled) return;
+        setCatalog(data.clusters ?? []);
+        setCatalogTotals(data.totals ?? { ncs: 0, global: 0 });
+        const globalOpen = (data.clusters as CatalogCluster[])
+          .filter((c) => c.source === "global")
+          .map((c) => c.code);
+        setOpenClusters(new Set(["NCS_IRT", ...globalOpen.slice(0, 2)]));
+      } catch (e) {
+        if (!cancelled) setCatalogError(e instanceof Error ? e.message : "카탈로그 로드 실패");
+      } finally {
+        if (!cancelled) setCatalogLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const addFromCatalog = async (
+    selections: Array<{ source: "ncs" | "global"; code: string }>,
+  ) => {
+    const fresh = selections.filter((s) => !kitCodes.has(s.code));
+    if (fresh.length === 0) {
+      setMessage("이미 뱅크에 있는 역량입니다.");
       return;
     }
-    const c = data.competency;
-    setCompetencies((prev) =>
-      prev.map((x) =>
-        x.id === tempId ? { ...c, questionCount: 0, rubricByLevel: x.rubricByLevel ?? {} } : x,
-      ),
-    );
-    setSelectedId(c.id);
+    setMessage(null);
+    const codesBeingAdded = fresh.map((s) => s.code);
+    setAddingCodes((prev) => new Set([...prev, ...codesBeingAdded]));
+
+    const prevComps = competencies;
+    const prevQs = questions;
+    let sortBase = competencies.reduce((m, c) => Math.max(m, c.sortOrder), -1) + 1;
+    const optimisticComps: BankCompetency[] = [];
+    const optimisticQs: BankQuestion[] = [];
+
+    for (const sel of fresh) {
+      const item = findCatalogComp(sel.source, sel.code);
+      if (!item) continue;
+      const { comp, questions: qs } = buildOptimisticFromCatalog(item, sortBase++);
+      optimisticComps.push(comp);
+      optimisticQs.push(...qs);
+    }
+
+    if (optimisticComps.length > 0) {
+      setCompetencies((prev) => [...prev, ...optimisticComps]);
+      setQuestions((prev) => [...prev, ...optimisticQs]);
+      setSelectedCompId(optimisticComps[0].id);
+    }
+
+    try {
+      const res = await fetch(`${base}/competencies`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fromCatalog: true, selections: fresh }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error ?? "추가 실패");
+
+      const serverComps = (d.competencies as BankCompetency[] | undefined) ?? [];
+      const serverQs = (d.questions as BankQuestion[] | undefined) ?? [];
+      if (serverComps.length > 0) {
+        const codes = new Set(codesBeingAdded);
+        setCompetencies((prevComps) => {
+          const keptComps = prevComps.filter(
+            (c) => !(codes.has(c.code) && c.id.startsWith("pending-")),
+          );
+          const merged = [...keptComps];
+          for (const sc of serverComps) {
+            const idx = merged.findIndex((c) => c.code === sc.code);
+            if (idx >= 0) merged[idx] = sc;
+            else merged.push(sc);
+          }
+          return merged.sort((a, b) => a.sortOrder - b.sortOrder);
+        });
+        setQuestions((prevQs) => {
+          const keptQs = prevQs.filter(
+            (q) => !(codes.has(q.competencyCode) && q.id.startsWith("pending-q-")),
+          );
+          const existingIds = new Set(keptQs.map((q) => q.id));
+          const toAdd = serverQs.filter((q) => !existingIds.has(q.id));
+          return [...keptQs, ...toAdd];
+        });
+        setSelectedCompId(serverComps[0].id);
+      } else {
+        await refresh();
+      }
+
+      const added = (d.added as string[]) ?? [];
+      setMessage(
+        `${added.length}개 역량을 운영 뱅크에 넣었습니다.` +
+          (d.skipped?.length ? ` (건너뜀: ${d.skipped.join(", ")})` : ""),
+      );
+    } catch (e) {
+      setCompetencies(prevComps);
+      setQuestions(prevQs);
+      setMessage(e instanceof Error ? e.message : "추가 실패");
+    } finally {
+      setAddingCodes((prev) => {
+        const next = new Set(prev);
+        for (const code of codesBeingAdded) next.delete(code);
+        return next;
+      });
+    }
+  };
+
+  const parseDragPayload = (e: React.DragEvent): { source: "ncs" | "global"; code: string } | null => {
+    const raw =
+      e.dataTransfer.getData(DND_TYPE) ||
+      e.dataTransfer.getData("text/plain") ||
+      e.dataTransfer.getData("text");
+    if (!raw) return null;
+    try {
+      const payload = JSON.parse(raw) as { source?: string; code?: string };
+      if (!payload.code) return null;
+      return {
+        source: payload.source === "global" ? "global" : "ncs",
+        code: String(payload.code).toUpperCase(),
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const onDragStart = (e: React.DragEvent, c: CatalogComp) => {
+    const payload = JSON.stringify({ source: c.source, code: c.code });
+    e.dataTransfer.setData(DND_TYPE, payload);
+    // text/plain: Safari / 일부 브라우저가 커스텀 MIME만으로는 드래그가 깨짐
+    e.dataTransfer.setData("text/plain", payload);
+    e.dataTransfer.effectAllowed = "copy";
+    setDraggingCode(c.code);
+    // 질의/루브릭 화면에서도 드롭 가능하도록 키트 스텝으로 유도하지 않음 — 우측 전역 드롭존 사용
+  };
+
+  const onDragEnd = () => {
+    setDraggingCode(null);
+    setDropActive(false);
+  };
+
+  const onDropToKit = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropActive(false);
+    setDraggingCode(null);
+    const payload = parseDragPayload(e);
+    if (!payload) {
+      setMessage("드래그 데이터를 읽지 못했습니다. + 버튼으로 추가해 보세요.");
+      return;
+    }
+    await addFromCatalog([payload]);
+  };
+
+  const onCanvasDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+    if (!dropActive) setDropActive(true);
+  };
+
+  const removeCompetency = async (comp: BankCompetency) => {
+    if (!confirm(`「${comp.nameKo}」을(를) 뱅크에서 제거(비활성화)할까요?`)) return;
+    setBusy(true);
+    try {
+      await fetch(`${base}/competencies/${comp.id}`, { method: "DELETE" });
+      await refresh();
+    } finally {
+      setBusy(false);
+    }
   };
 
   const toggleCompetencyActive = async (comp: BankCompetency) => {
-    const res = await fetch(`/api/admin/competencies/${comp.id}`, {
+    const res = await fetch(`${base}/competencies/${comp.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isActive: !comp.isActive }),
@@ -398,51 +373,137 @@ export function ContentBankEditor({
     if (!res.ok) return;
     const data = await res.json();
     setCompetencies((prev) =>
-      prev.map((c) => (c.id === comp.id ? { ...c, isActive: data.competency.isActive } : c))
+      prev.map((c) => (c.id === comp.id ? { ...c, isActive: data.competency.isActive } : c)),
     );
+  };
+
+  const moveCompetency = async (compId: string, dir: -1 | 1) => {
+    const idx = competencies.findIndex((c) => c.id === compId);
+    const swap = idx + dir;
+    if (swap < 0 || swap >= competencies.length) return;
+    const next = [...competencies];
+    [next[idx], next[swap]] = [next[swap], next[idx]];
+    const items = next.map((c, i) => ({ id: c.id, sortOrder: i }));
+    setCompetencies(next.map((c, i) => ({ ...c, sortOrder: i })));
+    await fetch(`${base}/competencies`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items }),
+    });
   };
 
   const addQuestion = async (level: number) => {
-    if (!selected) return;
-    const template = prompt(`L${level} 질문 텍스트`);
-    if (!template?.trim()) return;
-    const res = await fetch("/api/admin/questions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ competencyId: selected.id, level, template: template.trim() }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      alert(data.error ?? "추가 실패");
+    if (!selectedCompId || !selectedComp) return;
+    if (selectedCompId.startsWith("pending-")) {
+      setMessage("역량이 서버에 저장될 때까지 잠시만 기다려 주세요.");
       return;
     }
-    const q = data.question;
-    setQuestions((prev) => [
-      ...prev,
-      {
-        id: q.id,
-        externalId: q.externalId,
-        competencyId: q.competencyId,
-        competencyCode: selected.code,
-        level: q.level,
-        template: q.template,
-        difficulty: q.difficulty,
-        discrimination: q.discrimination,
-        followUpHints: q.followUpHints ?? [],
-        rubricCriteria: q.rubricCriteria ?? [],
-        isActive: q.isActive,
-        sortOrder: q.sortOrder,
-      },
-    ]);
-    setCompetencies((prev) =>
-      prev.map((c) =>
-        c.id === selected.id ? { ...c, questionCount: c.questionCount + 1 } : c
-      )
-    );
+    const template = prompt(`L${level} 질문 문구`)?.trim();
+    if (!template) return;
+    const tempId = `pending-q-${Date.now()}`;
+    const sortOrder = (questionsByLevel.get(level)?.length ?? 0);
+    const optimistic: BankQuestion = {
+      id: tempId,
+      externalId: `TEMP-${tempId}`,
+      competencyId: selectedCompId,
+      competencyCode: selectedComp.code,
+      level,
+      template,
+      sortOrder,
+      isActive: true,
+      rubricCriteria: [],
+      difficulty: 0,
+      discrimination: 1,
+      followUpHints: [],
+    };
+    setQuestions((prev) => [...prev, optimistic]);
+    try {
+      const res = await fetch(`${base}/questions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ competencyId: selectedCompId, level, template }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error ?? "추가 실패");
+      const q = d.question as BankQuestion;
+      setQuestions((prev) =>
+        prev.map((x) =>
+          x.id === tempId
+            ? {
+                id: q.id,
+                externalId: q.externalId,
+                competencyId: q.competencyId,
+                competencyCode: selectedComp.code,
+                level: q.level,
+                template: q.template,
+                sortOrder: q.sortOrder,
+                isActive: q.isActive,
+                rubricCriteria: Array.isArray(q.rubricCriteria) ? q.rubricCriteria : [],
+                difficulty: q.difficulty ?? 0,
+                discrimination: q.discrimination ?? 1,
+                followUpHints: Array.isArray(q.followUpHints) ? q.followUpHints : [],
+              }
+            : x,
+        ),
+      );
+      setCompetencies((prev) =>
+        prev.map((c) =>
+          c.id === selectedCompId ? { ...c, questionCount: c.questionCount + 1 } : c,
+        ),
+      );
+    } catch (e) {
+      setQuestions((prev) => prev.filter((x) => x.id !== tempId));
+      setMessage(e instanceof Error ? e.message : "문항 추가 실패");
+    }
   };
 
-  const saveQuestion = async (q: BankQuestion) => {
-    const res = await fetch(`/api/admin/questions/${q.id}`, {
+  const updateQuestion = async (q: BankQuestion, patch: Partial<BankQuestion>) => {
+    setQuestions((prev) => prev.map((x) => (x.id === q.id ? { ...x, ...patch } : x)));
+    await fetch(`${base}/questions/${q.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+  };
+
+  const removeQuestion = async (q: BankQuestion) => {
+    if (!confirm("이 문항을 삭제할까요?")) return;
+    setBusy(true);
+    try {
+      await fetch(`${base}/questions/${q.id}`, { method: "DELETE" });
+      await refresh();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const moveQuestion = async (q: BankQuestion, dir: -1 | 1) => {
+    const list = [...(questionsByLevel.get(q.level) ?? [])];
+    const idx = list.findIndex((x) => x.id === q.id);
+    const swap = idx + dir;
+    if (swap < 0 || swap >= list.length) return;
+    [list[idx], list[swap]] = [list[swap], list[idx]];
+    const items = list.map((x, i) => ({ id: x.id, sortOrder: i }));
+    setQuestions((prev) => {
+      const others = prev.filter((x) => x.competencyId !== q.competencyId || x.level !== q.level);
+      return [...others, ...list.map((x, i) => ({ ...x, sortOrder: i }))];
+    });
+    await fetch(`${base}/questions`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        moves: list.map((x, i) => ({
+          id: x.id,
+          competencyId: x.competencyId,
+          level: x.level,
+          sortOrder: i,
+        })),
+      }),
+    });
+  };
+
+  const saveQuestionModal = async (q: BankQuestion) => {
+    const res = await fetch(`${base}/questions/${q.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(q),
@@ -466,227 +527,606 @@ export function ContentBankEditor({
               rubricCriteria: updated.rubricCriteria,
               isActive: updated.isActive,
             }
-          : item
-      )
+          : item,
+      ),
     );
     setEditing(null);
   };
 
-  const deleteQuestion = async (q: BankQuestion) => {
+  const deleteQuestionModal = async (q: BankQuestion) => {
     if (!confirm("이 문항을 삭제(또는 비활성화)할까요?")) return;
-    const res = await fetch(`/api/admin/questions/${q.id}`, { method: "DELETE" });
+    const res = await fetch(`${base}/questions/${q.id}`, { method: "DELETE" });
     if (!res.ok) return;
     const data = await res.json();
     if (data.softDeleted) {
       setQuestions((prev) =>
-        prev.map((item) => (item.id === q.id ? { ...item, isActive: false } : item))
+        prev.map((item) => (item.id === q.id ? { ...item, isActive: false } : item)),
       );
     } else {
       setQuestions((prev) => prev.filter((item) => item.id !== q.id));
       setCompetencies((prev) =>
         prev.map((c) =>
-          c.id === q.competencyId ? { ...c, questionCount: Math.max(0, c.questionCount - 1) } : c
-        )
+          c.id === q.competencyId ? { ...c, questionCount: Math.max(0, c.questionCount - 1) } : c,
+        ),
       );
     }
     setEditing(null);
   };
 
-  useEffect(() => {
-    if (!selectedId && competencies[0]) setSelectedId(competencies[0].id);
-  }, [competencies, selectedId]);
+  const updateRubric = async (compId: string, rubricByLevel: RubricByLevel) => {
+    await fetch(`${base}/competencies/${compId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rubricByLevel }),
+    });
+    setCompetencies((prev) =>
+      prev.map((c) => (c.id === compId ? { ...c, rubricByLevel } : c)),
+    );
+  };
+
+  const applyRubricToQuestions = async (
+    competencyId: string,
+    level: number,
+    criteria: string[],
+  ) => {
+    const res = await fetch(`${base}/rubrics/apply`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ competencyId, level, rubricCriteria: criteria }),
+    });
+    if (!res.ok) throw new Error("적용 실패");
+    setQuestions((prev) =>
+      prev.map((q) =>
+        q.competencyId === competencyId && q.level === level
+          ? { ...q, rubricCriteria: criteria }
+          : q,
+      ),
+    );
+  };
+
+  const filteredClusters = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return catalog;
+    return catalog
+      .map((cl) => ({
+        ...cl,
+        competencies: cl.competencies.filter(
+          (c) =>
+            c.nameKo.toLowerCase().includes(q) ||
+            c.code.toLowerCase().includes(q) ||
+            (c.description ?? "").toLowerCase().includes(q),
+        ),
+      }))
+      .filter((cl) => cl.competencies.length > 0);
+  }, [catalog, filter]);
+
+  const toggleCluster = (code: string) => {
+    setOpenClusters((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
+  };
+
+  const steps: { id: Step; n: number; label: string; hint: string }[] = [
+    { id: "kit", n: 1, label: "필요 역량", hint: "메타에서 끌어오기" },
+    { id: "questions", n: 2, label: "질의 조정", hint: "문항 편집" },
+    { id: "rubrics", n: 3, label: "루브릭", hint: "채점 기준" },
+  ];
+
+  const goStep = (id: Step) => {
+    if (id !== "kit" && competencies.length === 0) {
+      setMessage("먼저 좌측 메타데이터에서 역량을 키트로 추가하세요.");
+      setStep("kit");
+      return;
+    }
+    setStep(id);
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2 border-b border-card-border pb-2">
-        <button
-          type="button"
-          onClick={() => setViewMode("questions")}
-          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${
-            viewMode === "questions" ? "bg-primary text-white" : "text-muted hover:text-foreground"
-          }`}
-        >
-          <LayoutGrid className="h-4 w-4" />
-          문항 배치
-        </button>
-        <button
-          type="button"
-          onClick={() => setViewMode("rubrics")}
-          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${
-            viewMode === "rubrics" ? "bg-primary text-white" : "text-muted hover:text-foreground"
-          }`}
-        >
-          <ClipboardList className="h-4 w-4" />
-          역량별 루브릭
-        </button>
+      {/* Workflow strip */}
+      <div className="overflow-hidden rounded-2xl border border-card-border bg-[linear-gradient(120deg,#0f172a_0%,#1e293b_55%,#0f172a_100%)] p-4 text-white sm:p-5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold">
+          Content studio
+        </p>
+        <p className="mt-1 text-sm text-white/70">
+          메타데이터 → 필요 역량 → 질의 → 루브릭. 운영 문항 뱅크를 구성합니다.
+        </p>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <ol className="flex flex-wrap items-center gap-1">
+          {steps.map((s, i) => (
+            <li key={s.id} className="flex items-center gap-1">
+              {i > 0 ? <span className="px-1 text-white/30">→</span> : null}
+              <button
+                type="button"
+                onClick={() => goStep(s.id)}
+                className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
+                  step === s.id
+                    ? "border-gold/50 bg-gold/15 text-white"
+                    : "border-white/10 text-white/65 hover:border-white/25"
+                }`}
+              >
+                <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-[10px] font-bold">
+                  {s.n}
+                </span>
+                <span className="font-medium">{s.label}</span>
+                <span className="mt-0.5 block text-[10px] text-white/45 sm:ml-2 sm:mt-0 sm:inline">
+                  {s.hint}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ol>
+      </div>
       </div>
 
-      {viewMode === "rubrics" ? (
-        <CompetencyRubricPanel
-          competencies={rubricCompetencies}
-          onUpdate={async (id, rubricByLevel: RubricByLevel) => {
-            const res = await fetch(`/api/admin/competencies/${id}`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ rubricByLevel }),
-            });
-            if (!res.ok) throw new Error("저장 실패");
-            setCompetencies((prev) =>
-              prev.map((c) => (c.id === id ? { ...c, rubricByLevel } : c))
-            );
-          }}
-          onApplyToQuestions={async (competencyId, level, criteria) => {
-            const res = await fetch("/api/admin/rubrics/apply", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ competencyId, level, rubricCriteria: criteria }),
-            });
-            if (!res.ok) throw new Error("적용 실패");
-            setQuestions((prev) =>
-              prev.map((q) =>
-                q.competencyId === competencyId && q.level === level
-                  ? { ...q, rubricCriteria: criteria }
-                  : q
-              )
-            );
-          }}
-          onImportComplete={() => window.location.reload()}
-        />
-      ) : (
-        <>
-      {saving && (
-        <p className="text-xs text-muted">변경 사항 저장 중…</p>
-      )}
+      {message ? (
+        <p className="rounded-lg border border-card-border bg-card px-3 py-2 text-sm text-foreground">
+          {message}
+        </p>
+      ) : null}
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragEnd={(e) => {
-          const id = String(e.active.id);
-          if (id.startsWith("comp-")) onCompetencyDragEnd(e);
-          else handleDragEnd(e);
-        }}
-      >
-        <div className="grid gap-6 lg:grid-cols-12">
-          {/* 역량 사이드바 — AX 콘텐츠 뱅크 competency 패널 */}
-          <aside className="space-y-3 lg:col-span-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-foreground">역량</h2>
-              <button type="button" onClick={addCompetency} className="btn-primary px-2 py-1 text-xs">
-                <Plus className="mr-1 inline h-3 w-3" />
-                추가
-              </button>
-            </div>
-            <p className="text-xs text-muted">
-              드래그로 순서 변경 · 문항을 역량 위에 놓으면 이동
+      <div className="grid gap-4 lg:grid-cols-[minmax(240px,300px)_1fr]">
+        {/* Left: metadata catalog (BO object browser style) */}
+        <aside className="flex max-h-[min(78vh,880px)] flex-col overflow-hidden rounded-xl border border-card-border bg-card">
+          <div className="border-b border-card-border px-3 py-2.5">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gold">
+              Metadata
             </p>
-            <SortableContext
-              items={competencies.map((c) => `comp-${c.id}`)}
-              strategy={verticalListSortingStrategy}
+            <h2 className="text-sm font-semibold text-foreground">역량 사전</h2>
+            <p className="mt-0.5 text-[11px] leading-snug text-muted">
+              NCS {catalogTotals.ncs} · Global {catalogTotals.global}
+              {catalogTotals.global === 0 ? " (시드 필요)" : ""} — 드래그하거나 + 로 뱅크에 추가
+            </p>
+            <input
+              type="search"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder="검색…"
+              className="input-luxe mt-2 w-full text-xs"
+            />
+          </div>
+          <div className="flex-1 overflow-y-auto p-2">
+            {catalogLoading ? (
+              <p className="px-2 py-4 text-xs text-muted">카탈로그 불러오는 중…</p>
+            ) : catalogError ? (
+              <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-2 py-3 text-xs text-red-600">
+                {catalogError}
+              </p>
+            ) : (
+              filteredClusters.map((cl) => {
+                const open = openClusters.has(cl.code);
+                return (
+                  <div key={`${cl.source}-${cl.code}`} className="mb-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleCluster(cl.code)}
+                      className="flex w-full items-center gap-1 rounded-md px-2 py-1.5 text-left text-xs font-semibold text-foreground hover:bg-background"
+                    >
+                      {open ? (
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted" />
+                      ) : (
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted" />
+                      )}
+                      <span className="truncate">{cl.nameKo}</span>
+                      <span className="ml-auto text-[10px] font-normal text-muted">
+                        {cl.competencies.length}
+                      </span>
+                    </button>
+                    {open ? (
+                      <ul className="mb-2 space-y-0.5 pl-1">
+                        {cl.competencies.map((c) => {
+                          const inKit = kitCodes.has(c.code);
+                          const adding = addingCodes.has(c.code);
+                          return (
+                            <li key={`${c.source}-${c.code}`}>
+                              <div
+                                draggable={!inKit && !adding}
+                                onDragStart={(e) => {
+                                  if (inKit || adding) {
+                                    e.preventDefault();
+                                    return;
+                                  }
+                                  onDragStart(e, c);
+                                }}
+                                onDragEnd={onDragEnd}
+                                className={`group flex items-start gap-1 rounded-md border px-1.5 py-1.5 text-xs ${
+                                  inKit
+                                    ? "border-transparent bg-primary/5 opacity-60"
+                                    : draggingCode === c.code
+                                      ? "border-accent bg-accent/10"
+                                      : adding
+                                        ? "border-accent/40 bg-accent/5"
+                                        : "cursor-grab border-transparent hover:border-card-border hover:bg-background active:cursor-grabbing"
+                                }`}
+                                title={c.description ?? c.code}
+                              >
+                                <GripVertical
+                                  className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${
+                                    inKit ? "text-muted/30" : "text-muted/80"
+                                  }`}
+                                />
+                                <button
+                                  type="button"
+                                  disabled={inKit || adding}
+                                  onClick={() => {
+                                    if (!inKit) void addFromCatalog([{ source: c.source, code: c.code }]);
+                                  }}
+                                  className="min-w-0 flex-1 text-left disabled:cursor-default"
+                                >
+                                  <p className="font-medium leading-snug text-foreground">
+                                    {c.nameKo}
+                                    {adding ? (
+                                      <span className="ml-1 text-[10px] font-normal text-accent">
+                                        추가 중…
+                                      </span>
+                                    ) : null}
+                                  </p>
+                                  <p className="truncate text-[10px] text-muted">
+                                    {c.source === "global" ? "Global" : "NCS"} · {c.code} ·{" "}
+                                    {c.questionCount}문항
+                                  </p>
+                                </button>
+                                {inKit ? (
+                                  <span className="shrink-0 text-[10px] text-accent">뱅크</span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={adding}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      void addFromCatalog([{ source: c.source, code: c.code }]);
+                                    }}
+                                    className="shrink-0 rounded p-0.5 text-muted hover:text-accent disabled:opacity-40"
+                                    aria-label="뱅크에 추가"
+                                  >
+                                    <Plus className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : null}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </aside>
+
+        {/* Right: canvas by step — always accepts catalog drops */}
+        <div
+          className="relative min-w-0 space-y-3"
+          onDragOver={onCanvasDragOver}
+          onDragLeave={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropActive(false);
+          }}
+          onDrop={(e) => void onDropToKit(e)}
+        >
+          {dropActive || draggingCode ? (
+            <div
+              className={`pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-dashed ${
+                dropActive ? "border-accent bg-accent/10" : "border-card-border/40 bg-transparent"
+              }`}
             >
-              <div className="space-y-2">
+              {dropActive ? (
+                <p className="rounded-lg bg-card px-4 py-2 text-sm font-medium text-foreground shadow">
+                  여기에 놓아 뱅크에 추가
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {step === "kit" && (
+            <div
+              className={`min-h-[320px] rounded-xl border-2 border-dashed p-4 transition ${
+                dropActive ? "border-accent bg-accent/5" : "border-card-border bg-card"
+              }`}
+            >
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">운영 역량 뱅크</h2>
+                  <p className="text-xs text-muted">
+                    좌측 메타에서 끌어오거나 + 로 추가 · {competencies.length}개
+                  </p>
+                </div>
+                {competencies.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => goStep("questions")}
+                    className="btn-primary px-3 py-1.5 text-xs"
+                  >
+                    다음: 질의 조정 →
+                  </button>
+                ) : null}
+              </div>
+
+              {competencies.length === 0 ? (
+                <div className="flex h-48 flex-col items-center justify-center text-center text-sm text-muted">
+                  <p>여기에 역량을 놓으세요.</p>
+                  <p className="mt-1 max-w-sm text-xs">
+                    드래그가 안 되면 항목 오른쪽 <strong>+</strong> 를 누르세요. Global이 비면{" "}
+                    <code className="text-[10px]">npm run db:seed:global</code>
+                  </p>
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {competencies.map((c, idx) => (
+                    <li
+                      key={c.id}
+                      className={`flex items-center gap-2 rounded-lg border border-card-border bg-background px-3 py-2 text-sm ${
+                        !c.isActive ? "opacity-50" : ""
+                      }`}
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => void moveCompetency(c.id, -1)}
+                          disabled={idx === 0}
+                        >
+                          <ChevronUp className="h-4 w-4 text-muted" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void moveCompetency(c.id, 1)}
+                          disabled={idx === competencies.length - 1}
+                        >
+                          <ChevronDown className="h-4 w-4 text-muted" />
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        className="min-w-0 flex-1 text-left"
+                        onClick={() => {
+                          setSelectedCompId(c.id);
+                          goStep("questions");
+                        }}
+                      >
+                        <p className="font-medium text-foreground">{c.nameKo}</p>
+                        <p className="text-xs text-muted">
+                          {c.code} · 문항 {c.questionCount}
+                        </p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void toggleCompetencyActive(c)}
+                        className="shrink-0 text-xs text-muted hover:text-primary"
+                        title={c.isActive ? "비활성화" : "활성화"}
+                      >
+                        {c.isActive ? "ON" : "OFF"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void removeCompetency(c)}
+                        className="text-muted hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {step === "questions" && (
+            <div className="space-y-4 rounded-xl border border-card-border bg-card p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">질의 조정</h2>
+                  <p className="text-xs text-muted">
+                    레벨을 펼쳐 문항 전문을 보고 수정합니다. 좌측에서 역량을 끌어와도 키트에 추가됩니다.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setOpenLevels(new Set([1, 2, 3, 4, 5]))}
+                    className="btn-secondary px-2 py-1 text-[11px]"
+                  >
+                    전부 펼치기
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOpenLevels(new Set())}
+                    className="btn-secondary px-2 py-1 text-[11px]"
+                  >
+                    접기
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goStep("rubrics")}
+                    className="btn-primary px-3 py-1.5 text-xs"
+                  >
+                    다음: 루브릭 →
+                  </button>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
                 {competencies.map((c) => (
-                  <SortableCompetencyRow
+                  <button
                     key={c.id}
-                    comp={c}
-                    selected={selected?.id === c.id}
-                    onSelect={() => setSelectedId(c.id)}
-                    onToggleActive={() => toggleCompetencyActive(c)}
-                  />
+                    type="button"
+                    onClick={() => setSelectedCompId(c.id)}
+                    className={`rounded-lg border px-3 py-1.5 text-xs ${
+                      selectedCompId === c.id
+                        ? "border-primary bg-primary/10"
+                        : "border-card-border text-muted"
+                    }`}
+                  >
+                    {c.nameKo}
+                    <span className="ml-1 text-muted">({c.questionCount})</span>
+                  </button>
                 ))}
               </div>
-            </SortableContext>
-          </aside>
+              {!selectedComp ? (
+                <p className="text-sm text-muted">역량을 선택해 주세요.</p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground">
+                    {selectedComp.nameKo}
+                    <span className="ml-2 text-xs font-normal text-muted">{selectedComp.code}</span>
+                  </p>
+                  {LEVELS.map((lv) => {
+                    const list = questionsByLevel.get(lv) ?? [];
+                    const open = openLevels.has(lv);
+                    return (
+                      <div
+                        key={lv}
+                        className="overflow-hidden rounded-xl border border-card-border bg-background"
+                      >
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOpenLevels((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(lv)) next.delete(lv);
+                              else next.add(lv);
+                              return next;
+                            })
+                          }
+                          className="flex w-full items-center gap-2 px-3 py-2.5 text-left hover:bg-card/80"
+                        >
+                          {open ? (
+                            <ChevronDown className="h-4 w-4 shrink-0 text-muted" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
+                          )}
+                          <span className="text-sm font-semibold text-gold">L{lv}</span>
+                          <span className="text-xs text-muted">{list.length}문항</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void addQuestion(lv);
+                            }}
+                            className="ml-auto inline-flex rounded p-1 text-muted hover:bg-card hover:text-foreground"
+                            title="문항 추가"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </button>
+                        {open ? (
+                          <ul className="space-y-3 border-t border-card-border px-3 py-3">
+                            {list.length === 0 ? (
+                              <li className="text-xs text-muted">
+                                문항 없음. + 로 추가하거나 전부 펼친 뒤 다른 레벨을 확인하세요.
+                              </li>
+                            ) : (
+                              list.map((q, qIdx, arr) => (
+                                <li
+                                  key={q.id}
+                                  className="rounded-lg border border-card-border bg-card p-3"
+                                >
+                                  <label className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-muted">
+                                    {q.externalId}
+                                  </label>
+                                  <textarea
+                                    className="mb-2 min-h-[6.5rem] w-full resize-y rounded-lg border border-card-border bg-background px-3 py-2.5 text-sm leading-relaxed text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                    value={q.template}
+                                    rows={4}
+                                    onChange={(e) =>
+                                      setQuestions((prev) =>
+                                        prev.map((x) =>
+                                          x.id === q.id ? { ...x, template: e.target.value } : x,
+                                        ),
+                                      )
+                                    }
+                                    onBlur={() => void updateQuestion(q, { template: q.template })}
+                                  />
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-[11px] text-muted">순서</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => void moveQuestion(q, -1)}
+                                      disabled={qIdx === 0}
+                                      className="rounded border border-card-border px-2 py-0.5 text-xs disabled:opacity-40"
+                                    >
+                                      위
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => void moveQuestion(q, 1)}
+                                      disabled={qIdx === arr.length - 1}
+                                      className="rounded border border-card-border px-2 py-0.5 text-xs disabled:opacity-40"
+                                    >
+                                      아래
+                                    </button>
+                                    <select
+                                      className="rounded border border-card-border bg-background px-2 py-0.5 text-xs"
+                                      value={q.level}
+                                      onChange={(e) => {
+                                        const level = Number(e.target.value);
+                                        void updateQuestion(q, { level }).then(() => refresh());
+                                      }}
+                                    >
+                                      {LEVELS.map((l) => (
+                                        <option key={l} value={l}>
+                                          L{l}로 이동
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditing(q)}
+                                      className="text-xs text-accent hover:underline"
+                                    >
+                                      IRT·꼬리질문
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => void removeQuestion(q)}
+                                      className="ml-auto text-xs text-muted hover:text-red-500"
+                                    >
+                                      삭제
+                                    </button>
+                                  </div>
+                                </li>
+                              ))
+                            )}
+                          </ul>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
-          {/* 레벨별 칸반 — 문항 드래그 앤 드롭 */}
-          <section className="lg:col-span-9">
-            {selected ? (
-              <>
-                <div className="mb-4">
-                  <h2 className="text-lg font-bold text-foreground">{selected.nameKo}</h2>
-                  <p className="text-sm text-muted">{selected.code}</p>
-                </div>
-                <div className="-mx-4 overflow-x-auto overscroll-x-contain px-4 pb-2 md:mx-0 md:overflow-visible md:px-0">
-                  <div className="flex w-max gap-3 md:w-full md:grid md:grid-cols-5">
-                  {[1, 2, 3, 4, 5].map((level) => (
-                    <div key={level} className="w-64 shrink-0 md:w-auto">
-                    <LevelColumn
-                      level={level}
-                      competencyId={selected.id}
-                      questions={questionsByLevel[level]}
-                      onAdd={() => addQuestion(level)}
-                      onEdit={setEditing}
-                    />
-                    </div>
-                  ))}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-muted">역량을 추가해 주세요.</p>
-            )}
-          </section>
+          {step === "rubrics" && (
+            <div className="space-y-3 rounded-xl border border-card-border bg-card p-4">
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">루브릭 편집</h2>
+                <p className="text-xs text-muted">선택 역량의 L1–L5 채점 기준을 편집합니다</p>
+              </div>
+              {competencies.length === 0 ? (
+                <p className="text-sm text-muted">뱅크에 역량을 먼저 추가하세요.</p>
+              ) : (
+                <CompetencyRubricPanel
+                  competencies={rubricCompetencies}
+                  onUpdate={updateRubric}
+                  onApplyToQuestions={applyRubricToQuestions}
+                  onImportComplete={refresh}
+                />
+              )}
+            </div>
+          )}
         </div>
+      </div>
 
-        <DragOverlay>
-          {activeDrag ? (
-            <QuestionCard q={activeDrag} onEdit={() => {}} />
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-
-      {editing && (
+      {editing ? (
         <QuestionEditModal
           question={editing}
           onClose={() => setEditing(null)}
-          onSave={saveQuestion}
-          onDelete={deleteQuestion}
+          onSave={saveQuestionModal}
+          onDelete={deleteQuestionModal}
         />
-      )}
-        </>
-      )}
-    </div>
-  );
-}
-
-function LevelColumn({
-  level,
-  competencyId,
-  questions,
-  onAdd,
-  onEdit,
-}: {
-  level: number;
-  competencyId: string;
-  questions: BankQuestion[];
-  onAdd: () => void;
-  onEdit: (q: BankQuestion) => void;
-}) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: `level-${competencyId}-${level}`,
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={`flex min-h-[240px] flex-col rounded-xl border p-2 md:min-h-[280px] ${
-        isOver ? "border-primary bg-primary/5" : "border-card-border bg-background"
-      }`}
-    >
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-semibold text-muted">L{level}</span>
-        <button type="button" onClick={onAdd} className="text-muted hover:text-primary">
-          <Plus className="h-4 w-4" />
-        </button>
-      </div>
-      <SortableContext items={questions.map((q) => `q-${q.id}`)} strategy={verticalListSortingStrategy}>
-        <div className="flex flex-1 flex-col gap-2">
-          {questions.map((q) => (
-            <SortableQuestionCard key={q.id} q={q} onEdit={() => onEdit(q)} />
-          ))}
-        </div>
-      </SortableContext>
+      ) : null}
     </div>
   );
 }
@@ -709,7 +1149,7 @@ function QuestionEditModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="card-luxe max-h-[90vh] w-full max-w-2xl overflow-y-auto p-6">
-        <h3 className="text-lg font-bold">문항 · 루브릭 편집</h3>
+        <h3 className="text-lg font-bold">문항 · IRT · 루브릭</h3>
         <p className="text-xs text-muted">{draft.externalId}</p>
 
         <label className="mt-4 block text-sm font-medium">질문 텍스트</label>
@@ -728,7 +1168,9 @@ function QuestionEditModal({
               onChange={(e) => setDraft({ ...draft, level: Number(e.target.value) })}
             >
               {[1, 2, 3, 4, 5].map((l) => (
-                <option key={l} value={l}>L{l}</option>
+                <option key={l} value={l}>
+                  L{l}
+                </option>
               ))}
             </select>
           </div>
@@ -754,15 +1196,9 @@ function QuestionEditModal({
           </div>
         </div>
 
-        <label className="mt-4 block text-sm font-medium">
-          채점 루브릭 (한 줄에 기준 1개)
-        </label>
-        <p className="text-xs text-muted">
-          비워 두면 역량별 루브릭 탭의 L{draft.level} 기본값을 사용합니다.
-        </p>
+        <label className="mt-4 block text-sm font-medium">채점 루브릭 (한 줄에 기준 1개)</label>
         <textarea
           className="input-luxe mt-1 min-h-[120px] w-full font-mono text-xs"
-          placeholder="상황·배경을 구체적으로 설명했는가&#10;본인의 역할과 행동을 밝혔는가&#10;정량적 결과를 제시했는가"
           value={rubricText}
           onChange={(e) => setRubricText(e.target.value)}
         />

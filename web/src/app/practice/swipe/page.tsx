@@ -1,13 +1,11 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/session";
+import { requireProductCapability } from "@/lib/platform/page-guards";
 import { SwipeDeck } from "@/components/practice/SwipeDeck";
 import { SwipePageHeader } from "@/components/practice/SwipePageHeader";
 
 export const dynamic = "force-dynamic";
 
 export default async function SwipePage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/auth/login?next=/practice/swipe");
+  const user = await requireProductCapability("product.practice", "/practice/swipe");
 
   return (
     <div className="mx-auto max-w-lg">

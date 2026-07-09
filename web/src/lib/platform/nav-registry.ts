@@ -14,7 +14,7 @@ export type NavLabelKey =
   | "subscriptions"
   | "permissions";
 
-export type PrepareLabelKey = "interview" | "discover" | "cards" | "resumeReview";
+export type PrepareLabelKey = "interview" | "discover" | "cards" | "resumeReview" | "trialInterview";
 
 export type AdminSectionKey = "content" | "tenants" | "security" | "billing";
 
@@ -65,6 +65,7 @@ const PLATFORM_NAV_ORDER: AdminNavItem[] = [
 const ADMIN_SECTION_ORDER: AdminSectionKey[] = ["content", "tenants", "security", "billing"];
 
 const PREPARE_HREFS: { href: string; labelKey: PrepareLabelKey; capability: CapabilityId }[] = [
+  { href: "/demo", labelKey: "trialInterview", capability: "product.demo_trial" },
   { href: "/interview/setup", labelKey: "interview", capability: "product.interview" },
   { href: "/resume-review", labelKey: "resumeReview", capability: "product.resume_review" },
   { href: "/discover", labelKey: "discover", capability: "product.discover" },
@@ -96,8 +97,16 @@ export type NavigationConfig = {
   capabilities: CapabilityId[];
 };
 
-export async function buildNavigationForUser(user: RoleUser): Promise<NavigationConfig> {
+export async function buildNavigationForUser(
+  user: RoleUser & { id?: string },
+): Promise<NavigationConfig> {
   let tenantPersonalizationEnabled = false;
+  let billingTier: import("@prisma/client").PlanTier | undefined;
+  if (user.id) {
+    const { getBillingContext } = await import("@/lib/billing/subscription");
+    const billing = await getBillingContext(user.id);
+    billingTier = billing.planTier;
+  }
   if (user.organizationId && user.orgRole === "ADMIN") {
     const { prisma } = await import("@/lib/prisma");
     const org = await prisma.organization.findUnique({
@@ -107,7 +116,7 @@ export async function buildNavigationForUser(user: RoleUser): Promise<Navigation
     tenantPersonalizationEnabled = org?.saasPersonalizationEnabled ?? false;
   }
 
-  const context: AccessContext = { tenantPersonalizationEnabled };
+  const context: AccessContext = { tenantPersonalizationEnabled, billingTier };
   const caps = resolveUserCapabilities(user, context);
 
   const dashboardHref = caps.has("product.dashboard") ? "/dashboard" : null;

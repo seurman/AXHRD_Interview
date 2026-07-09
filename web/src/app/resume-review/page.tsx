@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { requirePageUser } from "@/lib/auth/guards";
+import { requireProductCapability } from "@/lib/platform/page-guards";
 import { prisma } from "@/lib/prisma";
 import { competencyLabel } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
 
 export default async function ResumeReviewHubPage() {
-  const user = await requirePageUser("/resume-review");
+  const user = await requireProductCapability("product.resume_review", "/resume-review");
 
   const reviews = await prisma.resumeReview.findMany({
     where: { userId: user.id },

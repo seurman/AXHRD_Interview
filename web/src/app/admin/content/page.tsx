@@ -17,8 +17,8 @@ export default async function AdminContentPage() {
         <p className="text-xs font-medium uppercase tracking-widest text-gold">Admin</p>
         <h1 className="mt-1 text-xl font-bold text-foreground sm:text-2xl">문항 뱅크 · 역량 · 루브릭</h1>
         <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">
-          운영 문항 뱅크 CMS입니다. 수퍼어드민·콘텐츠 관리자만 편집할 수 있으며, 고객 미팅용
-          데모는{" "}
+          운영 문항 뱅크 CMS입니다. 고객 데모와 동일한 Kit Studio로 역량·문항·루브릭을 구성합니다. 고객 미팅용
+          격리 데모는{" "}
           <Link href="/admin/demo" className="text-accent hover:underline">
             고객 데모
           </Link>

@@ -15,6 +15,7 @@ export const dictionary: Dictionary = {
       interview: "Start mock interview",
       resumeReview: "Resume review",
       cards: "Question cards",
+      trialInterview: "5-min trial",
       profile: "Profile",
     },
     navLong: {
@@ -24,6 +25,7 @@ export const dictionary: Dictionary = {
       interview: "Start mock interview",
       resumeReview: "Resume review",
       cards: "Question card practice",
+      trialInterview: "5-minute interview trial",
       profile: "Profile",
     },
     auth: {

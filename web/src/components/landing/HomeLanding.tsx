@@ -19,18 +19,20 @@ import { useI18n } from "@/lib/i18n/I18nProvider";
 import { LandingProductPreview } from "@/components/landing/LandingProductPreview";
 import { LandingGalleryTiles } from "@/components/landing/LandingGalleryTiles";
 import { LandingSpotlightVisual } from "@/components/landing/LandingSpotlightVisual";
-import { useLoggedIn } from "@/components/layout/NavSessionProvider";
+import { useLoggedIn, useNavSession } from "@/components/layout/NavSessionProvider";
 
 export function HomeLanding() {
   const loggedIn = useLoggedIn();
+  const nav = useNavSession();
+  const trialOnly = nav?.trialOnly ?? false;
   const { dict } = useI18n();
   const h = dict.home;
 
   const features = [
-    { icon: Mic2, ...h.features.interview, href: "/interview/setup" },
-    { icon: Sparkles, ...h.features.discover, href: "/discover" },
-    { icon: BarChart3, ...h.features.tracking, href: "/dashboard" },
-    { icon: Layers, ...h.features.cards, href: "/practice/swipe" },
+    { icon: Mic2, ...h.features.interview, href: trialOnly ? "/demo" : "/interview/setup" },
+    { icon: Sparkles, ...h.features.discover, href: trialOnly ? "/demo" : "/discover" },
+    { icon: BarChart3, ...h.features.tracking, href: trialOnly ? "/demo" : "/dashboard" },
+    { icon: Layers, ...h.features.cards, href: trialOnly ? "/demo" : "/practice/swipe" },
   ];
 
   const values = [
@@ -40,8 +42,12 @@ export function HomeLanding() {
     { icon: Scale, ...h.values.ncs },
   ];
 
-  const personalHref = loggedIn ? "/interview/setup" : "/auth/register";
-  const personalLabel = loggedIn ? h.hero.ctaStartLoggedIn : h.hero.ctaPersonal;
+  const personalHref = loggedIn ? (trialOnly ? "/demo" : "/interview/setup") : "/auth/register";
+  const personalLabel = loggedIn
+    ? trialOnly
+      ? "5분 면접 체험"
+      : h.hero.ctaStartLoggedIn
+    : h.hero.ctaPersonal;
 
   return (
     <div className="lp">

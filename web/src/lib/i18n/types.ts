@@ -18,6 +18,7 @@ export type Dictionary = {
       interview: string;
       resumeReview: string;
       cards: string;
+      trialInterview: string;
       profile: string;
     };
     navLong: {
@@ -27,6 +28,7 @@ export type Dictionary = {
       interview: string;
       resumeReview: string;
       cards: string;
+      trialInterview: string;
       profile: string;
     };
     auth: {

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
+import { requireProductCapability } from "@/lib/platform/page-guards";
 import { DiscoverReportView } from "@/components/discover/DiscoverReportView";
 import { toDiscoverProfileData } from "@/lib/discover/user-strengths";
 import { jobRoleLabel } from "@/lib/utils";
@@ -13,6 +14,7 @@ export default async function DiscoverReportPage({
   params: Promise<{ sessionId: string }>;
 }) {
   const { sessionId } = await params;
+  await requireProductCapability("product.discover", `/discover/${sessionId}/report`);
   const user = await requirePageUser(`/discover/${sessionId}/report`);
 
   const session = await prisma.selfDiscoverySession.findUnique({
