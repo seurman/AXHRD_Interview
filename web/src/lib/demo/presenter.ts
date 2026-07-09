@@ -1,9 +1,12 @@
 import { randomBytes } from "crypto";
-import { SignJWT, jwtVerify } from "jose";
 import { prisma } from "@/lib/prisma";
-import { getJwtSecret } from "@/lib/auth/jwt";
 
-export const DEMO_PRESENTER_COOKIE = "hr_in_demo_presenter";
+export {
+  DEMO_PRESENTER_COOKIE,
+  createDemoPresenterToken,
+  verifyDemoPresenterToken,
+} from "@/lib/demo/presenter-tokens";
+
 const DEMO_PRESENTER_EMAIL = "demo-presenter@internal.axhrd";
 
 export function generatePresenterKey(): string {
@@ -67,24 +70,4 @@ export async function getOrCreateDemoPresenterUser(): Promise<{
     select: { id: true },
   });
   return { id: created.id, organizationId: null };
-}
-
-export async function createDemoPresenterToken(sessionId: string): Promise<string> {
-  return new SignJWT({ sub: sessionId, typ: "demo_presenter" })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("4h")
-    .sign(getJwtSecret());
-}
-
-export async function verifyDemoPresenterToken(
-  token: string,
-  sessionId: string,
-): Promise<boolean> {
-  try {
-    const { payload } = await jwtVerify(token, getJwtSecret());
-    return payload.typ === "demo_presenter" && payload.sub === sessionId;
-  } catch {
-    return false;
-  }
 }

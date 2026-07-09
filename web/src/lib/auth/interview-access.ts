@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import {
   DEMO_PRESENTER_COOKIE,
   verifyDemoPresenterToken,
-} from "@/lib/demo/presenter";
+} from "@/lib/demo/presenter-tokens";
 
 async function readPresenterToken(): Promise<string | null> {
   const jar = await cookies();

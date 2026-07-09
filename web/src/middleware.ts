@@ -4,7 +4,7 @@ import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/jwt";
 import {
   DEMO_PRESENTER_COOKIE,
   verifyDemoPresenterToken,
-} from "@/lib/demo/presenter";
+} from "@/lib/demo/presenter-tokens";
 
 function isPublicPath(pathname: string) {
   if (pathname === "/") return true;
