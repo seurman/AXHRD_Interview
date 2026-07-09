@@ -120,9 +120,9 @@ export function CompetencyDashboard({
             <ChartCard title={st.radar}>
               <ResponsiveContainer width="100%" height={260}>
                 <RadarChart data={radarData}>
-                  <PolarGrid stroke="#e8e4dc" />
-                  <PolarAngleAxis dataKey="competency" tick={{ fill: "#64748b", fontSize: 10 }} />
-                  <Radar dataKey="score" stroke="#3d7ea6" fill="#3d7ea6" fillOpacity={0.3} />
+                  <PolarGrid stroke="var(--color-card-border)" />
+                  <PolarAngleAxis dataKey="competency" tick={{ fill: "var(--color-muted)", fontSize: 10 }} />
+                  <Radar dataKey="score" stroke="var(--color-primary)" fill="var(--color-primary)" fillOpacity={0.3} />
                 </RadarChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -130,11 +130,11 @@ export function CompetencyDashboard({
             <ChartCard title={st.growth}>
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={timelineData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e8e4dc" />
-                  <XAxis dataKey="session" tick={{ fill: "#64748b", fontSize: 11 }} />
-                  <YAxis domain={[-2, 2]} tick={{ fill: "#64748b", fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: "#fff", border: "1px solid #e8e4dc", borderRadius: 8 }} />
-                  <Line type="monotone" dataKey="theta" stroke="#c9a227" strokeWidth={2} dot />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-card-border)" />
+                  <XAxis dataKey="session" tick={{ fill: "var(--color-muted)", fontSize: 11 }} />
+                  <YAxis domain={[-2, 2]} tick={{ fill: "var(--color-muted)", fontSize: 11 }} />
+                  <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-card-border)", borderRadius: 8 }} />
+                  <Line type="monotone" dataKey="theta" stroke="var(--color-gold)" strokeWidth={2} dot />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>

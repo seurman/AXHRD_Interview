@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getOAuthAdapter } from "@/lib/oauth";
-import { setSessionCookie } from "@/lib/auth/session";
+import { applySessionCookie } from "@/lib/auth/session";
 import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
+import { loadPersonalAccessContext } from "@/lib/auth/personal-access";
+import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";
 import { OAUTH_NEXT_COOKIE } from "@/lib/auth/jwt";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import type { OAuthProvider as PrismaOAuthProvider } from "@prisma/client";
@@ -16,7 +18,7 @@ function toPrismaProvider(provider: string): PrismaOAuthProvider {
 
 export async function GET(
   req: Request,
-  { params }: { params: Promise<{ provider: string }> }
+  { params }: { params: Promise<{ provider: string }> },
 ) {
   const { provider } = await params;
   const adapter = getOAuthAdapter(provider);
@@ -27,7 +29,6 @@ export async function GET(
     return NextResponse.redirect(loginUrl);
   }
 
-  // 콜백은 로그인 전이라 사용자 식별이 안 되므로 IP 기준으로 남용 방지
   const ip = getClientIp(req);
   const rl = checkRateLimit(`oauth:callback:${provider}:${ip}`, 20, 10 * 60 * 1000);
   if (!rl.allowed) {
@@ -62,16 +63,16 @@ export async function GET(
     const user = await linkOrCreateUser(prismaProvider, profile);
 
     await syncSuperadminPlatformRole(user.id, user.email);
-    await setSessionCookie(user.id);
 
     const nextRaw = jar.get(OAUTH_NEXT_COOKIE)?.value;
     jar.delete(OAUTH_NEXT_COOKIE);
-    const next =
-      nextRaw && nextRaw.startsWith("/") && !nextRaw.startsWith("//")
-        ? nextRaw
-        : "/dashboard";
 
-    return NextResponse.redirect(new URL(next, req.url));
+    const accessContext = await loadPersonalAccessContext(user.id);
+    const redirectTo = resolvePostLoginRedirect(user, accessContext, nextRaw);
+
+    const response = NextResponse.redirect(new URL(redirectTo, req.url));
+    await applySessionCookie(response, user.id);
+    return response;
   } catch (e) {
     console.error(`[oauth/${provider}/callback]`, e);
     loginUrl.searchParams.set("error", "로그인 처리 중 오류가 발생했습니다.");
@@ -81,9 +82,8 @@ export async function GET(
 
 async function linkOrCreateUser(
   provider: PrismaOAuthProvider,
-  profile: { providerAccountId: string; email: string | null; name: string | null }
+  profile: { providerAccountId: string; email: string | null; name: string | null },
 ) {
-  // 1) 이미 연동된 계정이면 그대로 로그인
   const existingAccount = await prisma.oAuthAccount.findUnique({
     where: {
       provider_providerAccountId: {
@@ -95,7 +95,6 @@ async function linkOrCreateUser(
   });
   if (existingAccount) return existingAccount.user;
 
-  // 2) 이메일이 있고 기존 이메일/비밀번호 계정과 일치하면 계정 연동(중복 가입 방지)
   if (profile.email) {
     const existingUser = await prisma.user.findUnique({
       where: { email: profile.email },
@@ -113,8 +112,6 @@ async function linkOrCreateUser(
     }
   }
 
-  // 3) 신규 사용자 생성
-  // 이메일 동의를 거부한 경우를 대비해 placeholder 이메일 부여 (User.email이 필수·unique이므로)
   const email =
     profile.email ?? `${provider.toLowerCase()}_${profile.providerAccountId}@oauth.hr-in.local`;
 

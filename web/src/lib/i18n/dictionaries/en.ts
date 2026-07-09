@@ -374,6 +374,10 @@ export const dictionary: Dictionary = {
       STARTUP: "Startup",
       PUBLIC: "Public sector",
     },
+    tripleFeedback: {
+      title: "Triple feedback mode (optional)",
+      hint: "After each answer, see coaching cards from large enterprise, public sector, and startup lenses. IRT score stays single; uses more tokens. Off by default.",
+    },
   },
   discover: {
     eyebrow: "Self-Discovery Interview",

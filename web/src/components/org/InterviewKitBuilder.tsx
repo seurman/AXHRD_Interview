@@ -256,16 +256,8 @@ export function InterviewKitBuilder({
     setPaletteCode(code);
   }
 
-  function moveQuestionInKit(code: string, questionId: string, direction: "up" | "down") {
-    const draft = drafts[code];
-    if (!draft) return;
-    const idx = draft.selectedIds.indexOf(questionId);
-    if (idx < 0) return;
-    const nextIdx = direction === "up" ? idx - 1 : idx + 1;
-    if (nextIdx < 0 || nextIdx >= draft.selectedIds.length) return;
-    const next = [...draft.selectedIds];
-    [next[idx], next[nextIdx]] = [next[nextIdx], next[idx]];
-    patchDraft(code, { selectedIds: next });
+  function reorderQuestionsInKit(code: string, questionIds: string[]) {
+    patchDraft(code, { selectedIds: questionIds });
   }
 
   async function saveCompetency(code: string) {
@@ -353,7 +345,7 @@ export function InterviewKitBuilder({
         if (!draft) return;
         patchDraft(code, { selectedIds: draft.selectedIds.filter((id) => id !== qid) });
       }}
-      onMoveQuestion={moveQuestionInKit}
+      onReorderQuestions={reorderQuestionsInKit}
       onPatchDraft={patchDraft}
       onSave={(code) => void saveCompetency(code)}
     />

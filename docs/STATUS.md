@@ -440,7 +440,25 @@ npx.cmd tsx scripts/flow-smoke.ts
 프로덕션 DB에 NCS 루브릭 미반영 시:
 `cd web && npx dotenv-cli -e .env.production.local -- npm run db:seed:rubrics`
 
-### 다음에 구현 예정: **트리플 모드 (Triple Feedback)**
+### 구현 완료: **트리플 모드 (Triple Feedback)** — 2026-07-09
+
+**컨셉:** 동일 답변에 대해 **대기업 · 공공기관 · 스타트업** 3명의 면접관 관점 피드백을 카드 3장으로 병렬 표시. IRT 점수(θ, pass/attempt/downgrade)는 **1개만** 유지하고, 3카드는 **해석·코칭 렌즈**만 다름.
+
+| 구성요소 | 경로 |
+|----------|------|
+| 3관점 생성 (Gemini 1회 + 폴백) | `web/src/lib/interview/triple-feedback.ts` |
+| 프리셋 근거 | `web/src/lib/company/company-size-presets.ts` — LARGE / PUBLIC / STARTUP |
+| API 연동 | `web/src/app/api/interview/respond/route.ts` — `tripleFeedbackMode` 세션만 호출 |
+| UI | `web/src/components/interview/TripleFeedbackPanel.tsx` |
+| 옵션 토글 | `web/src/app/interview/setup/SetupForm.tsx` (기본 OFF) |
+| 스키마 | `InterviewSession.tripleFeedbackMode`, `ChipEvent.tripleFeedback` (Json 캐시) |
+
+**꼬리질문 리포트 반영 (동일 배포):**
+- `generateSessionReport` / `generateCompetencyFeedback` 입력에 `followUpQuestion`·`followUpAnswer`·`hadFollowUp` 전달
+- `web/src/lib/interview/report-response.ts` — finalize 매핑 공통화
+- `web/src/app/interview/[sessionId]/report/page.tsx` — 타임라인 칩에 `hadFollowUp` ↩ 마커
+
+**이전 스펙 (참고):**
 
 **컨셉:** 동일 답변에 대해 **대기업 · 공공기관 · 스타트업** 3명의 면접관 관점 피드백을 카드 3장으로 병렬 표시. IRT 점수(θ, pass/attempt/downgrade)는 **1개만** 유지하고, 3카드는 **해석·코칭 렌즈**만 다름.
 
@@ -467,6 +485,25 @@ npx.cmd tsx scripts/flow-smoke.ts
 - 공공: NCS·공직가치·규칙·책임
 - 스타트업: 오너십·성장·속도·비전 공감
 
-**리스크:** Gemini 토큰 증가 → 옵션/Pro 모드 권장. 3 verdict 불일치는 정상(안내 문구 필요).
+**리스크:** Gemini 토큰 증가 → SetupForm 옵션 토글로만 활성화(기본 OFF). 3 verdict 불일치는 정상(안내 문구 포함).
 
-**시작 명령:** 새 대화에서 `docs/STATUS.md`의 「트리플 모드」절을 읽고 MVP 구현 요청.
+### 구현 완료: **제품 간 SSO (서브도메인 공유 세션)** — 2026-07-09
+
+앱은 `web/` 하나, 도메인만 제품별 분리. 별도 OAuth/OIDC 서버 없이 **쿠키 `domain: .axhrd.com`** (production만)으로 `interview` / `ac` / `diagnosis` 서브도메인 간 로그인 공유.
+
+| 구성요소 | 경로 |
+|----------|------|
+| 쿠키 domain (set/clear 동일) | `web/src/lib/auth/cookie-domain.ts`, `web/src/lib/auth/session.ts` |
+| 호스트 랜딩 rewrite (스켈레톤) | `web/src/middleware.ts` — `interview.axhrd.com` `/` → `/interview`만 활성 |
+| 제품 URL 헬퍼 | `web/src/lib/platform/product-domains.ts` — `productUrl()` |
+
+**배포 (코드 밖, 운영 판단):**
+- Vercel → Settings → **Domains** 에 `interview.axhrd.com` 추가 (`app.axhrd.com` 병행·리다이렉트 여부는 운영 결정)
+- `ac.axhrd.com` / `diagnosis.axhrd.com` — 해당 라우트·제품 배포 전까지 DNS 연결하지 말 것
+
+**로컬 검증 (production 빌드·스테이징):**
+1. 로그인 후 DevTools → Application → Cookies → `hr_in_session`의 **Domain**이 `.axhrd.com`인지 확인
+2. 로그아웃 후 동일 쿠키가 **사라졌는지** 확인 (domain/path 불일치 시 삭제 실패 버그)
+3. localhost에서는 Domain이 **비어 있거나 호스트만** — 정상
+
+~~**시작 명령:** 새 대화에서 `docs/STATUS.md`의 「트리플 모드」절을 읽고 MVP 구현 요청.~~

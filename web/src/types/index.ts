@@ -88,6 +88,7 @@ export interface AnswerFeedback {
   level?: number;
   competency?: string;
   isInterim?: boolean;
+  tripleFeedback?: import("@/lib/interview/triple-feedback").TripleFeedbackResult;
 }
 
 export interface NextItem {

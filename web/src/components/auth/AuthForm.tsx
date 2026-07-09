@@ -37,13 +37,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
     const url = mode === "login" ? "/api/auth/login" : "/api/auth/register";
     const body =
       mode === "login"
-        ? { email, password }
-        : { email, password, name };
+        ? { email, password, next }
+        : { email, password, name, next };
 
     try {
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(body),
       });
       const { ok, data, message: apiError } = await parseApiResponse(res);
@@ -63,17 +64,31 @@ export function AuthForm({ mode }: { mode: Mode }) {
       setSuccess(successMessage);
       setLoading(false);
 
-      const target = buildAuthRedirect(next, mode, displayName);
+      const serverRedirect =
+        typeof data.redirect === "string" && data.redirect.startsWith("/")
+          ? data.redirect
+          : null;
+      const target =
+        serverRedirect ?? buildAuthRedirect(next, mode, displayName);
 
       window.setTimeout(() => {
-        router.push(target);
+        router.replace(target);
         router.refresh();
-      }, 1600);
+      }, 600);
     } catch (err) {
       setError(err instanceof Error ? err.message : a.errorGeneric);
       setLoading(false);
     }
   };
+
+  const registerHref =
+    next && next !== "/demo"
+      ? `/auth/register?next=${encodeURIComponent(next)}`
+      : "/auth/register";
+  const loginHref =
+    next && next !== "/demo"
+      ? `/auth/login?next=${encodeURIComponent(next)}`
+      : "/auth/login";
 
   return (
     <div className="card-luxe mx-auto max-w-md p-6 sm:p-8">
@@ -89,12 +104,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <a
             href={`/api/auth/oauth/kakao/start?next=${encodeURIComponent(next)}`}
             className="flex w-full items-center justify-center rounded-lg bg-[#FEE500] px-4 py-2.5 text-sm font-medium text-[#191919] transition hover:brightness-95"
+            aria-label="카카오로 로그인"
           >
             카카오로 {mode === "login" ? "로그인" : "시작하기"}
           </a>
           <a
             href={`/api/auth/oauth/naver/start?next=${encodeURIComponent(next)}`}
             className="flex w-full items-center justify-center rounded-lg bg-[#03C75A] px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-95"
+            aria-label="네이버로 로그인"
           >
             네이버로 {mode === "login" ? "로그인" : "시작하기"}
           </a>
@@ -118,10 +135,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <IconLoader className="h-5 w-5 text-accent" />
         </div>
       ) : (
-        <form onSubmit={submit} className="mt-8 space-y-4">
+        <form onSubmit={submit} className="mt-8 space-y-4" aria-busy={loading}>
           {mode === "register" && (
             <input
               type="text"
+              name="name"
+              autoComplete="name"
               placeholder="이름"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -131,6 +150,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
           )}
           <input
             type="email"
+            name="email"
+            autoComplete="email"
             placeholder="이메일"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -139,6 +160,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
           />
           <input
             type="password"
+            name="password"
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
             placeholder="비밀번호 (8자 이상)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -173,14 +196,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
           {mode === "login" ? (
             <>
               계정이 없으신가요?{" "}
-              <Link href="/auth/register" className="text-primary font-medium hover:underline">
+              <Link href={registerHref} className="text-primary font-medium hover:underline">
                 회원가입
               </Link>
             </>
           ) : (
             <>
               이미 가입하셨나요?{" "}
-              <Link href="/auth/login" className="text-primary font-medium hover:underline">
+              <Link href={loginHref} className="text-primary font-medium hover:underline">
                 로그인
               </Link>
             </>

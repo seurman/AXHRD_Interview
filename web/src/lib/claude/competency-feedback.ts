@@ -40,6 +40,7 @@ const SYSTEM = `당신은 한국 취업 면접 코치입니다.
 
 중요:
 - "highlights"의 quote는 지원자가 실제로 한 말을 그대로 인용해야 합니다(지어내지 마세요).
+- 꼬리질문이 있었던 문항(hadFollowUp=true)은 원 답변과 꼬리질문 답변을 함께 보고, 꼬리질문 대응도 summary·improvements·highlights에 자연스럽게 반영하세요.
 - note는 그 인용문에 대한 1문장 코칭(잘한 점 또는 보완점).
 - rewriteExample은 가장 약한 답변 하나를 상황-과제-행동-결과(STAR) 구조로 다시 쓴 예시 문장입니다.
 - "지원자 페르소나"가 주어지면, 답변들이 그 페르소나(가치관·태도)답게 일관됐는지 1문장으로
@@ -66,6 +67,9 @@ export async function generateCompetencyFeedback(params: {
     question: string;
     answer: string;
     score: number;
+    followUpQuestion?: string;
+    followUpAnswer?: string;
+    hadFollowUp?: boolean;
   }>;
   companyName?: string;
   jobRole?: string;
@@ -140,7 +144,14 @@ export async function generateCompetencyFeedback(params: {
 function mockCompetencyFeedback(params: {
   competency: string;
   summary: CompetencySummary;
-  responses: Array<{ question: string; answer: string; score: number }>;
+  responses: Array<{
+    question: string;
+    answer: string;
+    score: number;
+    followUpQuestion?: string;
+    followUpAnswer?: string;
+    hadFollowUp?: boolean;
+  }>;
   persona?: { name: string; description: string } | null;
 }): CompetencyFeedbackData {
   const responses = params.responses.filter((r) => r.answer?.trim());

@@ -16,7 +16,7 @@ export function CertificateView({ data }: { data: CertificateData }) {
     <div className="rounded-3xl border-4 border-double border-gold/70 bg-card p-8 shadow-luxe sm:p-12">
       <div className="text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold">
-          HR_IN Competency Certificate
+          AXHRD Competency Certificate
         </p>
         <h1 className="mt-3 text-2xl font-bold text-foreground sm:text-3xl">
           {data.name}님의 역량 인증서

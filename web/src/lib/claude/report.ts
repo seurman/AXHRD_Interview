@@ -15,6 +15,7 @@ const REPORT_SYSTEM = `당신은 한국 취업 코치입니다.
 면접 세션 결과를 바탕으로 격려와 구체적 개선안이 담긴 리포트 JSON을 작성하세요.
 
 중요: 각 section의 "highlight"는 해당 역량 답변 중 지원자가 실제로 한 말을 그대로 인용해야 합니다(지어내지 마세요).
+꼬리질문이 있었던 문항(hadFollowUp=true)은 원 답변과 꼬리질문 답변을 함께 보고, 꼬리질문에 얼마나 잘 대응했는지도 해당 section의 content나 suggestions에 자연스럽게 반영하세요.
 
 반드시 JSON만 출력:
 {
@@ -34,6 +35,9 @@ export async function generateSessionReport(params: {
     answer: string;
     score: number;
     competency: string;
+    followUpQuestion?: string;
+    followUpAnswer?: string;
+    hadFollowUp?: boolean;
   }>;
 }): Promise<SessionReportData> {
   const apiKey = process.env.DEEPSEEK_API_KEY;
@@ -96,7 +100,15 @@ export async function generateSessionReport(params: {
 
 function mockReport(
   competencies: CompetencySummary[],
-  responses: Array<{ question: string; answer: string; score: number; competency: string }>
+  responses: Array<{
+    question: string;
+    answer: string;
+    score: number;
+    competency: string;
+    followUpQuestion?: string;
+    followUpAnswer?: string;
+    hadFollowUp?: boolean;
+  }>
 ): SessionReportData {
   const sorted = [...competencies].sort((a, b) => b.theta - a.theta);
   const top = sorted[0];

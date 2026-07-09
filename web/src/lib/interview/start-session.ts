@@ -40,6 +40,7 @@ export type StartSessionBody = {
   /** 채용공고 URL — jdText가 짧거나 비어 있으면 서버에서 본문을 가져온다 */
   jdUrl?: string;
   companySize?: string;
+  tripleFeedbackMode?: boolean;
 };
 
 /** 공유 링크(OrgInterviewKitShare)로 들어온 세션 등, 사용자 본인 소속 기관과
@@ -97,6 +98,7 @@ export async function startInterviewSession(
     jdText,
     jdUrl: jdUrlBody,
     companySize,
+    tripleFeedbackMode,
   } = body;
 
   const industryCode: IndustryCode = INDUSTRY_CODES.includes(industry as IndustryCode)
@@ -332,6 +334,7 @@ export async function startInterviewSession(
       orgKitShareId: opts.orgKitShareId ?? null,
       isPresenterDemo: opts.isPresenterDemo ?? false,
       demoWorkspaceId: opts.demoWorkspaceId ?? null,
+      tripleFeedbackMode: tripleFeedbackMode === true,
     },
   });
 

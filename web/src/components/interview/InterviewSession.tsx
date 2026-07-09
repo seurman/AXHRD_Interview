@@ -7,6 +7,7 @@ import { LevelChip } from "./LevelChip";
 import { CompetencyBar } from "./CompetencyBar";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { AnswerFeedbackPanel } from "./AnswerFeedbackPanel";
+import { TripleFeedbackPanel } from "./TripleFeedbackPanel";
 import { LoadingRitual } from "@/components/ux/LoadingRitual";
 import { ClipDynamic } from "@/components/ui/ClipDynamic";
 import { competencyLabel } from "@/lib/labels";
@@ -28,6 +29,7 @@ interface InterviewSessionProps {
   initialState: InterviewSessionState;
   focusCompetency?: string;
   maxItems?: number;
+  tripleFeedbackMode?: boolean;
 }
 
 function readVoiceModeEnabled(): boolean {
@@ -43,6 +45,7 @@ export function InterviewSession({
   initialState,
   focusCompetency,
   maxItems = 3,
+  tripleFeedbackMode = false,
 }: InterviewSessionProps) {
   const router = useRouter();
   const [state, setState] = useState(initialState);
@@ -373,7 +376,16 @@ export function InterviewSession({
           )}
         </div>
 
-        {lastFeedback && !processing && <AnswerFeedbackPanel feedback={lastFeedback} />}
+        {lastFeedback && !processing ? (
+          tripleFeedbackMode && lastFeedback.tripleFeedback ? (
+            <TripleFeedbackPanel
+              feedback={lastFeedback}
+              tripleFeedback={lastFeedback.tripleFeedback}
+            />
+          ) : (
+            <AnswerFeedbackPanel feedback={lastFeedback} />
+          )
+        ) : null}
 
         <p className="text-center text-xs text-muted">
           문항 {state.totalItems + 1}/{maxItems}

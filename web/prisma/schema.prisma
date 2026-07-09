@@ -473,6 +473,8 @@ model InterviewSession {
   /** 고객 시연(presenter) 모드로 시작된 데모 세션 */
   isPresenterDemo Boolean       @default(false)
   demoWorkspaceId String?
+  /** 트리플 피드백(대기업·공공·스타트업 3관점) — 옵션, 기본 OFF */
+  tripleFeedbackMode Boolean    @default(false)
   createdAt       DateTime      @default(now())
 
   responses ResponseRecord[]
@@ -522,6 +524,8 @@ model ChipEvent {
   briefFeedback String?
   /** 이 문항에 꼬리질문이 있었는지 — 리포트/투명성 표시용 */
   hadFollowUp   Boolean          @default(false)
+  /** 트리플 피드백 3카드 캐시 (tripleFeedbackMode 세션만) */
+  tripleFeedback Json?
   sequence      Int
   createdAt     DateTime         @default(now())
 

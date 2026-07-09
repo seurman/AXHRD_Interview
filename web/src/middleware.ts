@@ -6,6 +6,17 @@ import { SESSION_COOKIE, getJwtSecret, verifySessionToken } from "@/lib/auth/jwt
 /** Edge middleware 전용 — Prisma·presenter.ts import 금지 */
 const DEMO_PRESENTER_COOKIE = "hr_in_demo_presenter";
 
+/** 서브도메인 루트(/) 랜딩 — 라우트가 있는 제품만 활성화 */
+const PRODUCT_HOST_LANDING_ACTIVE: Record<string, string> = {
+  "interview.axhrd.com": "/interview",
+};
+
+/**
+ * 라우트 생기기 전까지 DNS 연결·rewrite 하지 말 것 — 매핑만 문서화
+ * "ac.axhrd.com" → "/ac"
+ * "diagnosis.axhrd.com" → "/diagnosis"
+ */
+
 async function verifyDemoPresenterToken(
   token: string,
   sessionId: string,
@@ -16,6 +27,22 @@ async function verifyDemoPresenterToken(
   } catch {
     return false;
   }
+}
+
+function normalizeHost(hostHeader: string | null): string {
+  return (hostHeader ?? "").split(":")[0]?.toLowerCase() ?? "";
+}
+
+function productLandingRewrite(request: NextRequest): NextResponse | null {
+  if (request.nextUrl.pathname !== "/") return null;
+
+  const host = normalizeHost(request.headers.get("host"));
+  const target = PRODUCT_HOST_LANDING_ACTIVE[host];
+  if (!target) return null;
+
+  const url = request.nextUrl.clone();
+  url.pathname = target;
+  return NextResponse.rewrite(url);
 }
 
 function isPublicPath(pathname: string) {
@@ -58,6 +85,9 @@ function requiresAuth(pathname: string) {
 }
 
 export async function middleware(request: NextRequest) {
+  const landing = productLandingRewrite(request);
+  if (landing) return landing;
+
   const { pathname } = request.nextUrl;
   if (!requiresAuth(pathname)) {
     return NextResponse.next();
@@ -93,6 +123,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/dashboard/:path*",
     "/profile/:path*",
     "/interview/:path*",

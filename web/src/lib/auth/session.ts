@@ -2,11 +2,13 @@
  * 세션 인증 — JWT httpOnly 쿠키
  */
 
+import type { NextResponse } from "next/server";
 import type { PlatformRole } from "@prisma/client";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { isSuperadmin } from "@/lib/auth/superadmin";
 import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
+import { sharedCookieBaseOptions } from "@/lib/auth/cookie-domain";
 import {
   SESSION_COOKIE,
   createSessionToken,
@@ -15,21 +17,47 @@ import {
 
 export { SESSION_COOKIE, createSessionToken };
 
+const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
+
+function sessionCookieSetOptions() {
+  return {
+    ...sharedCookieBaseOptions(),
+    maxAge: SESSION_MAX_AGE,
+  };
+}
+
+function sessionCookieClearOptions() {
+  return {
+    ...sharedCookieBaseOptions(),
+    maxAge: 0,
+  };
+}
+
+/** Route Handler 응답(redirect·JSON)에 세션 쿠키를 직접 붙인다 */
+export async function applySessionCookie(response: NextResponse, userId: string) {
+  const token = await createSessionToken(userId);
+  response.cookies.set(SESSION_COOKIE, token, sessionCookieSetOptions());
+}
+
+/** Route Handler 응답에서 세션 쿠키 삭제 — set과 동일 domain/path 필수 */
+export function applyClearSessionCookie(response: NextResponse) {
+  response.cookies.set(SESSION_COOKIE, "", sessionCookieClearOptions());
+}
+
 export async function setSessionCookie(userId: string) {
   const token = await createSessionToken(userId);
   const jar = await cookies();
-  jar.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 30,
-  });
+  jar.set(SESSION_COOKIE, token, sessionCookieSetOptions());
 }
 
 export async function clearSessionCookie() {
   const jar = await cookies();
-  jar.delete(SESSION_COOKIE);
+  const base = sharedCookieBaseOptions();
+  jar.delete({
+    name: SESSION_COOKIE,
+    path: base.path,
+    ...(base.domain ? { domain: base.domain } : {}),
+  });
 }
 
 export async function getCurrentUser() {

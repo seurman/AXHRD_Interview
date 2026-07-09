@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
-import { InterviewKitBuilder } from "@/components/org/InterviewKitBuilder";
+import { OrgKitStudioEditor } from "@/components/admin/OrgKitStudioEditor";
 import { KitShareManager } from "@/components/org/KitShareManager";
 
 export const dynamic = "force-dynamic";
@@ -38,15 +38,15 @@ export default async function AdminOrgInterviewKitPage({ params }: Props) {
       </nav>
 
       <p className="max-w-2xl text-sm text-muted">
-        고객 데모 빌더와 같은 메타→키트→질의→루브릭 흐름입니다. 구성 후 공유 링크로 바로 실행할 수
-        있습니다.
+        플랫폼 문항 뱅크를 기반으로 기관 면접 킷을 조립합니다. 역량 선택 · 문항 매핑 · 루브릭 조정 후
+        공유 링크로 실행할 수 있습니다.
       </p>
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-medium uppercase tracking-widest text-gold">Tenant workspace</p>
           <h1 className="mt-1 text-2xl font-bold text-foreground">{org.name}</h1>
-          <p className="mt-1 text-sm text-muted">슈퍼어드민 편집 · 기관 ADMIN과 동일한 킷 빌더</p>
+          <p className="mt-1 text-sm text-muted">슈퍼어드민 · 기관 ADMIN과 동일한 킷 스튜디오</p>
         </div>
         <Link href={hubBase} className="btn-secondary inline-flex items-center gap-2 text-sm">
           <ArrowLeft className="h-4 w-4" />
@@ -54,7 +54,11 @@ export default async function AdminOrgInterviewKitPage({ params }: Props) {
         </Link>
       </div>
 
-      <InterviewKitBuilder organizationId={org.id} backHref={hubBase} backLabel="기관 허브로" />
+      <OrgKitStudioEditor
+        organizationId={org.id}
+        backHref={hubBase}
+        backLabel="기관 허브로"
+      />
 
       <KitShareManager organizationId={org.id} />
     </div>

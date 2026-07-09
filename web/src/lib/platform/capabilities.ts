@@ -131,11 +131,11 @@ export const CAPABILITY_REGISTRY: Record<CapabilityId, CapabilityDef> = {
   "tenant.interview_kit": {
     id: "tenant.interview_kit",
     category: "tenant",
-    labelKo: "인터뷰 킷 빌더",
+    labelKo: "인터뷰 킷 스튜디오",
     labelEn: "Interview kit",
-    descriptionKo: "문항 선택·루브릭 커스터마이즈",
+    descriptionKo: "뱅크에서 역량·문항 매핑 · 루브릭 조정",
     href: "/org/settings/interview-kit",
-    designNote: "기관 맞춤 루브릭·문항 조립 (AX 인터뷰 킷)",
+    designNote: "기관 면접 킷 조립 — 플랫폼 뱅크 기반",
   },
   "platform.permissions": {
     id: "platform.permissions",
@@ -169,9 +169,9 @@ export const CAPABILITY_REGISTRY: Record<CapabilityId, CapabilityDef> = {
     category: "platform_content",
     labelKo: "문항 뱅크",
     labelEn: "Content bank",
-    descriptionKo: "운영 역량·문항·루브릭 CMS",
+    descriptionKo: "역량·문항·루브릭 메타데이터 CMS",
     href: "/admin/content",
-    designNote: "역량·문항·루브릭 CMS",
+    designNote: "플랫폼 운영 메타데이터 — 생성·편집·매핑",
   },
   "platform.demo": {
     id: "platform.demo",

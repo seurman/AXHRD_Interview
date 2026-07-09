@@ -16,6 +16,11 @@ import {
 import { resolveInterviewActorFromRequest } from "@/lib/auth/interview-access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { buildAnswerKeyPointFeedback } from "@/lib/interview/feedback-helpers";
+import {
+  mapResponseForReport,
+  mapResponsesForCompetencyFeedback,
+} from "@/lib/interview/report-response";
+import { generateTripleFeedback } from "@/lib/interview/triple-feedback";
 import { getOrgKitCustomRubric } from "@/lib/org/interview-kit";
 import {
   appendUserTextRecord,
@@ -324,6 +329,16 @@ async function handleRespond(req: Request, userId: string) {
   const updatedAdministered = [...administeredIds, question.externalId];
   const planId = stored.planId ?? session.planId ?? undefined;
 
+  let tripleFeedbackJson: Prisma.InputJsonValue | undefined;
+  if (session.tripleFeedbackMode) {
+    const triple = await generateTripleFeedback({
+      question: displayedQuestion,
+      answer: correctedAnswer,
+      competency: question.competency.code,
+    });
+    tripleFeedbackJson = triple as unknown as Prisma.InputJsonValue;
+  }
+
   const updatedState = {
     competencies: irtResult.competency_states,
     nextItemId: irtResult.next_item?.item_id,
@@ -367,6 +382,7 @@ async function handleRespond(req: Request, userId: string) {
           rubricScore: irtResult.chip_event.rubric_score,
           briefFeedback: briefFeedbackWithConsistency,
           hadFollowUp: isFollowUpAnswer,
+          tripleFeedback: tripleFeedbackJson,
           sequence: session.responses.length,
         },
       }),
@@ -484,6 +500,7 @@ async function handleRespond(req: Request, userId: string) {
       level: irtResult.chip_event.level,
       competency: irtResult.chip_event.competency,
       isInterim: false,
+      ...(tripleFeedbackJson ? { tripleFeedback: tripleFeedbackJson } : {}),
     },
     nextQuestion,
     shouldTerminate: irtResult.should_terminate,
@@ -570,11 +587,7 @@ async function finalizeCompetencySession(params: {
   const feedbackData = await generateCompetencyFeedback({
     competency: params.focusCompetency,
     summary: compSummary,
-    responses: session.responses.map((r) => ({
-      question: r.question.template,
-      answer: r.correctedTranscript ?? r.transcript,
-      score: r.rubricScore,
-    })),
+    responses: mapResponsesForCompetencyFeedback(session.responses),
     companyName: params.companyName,
     jobRole: params.jobRole,
     persona: params.persona ?? undefined,
@@ -655,12 +668,7 @@ async function finalizeFullSession(
     companyName: session.targetCompany?.name,
     jobRole: session.jobRole,
     competencies: summary.competencies,
-    responses: session.responses.map((r) => ({
-      question: r.question.template,
-      answer: r.correctedTranscript ?? r.transcript,
-      score: r.rubricScore,
-      competency: r.competency,
-    })),
+    responses: session.responses.map((r) => mapResponseForReport(r)),
   });
 
   await prisma.sessionReport.create({

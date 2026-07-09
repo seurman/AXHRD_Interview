@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { CornerDownLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
 import { competencyLabel } from "@/lib/utils";
@@ -154,10 +155,16 @@ export default async function ReportPage({ params }: PageProps) {
           {session.chipEvents.map((e, i) => (
             <span
               key={i}
-              className="rounded-full border border-card-border bg-card px-3 py-1 text-xs text-muted"
+              className="relative inline-flex items-center rounded-full border border-card-border bg-card px-3 py-1 text-xs text-muted"
             >
               {e.chipType === "PASS" ? "♩" : e.chipType === "DOWNGRADE" ? "♭" : "♪"}{" "}
               L{e.level} {competencyLabel(e.competency)}
+              {e.hadFollowUp ? (
+                <CornerDownLeft
+                  className="ml-1 inline h-3 w-3 text-accent"
+                  aria-label="꼬리질문 포함"
+                />
+              ) : null}
             </span>
           ))}
         </div>

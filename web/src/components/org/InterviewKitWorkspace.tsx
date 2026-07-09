@@ -9,10 +9,9 @@ import {
   LayoutPanelLeft,
   Sparkles,
   ListChecks,
-  ChevronUp,
-  ChevronDown,
   X,
 } from "lucide-react";
+import { MotionReorderList } from "@/components/org/MotionReorderList";
 import { competencyLabel } from "@/lib/labels";
 import {
   KIT_RUBRIC_LEVELS,
@@ -64,7 +63,7 @@ type WorkspaceProps = {
   onRemoveCompetency: (code: string) => void;
   onAddQuestion: (code: string, questionId: string) => void;
   onRemoveQuestion: (code: string, questionId: string) => void;
-  onMoveQuestion: (code: string, questionId: string, direction: "up" | "down") => void;
+  onReorderQuestions: (code: string, questionIds: string[]) => void;
   onPatchDraft: (code: string, patch: Partial<CompetencyDraft>) => void;
   onSave: (code: string) => void;
 };
@@ -159,42 +158,14 @@ function BankQuestionCard({
 function KitQuestionRow({
   index,
   question,
-  canMoveUp,
-  canMoveDown,
   onRemove,
-  onMoveUp,
-  onMoveDown,
 }: {
   index: number;
   question: ApiQuestion | undefined;
-  canMoveUp: boolean;
-  canMoveDown: boolean;
   onRemove: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
 }) {
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-card-border bg-white p-2.5 shadow-sm">
-      <div className="flex shrink-0 flex-col gap-0.5">
-        <button
-          type="button"
-          disabled={!canMoveUp}
-          onClick={onMoveUp}
-          className="rounded p-0.5 text-muted hover:bg-card-border/40 disabled:opacity-25"
-          title="위로"
-        >
-          <ChevronUp className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          disabled={!canMoveDown}
-          onClick={onMoveDown}
-          className="rounded p-0.5 text-muted hover:bg-card-border/40 disabled:opacity-25"
-          title="아래로"
-        >
-          <ChevronDown className="h-3.5 w-3.5" />
-        </button>
-      </div>
+    <div className="flex items-start gap-2">
       <div className="min-w-0 flex-1">
         <span className="text-[10px] text-muted">{index + 1}.</span>{" "}
         <span className="text-[10px] font-bold text-gold">L{question?.level ?? "?"}</span>
@@ -221,7 +192,7 @@ function CompetencyKitPanel({
   onSelect,
   onRemove,
   onRemoveQuestion,
-  onMoveQuestion,
+  onReorderQuestions,
 }: {
   comp: ApiCompetency;
   draft: CompetencyDraft;
@@ -231,7 +202,7 @@ function CompetencyKitPanel({
   onSelect: () => void;
   onRemove: () => void;
   onRemoveQuestion: (questionId: string) => void;
-  onMoveQuestion: (questionId: string, direction: "up" | "down") => void;
+  onReorderQuestions: (questionIds: string[]) => void;
 }) {
   const style = compStyle(comp.code);
   const levelCounts = [0, 0, 0, 0, 0, 0];
@@ -278,19 +249,18 @@ function CompetencyKitPanel({
             왼쪽 문항 뱅크에서 + 로 추가하세요
           </p>
         ) : (
-          <div className="space-y-2">
-            {draft.selectedIds.map((id, index) => (
-              <KitQuestionRow
-                key={id}
-                index={index}
-                question={questionById.get(id)}
-                canMoveUp={index > 0}
-                canMoveDown={index < draft.selectedIds.length - 1}
-                onRemove={() => onRemoveQuestion(id)}
-                onMoveUp={() => onMoveQuestion(id, "up")}
-                onMoveDown={() => onMoveQuestion(id, "down")}
-              />
-            ))}
+          <div className="rounded-xl border border-card-border bg-white p-2 shadow-sm">
+            <MotionReorderList
+              ids={draft.selectedIds}
+              onReorder={onReorderQuestions}
+              renderItem={(id, index) => (
+                <KitQuestionRow
+                  index={index}
+                  question={questionById.get(id)}
+                  onRemove={() => onRemoveQuestion(id)}
+                />
+              )}
+            />
           </div>
         )}
       </div>
@@ -318,7 +288,7 @@ export function InterviewKitWorkspace(props: WorkspaceProps) {
     onRemoveCompetency,
     onAddQuestion,
     onRemoveQuestion,
-    onMoveQuestion,
+    onReorderQuestions,
     onPatchDraft,
     onSave,
   } = props;
@@ -347,7 +317,7 @@ export function InterviewKitWorkspace(props: WorkspaceProps) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-card-border bg-gradient-to-r from-slate-50 via-white to-gold/5 px-5 py-3">
         <Sparkles className="h-5 w-5 text-gold" />
-        <span className="text-sm font-semibold">인터뷰 킷 워크스페이스</span>
+        <span className="text-sm font-semibold">기관 인터뷰 킷 스튜디오</span>
         <span className="rounded-full bg-slate-200/80 px-2.5 py-0.5 text-xs text-foreground">
           {data.organizationName}
         </span>
@@ -371,7 +341,7 @@ export function InterviewKitWorkspace(props: WorkspaceProps) {
               <LayoutPanelLeft className="h-3.5 w-3.5" />
               역량
             </div>
-            <p className="mt-1 text-[10px] text-white/40">+ 로 킷에 추가</p>
+            <p className="mt-1 text-[10px] text-white/40">플랫폼 뱅크 → 킷에 매핑</p>
           </div>
           <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-2.5">
             {data.competencies.map((c) => (
@@ -479,7 +449,7 @@ export function InterviewKitWorkspace(props: WorkspaceProps) {
                       }}
                       onRemove={() => onRemoveCompetency(code)}
                       onRemoveQuestion={(qid) => onRemoveQuestion(code, qid)}
-                      onMoveQuestion={(qid, dir) => onMoveQuestion(code, qid, dir)}
+                      onReorderQuestions={(ids) => onReorderQuestions(code, ids)}
                     />
                   );
                 })}

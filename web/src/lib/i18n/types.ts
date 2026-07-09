@@ -263,6 +263,7 @@ export type Dictionary = {
     selectIndustry: string;
     selectCompetency: string;
     companySizes: Record<string, string>;
+    tripleFeedback: { title: string; hint: string };
   };
   discover: {
     eyebrow: string;

@@ -34,7 +34,7 @@ export const dictionary: Dictionary = {
     },
     admin: {
       title: "관리",
-      content: "문항 관리",
+      content: "문항 뱅크 CMS",
       demo: "고객 데모",
       users: "사용자 권한",
       audit: "감사 로그",
@@ -56,7 +56,7 @@ export const dictionary: Dictionary = {
       settings: "설정",
       cohortDashboard: "코호트",
       settingsHub: "면접 설정",
-      interviewKit: "인터뷰 킷",
+      interviewKit: "인터뷰 킷 스튜디오",
     },
     language: {
       label: "언어",
@@ -371,6 +371,10 @@ export const dictionary: Dictionary = {
       SMALL: "중소기업",
       STARTUP: "스타트업",
       PUBLIC: "공공기관",
+    },
+    tripleFeedback: {
+      title: "트리플 피드백 모드 (옵션)",
+      hint: "답변 직후 대기업·공공·스타트업 3관점 코칭 카드를 함께 봅니다. IRT 점수는 하나만 유지되며, 토큰 사용이 늘어납니다. 기본은 꺼져 있습니다.",
     },
   },
   discover: {

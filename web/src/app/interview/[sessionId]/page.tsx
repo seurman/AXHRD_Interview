@@ -137,6 +137,7 @@ export default async function InterviewPage({ params }: PageProps) {
         initialState={initialState}
         focusCompetency={session.focusCompetency ?? undefined}
         maxItems={session.mode === "COMPETENCY" ? 3 : 18}
+        tripleFeedbackMode={session.tripleFeedbackMode}
       />
     </div>
   );

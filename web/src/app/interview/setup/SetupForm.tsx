@@ -64,6 +64,7 @@ export function SetupForm({
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [focusCompetency, setFocusCompetency] = useState<string>("");
+  const [tripleFeedbackMode, setTripleFeedbackMode] = useState(false);
   // 역량 카드를 직접 클릭했는지 여부 — 산업/직무를 고를 때 자동으로 역량을 바꿔주되,
   // 사용자가 이미 직접 골랐다면(또는 URL의 ?competency=로 왔다면) 덮어쓰지 않기 위한 플래그.
   const competencyManuallyChanged = useRef(false);
@@ -262,6 +263,7 @@ export function SetupForm({
           focusCompetency,
           jdText,
           jdUrl: jdUrl.trim() || undefined,
+          tripleFeedbackMode,
         }),
       });
 
@@ -645,6 +647,23 @@ export function SetupForm({
                   : null}
           </p>
         )}
+      </section>
+
+      <section className="card-luxe space-y-2 p-5">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={tripleFeedbackMode}
+            onChange={(e) => setTripleFeedbackMode(e.target.checked)}
+            className="mt-1"
+          />
+          <span>
+            <span className="block font-semibold text-foreground">{s.tripleFeedback.title}</span>
+            <span className="mt-1 block text-xs leading-relaxed text-muted">
+              {s.tripleFeedback.hint}
+            </span>
+          </span>
+        </label>
       </section>
 
       <button
