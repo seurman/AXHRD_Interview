@@ -1,8 +1,12 @@
 import { notFound } from "next/navigation";
 import { requirePageUser } from "@/lib/auth/guards";
+import { isSuperadmin } from "@/lib/auth/superadmin";
+import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
+import { canAccessProductionContentBank, canManageDemoWorkspaces } from "@/lib/auth/roles";
 import { hasCapability } from "@/lib/platform/access";
 import { buildNavigationForUser } from "@/lib/platform/nav-registry";
 import { PlatformConsoleSidebar } from "@/components/admin/PlatformConsoleSidebar";
+import type { PlatformRole } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -11,11 +15,21 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requirePageUser("/admin");
+  const sessionUser = await requirePageUser("/admin");
+  if (isSuperadmin(sessionUser.email)) {
+    await syncSuperadminPlatformRole(sessionUser.id, sessionUser.email);
+  }
+  const user =
+    isSuperadmin(sessionUser.email) && sessionUser.platformRole !== "SUPERADMIN"
+      ? { ...sessionUser, platformRole: "SUPERADMIN" as PlatformRole }
+      : sessionUser;
+
   const nav = await buildNavigationForUser(user);
 
   const hasAnyPlatform =
     nav.platformConsoleHrefs.length > 0 ||
+    canAccessProductionContentBank(user) ||
+    canManageDemoWorkspaces(user) ||
     hasCapability(user, "platform.content") ||
     hasCapability(user, "platform.demo");
 

@@ -32,6 +32,24 @@ export type BankCompetencyRow = {
 
 /** 통합 역량 풀 스냅샷 — NCS·Global·Custom 모두 IRT Question과 1:1 */
 export async function loadContentBankSnapshot() {
+  try {
+    return await loadContentBankSnapshotInner();
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (
+      msg.includes("CompetencyCluster") ||
+      msg.includes("does not exist") ||
+      msg.includes("competencyCluster")
+    ) {
+      throw new Error(
+        "통합 역량 풀 테이블이 없습니다. `cd web && npx prisma migrate deploy` 후 `npx tsx scripts/sync-unified-bank.ts` 를 실행해 주세요.",
+      );
+    }
+    throw e;
+  }
+}
+
+async function loadContentBankSnapshotInner() {
   const [clusters, competencies, questions] = await Promise.all([
     prisma.competencyCluster.findMany({
       orderBy: [{ sortOrder: "asc" }, { code: "asc" }],

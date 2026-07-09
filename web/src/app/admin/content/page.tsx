@@ -8,7 +8,20 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminContentPage() {
   const user = await requireProductionContentAdmin("/admin/content");
-  const { clusters, competencies, questions } = await loadContentBankSnapshot();
+
+  let clusters: Awaited<ReturnType<typeof loadContentBankSnapshot>>["clusters"] = [];
+  let competencies: Awaited<ReturnType<typeof loadContentBankSnapshot>>["competencies"] = [];
+  let questions: Awaited<ReturnType<typeof loadContentBankSnapshot>>["questions"] = [];
+  let loadError: string | null = null;
+
+  try {
+    const snapshot = await loadContentBankSnapshot();
+    clusters = snapshot.clusters;
+    competencies = snapshot.competencies;
+    questions = snapshot.questions;
+  } catch (e) {
+    loadError = e instanceof Error ? e.message : "문항 뱅크를 불러오지 못했습니다.";
+  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-10">
@@ -41,11 +54,23 @@ export default async function AdminContentPage() {
         </div>
       </div>
 
-      <ContentMetadataStudio
-        initialClusters={clusters}
-        initialCompetencies={competencies}
-        initialQuestions={questions}
-      />
+      {loadError ? (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-4 text-sm text-red-700 dark:text-red-300">
+          <p className="font-semibold">문항 뱅크를 불러올 수 없습니다</p>
+          <p className="mt-2 whitespace-pre-wrap">{loadError}</p>
+          <p className="mt-3 text-muted">
+            로컬: dev 서버 재시작 후{" "}
+            <code className="text-xs">npx prisma migrate deploy</code> ·{" "}
+            <code className="text-xs">npx tsx scripts/sync-unified-bank.ts</code>
+          </p>
+        </div>
+      ) : (
+        <ContentMetadataStudio
+          initialClusters={clusters}
+          initialCompetencies={competencies}
+          initialQuestions={questions}
+        />
+      )}
 
       <MeaningLayerPanel />
     </div>

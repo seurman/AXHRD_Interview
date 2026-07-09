@@ -101,9 +101,9 @@ export function ContentMetadataStudio({
       if (qLevelFilter !== "all" && item.level !== qLevelFilter) return false;
       if (!q) return true;
       return (
-        item.template.toLowerCase().includes(q) ||
-        item.externalId.toLowerCase().includes(q) ||
-        item.competencyCode.toLowerCase().includes(q)
+        (item.template ?? "").toLowerCase().includes(q) ||
+        (item.externalId ?? "").toLowerCase().includes(q) ||
+        (item.competencyCode ?? "").toLowerCase().includes(q)
       );
     });
   }, [questions, qSearch, qCompFilter, qLevelFilter]);

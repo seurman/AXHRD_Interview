@@ -16,8 +16,8 @@ export function QuestionEditModal({
   onDelete: (q: BankQuestion) => void;
 }) {
   const [draft, setDraft] = useState(question);
-  const [rubricText, setRubricText] = useState(question.rubricCriteria.join("\n"));
-  const [hintsText, setHintsText] = useState(question.followUpHints.join("\n"));
+  const [rubricText, setRubricText] = useState((question.rubricCriteria ?? []).join("\n"));
+  const [hintsText, setHintsText] = useState((question.followUpHints ?? []).join("\n"));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
