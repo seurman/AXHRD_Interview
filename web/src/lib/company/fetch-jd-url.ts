@@ -25,7 +25,6 @@ const NAV_BOILERPLATE_MARKERS = ["지역별", "직업별", "역세권별", "HOT1
 /** 사이트별로 우선 추출할 class 이름 (앞일수록 구체적) */
 const PRIORITY_CONTENT_CLASSES: { needle: string; weight: number }[] = [
   { needle: "user_content", weight: 5 },
-  { needle: "wrap_jv_cont", weight: 4 },
   { needle: "job_description", weight: 4 },
   { needle: "job-description", weight: 4 },
   { needle: "posting-content", weight: 4 },
@@ -33,6 +32,9 @@ const PRIORITY_CONTENT_CLASSES: { needle: string; weight: number }[] = [
   { needle: "recruit-content", weight: 3 },
   { needle: "se-main-container", weight: 3 },
 ];
+
+/** 사람인 채용 본문 구역 — wrap_jv_cont 전체는 잡음(통계·기업정보·태그)이 많아 제외 */
+const SARAMIN_JOB_SECTIONS = ["jv_summary", "user_content", "jv_howto"] as const;
 
 function isPrivateOrBlockedHost(hostname: string): boolean {
   const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
@@ -55,9 +57,60 @@ function sanitizeHtmlForExtraction(html: string): string {
     .replace(/<!--[\s\S]*?-->/g, " ");
 }
 
+/** 사람인 공고에 숨겨 둔 SEO 키워드(0px 셀) 제거 — line-height:0px 등은 유지 */
+function stripHiddenSeoBlocks(html: string): string {
+  const hiddenStyle =
+    "(?:(?<![\\w-])height:\\s*0(?:px)?|(?<![\\w-])width:\\s*0(?:px)?|(?<![\\w-])font-size:\\s*0(?:px)?|overflow:\\s*hidden)";
+  return html
+    .replace(
+      new RegExp(
+        `<(?:td|tr|div|span)[^>]*style="[^"]*${hiddenStyle}[^"]*"[^>]*>[\\s\\S]*?<\\/(?:td|tr|div|span)>`,
+        "gi",
+      ),
+      " ",
+    )
+    .replace(/<font[^>]*>\s*<\/font>/gi, " ");
+}
+
+function readImgAltTags(html: string): string[] {
+  const alts: string[] = [];
+  const re = /<img\b[\s\S]*?\balt=["']([^"']+)["']/gi;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(html)) !== null) {
+    alts.push(match[1].trim());
+  }
+  return alts;
+}
+
+function extractMediaAltText(html: string): string[] {
+  const alts = [
+    ...readImgAltTags(html),
+    ...Array.from(html.matchAll(/<area\b[^>]*\balt=["']([^"']+)["'][^>]*>/gi)).map((m) => m[1].trim()),
+  ].filter(
+    (alt) =>
+      alt.length > 3 &&
+      !/그래픽|banner|닫기|logo|loading|blank|운세|광고/i.test(alt),
+  );
+  return [...new Set(alts)];
+}
+
+function isSaraminJobHtml(html: string): boolean {
+  return /saramin\.co\.kr/i.test(html) && /user_content|wrap_jv_cont|jv_cont jv_summary/i.test(html);
+}
+
 function fragmentToPlainText(fragment: string): string {
-  return fragment
-    .replace(/<(br|\/p|\/div|\/li|\/h[1-6]|\/tr|\/td|\/th)[^>]*>/gi, "\n")
+  let working = stripHiddenSeoBlocks(fragment);
+  for (const alt of readImgAltTags(working)) {
+    working = working.replace(
+      new RegExp(`<img\\b[\\s\\S]*?\\balt=["']${alt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["'][\\s\\S]*?(?:>|(?=<))`, "i"),
+      `\n${alt}\n`,
+    );
+  }
+  return working
+    .replace(/<area\b[^>]*\balt=["']([^"']+)["'][^>]*>/gi, "\n$1\n")
+    .replace(/<\/t[dh][^>]*>/gi, "\n")
+    .replace(/<t[dh][^>]*>/gi, " ")
+    .replace(/<(br|\/p|\/div|\/li|\/h[1-6]|\/tr)[^>]*>/gi, "\n")
     .replace(/<li[^>]*>/gi, "\n• ")
     .replace(/<dt[^>]*>/gi, "\n")
     .replace(/<dd[^>]*>/gi, ": ")
@@ -73,6 +126,72 @@ function fragmentToPlainText(fragment: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
+}
+
+function composeSaraminJobText(html: string): string | null {
+  const sanitized = sanitizeHtmlForExtraction(html);
+  const sections: string[] = [];
+
+  const sectionLabels: Record<(typeof SARAMIN_JOB_SECTIONS)[number], string> = {
+    jv_summary: "핵심 정보",
+    user_content: "상세요강",
+    jv_howto: "접수기간 및 방법",
+  };
+
+  for (const sectionClass of SARAMIN_JOB_SECTIONS) {
+    const blocks = findDivContentsByClass(sanitized, sectionClass);
+    for (const block of blocks) {
+      let cleaned = stripHiddenSeoBlocks(block);
+      if (sectionClass === "jv_summary") {
+        cleaned = cleaned
+          .replace(/<ul class="list_meta"[\s\S]*?<\/ul>/gi, " ")
+          .replace(/<section class="box_ai_pass_result[\s\S]*?<\/section>/gi, " ")
+          .replace(/<div class="job_divider[\s\S]*?<\/div>/gi, " ");
+      }
+      if (sectionClass === "jv_howto") {
+        cleaned = cleaned.replace(/<div class="info_timer"[\s\S]*?<\/div>/gi, " ");
+      }
+
+      let text = fragmentToPlainText(cleaned);
+      if (sectionClass === "user_content") {
+        const alts = extractMediaAltText(cleaned);
+        const hasImg = /<img\b/i.test(cleaned);
+        const hasSubstantiveTableText =
+          /담당업무|자격요건|모집분야|주요업무|근무조건|복리후생|채용분야|지원자격/.test(text);
+        if (hasImg && alts.length > 0 && !hasSubstantiveTableText) {
+          text = [
+            "[안내] 상세요강이 이미지 공고로 제공되어 텍스트 추출이 제한됩니다.",
+            "이미지 설명:",
+            ...alts.map((alt) => `· ${alt}`),
+          ].join("\n");
+        } else if (alts.some((alt) => !text.includes(alt))) {
+          text = `${text}\n\n이미지 설명:\n${alts.map((alt) => `· ${alt}`).join("\n")}`.trim();
+        }
+      }
+      if (text.length >= 20) {
+        sections.push(`## ${sectionLabels[sectionClass]}\n${text}`);
+      }
+    }
+  }
+
+  const combined = sections.join("\n\n").trim();
+  return combined.length >= 80 ? combined : null;
+}
+
+function looksLikeSaraminPageChrome(text: string): boolean {
+  const markers = [
+    "기업리뷰",
+    "면접후기",
+    "관련 태그",
+    "경쟁자들의",
+    "지원자 통계",
+    "AI 서류 합격률",
+    "로그인하고 합격률",
+    "스토어 바로가기",
+    "선배들의 Tip",
+  ];
+  const hits = markers.filter((m) => text.includes(m)).length;
+  return hits >= 2;
 }
 
 function looksLikeNavBoilerplate(text: string): boolean {
@@ -227,7 +346,7 @@ function buildSupplementalHeader(html: string): string {
   return parts.join("\n\n").trim();
 }
 
-/** 사람인 relay URL은 JS로 본문을 채우므로 SEO view URL로 정규화 */
+/** 사람인 relay/pop-view URL은 JS·팝업 뷰라 SEO view URL로 정규화 */
 export function normalizeJdFetchUrl(rawUrl: string): string {
   let parsed: URL;
   try {
@@ -237,7 +356,11 @@ export function normalizeJdFetchUrl(rawUrl: string): string {
   }
 
   const host = parsed.hostname.toLowerCase();
-  if (host.endsWith("saramin.co.kr") && parsed.pathname.includes("/jobs/relay/view")) {
+  const isRelayPath =
+    parsed.pathname.includes("/jobs/relay/view") ||
+    parsed.pathname.includes("/jobs/relay/pop-view");
+
+  if (host.endsWith("saramin.co.kr") && isRelayPath) {
     const recIdx = parsed.searchParams.get("rec_idx");
     if (recIdx) {
       const view = new URL("https://www.saramin.co.kr/zf_user/jobs/view");
@@ -252,11 +375,18 @@ export function normalizeJdFetchUrl(rawUrl: string): string {
 export function htmlToPlainText(html: string): string {
   const sanitized = sanitizeHtmlForExtraction(html);
   const supplemental = buildSupplementalHeader(html);
-  let best = pickBestPlainText(collectRegionCandidates(sanitized));
 
-  if (!best || best.length < MIN_USEFUL_CHARS) {
+  let best = "";
+  if (isSaraminJobHtml(html)) {
+    best = composeSaraminJobText(html) ?? "";
+  }
+  if (!best) {
+    best = pickBestPlainText(collectRegionCandidates(sanitized));
+  }
+
+  if ((!best || best.length < MIN_USEFUL_CHARS) && !looksLikeSaraminPageChrome(best)) {
     const fallback = fragmentToPlainText(sanitized);
-    if (fallback && !looksLikeNavBoilerplate(fallback)) {
+    if (fallback && !looksLikeNavBoilerplate(fallback) && !looksLikeSaraminPageChrome(fallback)) {
       best = fallback;
     }
   }
@@ -343,7 +473,7 @@ export async function fetchJdTextFromUrl(rawUrl: string): Promise<FetchJdUrlResu
       text = htmlToPlainText(raw);
     }
 
-    if (text.length < MIN_USEFUL_CHARS || looksLikeNavBoilerplate(text)) {
+    if (text.length < MIN_USEFUL_CHARS || looksLikeNavBoilerplate(text) || looksLikeSaraminPageChrome(text)) {
       return {
         ok: false,
         error:

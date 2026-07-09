@@ -4,12 +4,21 @@ import { describe, expect, it } from "vitest";
 import { fetchJdTextFromUrl, htmlToPlainText, normalizeJdFetchUrl, resolveJdText } from "./fetch-jd-url";
 
 const saraminFixturePath = join(__dirname, "fixtures", "saramin-view-snippet.html");
+const commaxFixturePath = join(__dirname, "fixtures", "saramin-commax-snippet.html");
 
 describe("normalizeJdFetchUrl", () => {
   it("rewrites Saramin relay URLs to the SEO view page", () => {
     expect(
       normalizeJdFetchUrl("https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=54280342"),
     ).toBe("https://www.saramin.co.kr/zf_user/jobs/view?rec_idx=54280342");
+  });
+
+  it("rewrites Saramin pop-view URLs to the SEO view page", () => {
+    expect(
+      normalizeJdFetchUrl(
+        "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=54333813&t_ref=main",
+      ),
+    ).toBe("https://www.saramin.co.kr/zf_user/jobs/view?rec_idx=54333813");
   });
 });
 
@@ -40,6 +49,22 @@ describe("htmlToPlainText", () => {
     expect(text.length).toBeGreaterThan(500);
     expect(text).toMatch(/켐트로닉스|반도체|채용/);
     expect(text).not.toMatch(/지역별[\s\S]{0,40}직업별[\s\S]{0,40}역세권별/);
+  });
+
+  it("detects image-only Saramin postings from minimal HTML", () => {
+    const html = `<html><body><div class="wrap_jv_cont"><div class="jv_cont jv_summary"><div class="cont">경력: 신입</div></div><div class="user_content"><table><tr><td><img src="x.png" alt="코맥스 신입 경력 채용" usemap="#Map"></td></tr></table><map><area alt="자사양식 다운로드(신입)"></map></div></div></body></html>`;
+    const text = htmlToPlainText(html);
+    expect(text).toMatch(/이미지 공고|코맥스 신입 경력/);
+  });
+
+  it("extracts focused Saramin sections and drops page chrome for image postings", () => {
+    const html = readFileSync(commaxFixturePath, "utf8");
+    const text = htmlToPlainText(html);
+    expect(text).toMatch(/핵심 정보|상세요강|접수기간/);
+    expect(text).toMatch(/코맥스|신입|경력/);
+    expect(text).toMatch(/이미지 공고|경동나비엔/);
+    expect(text).not.toMatch(/관련 태그|기업리뷰|경쟁자들의/);
+    expect(text).not.toMatch(/IT개발·데이터 > 기술스택 > Java/);
   });
 });
 
@@ -89,6 +114,22 @@ describe("fetchJdTextFromUrl (live)", () => {
       expect(result.text.length).toBeGreaterThan(500);
       expect(result.text).toMatch(/켐트로닉스|반도체/);
       expect(result.url).toContain("/jobs/view?rec_idx=54280342");
+    },
+    20_000,
+  );
+
+  it(
+    "fetches Saramin pop-view URLs without page chrome noise",
+    async () => {
+      const result = await fetchJdTextFromUrl(
+        "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=54333813",
+      );
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.text).toMatch(/핵심 정보|상세요강|접수기간/);
+      expect(result.text).toMatch(/코맥스|신입|경력/);
+      expect(result.text).not.toMatch(/관련 태그|기업리뷰|경쟁자들의/);
+      expect(result.text.length).toBeLessThan(2000);
     },
     20_000,
   );
