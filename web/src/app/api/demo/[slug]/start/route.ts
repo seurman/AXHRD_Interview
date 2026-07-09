@@ -8,6 +8,8 @@ import { startInterviewSession } from "@/lib/interview/start-session";
 import {
   createDemoPresenterToken,
   DEMO_PRESENTER_COOKIE,
+} from "@/lib/demo/presenter-tokens";
+import {
   getOrCreateDemoPresenterUser,
   validatePresenterKey,
 } from "@/lib/demo/presenter";

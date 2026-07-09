@@ -1,12 +1,6 @@
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 
-export {
-  DEMO_PRESENTER_COOKIE,
-  createDemoPresenterToken,
-  verifyDemoPresenterToken,
-} from "@/lib/demo/presenter-tokens";
-
 const DEMO_PRESENTER_EMAIL = "demo-presenter@internal.axhrd";
 
 export function generatePresenterKey(): string {

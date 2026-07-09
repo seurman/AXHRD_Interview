@@ -1,10 +1,22 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/jwt";
-import {
-  DEMO_PRESENTER_COOKIE,
-  verifyDemoPresenterToken,
-} from "@/lib/demo/presenter-tokens";
+import { jwtVerify } from "jose";
+import { SESSION_COOKIE, getJwtSecret, verifySessionToken } from "@/lib/auth/jwt";
+
+/** Edge middleware 전용 — Prisma·presenter.ts import 금지 */
+const DEMO_PRESENTER_COOKIE = "hr_in_demo_presenter";
+
+async function verifyDemoPresenterToken(
+  token: string,
+  sessionId: string,
+): Promise<boolean> {
+  try {
+    const { payload } = await jwtVerify(token, getJwtSecret());
+    return payload.typ === "demo_presenter" && payload.sub === sessionId;
+  } catch {
+    return false;
+  }
+}
 
 function isPublicPath(pathname: string) {
   if (pathname === "/") return true;
