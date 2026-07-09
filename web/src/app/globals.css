@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../components/brand/logo.css";
 
 @theme {
   --color-background: #f7f8fc;
@@ -216,15 +217,8 @@ body {
     box-shadow: 0 1px 0 rgb(47 95 238 / 0.06);
   }
 
-  .header-premium .brand-mark {
-    border-color: rgb(47 95 238 / 0.35);
-    background: rgb(47 95 238 / 0.08);
-    color: var(--color-primary);
-  }
-
-  .header-premium .brand-text {
-    color: var(--color-primary);
-    letter-spacing: 0.14em;
+  .header-premium .axhrd-logo {
+    color: var(--color-foreground);
   }
 
   .header-premium .nav-pill {
@@ -1327,13 +1321,10 @@ body:has(.lp) .header-premium {
   backdrop-filter: blur(14px);
 }
 
-body:has(.lp) .header-premium .brand-mark {
-  border-color: rgb(198 212 255 / 0.45);
-  background: rgb(255 255 255 / 0.08);
-  color: #c6d4ff;
+body:has(.lp) .header-premium .axhrd-logo {
+  color: rgb(248 250 252 / 0.96);
 }
 
-body:has(.lp) .header-premium .brand-text,
 body:has(.lp) .header-premium .nav-pill,
 body:has(.lp) .header-premium .user-greeting,
 body:has(.lp) .header-premium .lang-switch button {

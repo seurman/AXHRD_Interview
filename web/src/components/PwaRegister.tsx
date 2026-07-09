@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-const SW_URL = "/sw.js?v=3";
+const SW_URL = "/sw.js?v=4";
 
 /** 최소 PWA — manifest 연결 + 정적 셸 서비스워커 등록 */
 export function PwaRegister() {

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AXHRD · Favicon (32x32 optimized). Solid background for tab visibility. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="6" fill="#0A0A0B"/>
+  <g stroke="#fff" stroke-width="1.6" fill="none" transform="translate(6, 6)">
+    <path d="M 10 1 L 10 10 L 2 6"/>
+    <path d="M 18 6 L 10 10 L 18 14"/>
+    <path d="M 10 10 L 2 14 L 10 19"/>
+    <path d="M 10 10 L 10 19 L 18 14"/>
+    <path d="M 10 10 L 18 6 L 10 1"/>
+    <path d="M 10 10 L 2 6 L 2 14"/>
+  </g>
+  <circle cx="16" cy="16" r="3" fill="#0066FF"/>
+</svg>

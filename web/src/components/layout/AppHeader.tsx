@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { useNavSession } from "@/components/layout/NavSessionProvider";
+import { Logo } from "@/components/brand/Logo";
 import { MobileNav } from "./MobileNav";
 import { MainNav } from "./MainNav";
 import { BillingPastDueBanner } from "@/components/billing/BillingPastDueBanner";
@@ -10,7 +11,6 @@ import { BillingPastDueBanner } from "@/components/billing/BillingPastDueBanner"
 export function AppHeader() {
   const { dict } = useI18n();
   const nav = useNavSession();
-  const brand = dict.common.brand;
 
   const loggedIn = nav?.loggedIn ?? false;
   const dashboardHref = nav?.dashboardHref ?? null;
@@ -25,13 +25,12 @@ export function AppHeader() {
       <BillingPastDueBanner />
       <header className="header-premium sticky top-0 z-40">
         <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-3 px-5 py-3 sm:px-8 sm:py-3.5">
-          <Link href="/" className="group flex min-w-0 shrink items-center gap-2.5">
-            <span className="brand-mark flex h-8 w-8 items-center justify-center rounded-full border border-gold/40 bg-gold/10 text-[10px] font-bold text-gold">
-              AX
-            </span>
-            <span className="brand-text keep-one-line text-sm font-semibold tracking-[0.14em] text-gold sm:text-base">
-              {brand}
-            </span>
+          <Link
+            href="/"
+            className="axhrd-logo axhrd-logo--md group min-w-0 shrink"
+            aria-label={`${dict.common.brand} home`}
+          >
+            <Logo size={28} />
           </Link>
 
           <MainNav

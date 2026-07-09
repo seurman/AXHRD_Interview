@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AXHRD · Monochrome (single-color, no signal blue). For debossing, single-color print, favicons. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 160" fill="none" role="img" aria-label="AXHRD">
+  <title>AXHRD</title>
+  <g>
+    <g stroke="currentColor" stroke-width="8" fill="none">
+      <path d="M 80 16 L 80 80 L 24 48"/>
+      <path d="M 142 48 L 80 80 L 142 112"/>
+      <path d="M 80 80 L 24 112 L 80 144"/>
+      <path d="M 80 80 L 80 144 L 142 112"/>
+      <path d="M 80 80 L 142 48 L 80 16"/>
+      <path d="M 80 80 L 24 48 L 24 112"/>
+    </g>
+    <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="6" fill="none" opacity="0.4"/>
+    <circle cx="80" cy="80" r="16" fill="currentColor"/>
+  </g>
+  <g transform="translate(190, 0)" fill="currentColor">
+    <text x="0" y="112"
+      font-family="Inter, -apple-system, 'Segoe UI', sans-serif"
+      font-weight="500"
+      font-size="112"
+      letter-spacing="-6">AXHRD</text>
+  </g>
+</svg>

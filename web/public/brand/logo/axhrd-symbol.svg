@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AXHRD · Aperture Symbol (mark-only). Uses currentColor for outline, #0066FF for center. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" role="img" aria-label="AXHRD symbol">
+  <title>AXHRD</title>
+  <g stroke="currentColor" stroke-width="8" fill="none">
+    <path d="M 100 20 L 100 100 L 30 60"/>
+    <path d="M 178 60 L 100 100 L 178 140"/>
+    <path d="M 100 100 L 30 140 L 100 180"/>
+    <path d="M 100 100 L 100 180 L 178 140"/>
+    <path d="M 100 100 L 178 60 L 100 20"/>
+    <path d="M 100 100 L 30 60 L 30 140"/>
+  </g>
+  <circle cx="100" cy="100" r="88" stroke="currentColor" stroke-width="6" fill="none" opacity="0.35"/>
+  <circle cx="100" cy="100" r="20" fill="#0066FF"/>
+</svg>

@@ -1,0 +1,66 @@
+/**
+ * AXHRD Brand Tokens & Logo CSS
+ */
+
+:root {
+  --axhrd-ink: #0a0a0b;
+  --axhrd-ivory: #fafaf7;
+  --axhrd-signal: #0066ff;
+  --axhrd-signal-hover: #1a75ff;
+  --axhrd-signal-active: #0052cc;
+  --axhrd-ash: #1f1f22;
+  --axhrd-ash-2: #2a2a2e;
+  --axhrd-fog: #6b6b72;
+
+  --axhrd-font-sans:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-pretendard),
+    "Pretendard Variable", "Pretendard", system-ui, sans-serif;
+  --axhrd-font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
+
+  --axhrd-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.axhrd-logo {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-foreground);
+  transition: opacity 0.2s var(--axhrd-ease);
+}
+
+.axhrd-logo:hover {
+  opacity: 0.8;
+}
+
+.axhrd-logo--on-dark {
+  color: var(--axhrd-ivory);
+}
+
+.axhrd-logo--sm svg {
+  height: 24px;
+  width: auto;
+}
+
+.axhrd-logo--md svg {
+  height: 28px;
+  width: auto;
+}
+
+@media (min-width: 640px) {
+  .axhrd-logo--md svg {
+    height: 32px;
+  }
+}
+
+.axhrd-logo--lg svg {
+  height: 48px;
+  width: auto;
+}
+
+.axhrd-logo--xl svg {
+  height: 64px;
+  width: auto;
+}
+
+.axhrd-logo--padded {
+  padding: 0.5em;
+}

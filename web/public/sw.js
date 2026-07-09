@@ -1,5 +1,9 @@
-const CACHE = "axhrd-shell-v3";
-const OFFLINE_SHELL = ["/manifest.json", "/icons/icon-192.svg", "/icons/icon-512.svg"];
+const CACHE = "axhrd-shell-v4";
+const OFFLINE_SHELL = [
+  "/manifest.json",
+  "/brand/logo/axhrd-favicon.svg",
+  "/brand/logo/axhrd-app-icon.svg",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

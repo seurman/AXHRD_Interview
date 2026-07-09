@@ -18,6 +18,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: dict.meta.title,
     description: dict.meta.description,
+    icons: {
+      icon: [{ url: "/brand/logo/axhrd-favicon.svg", type: "image/svg+xml" }],
+      apple: [{ url: "/brand/logo/axhrd-app-icon.svg", type: "image/svg+xml" }],
+    },
   };
 }
 
@@ -40,8 +44,7 @@ export default async function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#2f5fee" />
-        <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+        <meta name="theme-color" content="#0066FF" />
       </head>
       <body className={`${fontVariables} antialiased`}>
         <I18nProvider locale={locale}>
