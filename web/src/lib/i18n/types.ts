@@ -255,7 +255,7 @@ export type Dictionary = {
     persona: { eyebrow: string };
     competency: { title: string; hint: string; plan: string; recommended: string; done: string; inProgress: string; notStarted: string };
     resume: { title: string; hint: string; upload: string; parsing: string; manual: string; placeholder: string };
-    resumeReview: { button: string; preparing: string; needResume: string };
+    resumeReview: { button: string; preparing: string; needResume: string; needIndustry: string };
     start: string;
     preparing: string;
     selectIndustry: string;

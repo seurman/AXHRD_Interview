@@ -60,7 +60,7 @@ export function SetupForm({
   const [jobRole, setJobRole] = useState<string>("MARKETING");
   const [fileResumeText, setFileResumeText] = useState("");
   const [manualText, setManualText] = useState("");
-  const [showManualInput, setShowManualInput] = useState(false);
+  const [showManualInput, setShowManualInput] = useState(true);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [focusCompetency, setFocusCompetency] = useState<string>("");
@@ -324,6 +324,13 @@ export function SetupForm({
   };
 
   const completedCount = competencies.filter((c) => c.status === "COMPLETED").length;
+  const resumeDraft = (manualText.trim() || fileResumeText.trim());
+  const canRequestReview =
+    Boolean(industry) &&
+    resumeDraft.length >= 20 &&
+    !reviewLoading &&
+    !loading &&
+    !parsingFile;
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -616,8 +623,8 @@ export function SetupForm({
         <button
           type="button"
           onClick={requestResumeReview}
-          disabled={reviewLoading || loading || parsingFile || parsingJdFile || !industry}
-          className="btn-secondary w-full py-2.5 text-sm"
+          disabled={!canRequestReview}
+          className="btn-secondary w-full py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
         >
           {reviewLoading ? (
             <>
@@ -627,6 +634,17 @@ export function SetupForm({
             s.resumeReview.button
           )}
         </button>
+        {!canRequestReview && !reviewLoading && (
+          <p className="text-center text-xs text-muted">
+            {!industry
+              ? s.resumeReview.needIndustry
+              : resumeDraft.length < 20
+                ? s.resumeReview.needResume
+                : parsingFile
+                  ? s.resume.parsing
+                  : null}
+          </p>
+        )}
       </section>
 
       <button

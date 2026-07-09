@@ -359,6 +359,7 @@ export const dictionary: Dictionary = {
       button: "Get resume feedback (optional)",
       preparing: "Generating review…",
       needResume: "Enter or upload at least 20 characters of resume text first.",
+      needIndustry: "Select an industry above first.",
     },
     start: "Start interview",
     preparing: "Preparing…",

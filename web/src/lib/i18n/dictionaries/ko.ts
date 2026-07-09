@@ -357,6 +357,7 @@ export const dictionary: Dictionary = {
       button: "자소서 첨삭 받기 (선택)",
       preparing: "첨삭 생성 중…",
       needResume: "자소서를 20자 이상 입력하거나 업로드한 뒤 첨삭을 요청해 주세요.",
+      needIndustry: "위에서 산업군을 먼저 선택해 주세요.",
     },
     start: "역량 면접 시작",
     preparing: "준비 중…",
