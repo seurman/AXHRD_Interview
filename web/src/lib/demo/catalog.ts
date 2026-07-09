@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { parseRubricByLevel, type RubricByLevel } from "@/lib/competency/rubric";
 import { parseRubricCriteria } from "@/lib/competency/bank";
+import { loadContentBankSnapshot } from "@/lib/competency/content-bank-data";
 import { loadDemoWorkspaceSnapshot } from "@/lib/demo/workspace";
 import { Prisma } from "@prisma/client";
 
@@ -10,7 +11,7 @@ let catalogCache: {
   data: Awaited<ReturnType<typeof loadDemoCatalogMetadataUncached>>;
 } | null = null;
 
-export type DemoCatalogSource = "ncs" | "global";
+export type DemoCatalogSource = "ncs" | "global" | "custom";
 
 export type DemoCatalogQuestion = {
   externalId: string;
@@ -40,10 +41,16 @@ export type DemoCatalogCluster = {
   competencies: DemoCatalogCompetency[];
 };
 
-/** Business Objects식 좌측 메타데이터 팔레트 — NCS 6 + Global 20 */
+function sourceToCatalogSource(source: string): DemoCatalogSource {
+  if (source === "NCS") return "ncs";
+  if (source === "GLOBAL") return "global";
+  return "custom";
+}
+
+/** 통합 역량 풀 — 클러스터별 메타데이터 팔레트 */
 export async function loadDemoCatalogMetadata(): Promise<{
   clusters: DemoCatalogCluster[];
-  totals: { ncs: number; global: number };
+  totals: { ncs: number; global: number; custom: number };
 }> {
   const now = Date.now();
   if (catalogCache && now - catalogCache.at < CATALOG_CACHE_TTL_MS) {
@@ -56,114 +63,99 @@ export async function loadDemoCatalogMetadata(): Promise<{
 
 async function loadDemoCatalogMetadataUncached(): Promise<{
   clusters: DemoCatalogCluster[];
-  totals: { ncs: number; global: number };
+  totals: { ncs: number; global: number; custom: number };
 }> {
-  const [ncsComps, ncsQuestions, globalClusters] = await Promise.all([
-    prisma.competency.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
-    }),
-    prisma.question.findMany({
-      where: { isActive: true },
-      orderBy: [{ level: "asc" }, { sortOrder: "asc" }],
-      include: { competency: { select: { code: true } } },
-    }),
-    prisma.globalCompetencyCluster.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
-      include: {
-        competencies: {
-          where: { isActive: true },
-          orderBy: { sortOrder: "asc" },
-          include: {
-            rubricLevels: { orderBy: { level: "asc" } },
-            questions: { where: { isActive: true }, orderBy: { sortOrder: "asc" } },
-          },
-        },
-      },
-    }),
-  ]);
-
-  const qsByComp = new Map<string, typeof ncsQuestions>();
-  for (const q of ncsQuestions) {
+  const bank = await loadContentBankSnapshot();
+  const qsByComp = new Map<string, typeof bank.questions>();
+  for (const q of bank.questions) {
+    if (!q.isActive) continue;
     const list = qsByComp.get(q.competencyId) ?? [];
     list.push(q);
     qsByComp.set(q.competencyId, list);
   }
 
-  const ncsCluster: DemoCatalogCluster = {
-    source: "ncs",
-    code: "NCS_IRT",
-    nameKo: "NCS · IRT 면접 (6)",
-    description: "운영 문항 뱅크 — 모의면접 IRT용",
-    competencies: ncsComps.map((c) => {
-      const qs = qsByComp.get(c.id) ?? [];
-      return {
-        source: "ncs" as const,
-        code: c.code,
-        nameKo: c.nameKo,
-        description: c.description,
-        questionCount: qs.length,
-        rubricByLevel: parseRubricByLevel(c.rubricByLevel),
-        questions: qs.map((q) => ({
-          externalId: q.externalId,
-          level: q.level,
-          template: q.template,
-          sortOrder: q.sortOrder,
-          rubricCriteria: parseRubricCriteria(q.rubricCriteria),
-        })),
-      };
-    }),
-  };
+  const compsByCluster = new Map<string, typeof bank.competencies>();
+  for (const c of bank.competencies) {
+    if (!c.isActive) continue;
+    const key = c.clusterId ?? "__unclustered__";
+    const list = compsByCluster.get(key) ?? [];
+    list.push(c);
+    compsByCluster.set(key, list);
+  }
 
-  const global: DemoCatalogCluster[] = globalClusters.map((cl) => ({
-    source: "global" as const,
-    code: cl.code,
-    nameKo: cl.nameKo,
-    description: cl.description,
-    competencies: cl.competencies.map((c) => {
-      const rubricByLevel: RubricByLevel = {};
-      for (const lv of c.rubricLevels) {
-        const lines = lv.descriptionKo
-          .split(/\n+/)
-          .map((s) => s.trim())
-          .filter(Boolean);
-        rubricByLevel[String(lv.level)] = lines.length > 0 ? lines : [lv.descriptionKo];
-      }
+  const clusters: DemoCatalogCluster[] = bank.clusters
+    .filter((cl) => cl.isActive)
+    .map((cl) => {
+      const comps = compsByCluster.get(cl.id) ?? [];
+      const catalogSource = sourceToCatalogSource(cl.source);
       return {
-        source: "global" as const,
-        code: c.code,
-        nameKo: c.nameKo,
-        description: c.definition,
-        clusterCode: cl.code,
-        clusterNameKo: cl.nameKo,
-        questionCount: c.questions.length,
-        rubricByLevel,
-        questions: c.questions.map((q, i) => {
-          // Prefer level encoded in externalId (GLOB-CODE-L3-01); else round-robin L1–L5
-          const m = /(?:^|-)L([1-5])(?:-|$)/i.exec(q.externalId);
-          const level = m
-            ? Number(m[1])
-            : (((i % 5) + 1) as 1 | 2 | 3 | 4 | 5);
+        source: catalogSource,
+        code: cl.code,
+        nameKo: cl.nameKo,
+        description: cl.description,
+        competencies: comps.map((c) => {
+          const qs = qsByComp.get(c.id) ?? [];
+          const rubricByLevel = parseRubricByLevel(c.rubricByLevel);
           return {
-            externalId: q.externalId,
-            level,
-            template: q.questionText,
-            sortOrder: q.sortOrder || i,
-            rubricCriteria: rubricByLevel[String(level)] ?? [],
+            source: sourceToCatalogSource(c.source),
+            code: c.code,
+            nameKo: c.nameKo,
+            description: c.description,
+            clusterCode: cl.code,
+            clusterNameKo: cl.nameKo,
+            questionCount: qs.length,
+            rubricByLevel,
+            questions: qs.map((q) => ({
+              externalId: q.externalId,
+              level: q.level,
+              template: q.template,
+              sortOrder: q.sortOrder,
+              rubricCriteria: parseRubricCriteria(q.rubricCriteria),
+            })),
           };
         }),
       };
-    }),
-  }));
+    });
 
-  return {
-    clusters: [ncsCluster, ...global],
-    totals: {
-      ncs: ncsCluster.competencies.length,
-      global: global.reduce((n, cl) => n + cl.competencies.length, 0),
-    },
-  };
+  const unclustered = compsByCluster.get("__unclustered__") ?? [];
+  if (unclustered.length > 0) {
+    clusters.push({
+      source: "custom",
+      code: "UNCATEGORIZED",
+      nameKo: "미분류 역량",
+      description: null,
+      competencies: unclustered.map((c) => {
+        const qs = qsByComp.get(c.id) ?? [];
+        return {
+          source: sourceToCatalogSource(c.source),
+          code: c.code,
+          nameKo: c.nameKo,
+          description: c.description,
+          questionCount: qs.length,
+          rubricByLevel: parseRubricByLevel(c.rubricByLevel),
+          questions: qs.map((q) => ({
+            externalId: q.externalId,
+            level: q.level,
+            template: q.template,
+            sortOrder: q.sortOrder,
+            rubricCriteria: parseRubricCriteria(q.rubricCriteria),
+          })),
+        };
+      }),
+    });
+  }
+
+  let ncs = 0;
+  let global = 0;
+  let custom = 0;
+  for (const cl of clusters) {
+    const n = cl.competencies.length;
+    if (cl.source === "ncs") ncs += n;
+    else if (cl.source === "global") global += n;
+    else custom += n;
+  }
+
+  return { clusters, totals: { ncs, global, custom } };
 }
 
 function uniqueExternalId(workspaceId: string, preferred: string, used: Set<string>) {

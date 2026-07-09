@@ -1,12 +1,48 @@
 import { prisma } from "@/lib/prisma";
 import { parseFollowUpHints, parseRubricCriteria } from "@/lib/competency/bank";
+import type { CompetencySource } from "@prisma/client";
 
-/** /admin/content · ContentBankEditor와 동일한 스냅샷 — SaaS 킷 빌더도 같은 데이터 사용 */
+export type BankCluster = {
+  id: string;
+  code: string;
+  nameKo: string;
+  nameEn: string | null;
+  description: string | null;
+  source: CompetencySource;
+  sortOrder: number;
+  isActive: boolean;
+  competencyCount: number;
+};
+
+export type BankCompetencyRow = {
+  id: string;
+  code: string;
+  nameKo: string;
+  nameEn: string | null;
+  description: string | null;
+  clusterId: string | null;
+  clusterCode: string | null;
+  clusterNameKo: string | null;
+  source: CompetencySource;
+  sortOrder: number;
+  isActive: boolean;
+  rubricByLevel: unknown;
+  questionCount: number;
+};
+
+/** 통합 역량 풀 스냅샷 — NCS·Global·Custom 모두 IRT Question과 1:1 */
 export async function loadContentBankSnapshot() {
-  const [competencies, questions] = await Promise.all([
+  const [clusters, competencies, questions] = await Promise.all([
+    prisma.competencyCluster.findMany({
+      orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
+      include: { _count: { select: { competencies: true } } },
+    }),
     prisma.competency.findMany({
       orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
-      include: { _count: { select: { questions: true } } },
+      include: {
+        cluster: { select: { code: true, nameKo: true } },
+        _count: { select: { questions: true } },
+      },
     }),
     prisma.question.findMany({
       orderBy: [
@@ -19,17 +55,37 @@ export async function loadContentBankSnapshot() {
     }),
   ]);
 
+  const clusterRows: BankCluster[] = clusters.map((c) => ({
+    id: c.id,
+    code: c.code,
+    nameKo: c.nameKo,
+    nameEn: c.nameEn,
+    description: c.description,
+    source: c.source,
+    sortOrder: c.sortOrder,
+    isActive: c.isActive,
+    competencyCount: c._count.competencies,
+  }));
+
+  const competencyRows: BankCompetencyRow[] = competencies.map((c) => ({
+    id: c.id,
+    code: c.code,
+    nameKo: c.nameKo,
+    nameEn: c.nameEn,
+    description: c.description,
+    clusterId: c.clusterId,
+    clusterCode: c.cluster?.code ?? null,
+    clusterNameKo: c.cluster?.nameKo ?? null,
+    source: c.source,
+    sortOrder: c.sortOrder,
+    isActive: c.isActive,
+    rubricByLevel: c.rubricByLevel,
+    questionCount: c._count.questions,
+  }));
+
   return {
-    competencies: competencies.map((c) => ({
-      id: c.id,
-      code: c.code,
-      nameKo: c.nameKo,
-      description: c.description,
-      sortOrder: c.sortOrder,
-      isActive: c.isActive,
-      rubricByLevel: c.rubricByLevel,
-      questionCount: c._count.questions,
-    })),
+    clusters: clusterRows,
+    competencies: competencyRows,
     questions: questions.map((q) => ({
       id: q.id,
       externalId: q.externalId,

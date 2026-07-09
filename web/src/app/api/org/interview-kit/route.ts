@@ -11,7 +11,7 @@ import {
   resolveInterviewKitAccess,
 } from "@/lib/org/interview-kit";
 import { parseRubricByLevel, type RubricByLevel } from "@/lib/competency/rubric";
-import { COMPETENCY_CODES } from "@/types";
+import { getActiveCompetencyCodes } from "@/lib/competency/bank";
 
 const ACCESS_ERRORS: Record<string, string> = {
   not_admin: "기관 ADMIN 권한이 필요합니다.",
@@ -52,6 +52,7 @@ export async function GET(req: Request) {
   });
 
   const rubricByCode = new Map(bank.competencies.map((c) => [c.code, c.rubricByLevel]));
+  const activeCodes = bank.competencies.filter((c) => c.isActive).map((c) => c.code);
 
   return NextResponse.json({
     organizationId,
@@ -84,7 +85,7 @@ export async function GET(req: Request) {
       customRubricByLevel: parseOrgKitRubricByLevel(k.customRubricCriteria),
       updatedAt: k.updatedAt.toISOString(),
     })),
-    competencyCodes: [...COMPETENCY_CODES],
+    competencyCodes: activeCodes,
   });
 }
 
@@ -114,7 +115,8 @@ export async function PUT(req: Request) {
 
   const body = (await req.json()) as PutBody;
   const competency = typeof body.competency === "string" ? body.competency.trim() : "";
-  if (!competency || !(COMPETENCY_CODES as readonly string[]).includes(competency)) {
+  const bankCodes = await getActiveCompetencyCodes();
+  if (!competency || !bankCodes.includes(competency)) {
     return NextResponse.json({ error: "유효한 역량 코드가 필요합니다." }, { status: 400 });
   }
 
@@ -185,7 +187,8 @@ export async function DELETE(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const competency = searchParams.get("competency")?.trim() ?? "";
-  if (!competency || !(COMPETENCY_CODES as readonly string[]).includes(competency)) {
+  const bankCodes = await getActiveCompetencyCodes();
+  if (!competency || !bankCodes.includes(competency)) {
     return NextResponse.json({ error: "유효한 역량 코드가 필요합니다." }, { status: 400 });
   }
 

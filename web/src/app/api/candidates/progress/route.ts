@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
-import { COMPETENCY_CODES } from "@/types";
+import { getActiveCompetencyCodes, getActiveCompetencies } from "@/lib/competency/bank";
 import { competencyLabel } from "@/lib/labels";
 
 export async function GET(req: Request) {
@@ -33,6 +33,11 @@ export async function GET(req: Request) {
   }
 
   const plan = userWithPlans.interviewPlans[0];
+  const activeCodes = await getActiveCompetencyCodes();
+  const activeComps = await getActiveCompetencies();
+  const labelByCode = new Map(
+    activeComps.map((c) => [c.code, c.nameKo || competencyLabel(c.code)]),
+  );
 
   if (!plan) {
     return NextResponse.json({
@@ -40,9 +45,9 @@ export async function GET(req: Request) {
       userId: user.id,
       name: user.name,
       plan: null,
-      competencies: COMPETENCY_CODES.map((code) => ({
+      competencies: activeCodes.map((code) => ({
         code,
-        label: competencyLabel(code),
+        label: labelByCode.get(code) ?? competencyLabel(code),
         status: "NOT_STARTED",
       })),
     });
@@ -62,13 +67,13 @@ export async function GET(req: Request) {
       companyName: plan.targetCompany?.name,
       completedCount: plan.competencyProgress.filter((p) => p.status === "COMPLETED")
         .length,
-      total: COMPETENCY_CODES.length,
+      total: activeCodes.length,
     },
-    competencies: COMPETENCY_CODES.map((code) => {
+    competencies: activeCodes.map((code) => {
       const p = progressMap[code];
       return {
         code,
-        label: competencyLabel(code),
+        label: labelByCode.get(code) ?? competencyLabel(code),
         status: p?.status ?? "NOT_STARTED",
         levelEst: p?.levelEst,
         percentile: p?.percentile,

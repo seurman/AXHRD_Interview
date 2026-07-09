@@ -13,6 +13,7 @@ import { summarizeResume } from "@/lib/interview/resume-summary";
 import { parseResumeSummary } from "@/lib/interview/build-question";
 import { filterAndRankQuestionPool } from "@/lib/interview/question-pool";
 import { filterQuestionsByOrgKit } from "@/lib/org/interview-kit";
+import { getActiveCompetencyCodes } from "@/lib/competency/bank";
 import {
   appendUserTextRecord,
   formatInterviewSetupText,
@@ -232,7 +233,7 @@ export async function startInterviewSession(
     jobRole: jobRole ?? "OTHER",
   });
 
-  const competencyOrder = opts.allowedCompetencies ?? COMPETENCY_CODES;
+  const competencyOrder = opts.allowedCompetencies ?? (await getActiveCompetencyCodes());
 
   let competency = (focusCompetency?.trim().toUpperCase() || undefined) as string | undefined;
   if (competency && opts.allowedCompetencies && !opts.allowedCompetencies.includes(competency)) {
@@ -257,7 +258,7 @@ export async function startInterviewSession(
 
   if (
     !opts.allowAnyCompetencyCode &&
-    !(COMPETENCY_CODES as readonly string[]).includes(competency) &&
+    !competencyOrder.includes(competency) &&
     !opts.allowedCompetencies?.includes(competency)
   ) {
     return {
@@ -446,7 +447,7 @@ export async function startInterviewSession(
       planId: plan.id,
       focusCompetency: competency,
       userId: user.id,
-      totalCompetencies: COMPETENCY_CODES.length,
+      totalCompetencies: competencyOrder.length,
       completedCount: plan.competencyProgress.filter((p) => p.status === "COMPLETED").length,
     },
   };

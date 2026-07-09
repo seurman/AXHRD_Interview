@@ -27,20 +27,32 @@ export async function PATCH(
   const body = await req.json().catch(() => ({}));
   const data: {
     nameKo?: string;
+    nameEn?: string | null;
     description?: string | null;
     isActive?: boolean;
     sortOrder?: number;
+    clusterId?: string | null;
+    source?: "NCS" | "GLOBAL" | "CUSTOM";
     rubricByLevel?: Prisma.InputJsonValue;
   } = {};
 
   if (typeof body.nameKo === "string" && body.nameKo.trim()) {
     data.nameKo = body.nameKo.trim();
   }
+  if (body.nameEn !== undefined) {
+    data.nameEn = typeof body.nameEn === "string" ? body.nameEn.trim() || null : null;
+  }
   if (body.description !== undefined) {
     data.description =
       typeof body.description === "string" ? body.description.trim() || null : null;
   }
   if (typeof body.isActive === "boolean") data.isActive = body.isActive;
+  if (body.clusterId !== undefined) {
+    data.clusterId = typeof body.clusterId === "string" ? body.clusterId : null;
+  }
+  if (typeof body.source === "string" && ["NCS", "GLOBAL", "CUSTOM"].includes(body.source)) {
+    data.source = body.source as "NCS" | "GLOBAL" | "CUSTOM";
+  }
   if (body.rubricByLevel !== undefined) {
     data.rubricByLevel = parseRubricByLevel(body.rubricByLevel) as Prisma.InputJsonValue;
   }

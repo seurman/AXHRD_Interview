@@ -19,9 +19,9 @@ import {
   type RubricCompetency,
 } from "@/components/admin/CompetencyRubricPanel";
 import { QuestionEditModal } from "@/components/admin/kit-studio/QuestionEditModal";
+import type { BankCompetencyRow, BankCluster } from "@/lib/competency/content-bank-data";
 import {
   BANK_QUESTION_DEFAULTS,
-  type BankCompetency,
   type BankQuestion,
 } from "@/components/admin/kit-studio/bank-types";
 import type { CatalogCluster } from "@/components/admin/kit-studio/types";
@@ -33,13 +33,25 @@ const DND_QUESTION = "application/x-axhrd-bank-question";
 
 type Tab = "competencies" | "questions" | "levels" | "rubrics";
 
+const SOURCE_LABEL: Record<string, string> = {
+  NCS: "NCS",
+  GLOBAL: "Global",
+  CUSTOM: "Custom",
+};
+
 type Props = {
-  initialCompetencies: BankCompetency[];
+  initialClusters: BankCluster[];
+  initialCompetencies: BankCompetencyRow[];
   initialQuestions: BankQuestion[];
 };
 
-export function ContentMetadataStudio({ initialCompetencies, initialQuestions }: Props) {
+export function ContentMetadataStudio({
+  initialClusters,
+  initialCompetencies,
+  initialQuestions,
+}: Props) {
   const [tab, setTab] = useState<Tab>("questions");
+  const [clusters, setClusters] = useState(initialClusters);
   const [competencies, setCompetencies] = useState(initialCompetencies);
   const [questions, setQuestions] = useState(initialQuestions);
   const [selectedId, setSelectedId] = useState(initialCompetencies[0]?.id ?? "");
@@ -55,13 +67,18 @@ export function ContentMetadataStudio({ initialCompetencies, initialQuestions }:
   const [qSearch, setQSearch] = useState("");
   const [qCompFilter, setQCompFilter] = useState<string>("all");
   const [qLevelFilter, setQLevelFilter] = useState<number | "all">("all");
+  const [clusterFilter, setClusterFilter] = useState<string>("all");
 
   const [compDraft, setCompDraft] = useState({ nameKo: "", description: "" });
   const [newComp, setNewComp] = useState({ code: "", nameKo: "", description: "" });
   const [showNewComp, setShowNewComp] = useState(false);
 
   const selected = competencies.find((c) => c.id === selectedId);
-  const compOrder = useMemo(() => competencies.map((c) => c.id), [competencies]);
+  const visibleCompetencies = useMemo(() => {
+    if (clusterFilter === "all") return competencies;
+    return competencies.filter((c) => c.clusterId === clusterFilter);
+  }, [competencies, clusterFilter]);
+  const compOrder = useMemo(() => visibleCompetencies.map((c) => c.id), [visibleCompetencies]);
   const compById = useMemo(() => new Map(competencies.map((c) => [c.id, c])), [competencies]);
 
   const questionsByLevel = useMemo(() => {
@@ -128,7 +145,8 @@ export function ContentMetadataStudio({ initialCompetencies, initialQuestions }:
     const data = await res.json();
     setCompetencies(data.competencies);
     setQuestions(data.questions);
-    if (!data.competencies.some((c: BankCompetency) => c.id === selectedId)) {
+    if (data.clusters) setClusters(data.clusters);
+    if (!data.competencies.some((c: BankCompetencyRow) => c.id === selectedId)) {
       setSelectedId(data.competencies[0]?.id ?? "");
     }
   }
@@ -176,7 +194,7 @@ export function ContentMetadataStudio({ initialCompetencies, initialQuestions }:
     }
   }
 
-  async function toggleCompetencyActive(comp: BankCompetency) {
+  async function toggleCompetencyActive(comp: BankCompetencyRow) {
     const res = await fetch(`/api/admin/competencies/${comp.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -188,7 +206,7 @@ export function ContentMetadataStudio({ initialCompetencies, initialQuestions }:
     );
   }
 
-  async function deleteCompetency(comp: BankCompetency) {
+  async function deleteCompetency(comp: BankCompetencyRow) {
     if (!confirm(`역량 「${comp.nameKo}」을(를) 삭제(또는 비활성화)할까요?`)) return;
     const res = await fetch(`/api/admin/competencies/${comp.id}`, { method: "DELETE" });
     const data = await res.json().catch(() => ({}));
@@ -399,13 +417,41 @@ export function ContentMetadataStudio({ initialCompetencies, initialQuestions }:
         <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-accent">
           Platform metadata CMS
         </p>
-        <h2 className="mt-1 text-lg font-bold text-foreground">메타데이터 편집 스튜디오</h2>
+        <h2 className="mt-1 text-lg font-bold text-foreground">통합 역량 풀 CMS</h2>
         <p className="mt-1 max-w-3xl text-sm text-muted">
-          Kit Studio(기관 킷 조립)와 별개입니다. 여기서 역량·문항 원본 데이터를 직접 생성·수정합니다.
-          기관별 면접 킷 구성은 <strong className="text-foreground">기관 → 인터뷰 킷 스튜디오</strong>에서
-          하세요.
+          NCS·Global·Custom 역량이 하나의 IRT 문항 뱅크입니다. 좌측 역량군(클러스터)으로 필터하고
+          역량·문항·루브릭을 편집하세요. 기관 킷 조립은{" "}
+          <strong className="text-foreground">인터뷰 킷 스튜디오</strong>에서 합니다.
         </p>
       </div>
+
+      <aside className="card-luxe flex flex-wrap gap-2 p-3">
+        <span className="w-full text-xs font-semibold uppercase text-muted">역량군</span>
+        <button
+          type="button"
+          className={`rounded-lg px-3 py-1.5 text-xs ${clusterFilter === "all" ? "bg-accent/15 font-semibold" : "hover:bg-card-border/40"}`}
+          onClick={() => setClusterFilter("all")}
+        >
+          전체 ({competencies.length})
+        </button>
+        {clusters.map((cl) => (
+          <button
+            key={cl.id}
+            type="button"
+            className={`rounded-lg px-3 py-1.5 text-xs ${clusterFilter === cl.id ? "bg-accent/15 font-semibold" : "hover:bg-card-border/40"}`}
+            onClick={() => {
+              setClusterFilter(cl.id);
+              const first = competencies.find((c) => c.clusterId === cl.id);
+              if (first) setSelectedId(first.id);
+            }}
+          >
+            {cl.nameKo}{" "}
+            <span className="text-muted">
+              · {SOURCE_LABEL[cl.source] ?? cl.source} · {cl.competencyCount}
+            </span>
+          </button>
+        ))}
+      </aside>
 
       <div className="flex flex-wrap gap-2 border-b border-card-border pb-1">
         {tabs.map(({ id, label, icon: Icon, hint }) => (
@@ -541,9 +587,9 @@ export function ContentMetadataStudio({ initialCompetencies, initialQuestions }:
               onChange={(e) => setQCompFilter(e.target.value)}
             >
               <option value="all">모든 역량</option>
-              {competencies.map((c) => (
+              {visibleCompetencies.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.code}
+                  {c.code} ({SOURCE_LABEL[c.source]})
                 </option>
               ))}
             </select>
@@ -666,6 +712,9 @@ export function ContentMetadataStudio({ initialCompetencies, initialQuestions }:
                   >
                     {c.nameKo}
                     <span className="ml-1 text-[10px] text-muted">{c.code}</span>
+                    <span className="mt-0.5 block text-[10px] text-muted">
+                      {SOURCE_LABEL[c.source]} · {c.questionCount}문항
+                    </span>
                   </button>
                 );
               }}
@@ -719,7 +768,7 @@ export function ContentMetadataStudio({ initialCompetencies, initialQuestions }:
       {tab === "levels" && selected ? (
         <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
           <aside className="card-luxe space-y-1 p-2">
-            {competencies.map((c) => (
+            {visibleCompetencies.map((c) => (
               <button
                 key={c.id}
                 type="button"

@@ -1,21 +1,11 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import {
   loadDemoCatalogMetadata,
   type DemoCatalogSource,
 } from "@/lib/demo/catalog";
 import { loadContentBankSnapshot } from "@/lib/competency/content-bank-data";
-
-function difficultyForLevel(level: number): number {
-  const map: Record<number, number> = {
-    1: -1.4,
-    2: -0.6,
-    3: 0,
-    4: 0.7,
-    5: 1.4,
-  };
-  return map[level] ?? 0;
-}
+import { difficultyForLevel } from "@/lib/competency/unified-bank-sync";
 
 function uniqueExternalId(preferred: string, used: Set<string>) {
   let id = preferred.trim();
@@ -71,11 +61,19 @@ export async function addCatalogCompetenciesToBank(
         continue;
       }
 
+      const cluster = item.clusterCode
+        ? await tx.competencyCluster.findUnique({ where: { code: item.clusterCode } })
+        : null;
+      const source =
+        item.source === "ncs" ? "NCS" : item.source === "global" ? "GLOBAL" : "CUSTOM";
+
       const created = await tx.competency.create({
         data: {
           code: item.code,
           nameKo: item.nameKo,
           description: item.description,
+          clusterId: cluster?.id ?? null,
+          source,
           sortOrder,
           isActive: true,
           rubricByLevel: item.rubricByLevel as Prisma.InputJsonValue,

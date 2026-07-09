@@ -218,6 +218,10 @@ async function main() {
       2
     )
   );
+
+  const { syncUnifiedCompetencyPool } = await import("../src/lib/competency/unified-bank-sync");
+  const synced = await syncUnifiedCompetencyPool();
+  console.log("Unified IRT pool sync:", synced);
 }
 
 main()

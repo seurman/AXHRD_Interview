@@ -6,6 +6,7 @@ import {
   addCatalogCompetenciesToBank,
 } from "@/lib/competency/catalog-import";
 import type { DemoCatalogSource } from "@/lib/demo/catalog";
+import type { CompetencySource } from "@prisma/client";
 
 const CODE_RE = /^[A-Z][A-Z0-9_]{1,31}$/;
 
@@ -23,7 +24,11 @@ export async function POST(req: Request) {
         : [];
     const selections = raw
       .map((s: { source?: string; code?: string }) => ({
-        source: (s.source === "ncs" ? "ncs" : "global") as DemoCatalogSource,
+        source: (s.source === "ncs"
+          ? "ncs"
+          : s.source === "custom"
+            ? "custom"
+            : "global") as DemoCatalogSource,
         code: typeof s.code === "string" ? s.code.trim().toUpperCase() : "",
       }))
       .filter((s: { code: string }) => CODE_RE.test(s.code));
@@ -83,12 +88,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "한글 역량명을 입력해 주세요." }, { status: 400 });
   }
 
+  const clusterId = typeof body.clusterId === "string" ? body.clusterId : undefined;
+  const sourceRaw = typeof body.source === "string" ? body.source.toUpperCase() : "CUSTOM";
+  const source = (["NCS", "GLOBAL", "CUSTOM"].includes(sourceRaw)
+    ? sourceRaw
+    : "CUSTOM") as CompetencySource;
+  const nameEn = typeof body.nameEn === "string" ? body.nameEn.trim() || null : null;
+
   const maxOrder = await prisma.competency.aggregate({ _max: { sortOrder: true } });
   const sortOrder = (maxOrder._max.sortOrder ?? -1) + 1;
 
   try {
     const created = await prisma.competency.create({
-      data: { code, nameKo, description, sortOrder, isActive: true },
+      data: {
+        code,
+        nameKo,
+        nameEn,
+        description,
+        clusterId: clusterId || null,
+        source,
+        sortOrder,
+        isActive: true,
+      },
     });
     await logAdminAudit({
       actor: auditActor(auth),
