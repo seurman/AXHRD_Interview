@@ -2063,6 +2063,16 @@ html.dark .lp-proof-row {
     break-inside: avoid;
   }
 
+  .report-print-wrap {
+    border: 2px double color-mix(in srgb, var(--color-gold) 35%, #ccc) !important;
+    padding: 1.25rem 1.5rem !important;
+    margin: 0 !important;
+  }
+
+  .report-print-letterhead {
+    display: block !important;
+  }
+
   .report-prose {
     word-break: keep-all;
     overflow-wrap: break-word;

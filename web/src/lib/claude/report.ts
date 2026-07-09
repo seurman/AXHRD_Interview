@@ -98,6 +98,61 @@ export async function generateSessionReport(params: {
   return mockReport(params.competencies, params.responses);
 }
 
+function hashSeed(str: string): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (h * 31 + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+}
+
+function pickTemplates<T>(templates: T[], seed: string, count: number): T[] {
+  if (templates.length === 0) return [];
+  const start = hashSeed(seed) % templates.length;
+  const picked: T[] = [];
+  for (let i = 0; i < count; i++) {
+    picked.push(templates[(start + i) % templates.length]);
+  }
+  return picked;
+}
+
+function contentForPercentile(percentile: number, level: number): string {
+  if (percentile >= 70) {
+    return `추정 레벨 L${level} — 상위권 역량으로 안정적인 답변을 보였습니다.`;
+  }
+  if (percentile >= 50) {
+    return `추정 레벨 L${level} — 평균 이상 수준으로 핵심을 전달했습니다.`;
+  }
+  if (percentile >= 40) {
+    return `추정 레벨 L${level} — 기본기는 갖추었으나 구체성을 더하면 좋겠습니다.`;
+  }
+  return `추정 레벨 L${level} — 기초 역량부터 다시 다지면 좋겠습니다.`;
+}
+
+const SUGGESTION_HIGH = [
+  "성과 수치와 본인 기여도를 한 문장으로 압축해 말해보세요.",
+  "답변 마지막에 배운 점·다음 행동을 한 줄로 정리해보세요.",
+  "같은 경험을 STAR 구조로 2분 이내에 말하는 연습을 해보세요.",
+];
+
+const SUGGESTION_MID = [
+  "상황·과제·행동·결과 순서로 답변을 재구성해보세요.",
+  "추상적 표현 대신 구체적 사례 하나를 골라 반복 연습하세요.",
+  "질문 의도에 맞는 키워드를 답변 앞부분에 먼저 제시해보세요.",
+];
+
+const SUGGESTION_LOW = [
+  "L1~L2 기초 문항부터 짧게 답하는 연습을 해보세요.",
+  "경험이 없더라도 학습·프로젝트 사례를 하나 준비해두세요.",
+  "한 문장 요약 → 근거 한 가지 순으로 답변 길이를 맞춰보세요.",
+];
+
+function suggestionsForCompetency(competency: string, percentile: number): string[] {
+  const templates =
+    percentile >= 70 ? SUGGESTION_HIGH : percentile >= 50 ? SUGGESTION_MID : SUGGESTION_LOW;
+  return pickTemplates(templates, competency, 2);
+}
+
 function mockReport(
   competencies: CompetencySummary[],
   responses: Array<{
@@ -113,6 +168,7 @@ function mockReport(
   const sorted = [...competencies].sort((a, b) => b.theta - a.theta);
   const top = sorted[0];
   const bottom = sorted[sorted.length - 1];
+  const weakestLabel = bottom ? competencyLabel(bottom.competency) : "약점";
 
   return {
     summary: `전반적으로 ${competencies.length}개 역량을 측정했습니다. ${top?.competency ? competencyLabel(top.competency) : ""} 영역이 상대적으로 강점으로 보입니다.`,
@@ -121,12 +177,13 @@ function mockReport(
         .filter((r) => r.competency === c.competency && r.answer?.trim())
         .sort((a, b) => b.score - a.score);
       const bestAnswer = compResponses[0];
+      const percentile = Math.round(c.percentile);
 
       return {
         title: c.competency,
-        content: `θ=${c.theta.toFixed(2)}, 추정 레벨 L${c.level_estimate}`,
-        score: Math.round(c.percentile),
-        suggestions: ["구체적 수치와 본인 역할을 포함하세요."],
+        content: contentForPercentile(percentile, c.level_estimate),
+        score: percentile,
+        suggestions: suggestionsForCompetency(c.competency, percentile),
         highlight: bestAnswer ? extractQuote(bestAnswer.answer) : undefined,
       };
     }),
@@ -135,9 +192,9 @@ function mockReport(
       ? [`${competencyLabel(bottom.competency)} 역량 보강 (레벨 ${bottom.level_estimate})`]
       : [],
     nextSteps: [
-      "약점 역량 L1~L2 문항 반복 연습",
+      `${weakestLabel} 영역 L1~L2 문항 반복 연습`,
       "STAR 구조로 2분 이내 답변 연습",
-      "다음 차수에서 동일 역량 θ 변화 확인",
+      `${weakestLabel} 역량 중심으로 다음 차수 면접 진행`,
     ],
   };
 }

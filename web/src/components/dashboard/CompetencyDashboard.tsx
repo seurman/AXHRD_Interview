@@ -14,6 +14,7 @@ import {
   PolarAngleAxis,
   Radar,
 } from "recharts";
+import type { DotProps } from "recharts";
 import { competencyLabel } from "@/lib/labels";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { QuestPanel } from "./QuestPanel";
@@ -80,6 +81,7 @@ export function CompetencyDashboard({
     competency: competencyLabel(code),
     score: v.assessed ? v.percentile : 0,
     code,
+    assessed: v.assessed,
   }));
 
   const timelineData = buildTimeline(snapshots);
@@ -122,7 +124,13 @@ export function CompetencyDashboard({
                 <RadarChart data={radarData}>
                   <PolarGrid stroke="var(--color-card-border)" />
                   <PolarAngleAxis dataKey="competency" tick={{ fill: "var(--color-muted)", fontSize: 10 }} />
-                  <Radar dataKey="score" stroke="var(--color-primary)" fill="var(--color-primary)" fillOpacity={0.3} />
+                  <Radar
+                    dataKey="score"
+                    stroke="var(--color-primary)"
+                    fill="var(--color-primary)"
+                    fillOpacity={0.3}
+                    dot={<AssessedRadarDot />}
+                  />
                 </RadarChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -177,6 +185,25 @@ export function CompetencyDashboard({
         </div>
       </div>
     </div>
+  );
+}
+
+function AssessedRadarDot(props: DotProps & { payload?: { assessed?: boolean } }) {
+  const { cx, cy, payload } = props;
+  if (cx == null || cy == null) return null;
+  const assessed = payload?.assessed !== false;
+
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={assessed ? 4 : 3}
+      fill={assessed ? "var(--color-primary)" : "var(--color-muted)"}
+      fillOpacity={assessed ? 1 : 0.4}
+      stroke={assessed ? "var(--color-primary)" : "var(--color-muted)"}
+      strokeWidth={assessed ? 2 : 1}
+      strokeDasharray={assessed ? undefined : "2 2"}
+    />
   );
 }
 

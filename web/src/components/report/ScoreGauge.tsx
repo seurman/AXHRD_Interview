@@ -6,11 +6,16 @@ export function ScoreGauge({
   value,
   size = 112,
   label = "백분위",
+  variant = "accent",
 }: {
   value: number;
   size?: number;
   label?: string;
+  /** accent: 기본 강조색, gold: 인증서·리포트 요약용 골드 포인트 */
+  variant?: "accent" | "gold";
 }) {
+  const strokeColor =
+    variant === "gold" ? "var(--color-gold)" : "var(--color-accent)";
   const clamped = Math.max(0, Math.min(100, value));
   const stroke = 10;
   const radius = (size - stroke) / 2;
@@ -34,7 +39,7 @@ export function ScoreGauge({
           cy={center}
           r={radius}
           fill="none"
-          stroke="var(--color-accent)"
+          stroke={strokeColor}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
