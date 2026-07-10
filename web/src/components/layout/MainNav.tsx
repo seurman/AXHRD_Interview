@@ -27,6 +27,7 @@ export function MainNav({
   profileHref,
   adminSections,
   saasLinks,
+  headerLinks = [],
   userName,
   loggedIn,
   loading = false,
@@ -36,6 +37,7 @@ export function MainNav({
   profileHref: string | null;
   adminSections: AdminNavSection[];
   saasLinks?: SaasLinksConfig | null;
+  headerLinks?: { href: string; label: string }[];
   userName?: string;
   loggedIn: boolean;
   loading?: boolean;
@@ -112,6 +114,16 @@ export function MainNav({
           {c.nav.profile}
         </Link>
       )}
+
+      {headerLinks.map((link) => (
+        <Link
+          key={link.href}
+          href={link.href}
+          className={`nav-pill ${linkActive(link.href) ? "nav-pill-active" : ""}`}
+        >
+          {link.label}
+        </Link>
+      ))}
 
       {saasLinks && (
         <SaasNavMenu

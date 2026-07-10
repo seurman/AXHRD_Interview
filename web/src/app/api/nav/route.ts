@@ -28,6 +28,8 @@ export async function GET() {
       userName: null,
       orgRole: null,
       organizationId: null,
+      isSuperAdmin: false,
+      headerLinks: [],
       trialOnly: false,
       canPresentDemo: false,
       dashboardHref: null,
@@ -51,6 +53,8 @@ export async function GET() {
       prepareLinks: [] as { href: string; labelKey: import("@/lib/platform/nav-registry").PrepareLabelKey }[],
       profileHref: "/profile" as string | null,
       saasLinks: null,
+      headerLinks: [] as { href: string; label: string }[],
+      isSuperAdmin: false,
       adminSections: [] as import("@/lib/nav/client-types").NavPayload["adminSections"],
     };
   });
@@ -62,6 +66,8 @@ export async function GET() {
     userName: user.name,
     orgRole: user.orgRole,
     organizationId: user.organizationId,
+    isSuperAdmin: nav.isSuperAdmin ?? false,
+    headerLinks: nav.headerLinks ?? [],
     trialOnly: isPersonalTrialOnlyUser(user, personalContext),
     canPresentDemo: canManageDemoWorkspaces({
       email: user.email,

@@ -39,12 +39,12 @@ export function resolveUserCapabilities(
   user: RoleUser,
   context: AccessContext = {},
 ): Set<CapabilityId> {
+  if (isSuperAdminUser(user)) {
+    return new Set(ALL_CAPABILITY_IDS);
+  }
+
   const role = primaryPlatformRole(user);
   let caps = new Set(ROLE_CAPABILITY_MATRIX[role]);
-
-  if (isSuperAdminUser(user)) {
-    caps = new Set(ALL_CAPABILITY_IDS);
-  }
 
   if (isOrgAdminUser(user) && !context.tenantPersonalizationEnabled) {
     caps.delete("tenant.settings");
@@ -52,7 +52,7 @@ export function resolveUserCapabilities(
     caps.delete("tenant.custom_competency");
   }
 
-  if (!context.diagnosticEnabled && !isSuperAdminUser(user)) {
+  if (!context.diagnosticEnabled) {
     caps.delete("tenant.diagnostic");
   }
 

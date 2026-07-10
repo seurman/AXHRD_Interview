@@ -14,6 +14,7 @@ import {
   Shield,
   Users,
   Wallet,
+  Activity,
 } from "lucide-react";
 import type { CapabilityId } from "@/lib/platform/capabilities";
 
@@ -26,6 +27,7 @@ const ICON_BY_CAPABILITY: Partial<Record<CapabilityId, LucideIcon>> = {
   "platform.users": Users,
   "platform.organizations": Building2,
   "platform.content": ClipboardList,
+  "platform.diagnostic": Activity,
   "platform.demo": Presentation,
   "platform.subscriptions": Wallet,
   "platform.audit": FileSearch,

@@ -131,6 +131,9 @@ export type NavigationConfig = {
   prepareLinks: { href: string; labelKey: PrepareLabelKey }[];
   profileHref: string | null;
   saasLinks: SaasNavConfig | null;
+  /** 수퍼어드민 전용 — 헤더에 직접 노출되는 운영 링크 */
+  headerLinks: { href: string; label: string }[];
+  isSuperAdmin: boolean;
   adminLinks: { href: string; labelKey: NavLabelKey }[];
   adminSections: AdminNavSection[];
   platformConsoleHrefs: { href: string; label: string; capability: CapabilityId }[];
@@ -140,8 +143,9 @@ export type NavigationConfig = {
 export async function buildNavigationForUser(
   user: RoleUser & { id?: string },
 ): Promise<NavigationConfig> {
-  let tenantPersonalizationEnabled = false;
-  let diagnosticEnabled = isSuperAdminUser(user);
+  const superAdmin = isSuperAdminUser(user);
+  let tenantPersonalizationEnabled = superAdmin;
+  let diagnosticEnabled = superAdmin;
   let billingTier: import("@prisma/client").PlanTier | undefined;
   if (user.id) {
     const { getBillingContext } = await import("@/lib/billing/subscription");
@@ -150,8 +154,8 @@ export async function buildNavigationForUser(
   }
   if (user.organizationId && user.orgRole === "ADMIN") {
     const flags = await loadOrgAdminFlags(user.organizationId);
-    tenantPersonalizationEnabled = flags.tenantPersonalizationEnabled;
-    diagnosticEnabled = isSuperAdminUser(user) || flags.diagnosticEnabled;
+    tenantPersonalizationEnabled = superAdmin || flags.tenantPersonalizationEnabled;
+    diagnosticEnabled = superAdmin || flags.diagnosticEnabled;
   }
 
   const context: AccessContext = {
@@ -176,45 +180,69 @@ export async function buildNavigationForUser(
 
   let saasLinks: SaasNavConfig | null = null;
   const hasOrgMembership = !!user.organizationId;
-  const hasTenantNav =
-    hasOrgMembership &&
-    (caps.has("tenant.cohort") ||
-      caps.has("tenant.settings") ||
-      caps.has("tenant.interview_kit") ||
-      caps.has("tenant.diagnostic"));
 
-  if (hasTenantNav) {
-    const links: SaasNavConfig["links"] = [];
-    const settingsLinks: SaasNavConfig["settingsLinks"] = [];
+  if (superAdmin && hasOrgMembership) {
+    saasLinks = {
+      titleKey: "saas",
+      links: [
+        { href: "/org/dashboard", labelKey: "cohortDashboard" },
+        { href: "/org/diagnosis", labelKey: "diagnosticDashboard" },
+      ],
+      settingsTitleKey: "settings",
+      settingsLinks: [
+        { href: "/org/settings", labelKey: "settingsHub" },
+        { href: "/org/settings/interview-kit", labelKey: "interviewKit" },
+      ],
+    };
+  } else {
+    const hasTenantNav =
+      hasOrgMembership &&
+      (caps.has("tenant.cohort") ||
+        caps.has("tenant.settings") ||
+        caps.has("tenant.interview_kit") ||
+        caps.has("tenant.diagnostic"));
 
-    if (caps.has("tenant.cohort")) {
-      links.push({
-        href: "/org/dashboard",
-        labelKey: "cohortDashboard",
-      });
-    }
-    if (caps.has("tenant.diagnostic")) {
-      links.push({
-        href: "/org/diagnosis",
-        labelKey: "diagnosticDashboard",
-      });
-    }
+    if (hasTenantNav) {
+      const links: SaasNavConfig["links"] = [];
+      const settingsLinks: SaasNavConfig["settingsLinks"] = [];
 
-    if (caps.has("tenant.settings")) {
-      settingsLinks.push({ href: "/org/settings", labelKey: "settingsHub" });
-    }
-    if (caps.has("tenant.interview_kit")) {
-      settingsLinks.push({ href: "/org/settings/interview-kit", labelKey: "interviewKit" });
-    }
+      if (caps.has("tenant.cohort")) {
+        links.push({
+          href: "/org/dashboard",
+          labelKey: "cohortDashboard",
+        });
+      }
+      if (caps.has("tenant.diagnostic")) {
+        links.push({
+          href: "/org/diagnosis",
+          labelKey: "diagnosticDashboard",
+        });
+      }
 
-    if (links.length > 0 || settingsLinks.length > 0) {
-      saasLinks = {
-        titleKey: "saas",
-        links,
-        settingsTitleKey: "settings",
-        settingsLinks,
-      };
+      if (caps.has("tenant.settings")) {
+        settingsLinks.push({ href: "/org/settings", labelKey: "settingsHub" });
+      }
+      if (caps.has("tenant.interview_kit")) {
+        settingsLinks.push({ href: "/org/settings/interview-kit", labelKey: "interviewKit" });
+      }
+
+      if (links.length > 0 || settingsLinks.length > 0) {
+        saasLinks = {
+          titleKey: "saas",
+          links,
+          settingsTitleKey: "settings",
+          settingsLinks,
+        };
+      }
     }
+  }
+
+  const headerLinks: { href: string; label: string }[] = [];
+  if (superAdmin) {
+    if (hasOrgMembership) {
+      headerLinks.push({ href: "/org/diagnosis", label: "조직진단" });
+    }
+    headerLinks.push({ href: "/admin/diagnostic", label: "진단 CMS" });
   }
 
   const visibleAdmin = PLATFORM_NAV_ORDER.filter((item) => caps.has(item.capability));
@@ -239,6 +267,8 @@ export async function buildNavigationForUser(
     prepareLinks,
     profileHref,
     saasLinks,
+    headerLinks,
+    isSuperAdmin: superAdmin,
     adminLinks,
     adminSections,
     platformConsoleHrefs,

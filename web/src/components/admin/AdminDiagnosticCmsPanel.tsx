@@ -31,9 +31,10 @@ type WaveRow = {
 type Props = {
   instruments: InstrumentSummary[];
   waves: WaveRow[];
+  dbError?: string | null;
 };
 
-export function AdminDiagnosticCmsPanel({ instruments, waves }: Props) {
+export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: Props) {
   const router = useRouter();
   const [seeding, setSeeding] = useState(false);
   const [seedError, setSeedError] = useState<string | null>(null);
@@ -124,12 +125,24 @@ export function AdminDiagnosticCmsPanel({ instruments, waves }: Props) {
               type="button"
               disabled={seeding}
               onClick={() => void runSeed()}
-              className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-50"
             >
               {seeding ? "설치 중…" : "문항뱅크 설치"}
             </button>
           )}
         </div>
+
+        {dbError && (
+          <div className="mt-4 rounded-xl border border-rose-300/60 bg-rose-50/80 p-4 text-sm text-rose-900 dark:bg-rose-950/30 dark:text-rose-100">
+            <p className="font-medium">DB 연결/스키마 오류</p>
+            <p className="mt-1 text-xs opacity-90">{dbError}</p>
+            <p className="mt-2 text-xs">
+              운영 Supabase에서{" "}
+              <code className="rounded bg-black/10 px-1">npx prisma migrate deploy</code> 실행 후
+              다시 시도하세요.
+            </p>
+          </div>
+        )}
 
         {seedError && <p className="mt-3 text-sm text-rose-600">{seedError}</p>}
 

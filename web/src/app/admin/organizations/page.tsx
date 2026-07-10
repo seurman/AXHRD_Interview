@@ -102,7 +102,13 @@ export default async function AdminOrganizationsPage() {
       )}
 
       <section className="space-y-4">
-        <h2 className="font-semibold text-foreground">운영 중인 기관 ({active.length})</h2>
+        <div>
+          <h2 className="font-semibold text-foreground">운영 중인 기관 ({active.length})</h2>
+          <p className="mt-1 text-sm text-muted">
+            각 기관 카드 <strong className="font-medium text-foreground">하단</strong>의 「ARC
+            조직진단 SKU」 토글로 기관 ADMIN 메뉴에 조직진단을 노출합니다.
+          </p>
+        </div>
         {active.length === 0 ? (
           <p className="text-sm text-muted">승인된 기관이 없습니다.</p>
         ) : (

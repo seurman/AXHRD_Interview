@@ -93,6 +93,7 @@ export function MobileNav({
   profileHref,
   adminSections,
   saasLinks,
+  headerLinks = [],
   userName,
   loggedIn,
   guestMenu,
@@ -103,6 +104,7 @@ export function MobileNav({
   profileHref: string | null;
   adminSections: AdminNavSection[];
   saasLinks?: SaasLinksConfig | null;
+  headerLinks?: { href: string; label: string }[];
   userName?: string;
   loggedIn: boolean;
   guestMenu: boolean;
@@ -125,13 +127,14 @@ export function MobileNav({
     prepareLinks.forEach((l) => hrefs.add(l.href));
     saasLinks?.links.forEach((l) => hrefs.add(l.href));
     saasLinks?.settingsLinks.forEach((l) => hrefs.add(l.href));
+    headerLinks.forEach((l) => hrefs.add(l.href));
     adminSections.forEach((s) => s.links.forEach((l) => hrefs.add(l.href)));
     if (!loggedIn) {
       hrefs.add("/auth/login");
       hrefs.add("/auth/register");
     }
     return [...hrefs];
-  }, [adminSections, dashboardHref, loggedIn, prepareLinks, profileHref, saasLinks]);
+  }, [adminSections, dashboardHref, headerLinks, loggedIn, prepareLinks, profileHref, saasLinks]);
 
   useEffect(() => {
     setMounted(true);
@@ -246,6 +249,17 @@ export function MobileNav({
               {getMobileNavLabel("profile", dict)}
             </MobileNavLink>
           )}
+
+          {headerLinks.map((link) => (
+            <MobileNavLink
+              key={link.href}
+              href={link.href}
+              onNavigate={closeDrawer}
+              className={linkClass(link.href)}
+            >
+              {link.label}
+            </MobileNavLink>
+          ))}
 
           {saasLinks && (
             <AccordionSection title={c.saas.title} defaultOpen={saasActive} active={saasActive}>

@@ -19,6 +19,7 @@ export function AppHeader() {
   const prepareLinks = nav?.prepareLinks ?? [];
   const profileHref = nav?.profileHref ?? null;
   const saasLinks = nav?.saasLinks ?? null;
+  const headerLinks = nav?.headerLinks ?? [];
   const adminSections = nav?.adminSections ?? [];
   const userName = nav?.userName ?? undefined;
 
@@ -42,6 +43,7 @@ export function AppHeader() {
             prepareLinks={prepareLinks}
             profileHref={profileHref}
             saasLinks={saasLinks}
+            headerLinks={headerLinks}
             userName={userName}
             loading={loading && nav === null}
           />
@@ -55,6 +57,7 @@ export function AppHeader() {
             prepareLinks={prepareLinks}
             profileHref={profileHref}
             saasLinks={saasLinks}
+            headerLinks={headerLinks}
             userName={userName}
           />
         </div>
