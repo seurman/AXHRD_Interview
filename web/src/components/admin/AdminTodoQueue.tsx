@@ -13,12 +13,12 @@ export function AdminTodoQueue({ items }: { items: PlatformTodoItem[] }) {
   }
 
   return (
-    <ul className="-mx-6 -mb-4 border-t border-card-border">
+    <ul className="-mx-6 -mb-4 border-t border-[var(--platform-border)]">
       {items.map((item) => (
-        <li key={item.id} className="border-b border-card-border last:border-0">
+        <li key={item.id} className="border-b border-[var(--platform-border)] last:border-0">
           <Link
             href={item.href}
-            className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-6 py-3 text-sm transition hover:bg-background/60"
+            className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-6 py-3 text-sm transition hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
           >
             {item.urgent ? (
               <Badge tone="warning" className="w-16 shrink-0 justify-center">
@@ -30,14 +30,14 @@ export function AdminTodoQueue({ items }: { items: PlatformTodoItem[] }) {
               </Badge>
             )}
             <span className="min-w-[10rem] flex-1">
-              <span className="font-medium text-foreground">{item.title}</span>
+              <span className="font-semibold text-foreground">{item.title}</span>
               {item.subtitle && <span className="text-muted"> · {item.subtitle}</span>}
             </span>
             {item.meta && <span className="shrink-0 text-xs text-muted">{item.meta}</span>}
             {item.at && (
               <span className="shrink-0 text-xs text-muted">{formatRelativeTime(item.at)}</span>
             )}
-            <span className="ml-auto shrink-0 text-xs text-accent">처리 →</span>
+            <span className="ml-auto shrink-0 text-xs text-[var(--platform-accent)]">처리 →</span>
           </Link>
         </li>
       ))}

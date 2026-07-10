@@ -38,6 +38,12 @@ export const dictionary: Dictionary = {
       overview: "개요",
       consoleTitle: "AXHRD Console",
       backToService: "서비스로 돌아가기",
+      workspaces: {
+        tenants: "테넌트",
+        product: "제품",
+        operations: "운영",
+        settings: "설정",
+      },
       content: "IRT 문항",
       repository: "역량·루브릭",
       demo: "데모 워크스페이스",

@@ -54,6 +54,12 @@ export type Dictionary = {
       subscriptions: string;
       permissions: string;
       diagnostic: string;
+      workspaces: {
+        tenants: string;
+        product: string;
+        operations: string;
+        settings: string;
+      };
       sections: {
         tenants: string;
         product: string;

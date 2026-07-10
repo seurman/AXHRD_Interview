@@ -39,6 +39,12 @@ export const dictionary: Dictionary = {
       overview: "Overview",
       consoleTitle: "AXHRD Console",
       backToService: "Back to app",
+      workspaces: {
+        tenants: "Tenants",
+        product: "Product",
+        operations: "Operations",
+        settings: "Settings",
+      },
       content: "IRT questions",
       repository: "Competencies & rubrics",
       demo: "Demo workspaces",

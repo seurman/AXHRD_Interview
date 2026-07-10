@@ -1336,6 +1336,267 @@ body {
   max-width: none;
 }
 
+/* ── Platform App Shell (Vercel-style light console) ── */
+body:has(.platform-app) {
+  background: #e8ecf2;
+}
+
+html.dark body:has(.platform-app) {
+  background: #080808;
+}
+
+.platform-app {
+  --platform-accent: #0070f3;
+  --platform-accent-hover: #0060df;
+  --platform-sidebar-bg: #ffffff;
+  --platform-canvas: #e8ecf2;
+  --platform-canvas-highlight: #f4f6fa;
+  --platform-surface: #ffffff;
+  --platform-surface-raised: #ffffff;
+  --platform-border: #d4dae3;
+  --platform-text: #0f1419;
+  --platform-text-muted: #4b5563;
+  --platform-shadow-sm: 0 1px 2px rgb(15 20 25 / 0.06), 0 1px 3px rgb(15 20 25 / 0.04);
+  --platform-shadow: 0 1px 2px rgb(15 20 25 / 0.05), 0 4px 14px rgb(15 20 25 / 0.07);
+  --platform-shadow-raised: 0 2px 4px rgb(15 20 25 / 0.06), 0 8px 24px rgb(15 20 25 / 0.09);
+  background: var(--platform-canvas);
+  color: var(--platform-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  -webkit-font-smoothing: antialiased;
+}
+
+html.dark .platform-app {
+  --platform-sidebar-bg: #111111;
+  --platform-canvas: #080808;
+  --platform-canvas-highlight: #141414;
+  --platform-surface: #161616;
+  --platform-surface-raised: #1c1c1c;
+  --platform-border: #2e2e2e;
+  --platform-text: #f5f5f5;
+  --platform-text-muted: #a3a3a3;
+  --platform-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
+  --platform-shadow: 0 2px 8px rgb(0 0 0 / 0.4);
+  --platform-shadow-raised: 0 4px 20px rgb(0 0 0 / 0.45);
+}
+
+.platform-sidebar {
+  background: linear-gradient(180deg, var(--platform-sidebar-bg) 0%, var(--platform-canvas-highlight) 100%);
+  border-right: 1px solid var(--platform-border);
+  box-shadow:
+    2px 0 20px rgb(15 20 25 / 0.08),
+    inset -1px 0 0 rgb(255 255 255 / 0.6);
+}
+
+.platform-nav-section-label {
+  margin-bottom: 0.125rem;
+  padding: 0.5rem 0.5rem 0.125rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--platform-text-muted);
+}
+
+.platform-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.5625rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--platform-text-muted);
+  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+}
+
+.platform-nav-item:hover {
+  background: color-mix(in srgb, var(--platform-text) 6%, var(--platform-surface));
+  color: var(--platform-text);
+  box-shadow: var(--platform-shadow-sm);
+}
+
+.platform-nav-item--active {
+  background: var(--platform-surface);
+  font-weight: 700;
+  color: var(--platform-text);
+  box-shadow: var(--platform-shadow-sm);
+}
+
+.platform-sidebar-footer-btn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.5625rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--platform-text-muted);
+  transition: background 0.12s, color 0.12s;
+}
+
+.platform-sidebar-footer-btn:hover {
+  background: color-mix(in srgb, var(--platform-text) 6%, var(--platform-surface));
+  color: var(--platform-text);
+}
+
+.platform-content {
+  background:
+    radial-gradient(ellipse 140% 90% at 50% -25%, rgb(255 255 255 / 0.95), transparent 50%),
+    radial-gradient(ellipse 80% 50% at 100% 0%, rgb(0 112 243 / 0.04), transparent 45%),
+    linear-gradient(180deg, var(--platform-canvas-highlight) 0%, var(--platform-canvas) 55%, color-mix(in srgb, var(--platform-canvas) 85%, #c8d0dc) 100%);
+}
+
+html.dark .platform-content {
+  background:
+    radial-gradient(ellipse 100% 60% at 50% -10%, rgb(255 255 255 / 0.06), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgb(0 112 243 / 0.06), transparent 40%),
+    linear-gradient(180deg, #0c0c0c 0%, var(--platform-canvas) 100%);
+}
+
+html.dark .platform-sidebar {
+  box-shadow:
+    2px 0 24px rgb(0 0 0 / 0.5),
+    inset -1px 0 0 rgb(255 255 255 / 0.04);
+}
+
+html.dark .platform-panel {
+  box-shadow:
+    var(--platform-shadow-raised),
+    inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+html.dark .platform-metric-tile {
+  background: linear-gradient(165deg, #1c1c1c 0%, #141414 100%);
+  box-shadow:
+    var(--platform-shadow-sm),
+    inset 0 1px 0 rgb(255 255 255 / 0.05);
+}
+
+.platform-content-inner {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1200px;
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+@media (min-width: 1024px) {
+  .platform-content-inner {
+    padding: 2rem 2rem 3rem;
+  }
+}
+
+.platform-search {
+  border: 1px solid var(--platform-border);
+  border-radius: 0.375rem;
+  background: var(--platform-surface);
+  padding: 0.5rem 0.625rem 0.5rem 2rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--platform-text-muted);
+  box-shadow: var(--platform-shadow-sm);
+}
+
+.platform-icon-btn {
+  display: flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  color: var(--platform-text-muted);
+}
+
+.platform-icon-btn:hover {
+  background: color-mix(in srgb, var(--platform-text) 6%, transparent);
+  color: var(--platform-text);
+}
+
+.platform-panel {
+  border: 1px solid var(--platform-border);
+  border-radius: 0.625rem;
+  background: linear-gradient(180deg, var(--platform-surface-raised) 0%, var(--platform-surface) 100%);
+  box-shadow:
+    var(--platform-shadow-raised),
+    inset 0 1px 0 rgb(255 255 255 / 0.7);
+}
+
+.platform-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--platform-border);
+  padding: 1rem 1.25rem;
+  background: color-mix(in srgb, var(--platform-canvas-highlight) 40%, var(--platform-surface));
+}
+
+.platform-panel-body {
+  padding: 1.25rem;
+}
+
+.platform-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 0.375rem;
+  background: var(--platform-text);
+  padding: 0.5rem 0.9375rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--platform-surface);
+  box-shadow: var(--platform-shadow-sm);
+  transition: opacity 0.15s, box-shadow 0.15s;
+}
+
+.platform-btn-primary:hover {
+  opacity: 0.92;
+  box-shadow: var(--platform-shadow);
+}
+
+.platform-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--platform-border);
+  background: linear-gradient(180deg, #ffffff 0%, #f6f8fb 100%);
+  padding: 0.5rem 0.9375rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--platform-text);
+  box-shadow: var(--platform-shadow-sm);
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+
+.platform-btn-secondary:hover {
+  border-color: color-mix(in srgb, var(--platform-text) 22%, var(--platform-border));
+  box-shadow: var(--platform-shadow);
+}
+
+.platform-metric-tile {
+  border: 1px solid var(--platform-border);
+  border-radius: 0.5rem;
+  background: linear-gradient(165deg, #ffffff 0%, #eef2f7 100%);
+  padding: 1rem 1.125rem;
+  box-shadow:
+    var(--platform-shadow-sm),
+    inset 0 1px 0 rgb(255 255 255 / 0.85);
+  transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s;
+}
+
+.platform-metric-tile:hover {
+  border-color: color-mix(in srgb, var(--platform-text) 18%, var(--platform-border));
+  box-shadow: var(--platform-shadow);
+  transform: translateY(-1px);
+}
+
+.platform-metric-tile--alert {
+  border-color: color-mix(in srgb, #e67e22 50%, var(--platform-border));
+  background: linear-gradient(165deg, #fffaf3 0%, #fff4e6 100%);
+}
+
 /* Non-marketing routes keep the previous constrained canvas */
 .app-shell {
   margin-left: auto;
