@@ -14,9 +14,8 @@ export function AppHeader() {
   const { dict } = useI18n();
   const { nav, loading } = useNavSessionContext();
 
-  const loggedIn = nav?.loggedIn ?? false;
-  const showAuthMenu = loggedIn && (!loading || nav !== null);
-  const showGuestMenu = !loggedIn && !loading;
+  const navReady = nav !== null;
+  const loggedIn = nav?.loggedIn === true;
   const dashboardHref = nav?.dashboardHref ?? null;
   const prepareLinks = nav?.prepareLinks ?? [];
   const profileHref = nav?.profileHref ?? null;
@@ -41,21 +40,21 @@ export function AppHeader() {
           <MainNav
             adminSections={adminSections}
             dashboardHref={dashboardHref}
-            loggedIn={showAuthMenu}
+            loggedIn={loggedIn}
             prepareLinks={prepareLinks}
             profileHref={profileHref}
             saasLinks={saasLinks}
             headerLinks={headerLinks}
             userName={userName}
-            loading={loading && nav === null}
+            loading={!navReady && loading}
           />
 
           <MobileNav
             adminSections={adminSections}
             dashboardHref={dashboardHref}
-            loggedIn={showAuthMenu}
-            guestMenu={showGuestMenu}
-            loading={loading && nav === null}
+            loggedIn={loggedIn}
+            guestMenu={navReady && !loggedIn}
+            loading={!navReady && loading}
             prepareLinks={prepareLinks}
             profileHref={profileHref}
             saasLinks={saasLinks}

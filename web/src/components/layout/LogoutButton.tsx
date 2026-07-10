@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { clearNavSessionCache } from "@/components/layout/NavSessionProvider";
 
 async function performLogout(): Promise<void> {
   const res = await fetch("/api/auth/session", {
@@ -29,6 +30,7 @@ export function LogoutButton({
     setBusy(true);
     try {
       await performLogout();
+      clearNavSessionCache();
       window.location.assign("/");
     } catch {
       setBusy(false);
@@ -61,7 +63,7 @@ export function LogoutButton({
         type="button"
         disabled={busy}
         onClick={() => void handleLogout()}
-        className="nav-pill text-white/60 hover:border-white/30 hover:text-white disabled:opacity-60"
+        className="nav-pill text-muted hover:text-foreground disabled:opacity-60"
         title={text}
         aria-label={text}
       >

@@ -48,8 +48,8 @@ export function MainNav({
 
   if (loading) {
     return (
-      <nav className="hidden items-center sm:flex" aria-hidden>
-        <span className="h-8 w-28 animate-pulse rounded-full bg-primary/10" />
+      <nav className="hidden min-h-9 items-center sm:flex" aria-hidden>
+        <span className="h-8 w-48 max-w-[50vw] animate-pulse rounded-full bg-primary/10" />
       </nav>
     );
   }
