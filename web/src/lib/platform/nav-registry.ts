@@ -151,7 +151,7 @@ export async function buildNavigationForUser(
   if (user.organizationId && user.orgRole === "ADMIN") {
     const flags = await loadOrgAdminFlags(user.organizationId);
     tenantPersonalizationEnabled = flags.tenantPersonalizationEnabled;
-    diagnosticEnabled = flags.diagnosticEnabled;
+    diagnosticEnabled = isSuperAdminUser(user) || flags.diagnosticEnabled;
   }
 
   const context: AccessContext = {

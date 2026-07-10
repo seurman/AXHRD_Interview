@@ -8,12 +8,14 @@ import {
   Users,
   UserCog,
   ExternalLink,
+  Activity,
 } from "lucide-react";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { getOrgHubSnapshot } from "@/lib/org/hub-data";
 import { OrgContractEditor } from "@/components/admin/OrgContractEditor";
 import { OrgKindBadge } from "@/components/admin/OrgKindBadge";
 import { OrgHubPersonalizationToggle } from "@/components/admin/OrgHubPersonalizationToggle";
+import { OrgHubDiagnosticToggle } from "@/components/admin/OrgHubDiagnosticToggle";
 import { OrgReviewActions } from "@/components/admin/OrgReviewActions";
 import { OrgStatusBadge } from "@/components/admin/OrgStatusBadge";
 import { planLabel } from "@/lib/billing/plans";
@@ -166,15 +168,36 @@ export default async function AdminOrgHubPage({ params }: Props) {
               {hub.kitCount > 0 ? `${hub.kitCount}개 역량 설정됨` : "아직 설정 없음"}
             </p>
           </Link>
+
+          {hub.diagnosticEnabled && (
+            <Link
+              href="/org/diagnosis"
+              className="group rounded-2xl border border-card-border bg-card p-6 shadow-sm transition hover:border-accent/40 hover:shadow-md md:col-span-2"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-accent">
+                  <Activity className="h-5 w-5" />
+                </div>
+                <ExternalLink className="h-4 w-4 text-muted opacity-0 transition group-hover:opacity-100" />
+              </div>
+              <h2 className="mt-4 font-semibold text-foreground">조직진단 콘솔</h2>
+              <p className="mt-1 text-sm text-muted">
+                ARC Index 웨이브·팀 링크·집계 대시보드. 기관 ADMIN과 동일한 화면입니다.
+              </p>
+            </Link>
+          )}
         </section>
       )}
 
       {hub.status === "APPROVED" && (
-        <OrgHubPersonalizationToggle
-          organizationId={hub.id}
-          enabled={hub.personalizationEnabled}
-          enabledAt={hub.personalizationEnabledAt?.toISOString() ?? null}
-        />
+        <div className="grid gap-4 md:grid-cols-2">
+          <OrgHubPersonalizationToggle
+            organizationId={hub.id}
+            enabled={hub.personalizationEnabled}
+            enabledAt={hub.personalizationEnabledAt?.toISOString() ?? null}
+          />
+          <OrgHubDiagnosticToggle organizationId={hub.id} enabled={hub.diagnosticEnabled} />
+        </div>
       )}
 
       <section className="card-luxe overflow-hidden">

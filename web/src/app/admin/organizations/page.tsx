@@ -16,6 +16,7 @@ import {
   ChevronRight,
   ClipboardList,
   Sparkles,
+  Activity,
   Users,
 } from "lucide-react";
 
@@ -135,6 +136,12 @@ export default async function AdminOrganizationsPage() {
                     <span className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-2 py-0.5 text-[10px] font-semibold text-gold">
                       <Sparkles className="h-3 w-3" />
                       맞춤 설정 ON
+                    </span>
+                  )}
+                  {org.diagnosticEnabled && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">
+                      <Activity className="h-3 w-3" />
+                      조직진단 ON
                     </span>
                   )}
                 </div>

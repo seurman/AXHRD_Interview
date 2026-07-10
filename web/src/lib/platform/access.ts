@@ -52,7 +52,7 @@ export function resolveUserCapabilities(
     caps.delete("tenant.custom_competency");
   }
 
-  if (!context.diagnosticEnabled) {
+  if (!context.diagnosticEnabled && !isSuperAdminUser(user)) {
     caps.delete("tenant.diagnostic");
   }
 

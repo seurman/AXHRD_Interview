@@ -72,6 +72,7 @@ export async function getOrgHubSnapshot(organizationId: string) {
     seatCap,
     personalizationEnabled: org.saasPersonalizationEnabled,
     personalizationEnabledAt: org.saasPersonalizationEnabledAt,
+    diagnosticEnabled: org.diagnosticEnabled,
     kitCount: org.interviewKits.length,
     kits: org.interviewKits,
     subscription,
