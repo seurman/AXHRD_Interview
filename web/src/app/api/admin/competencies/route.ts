@@ -108,7 +108,8 @@ export async function POST(req: Request) {
         clusterId: clusterId || null,
         source,
         sortOrder,
-        isActive: true,
+        lifecycleStatus: "DRAFT",
+        isActive: false,
       },
     });
     await logAdminAudit({

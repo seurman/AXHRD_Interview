@@ -109,6 +109,12 @@ export async function validateCompetencyRubrics(competencyId: string) {
     };
   }
 
+  const defaultSet = await prisma.rubricSet.findFirst({
+    where: { competencyId, organizationId: null, isDefault: true },
+    include: { details: true },
+  });
+  const defaultDetails = defaultSet?.details ?? null;
+
   const questions = await prisma.question.findMany({
     where: {
       competencyId,
@@ -137,6 +143,7 @@ export async function validateCompetencyRubrics(competencyId: string) {
       rubricCriteria: q.rubricCriteria,
       rubricByLevel: competency.rubricByLevel,
       mappedRubricSetId: q.rubricMappings[0]?.rubricSetId ?? null,
+      defaultRubricDetails: defaultDetails,
     });
     coverage[resolved.kind] += 1;
     if (resolved.kind === "missing") {
@@ -192,6 +199,8 @@ export async function getCompetencyWorkspace(competencyId: string) {
   ]);
 
   const legacyLevels = legacyRubricLevels(competency.rubricByLevel);
+  const defaultSet = rubricSets.find((s) => s.isDefault && !s.organization);
+  const defaultDetails = defaultSet?.details ?? null;
 
   return {
     competency: {
@@ -220,6 +229,7 @@ export async function getCompetencyWorkspace(competencyId: string) {
         rubricCriteria: q.rubricCriteria,
         rubricByLevel: competency.rubricByLevel,
         mappedRubricSetId: mapped?.id ?? null,
+        defaultRubricDetails: defaultDetails,
       });
       return {
         id: q.id,
@@ -381,6 +391,24 @@ export async function upsertRubricSet(input: {
         _count: { select: { questionMappings: true } },
       },
     });
+  }).then(async (result) => {
+    if (input.isDefault && !input.organizationId) {
+      const { rubricByLevelFromDetails } = await import("@/lib/competency/rubric-ssot");
+      const rubricByLevel = rubricByLevelFromDetails(
+        result.details.map((d) => ({
+          scoreLevel: d.scoreLevel,
+          levelName: d.levelName,
+          behavioralIndicator: d.behavioralIndicator,
+        })),
+      );
+      if (Object.keys(rubricByLevel).length > 0) {
+        await prisma.competency.update({
+          where: { id: input.competencyId },
+          data: { rubricByLevel: rubricByLevel as import("@prisma/client").Prisma.InputJsonValue },
+        });
+      }
+    }
+    return result;
   });
 }
 

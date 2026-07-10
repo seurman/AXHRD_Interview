@@ -93,9 +93,16 @@ const COVERAGE_BADGE: Record<
 type Props = {
   competency: RepositoryCompetencyRow;
   onRefreshList?: () => void;
+  embedded?: boolean;
+  onOpenQuestions?: () => void;
 };
 
-export function CompetencyWorkspace({ competency, onRefreshList }: Props) {
+export function CompetencyWorkspace({
+  competency,
+  onRefreshList,
+  embedded = false,
+  onOpenQuestions,
+}: Props) {
   const [tab, setTab] = useState<WorkspaceTab>("overview");
   const [data, setData] = useState<WorkspaceData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -268,13 +275,15 @@ export function CompetencyWorkspace({ competency, onRefreshList }: Props) {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            {!embedded && (
             <Link
               href={`/admin/content?competency=${data.competency.code}`}
               className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm hover:bg-muted/30"
             >
               <ExternalLink className="h-4 w-4" />
-              문항 뱅크에서 편집
+              Framework Studio에서 편집
             </Link>
+            )}
           </div>
         </div>
 
@@ -360,8 +369,9 @@ export function CompetencyWorkspace({ competency, onRefreshList }: Props) {
               <ActionButton
                 icon={ArrowRight}
                 label="문항·IRT 파라미터 편집"
-                description="통합 문항 뱅크 CMS로 이동"
-                href={`/admin/content?competency=${data.competency.code}`}
+                description="Framework Studio 문항 탭으로 이동"
+                href={embedded ? undefined : `/admin/content?competency=${data.competency.code}&tab=levels`}
+                onClick={embedded ? onOpenQuestions : undefined}
               />
             </div>
           </div>

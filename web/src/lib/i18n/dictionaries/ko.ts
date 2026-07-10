@@ -44,7 +44,7 @@ export const dictionary: Dictionary = {
         operations: "운영",
         settings: "설정",
       },
-      content: "IRT 문항",
+      content: "Framework Studio",
       repository: "역량·루브릭",
       demo: "데모 워크스페이스",
       users: "사용자",

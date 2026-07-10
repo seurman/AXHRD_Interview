@@ -36,12 +36,6 @@ export const PLATFORM_NAV_ORDER: AdminNavItem[] = [
   },
   { href: "/admin/content", labelKey: "content", capability: "platform.content", section: "product" },
   {
-    href: "/admin/repository",
-    labelKey: "repository",
-    capability: "platform.content",
-    section: "product",
-  },
-  {
     href: "/admin/diagnostic",
     labelKey: "diagnostic",
     capability: "platform.diagnostic",

@@ -50,13 +50,22 @@ type Props = {
   initialClusters: BankCluster[];
   initialCompetencies: BankCompetencyRow[];
   initialQuestions: BankQuestion[];
+  layout?: "full" | "workspace";
+  workspacePanel?: "questions" | "levels" | "rubrics";
+  controlledSelectedId?: string;
+  onRefresh?: () => Promise<void>;
 };
 
 export function ContentMetadataStudio({
   initialClusters,
   initialCompetencies,
   initialQuestions,
+  layout = "full",
+  workspacePanel = "levels",
+  controlledSelectedId,
+  onRefresh: onExternalRefresh,
 }: Props) {
+  const isWorkspace = layout === "workspace";
   const [tab, setTab] = useState<Tab>("questions");
   const [clusters, setClusters] = useState(initialClusters);
   const [competencies, setCompetencies] = useState(initialCompetencies);
@@ -80,7 +89,11 @@ export function ContentMetadataStudio({
   const [newComp, setNewComp] = useState({ code: "", nameKo: "", description: "" });
   const [showNewComp, setShowNewComp] = useState(false);
 
-  const selected = competencies.find((c) => c.id === selectedId);
+  const activeTab: Tab = isWorkspace ? workspacePanel : tab;
+  const activeSelectedId =
+    isWorkspace && controlledSelectedId ? controlledSelectedId : selectedId;
+
+  const selected = competencies.find((c) => c.id === activeSelectedId);
   const visibleCompetencies = useMemo(() => {
     if (clusterFilter === "all") return competencies;
     return competencies.filter((c) => c.clusterId === clusterFilter);
@@ -92,14 +105,14 @@ export function ContentMetadataStudio({
     const map = new Map<number, BankQuestion[]>();
     for (const lv of LEVELS) map.set(lv, []);
     for (const q of questions) {
-      if (q.competencyId !== selectedId) continue;
+      if (q.competencyId !== activeSelectedId) continue;
       map.get(q.level)?.push(q);
     }
     for (const lv of LEVELS) {
       map.get(lv)?.sort((a, b) => a.sortOrder - b.sortOrder);
     }
     return map;
-  }, [questions, selectedId]);
+  }, [questions, activeSelectedId]);
 
   const filteredQuestions = useMemo(() => {
     const q = qSearch.trim().toLowerCase();
@@ -122,6 +135,12 @@ export function ContentMetadataStudio({
     () => mapCompetencyRubrics(competencies),
     [competencies],
   );
+
+  useEffect(() => {
+    if (isWorkspace && controlledSelectedId) {
+      setQCompFilter(controlledSelectedId);
+    }
+  }, [isWorkspace, controlledSelectedId]);
 
   useEffect(() => {
     if (!selected) return;
@@ -156,9 +175,10 @@ export function ContentMetadataStudio({
     setCompetencies(data.competencies);
     setQuestions(data.questions);
     if (data.clusters) setClusters(data.clusters);
-    if (!data.competencies.some((c: BankCompetencyRow) => c.id === selectedId)) {
+    if (!isWorkspace && !data.competencies.some((c: BankCompetencyRow) => c.id === selectedId)) {
       setSelectedId(data.competencies[0]?.id ?? "");
     }
+    if (onExternalRefresh) await onExternalRefresh();
   }
 
   async function saveCompetencyOrder(nextIds: string[]) {
@@ -355,7 +375,7 @@ export function ContentMetadataStudio({
   }
 
   async function addQuestion(level: number, competencyId?: string) {
-    const compId = competencyId ?? selectedId;
+    const compId = competencyId ?? activeSelectedId;
     const comp = compById.get(compId);
     if (!comp) return;
     const template = prompt(`L${level} 새 질문 텍스트를 입력하세요:`);
@@ -422,7 +442,9 @@ export function ContentMetadataStudio({
   ];
 
   return (
-    <div className="space-y-4" data-cms="metadata-v2">
+    <div className="space-y-4" data-cms={isWorkspace ? "framework-workspace" : "metadata-v2"}>
+      {!isWorkspace && (
+        <>
       <div className="rounded-2xl border-2 border-accent/40 bg-gradient-to-br from-accent/10 via-card to-gold/5 p-5">
         <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-accent">
           Platform metadata CMS
@@ -578,8 +600,10 @@ export function ContentMetadataStudio({
           )}
         </div>
       ) : null}
+        </>
+      )}
 
-      {tab === "questions" ? (
+      {activeTab === "questions" ? (
         <div className="card-luxe overflow-hidden">
           <div className="flex flex-wrap items-center gap-3 border-b border-card-border p-4">
             <div className="relative min-w-[200px] flex-1">
@@ -591,6 +615,7 @@ export function ContentMetadataStudio({
                 onChange={(e) => setQSearch(e.target.value)}
               />
             </div>
+            {!isWorkspace && (
             <select
               className="input-luxe"
               value={qCompFilter}
@@ -603,6 +628,7 @@ export function ContentMetadataStudio({
                 </option>
               ))}
             </select>
+            )}
             <select
               className="input-luxe"
               value={qLevelFilter}
@@ -702,7 +728,7 @@ export function ContentMetadataStudio({
         </div>
       ) : null}
 
-      {tab === "competencies" ? (
+      {tab === "competencies" && !isWorkspace ? (
         <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
           <aside className="card-luxe p-3">
             <p className="mb-2 text-xs font-semibold uppercase text-muted">드래그로 순서 변경</p>
@@ -775,8 +801,9 @@ export function ContentMetadataStudio({
         </div>
       ) : null}
 
-      {tab === "levels" && selected ? (
-        <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
+      {activeTab === "levels" && selected ? (
+        <div className={`grid gap-4 ${isWorkspace ? "" : "lg:grid-cols-[220px_1fr]"}`}>
+          {!isWorkspace && (
           <aside className="card-luxe space-y-1 p-2">
             {visibleCompetencies.map((c) => (
               <button
@@ -804,6 +831,7 @@ export function ContentMetadataStudio({
               </button>
             ))}
           </aside>
+          )}
           <div className="space-y-3">
             {LEVELS.map((level) => {
               const list = questionsByLevel.get(level) ?? [];
@@ -871,14 +899,14 @@ export function ContentMetadataStudio({
         </div>
       ) : null}
 
-      {tab === "levels" && !selected ? (
+      {activeTab === "levels" && !selected ? (
         <p className="text-sm text-muted">역량을 먼저 추가하세요.</p>
       ) : null}
 
-      {tab === "rubrics" ? (
+      {activeTab === "rubrics" ? (
         <div className="card-luxe p-4">
           <CompetencyRubricPanel
-            competencies={rubricCompetencies}
+            competencies={selected ? mapCompetencyRubrics([selected]) : rubricCompetencies}
             onUpdate={async (id, rubricByLevel: RubricByLevel) => {
               await fetch(`/api/admin/competencies/${id}`, {
                 method: "PATCH",

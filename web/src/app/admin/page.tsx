@@ -14,8 +14,7 @@ import { PLATFORM_NAV_ORDER } from "@/lib/platform/nav-registry";
 export const dynamic = "force-dynamic";
 
 const CONTENT_LINKS = [
-  { href: "/admin/content", labelKey: "content" as const, desc: "IRT 문항·역량 풀 편집" },
-  { href: "/admin/repository", labelKey: "repository" as const, desc: "역량 라이프사이클·루브릭 매핑" },
+  { href: "/admin/content", labelKey: "content" as const, desc: "Framework Studio · 역량·문항·루브릭·품질" },
   { href: "/admin/demo", labelKey: "demo" as const, desc: "고객 미팅용 데모 샌드박스" },
 ];
 
@@ -32,7 +31,7 @@ export default async function AdminHomePage() {
   }
 
   const contentLinks = CONTENT_LINKS.filter((l) => {
-    if (l.href === "/admin/content" || l.href === "/admin/repository") {
+    if (l.href === "/admin/content") {
       return hasCapability(user, "platform.content");
     }
     if (l.href === "/admin/demo") return hasCapability(user, "platform.demo");

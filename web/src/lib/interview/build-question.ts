@@ -4,10 +4,9 @@ import {
   personalizeQuestion,
   type InterviewStyleHint,
 } from "@/lib/interview/personalize-question";
-import { rubricForNcsLevel } from "@/lib/competency/ncs-rubric";
 import type { ResumeSummary } from "@/lib/interview/resume-summary";
-import { parseRubricCriteria } from "@/lib/competency/bank";
-import { rubricForCompetencyLevel } from "@/lib/competency/rubric";
+import { resolveRubricCriteria } from "@/lib/competency/rubric-ssot";
+import type { QuestionRubricContext } from "@/lib/competency/rubric-loader";
 import { parseJdRequirements } from "@/lib/company/jd-mapper";
 import {
   applyPressureTone,
@@ -23,18 +22,22 @@ type QuestionRow = {
   level: number;
   rubricCriteria?: unknown;
   competency: { code: string; rubricByLevel?: unknown };
+  rubricContext?: QuestionRubricContext;
 };
 
 function rubricForQuestion(
   question: QuestionRow,
-  orgKitRubric?: string[] | null
+  orgKitRubric?: string[] | null,
 ): string[] {
-  if (orgKitRubric && orgKitRubric.length > 0) return orgKitRubric;
-  const stored = parseRubricCriteria(question.rubricCriteria);
-  if (stored.length > 0) return stored;
-  const compLevel = rubricForCompetencyLevel(question.competency.rubricByLevel, question.level);
-  if (compLevel.length > 0) return compLevel;
-  return rubricForNcsLevel(question.competency.code, question.level);
+  return resolveRubricCriteria({
+    orgKitRubric,
+    questionCriteria: question.rubricCriteria,
+    questionLevel: question.level,
+    competencyCode: question.competency.code,
+    legacyRubricByLevel: question.competency.rubricByLevel,
+    mappedRubricDetails: question.rubricContext?.mappedDetails,
+    defaultRubricDetails: question.rubricContext?.defaultDetails,
+  });
 }
 
 type SessionContext = {
@@ -97,8 +100,16 @@ export async function buildPersonalizedQuestion(
     pressureTier?: PressureTier;
     /** 기관 인터뷰 킷 customRubricCriteria — 있으면 플랫폼/문항 루브릭 대신 사용 */
     orgKitRubric?: string[] | null;
+    /** RubricSet 컨텍스트 — 미전달 시 question.rubricContext 또는 DB 조회 */
+    rubricContext?: QuestionRubricContext;
   }
 ): Promise<InterviewQuestion> {
+  let rubricContext = options?.rubricContext ?? question.rubricContext;
+  if (!rubricContext) {
+    const { loadRubricContextForQuestion } = await import("@/lib/competency/rubric-loader");
+    rubricContext = await loadRubricContextForQuestion(question.id);
+  }
+  const questionWithRubric: QuestionRow = { ...question, rubricContext };
   const stored = parseIrtState(session.irtState);
   const cached = stored.personalizedQuestions?.[question.externalId];
   const seed = stored.administeredIds.length;
@@ -123,7 +134,7 @@ export async function buildPersonalizedQuestion(
 
   // skipPersonalization이 true일 때만 Gemini 미호출 — 기본은 매 문항 개인화 시도
   if (options?.skipPersonalization) {
-    const rubric = rubricForQuestion(question, options.orgKitRubric);
+    const rubric = rubricForQuestion(questionWithRubric, options.orgKitRubric);
     const personalizedQuestions = {
       ...stored.personalizedQuestions,
       [question.externalId]: { text: question.template, rubric, resumePersonalized: false },
@@ -164,13 +175,8 @@ export async function buildPersonalizedQuestion(
     interviewStyle: parseInterviewStyle(session.targetCompany?.interviewStyle),
   });
 
-  const adminRubric = parseRubricCriteria(question.rubricCriteria);
-  const rubric =
-    options?.orgKitRubric && options.orgKitRubric.length > 0
-      ? options.orgKitRubric
-      : adminRubric.length > 0
-        ? adminRubric
-        : result.rubric;
+  const resolvedRubric = rubricForQuestion(questionWithRubric, options?.orgKitRubric);
+  const rubric = resolvedRubric.length > 0 ? resolvedRubric : result.rubric;
 
   const resumePersonalized = result.text !== question.template;
   const personalizedQuestions = {

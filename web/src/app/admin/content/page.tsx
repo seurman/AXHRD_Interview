@@ -6,11 +6,31 @@ import { MeaningLayerPanel } from "@/components/admin/MeaningLayerPanel";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
+import type { FrameworkWorkspaceTab } from "@/components/admin/framework/FrameworkCompetencyWorkspace";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminContentPage() {
+const VALID_TABS = new Set<FrameworkWorkspaceTab>([
+  "meta",
+  "levels",
+  "questions",
+  "rubrics",
+  "quality",
+]);
+
+type Props = {
+  searchParams: Promise<{ competency?: string; tab?: string }>;
+};
+
+export default async function AdminContentPage({ searchParams }: Props) {
   const user = await requireProductionContentAdmin("/admin/content");
+  const params = await searchParams;
+  const initialCompetencyCode = params.competency?.trim() || null;
+  const tabParam = params.tab?.trim();
+  const initialTab =
+    tabParam && VALID_TABS.has(tabParam as FrameworkWorkspaceTab)
+      ? (tabParam as FrameworkWorkspaceTab)
+      : null;
 
   let clusters: Awaited<ReturnType<typeof loadContentBankSnapshot>>["clusters"] = [];
   let competencies: Awaited<ReturnType<typeof loadContentBankSnapshot>>["competencies"] = [];
@@ -27,14 +47,13 @@ export default async function AdminContentPage() {
   }
 
   return (
-    <div className={ADMIN_CONTAINER.default}>
+    <div className={ADMIN_CONTAINER.wide}>
       <AdminPageHeader
         eyebrow={PLATFORM_EYEBROW.content}
-        title="통합 역량 풀 · IRT 문항 뱅크"
+        title="Framework Studio"
         subtitle={
           <>
-            NCS·글로벌·신규 역량을 하나의 풀에서 관리합니다. 출처(source)만 다르고 모두 IRT 면접에
-            사용됩니다. 좌측 역량군(클러스터)별로 역량·문항·루브릭을 편집하세요. 기관 킷 조립은{" "}
+            역량군 → 역량 → 문항(IRT) · 루브릭 · 품질을 한 워크스페이스에서 관리합니다. 기관 킷 조립은{" "}
             <Link href="/org/settings/interview-kit" className="text-accent hover:underline">
               인터뷰 킷 스튜디오
             </Link>
@@ -44,7 +63,6 @@ export default async function AdminContentPage() {
         }
         links={[
           { href: "/admin/organizations", label: "기관 관리 · 테넌트 허브 →" },
-          { href: "/admin/repository", label: "역량 뱅크 →" },
           ...(hasSuperadminAccess(user)
             ? [
                 { href: "/admin/users", label: "ADMIN 권한 부여 →" },
@@ -69,6 +87,8 @@ export default async function AdminContentPage() {
           initialClusters={clusters}
           initialCompetencies={competencies}
           initialQuestions={questions}
+          initialCompetencyCode={initialCompetencyCode}
+          initialTab={initialTab}
         />
       )}
 

@@ -1,5 +1,9 @@
 import { parseRubricCriteria } from "@/lib/competency/bank";
 import { parseRubricByLevel, rubricForCompetencyLevel } from "@/lib/competency/rubric";
+import {
+  criteriaFromRubricDetails,
+  defaultRubricSetHasLevel,
+} from "@/lib/competency/rubric-ssot";
 
 export type QuestionCoverageKind =
   | "mapped"
@@ -18,6 +22,7 @@ export function resolveQuestionCoverage(input: {
   rubricCriteria: unknown;
   rubricByLevel: unknown;
   mappedRubricSetId: string | null;
+  defaultRubricDetails?: Array<{ scoreLevel: number; behavioralIndicator: string }> | null;
 }): QuestionCoverage {
   if (input.mappedRubricSetId) {
     return {
@@ -36,6 +41,14 @@ export function resolveQuestionCoverage(input: {
     };
   }
 
+  if (defaultRubricSetHasLevel(input.defaultRubricDetails ?? null, input.level)) {
+    return {
+      kind: "mapped",
+      criteriaCount: criteriaFromRubricDetails(input.defaultRubricDetails, input.level).length,
+      mappedRubricSetId: null,
+    };
+  }
+
   const levelCriteria = rubricForCompetencyLevel(input.rubricByLevel, input.level);
   if (levelCriteria.length > 0) {
     return {
@@ -49,9 +62,9 @@ export function resolveQuestionCoverage(input: {
 }
 
 export const COVERAGE_LABEL: Record<QuestionCoverageKind, string> = {
-  mapped: "루브릭 세트 연결",
+  mapped: "루브릭 세트 (연결 또는 기본)",
   question_criteria: "문항별 채점 기준",
-  competency_level: "역량 L-루브릭",
+  competency_level: "역량 L-루브릭 (legacy JSON)",
   missing: "채점 기준 없음",
 };
 

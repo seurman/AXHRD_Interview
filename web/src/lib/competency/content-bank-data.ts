@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { parseFollowUpHints, parseRubricCriteria } from "@/lib/competency/bank";
 import { PLATFORM_OWNER_FILTER } from "@/lib/content/ownership";
-import type { CompetencySource } from "@prisma/client";
+import type { CompetencySource, CompetencyLifecycleStatus } from "@prisma/client";
 
 export type BankCluster = {
   id: string;
@@ -27,6 +27,7 @@ export type BankCompetencyRow = {
   source: CompetencySource;
   sortOrder: number;
   isActive: boolean;
+  lifecycleStatus: CompetencyLifecycleStatus;
   rubricByLevel: unknown;
   questionCount: number;
 };
@@ -100,6 +101,7 @@ async function loadContentBankSnapshotInner() {
     source: c.source,
     sortOrder: c.sortOrder,
     isActive: c.isActive,
+    lifecycleStatus: c.lifecycleStatus,
     rubricByLevel: c.rubricByLevel,
     questionCount: c._count.questions,
   }));

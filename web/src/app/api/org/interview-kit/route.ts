@@ -11,6 +11,8 @@ import {
   resolveInterviewKitAccess,
 } from "@/lib/org/interview-kit";
 import { parseRubricByLevel, type RubricByLevel } from "@/lib/competency/rubric";
+import { loadDefaultRubricByLevelForCompetencies } from "@/lib/competency/rubric-loader";
+import { effectiveRubricByLevel } from "@/lib/competency/rubric-sync";
 import { getActiveCompetencyCodes } from "@/lib/competency/bank";
 
 const ACCESS_ERRORS: Record<string, string> = {
@@ -51,7 +53,8 @@ export async function GET(req: Request) {
     where: { organizationId },
   });
 
-  const rubricByCode = new Map(bank.competencies.map((c) => [c.code, c.rubricByLevel]));
+  const competencyIds = bank.competencies.filter((c) => c.isActive).map((c) => c.id);
+  const rubricFromSets = await loadDefaultRubricByLevelForCompetencies(competencyIds);
   const activeCodes = bank.competencies.filter((c) => c.isActive).map((c) => c.code);
 
   return NextResponse.json({
@@ -68,7 +71,7 @@ export async function GET(req: Request) {
         code: c.code,
         nameKo: c.nameKo,
         description: c.description,
-        rubricByLevel: parseRubricByLevel(rubricByCode.get(c.code)),
+        rubricByLevel: effectiveRubricByLevel(c.rubricByLevel, rubricFromSets.get(c.id)),
       })),
     questions: bank.questions.map((q) => ({
       id: q.id,

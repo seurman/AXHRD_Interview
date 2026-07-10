@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import type { CompetencyLifecycleStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   auditActor,
@@ -9,6 +10,10 @@ import {
 } from "@/lib/admin/auth";
 import { logAdminAudit, snapshotCompetency } from "@/lib/admin/audit";
 import { parseRubricByLevel } from "@/lib/competency/rubric";
+import { syncDefaultRubricSetFromLegacy } from "@/lib/competency/rubric-sync";
+import {
+  lifecycleToIsActive,
+} from "@/lib/repository/types";
 
 export async function PATCH(
   req: Request,
@@ -30,6 +35,7 @@ export async function PATCH(
     nameEn?: string | null;
     description?: string | null;
     isActive?: boolean;
+    lifecycleStatus?: CompetencyLifecycleStatus;
     sortOrder?: number;
     clusterId?: string | null;
     source?: "NCS" | "GLOBAL" | "CUSTOM";
@@ -46,7 +52,17 @@ export async function PATCH(
     data.description =
       typeof body.description === "string" ? body.description.trim() || null : null;
   }
-  if (typeof body.isActive === "boolean") data.isActive = body.isActive;
+  if (typeof body.isActive === "boolean") {
+    data.isActive = body.isActive;
+    data.lifecycleStatus = body.isActive ? "ACTIVE" : "DRAFT";
+  }
+  if (
+    typeof body.lifecycleStatus === "string" &&
+    ["DRAFT", "ACTIVE", "ARCHIVED"].includes(body.lifecycleStatus)
+  ) {
+    data.lifecycleStatus = body.lifecycleStatus as CompetencyLifecycleStatus;
+    data.isActive = lifecycleToIsActive(data.lifecycleStatus);
+  }
   if (body.clusterId !== undefined) {
     data.clusterId = typeof body.clusterId === "string" ? body.clusterId : null;
   }
@@ -58,6 +74,24 @@ export async function PATCH(
   }
 
   const updated = await prisma.competency.update({ where: { id }, data });
+
+  if (body.rubricByLevel !== undefined) {
+    await syncDefaultRubricSetFromLegacy(updated.id, updated.rubricByLevel, {
+      nameKo: updated.nameKo,
+      code: updated.code,
+    });
+    const refreshed = await prisma.competency.findUniqueOrThrow({ where: { id } });
+    await logAdminAudit({
+      actor: auditActor(auth),
+      action: "UPDATE",
+      entityType: "competency",
+      entityId: id,
+      summary: `역량 수정: ${refreshed.code}`,
+      beforeState: before,
+      afterState: snapshotCompetency(refreshed),
+    });
+    return NextResponse.json({ competency: refreshed });
+  }
 
   await logAdminAudit({
     actor: auditActor(auth),

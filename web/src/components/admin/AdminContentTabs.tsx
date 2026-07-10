@@ -1,20 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { ContentMetadataStudio } from "@/components/admin/ContentMetadataStudio";
+import { FrameworkStudio } from "@/components/admin/framework/FrameworkStudio";
 import { AdminOrgCustomCompetenciesPanel } from "@/components/admin/AdminOrgCustomCompetenciesPanel";
 import type { BankCluster, BankCompetencyRow } from "@/lib/competency/content-bank-data";
+import type { FrameworkWorkspaceTab } from "@/components/admin/framework/FrameworkCompetencyWorkspace";
 
 type Props = {
   initialClusters: BankCluster[];
   initialCompetencies: BankCompetencyRow[];
   initialQuestions: Awaited<ReturnType<typeof import("@/lib/competency/content-bank-data").loadContentBankSnapshot>>["questions"];
+  initialCompetencyCode?: string | null;
+  initialTab?: FrameworkWorkspaceTab | null;
 };
 
 export function AdminContentTabs({
   initialClusters,
   initialCompetencies,
   initialQuestions,
+  initialCompetencyCode,
+  initialTab,
 }: Props) {
   const [tab, setTab] = useState<"platform" | "org_custom">("platform");
 
@@ -28,7 +33,7 @@ export function AdminContentTabs({
             tab === "platform" ? "bg-accent text-white" : "text-muted hover:bg-card-border/40"
           }`}
         >
-          플랫폼 뱅크
+          Framework Studio
         </button>
         <button
           type="button"
@@ -42,10 +47,12 @@ export function AdminContentTabs({
       </div>
 
       {tab === "platform" ? (
-        <ContentMetadataStudio
+        <FrameworkStudio
           initialClusters={initialClusters}
           initialCompetencies={initialCompetencies}
           initialQuestions={initialQuestions}
+          initialCompetencyCode={initialCompetencyCode}
+          initialTab={initialTab}
         />
       ) : (
         <AdminOrgCustomCompetenciesPanel />
