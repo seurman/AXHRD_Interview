@@ -8,6 +8,7 @@ import {
   ClipboardList,
   FileSearch,
   LayoutGrid,
+  Layers,
   Presentation,
   Scale,
   Shield,
@@ -15,6 +16,10 @@ import {
   Wallet,
 } from "lucide-react";
 import type { CapabilityId } from "@/lib/platform/capabilities";
+
+const ICON_BY_HREF: Partial<Record<string, LucideIcon>> = {
+  "/admin/repository": Layers,
+};
 
 const ICON_BY_CAPABILITY: Partial<Record<CapabilityId, LucideIcon>> = {
   "platform.permissions": Shield,
@@ -43,7 +48,7 @@ export function PlatformConsoleSidebar({ items }: { items: Item[] }) {
         </div>
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
           {items.map((item) => {
-            const Icon = ICON_BY_CAPABILITY[item.capability];
+            const Icon = ICON_BY_HREF[item.href] ?? ICON_BY_CAPABILITY[item.capability];
             const active =
               pathname === item.href ||
               (item.href !== "/admin/permissions" && pathname.startsWith(`${item.href}/`));

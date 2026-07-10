@@ -1,5 +1,5 @@
 import type { CapabilityId } from "@/lib/platform/capabilities";
-import { CAPABILITY_REGISTRY } from "@/lib/platform/capabilities";
+import { dictionary as koDictionary } from "@/lib/i18n/dictionaries/ko";
 import { hasCapability, resolveUserCapabilities, type AccessContext } from "@/lib/platform/access";
 import { type RoleUser } from "@/lib/auth/roles";
 
@@ -187,7 +187,7 @@ export async function buildNavigationForUser(
 
   const platformConsoleHrefs = visibleAdmin.map((item) => ({
     href: item.href,
-    label: CAPABILITY_REGISTRY[item.capability].labelKo,
+    label: koDictionary.common.admin[item.labelKey],
     capability: item.capability,
   }));
 

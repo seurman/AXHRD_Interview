@@ -1,5 +1,12 @@
 import type { CompetencyLifecycleStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { parseRubricCriteria } from "@/lib/competency/bank";
+import {
+  legacyRubricLevels,
+  legacyRubricToDetails,
+  resolveQuestionCoverage,
+  type QuestionCoverageKind,
+} from "@/lib/repository/coverage";
 import {
   lifecycleToIsActive,
   platformCompetencyWhere,
@@ -87,6 +94,21 @@ export async function deleteRepositoryCompetency(id: string) {
 }
 
 export async function validateCompetencyRubrics(competencyId: string) {
+  const competency = await prisma.competency.findUnique({
+    where: { id: competencyId },
+    select: { rubricByLevel: true },
+  });
+  if (!competency) {
+    return {
+      totalQuestions: 0,
+      missingMappingCount: 0,
+      missingQuestions: [],
+      ok: true,
+      coverage: { mapped: 0, question_criteria: 0, competency_level: 0, missing: 0 },
+      needsNormalizedMapping: 0,
+    };
+  }
+
   const questions = await prisma.question.findMany({
     where: {
       competencyId,
@@ -100,26 +122,198 @@ export async function validateCompetencyRubrics(competencyId: string) {
     orderBy: [{ level: "asc" }, { externalId: "asc" }],
   });
 
-  const missing = questions.filter((q) => q.rubricMappings.length === 0);
-  const rubricCriteriaEmpty = questions.filter((q) => {
-    const criteria = q.rubricCriteria;
-    return (
-      q.rubricMappings.length === 0 &&
-      (!Array.isArray(criteria) || criteria.length === 0)
-    );
-  });
+  const coverage = { mapped: 0, question_criteria: 0, competency_level: 0, missing: 0 };
+  const missingQuestions: Array<{
+    id: string;
+    externalId: string;
+    questionText: string;
+    level: number;
+    coverageKind: QuestionCoverageKind;
+  }> = [];
+
+  for (const q of questions) {
+    const resolved = resolveQuestionCoverage({
+      level: q.level,
+      rubricCriteria: q.rubricCriteria,
+      rubricByLevel: competency.rubricByLevel,
+      mappedRubricSetId: q.rubricMappings[0]?.rubricSetId ?? null,
+    });
+    coverage[resolved.kind] += 1;
+    if (resolved.kind === "missing") {
+      missingQuestions.push({
+        id: q.id,
+        externalId: q.externalId,
+        questionText: q.template,
+        level: q.level,
+        coverageKind: resolved.kind,
+      });
+    }
+  }
+
+  const needsNormalizedMapping = questions.filter((q) => q.rubricMappings.length === 0).length;
 
   return {
     totalQuestions: questions.length,
-    missingMappingCount: missing.length,
-    missingQuestions: missing.map((q) => ({
-      id: q.id,
-      externalId: q.externalId,
-      questionText: q.template,
-      level: q.level,
-    })),
-    ok: missing.length === 0,
+    missingMappingCount: missingQuestions.length,
+    missingQuestions,
+    needsNormalizedMapping,
+    coverage,
+    ok: missingQuestions.length === 0,
   };
+}
+
+export async function getCompetencyWorkspace(competencyId: string) {
+  const competency = await prisma.competency.findFirst({
+    where: { id: competencyId, ...platformCompetencyWhere },
+    include: {
+      cluster: { select: { nameKo: true, code: true } },
+      _count: { select: { questions: true, rubricSets: true } },
+    },
+  });
+  if (!competency) return null;
+
+  const [rubricSets, questions, validation] = await Promise.all([
+    listRubricSetsForCompetency(competencyId),
+    prisma.question.findMany({
+      where: {
+        competencyId,
+        isActive: true,
+        ownerScope: "PLATFORM",
+        organizationId: null,
+      },
+      include: {
+        rubricMappings: {
+          include: { rubricSet: { select: { id: true, rubricName: true } } },
+        },
+      },
+      orderBy: [{ level: "asc" }, { sortOrder: "asc" }, { externalId: "asc" }],
+    }),
+    validateCompetencyRubrics(competencyId),
+  ]);
+
+  const legacyLevels = legacyRubricLevels(competency.rubricByLevel);
+
+  return {
+    competency: {
+      id: competency.id,
+      code: competency.code,
+      nameKo: competency.nameKo,
+      description: competency.description,
+      lifecycleStatus: competency.lifecycleStatus,
+      isActive: competency.isActive,
+      source: competency.source,
+      category: competency.cluster?.nameKo ?? competency.source,
+      clusterCode: competency.cluster?.code ?? null,
+      questionCount: competency._count.questions,
+      rubricSetCount: competency._count.rubricSets,
+    },
+    legacyRubric: {
+      levels: legacyLevels,
+      hasData: legacyLevels.length > 0,
+    },
+    rubricSets,
+    questions: questions.map((q) => {
+      const mapped = q.rubricMappings[0]?.rubricSet ?? null;
+      const rubricCriteria = parseRubricCriteria(q.rubricCriteria);
+      const coverage = resolveQuestionCoverage({
+        level: q.level,
+        rubricCriteria: q.rubricCriteria,
+        rubricByLevel: competency.rubricByLevel,
+        mappedRubricSetId: mapped?.id ?? null,
+      });
+      return {
+        id: q.id,
+        externalId: q.externalId,
+        template: q.template,
+        level: q.level,
+        difficulty: q.difficulty,
+        rubricCriteria,
+        coverage,
+        mappedRubric: mapped,
+      };
+    }),
+    validation,
+  };
+}
+
+export async function importLegacyRubricSet(competencyId: string) {
+  const competency = await prisma.competency.findUnique({
+    where: { id: competencyId },
+    select: { id: true, nameKo: true, code: true, rubricByLevel: true },
+  });
+  if (!competency) return { ok: false as const, error: "역량을 찾을 수 없습니다.", status: 404 };
+
+  const details = legacyRubricToDetails(competency.rubricByLevel);
+  if (details.length === 0) {
+    return {
+      ok: false as const,
+      error: "역량에 저장된 L-루브릭(rubricByLevel)이 없습니다. 문항 뱅크 CMS에서 먼저 편집하세요.",
+      status: 400,
+    };
+  }
+
+  const existing = await prisma.rubricSet.findFirst({
+    where: {
+      competencyId,
+      organizationId: null,
+      rubricName: `${competency.nameKo} 플랫폼 표준`,
+    },
+  });
+
+  const rubricSet = await upsertRubricSet({
+    id: existing?.id,
+    competencyId,
+    organizationId: null,
+    rubricName: `${competency.nameKo} 플랫폼 표준`,
+    scoringSystem: "FIVE_SCALE",
+    isDefault: true,
+    details,
+  });
+
+  return { ok: true as const, rubricSet };
+}
+
+export async function bulkMapQuestionsToDefaultRubric(competencyId: string) {
+  const defaultSet = await prisma.rubricSet.findFirst({
+    where: { competencyId, organizationId: null, isDefault: true },
+    orderBy: { createdAt: "asc" },
+  });
+  if (!defaultSet) {
+    return {
+      ok: false as const,
+      error: "플랫폼 기본 루브릭 세트가 없습니다. 먼저 루브릭을 생성하거나 기존 역량 루브릭을 가져오세요.",
+      status: 400,
+    };
+  }
+
+  const questions = await prisma.question.findMany({
+    where: {
+      competencyId,
+      isActive: true,
+      ownerScope: "PLATFORM",
+      organizationId: null,
+    },
+    include: { rubricMappings: { select: { id: true } } },
+  });
+
+  const unmapped = questions.filter((q) => q.rubricMappings.length === 0);
+  if (unmapped.length === 0) {
+    return { ok: true as const, mappedCount: 0, rubricSetId: defaultSet.id };
+  }
+
+  await prisma.$transaction(
+    unmapped.map((q) =>
+      prisma.questionRubricMapping.upsert({
+        where: {
+          questionId_rubricSetId: { questionId: q.id, rubricSetId: defaultSet.id },
+        },
+        create: { questionId: q.id, rubricSetId: defaultSet.id },
+        update: {},
+      }),
+    ),
+  );
+
+  return { ok: true as const, mappedCount: unmapped.length, rubricSetId: defaultSet.id };
 }
 
 export async function upsertRubricSet(input: {

@@ -4,34 +4,50 @@ import { useState } from "react";
 import Link from "next/link";
 import type { RepositoryCompetencyRow } from "@/lib/repository/types";
 import { CompetencyMasterBoard } from "@/components/admin/repository/CompetencyMasterBoard";
-import { RubricQuestionMapper } from "@/components/admin/repository/RubricQuestionMapper";
+import { CompetencyWorkspace } from "@/components/admin/repository/CompetencyWorkspace";
 
 export function RepositoryConsole() {
   const [selected, setSelected] = useState<RepositoryCompetencyRow | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-widest text-gold">Super Admin</p>
-        <h1 className="mt-1 text-xl font-bold text-foreground sm:text-2xl">
-          역량 리포지토리 · 루브릭 · 질문 매핑
-        </h1>
-        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted">
-          플랫폼 마스터 역량의 라이프사이클(DRAFT → ACTIVE)을 관리하고, 테넌트별 루브릭 세트와
-          질문-루브릭 매핑을 한 화면에서 검증합니다. IRT 문항 편집·클러스터 관리는{" "}
-          <Link href="/admin/content" className="text-accent hover:underline">
-            통합 문항 뱅크 CMS
+    <div className="space-y-6">
+      <header>
+        <p className="text-xs font-medium uppercase tracking-widest text-gold">Platform · Content</p>
+        <h1 className="mt-1 text-2xl font-bold text-foreground">역량 뱅크</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
+          플랫폼 마스터 역량의 라이프사이클, 테넌트 루브릭 세트, 질문-채점 연결을 관리합니다.
+          IRT 문항·난이도·문항별 rubricCriteria 편집은{" "}
+          <Link href="/admin/content" className="font-medium text-accent hover:underline">
+            문항 뱅크
           </Link>
-          에서 계속할 수 있습니다.
+          에서, 역량 L-루브릭(rubricByLevel) 편집도 동일 CMS에서 할 수 있습니다.
         </p>
-      </div>
+      </header>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)]">
+      <div className="grid min-h-[640px] gap-5 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
         <CompetencyMasterBoard
           selectedId={selected?.id ?? null}
-          onSelect={(c) => setSelected(c)}
+          refreshKey={refreshKey}
+          onSelect={setSelected}
         />
-        <RubricQuestionMapper competency={selected} />
+        <div className="min-w-0">
+          {selected ? (
+            <CompetencyWorkspace
+              key={selected.id}
+              competency={selected}
+              onRefreshList={() => setRefreshKey((k) => k + 1)}
+            />
+          ) : (
+            <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/10 px-6 text-center">
+              <p className="text-base font-medium text-foreground">역량을 선택하세요</p>
+              <p className="mt-2 max-w-sm text-sm text-muted">
+                좌측 목록에서 역량을 고르면 기존 L-루브릭·문항별 채점 기준·RubricSet 매핑 상태를
+                한눈에 확인할 수 있습니다.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

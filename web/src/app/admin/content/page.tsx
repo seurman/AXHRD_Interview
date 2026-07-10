@@ -42,7 +42,7 @@ export default async function AdminContentPage() {
             기관 관리 · 테넌트 허브 →
           </Link>
           <Link href="/admin/repository" className="text-accent hover:underline">
-            역량 리포지토리 · 루브릭 매핑 →
+            역량 뱅크 →
           </Link>
           {hasSuperadminAccess(user) && (
             <>

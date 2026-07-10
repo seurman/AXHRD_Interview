@@ -35,8 +35,8 @@ export const dictionary: Dictionary = {
     },
     admin: {
       title: "Admin",
-      content: "Content",
-      repository: "Competency repository",
+      content: "Question bank",
+      repository: "Competency bank",
       demo: "Customer demo",
       users: "Users",
       audit: "Audit log",
