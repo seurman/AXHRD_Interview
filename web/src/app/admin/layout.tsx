@@ -5,7 +5,7 @@ import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
 import { canAccessProductionContentBank, canManageDemoWorkspaces } from "@/lib/auth/roles";
 import { hasCapability } from "@/lib/platform/access";
 import { buildNavigationForUser } from "@/lib/platform/nav-registry";
-import { PlatformConsoleSidebar } from "@/components/admin/PlatformConsoleSidebar";
+import { AdminConsoleFrame } from "@/components/admin/AdminConsoleFrame";
 import { dictionary as koDictionary } from "@/lib/i18n/dictionaries/ko";
 import type { PlatformRole } from "@prisma/client";
 
@@ -49,9 +49,8 @@ export default async function AdminLayout({
   }));
 
   return (
-    <div className="mx-auto flex max-w-7xl">
-      <PlatformConsoleSidebar sections={sidebarSections} />
-      <div className="min-w-0 flex-1 px-4 py-6 sm:px-6">{children}</div>
-    </div>
+    <AdminConsoleFrame sections={sidebarSections} userName={user.name}>
+      {children}
+    </AdminConsoleFrame>
   );
 }

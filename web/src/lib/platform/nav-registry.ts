@@ -18,7 +18,7 @@ export type NavLabelKey =
 
 export type PrepareLabelKey = "interview" | "discover" | "cards" | "resumeReview" | "trialInterview";
 
-export type AdminSectionKey = "content" | "tenants" | "security" | "billing" | "diagnostic";
+export type AdminSectionKey = "tenants" | "product" | "operations" | "settings";
 
 export type AdminNavItem = {
   href: string;
@@ -28,55 +28,49 @@ export type AdminNavItem = {
 };
 
 export const PLATFORM_NAV_ORDER: AdminNavItem[] = [
-  { href: "/admin/content", labelKey: "content", capability: "platform.content", section: "content" },
-  {
-    href: "/admin/repository",
-    labelKey: "repository",
-    capability: "platform.content",
-    section: "content",
-  },
-  {
-    href: "/admin/diagnostic",
-    labelKey: "diagnostic",
-    capability: "platform.diagnostic",
-    section: "diagnostic",
-  },
-  { href: "/admin/demo", labelKey: "demo", capability: "platform.demo", section: "content" },
   {
     href: "/admin/organizations",
     labelKey: "orgApprove",
     capability: "platform.organizations",
     section: "tenants",
   },
+  { href: "/admin/content", labelKey: "content", capability: "platform.content", section: "product" },
   {
-    href: "/admin/organizations/benchmark",
-    labelKey: "orgBenchmark",
-    capability: "platform.benchmark",
-    section: "tenants",
+    href: "/admin/repository",
+    labelKey: "repository",
+    capability: "platform.content",
+    section: "product",
   },
-  { href: "/admin/users", labelKey: "users", capability: "platform.users", section: "security" },
+  {
+    href: "/admin/diagnostic",
+    labelKey: "diagnostic",
+    capability: "platform.diagnostic",
+    section: "product",
+  },
+  { href: "/admin/demo", labelKey: "demo", capability: "platform.demo", section: "product" },
+  { href: "/admin/users", labelKey: "users", capability: "platform.users", section: "operations" },
   {
     href: "/admin/sessions",
     labelKey: "sessions",
     capability: "platform.sessions",
-    section: "security",
+    section: "operations",
+  },
+  { href: "/admin/audit", labelKey: "audit", capability: "platform.audit", section: "operations" },
+  {
+    href: "/admin/subscriptions",
+    labelKey: "subscriptions",
+    capability: "platform.subscriptions",
+    section: "settings",
   },
   {
     href: "/admin/permissions",
     labelKey: "permissions",
     capability: "platform.permissions",
-    section: "security",
-  },
-  { href: "/admin/audit", labelKey: "audit", capability: "platform.audit", section: "security" },
-  {
-    href: "/admin/subscriptions",
-    labelKey: "subscriptions",
-    capability: "platform.subscriptions",
-    section: "billing",
+    section: "settings",
   },
 ];
 
-const ADMIN_SECTION_ORDER: AdminSectionKey[] = ["content", "diagnostic", "tenants", "security", "billing"];
+const ADMIN_SECTION_ORDER: AdminSectionKey[] = ["tenants", "product", "operations", "settings"];
 
 async function loadOrgAdminFlags(organizationId: string): Promise<{
   tenantPersonalizationEnabled: boolean;

@@ -1326,6 +1326,16 @@ body {
   }
 }
 
+/* Admin console — Vercel-style full viewport shell */
+.admin-console {
+  width: 100%;
+}
+
+.admin-console-main {
+  width: 100%;
+  max-width: none;
+}
+
 /* Non-marketing routes keep the previous constrained canvas */
 .app-shell {
   margin-left: auto;

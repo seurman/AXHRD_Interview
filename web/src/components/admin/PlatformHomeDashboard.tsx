@@ -17,12 +17,12 @@ import {
 } from "lucide-react";
 
 const QUICK_MODULES = [
-  { href: "/admin/organizations", label: "기관 관리", desc: "승인·계약·SKU", icon: Building2 },
-  { href: "/admin/users", label: "사용자 권한", desc: "역할·리뷰 플래그", icon: Users },
-  { href: "/admin/content", label: "문항 뱅크", desc: "IRT·역량 풀", icon: ClipboardList },
-  { href: "/admin/diagnostic", label: "조직진단 CMS", desc: "캠페인·리포트", icon: Activity },
+  { href: "/admin/organizations", label: "기관", desc: "승인·계약·SKU", icon: Building2 },
+  { href: "/admin/users", label: "사용자", desc: "역할·리뷰 플래그", icon: Users },
+  { href: "/admin/content", label: "IRT 문항", desc: "IRT·역량 풀", icon: ClipboardList },
+  { href: "/admin/diagnostic", label: "진단 캠페인", desc: "캠페인·리포트", icon: Activity },
   { href: "/admin/sessions", label: "면접 세션", desc: "실행 로그", icon: FileSearch },
-  { href: "/admin/subscriptions", label: "구독 관리", desc: "플랜·결제", icon: Wallet },
+  { href: "/admin/subscriptions", label: "구독·결제", desc: "플랜·결제", icon: Wallet },
 ] as const;
 
 function StatCard({
@@ -56,7 +56,7 @@ export function PlatformHomeDashboard({ snapshot }: { snapshot: PlatformHomeSnap
     <div className="space-y-8">
       <AdminPageHeader
         eyebrow={PLATFORM_EYEBROW.home}
-        title="Platform Console"
+        title="개요"
         subtitle="운영 할 일 → KPI → 모듈 순으로 확인하세요. 모든 숫자는 DB 실시간 집계입니다."
         links={[
           { href: "/admin/permissions", label: "권한 매트릭스 →" },

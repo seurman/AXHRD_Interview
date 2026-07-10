@@ -48,8 +48,9 @@ export default async function AdminOrganizationsPage() {
     <div className={ADMIN_CONTAINER.default}>
       <AdminPageHeader
         eyebrow={PLATFORM_EYEBROW.tenants}
-        title="기관 관리"
+        title="기관"
         subtitle="테넌트 생성·승인·유형(취업센터/인사팀)·이용 기간·플랜·권한을 한곳에서 관리합니다."
+        links={[{ href: "/admin/organizations/benchmark", label: "기관 비교 →" }]}
       />
       <OrgCreatePanel />
 

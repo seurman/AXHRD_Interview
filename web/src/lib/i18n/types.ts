@@ -39,6 +39,9 @@ export type Dictionary = {
     };
     admin: {
       title: string;
+      overview: string;
+      consoleTitle: string;
+      backToService: string;
       content: string;
       repository: string;
       demo: string;
@@ -52,11 +55,10 @@ export type Dictionary = {
       permissions: string;
       diagnostic: string;
       sections: {
-        content: string;
         tenants: string;
-        security: string;
-        billing: string;
-        diagnostic: string;
+        product: string;
+        operations: string;
+        settings: string;
       };
     };
     saas: {

@@ -13,8 +13,8 @@
  * 정말 필요한 경우에만 예외를 둔다(예외를 두는 경우 이유를 주석으로 남길 것).
  */
 export const ADMIN_CONTAINER = {
-  default: "mx-auto max-w-5xl space-y-8 pb-12",
-  wide: "mx-auto max-w-6xl space-y-8 pb-12",
-  detail: "mx-auto max-w-5xl space-y-8 pb-12",
-  editor: "mx-auto max-w-7xl space-y-6 pb-12",
+  default: "w-full max-w-none space-y-8 pb-12",
+  wide: "w-full max-w-none space-y-8 pb-12",
+  detail: "w-full max-w-none space-y-8 pb-12",
+  editor: "w-full max-w-none space-y-6 pb-12",
 } as const;

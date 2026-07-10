@@ -5,6 +5,7 @@ import { getTheme } from "@/lib/theme/get-theme";
 import { fontVariables } from "@/lib/fonts";
 import "./globals.css";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { AppHeaderGate } from "@/components/layout/AppHeaderGate";
 import { AppShell } from "@/components/layout/AppShell";
 import { NavSessionProvider } from "@/components/layout/NavSessionProvider";
 import { RouteTransitionProvider } from "@/components/layout/RouteTransitionProvider";
@@ -52,7 +53,9 @@ export default async function RootLayout({
           <RouteTransitionProvider>
             <NavSessionProvider>
               <PwaRegister />
-              <AppHeader />
+              <AppHeaderGate>
+                <AppHeader />
+              </AppHeaderGate>
               <main className="min-w-0">
                 <AppShell>{children}</AppShell>
               </main>

@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 const CONTENT_LINKS = [
   { href: "/admin/content", labelKey: "content" as const, desc: "IRT 문항·역량 풀 편집" },
   { href: "/admin/repository", labelKey: "repository" as const, desc: "역량 라이프사이클·루브릭 매핑" },
-  { href: "/admin/demo", labelKey: "demo" as const, desc: "고객 미팅용 샌드박스" },
+  { href: "/admin/demo", labelKey: "demo" as const, desc: "고객 미팅용 데모 샌드박스" },
 ];
 
 export default async function AdminHomePage() {
