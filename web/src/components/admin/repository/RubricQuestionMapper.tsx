@@ -131,6 +131,8 @@ export function RubricQuestionMapper({ competency }: Props) {
     );
   }
 
+  const selectedCompetency = competency;
+
   async function saveRubricSet() {
     setBusy("save-rubric");
     try {
@@ -138,7 +140,7 @@ export function RubricQuestionMapper({ competency }: Props) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          competencyId: competency.id,
+          competencyId: selectedCompetency.id,
           rubricName: form.rubricName,
           scoringSystem: form.scoringSystem,
           organizationId: form.organizationId || null,
@@ -194,7 +196,7 @@ export function RubricQuestionMapper({ competency }: Props) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          competencyId: competency.id,
+          competencyId: selectedCompetency.id,
           questionText: newQuestion.trim(),
         }),
       });
