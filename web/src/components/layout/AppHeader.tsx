@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n/I18nProvider";
-import { useNavSession } from "@/components/layout/NavSessionProvider";
+import { useNavSessionContext } from "@/components/layout/NavSessionProvider";
 import { Logo } from "@/components/brand/Logo";
 import { MobileNav } from "./MobileNav";
 import { MainNav } from "./MainNav";
@@ -10,9 +10,11 @@ import { BillingPastDueBanner } from "@/components/billing/BillingPastDueBanner"
 
 export function AppHeader() {
   const { dict } = useI18n();
-  const nav = useNavSession();
+  const { nav, loading } = useNavSessionContext();
 
   const loggedIn = nav?.loggedIn ?? false;
+  const showAuthMenu = loggedIn && (!loading || nav !== null);
+  const showGuestMenu = !loggedIn && !loading;
   const dashboardHref = nav?.dashboardHref ?? null;
   const prepareLinks = nav?.prepareLinks ?? [];
   const profileHref = nav?.profileHref ?? null;
@@ -36,17 +38,20 @@ export function AppHeader() {
           <MainNav
             adminSections={adminSections}
             dashboardHref={dashboardHref}
-            loggedIn={loggedIn}
+            loggedIn={showAuthMenu}
             prepareLinks={prepareLinks}
             profileHref={profileHref}
             saasLinks={saasLinks}
             userName={userName}
+            loading={loading && nav === null}
           />
 
           <MobileNav
             adminSections={adminSections}
             dashboardHref={dashboardHref}
-            loggedIn={loggedIn}
+            loggedIn={showAuthMenu}
+            guestMenu={showGuestMenu}
+            loading={loading && nav === null}
             prepareLinks={prepareLinks}
             profileHref={profileHref}
             saasLinks={saasLinks}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { IconLoader } from "@/components/ui/icons";
@@ -13,7 +13,6 @@ type Mode = "login" | "register";
 export function AuthForm({ mode }: { mode: Mode }) {
   const { dict } = useI18n();
   const a = dict.auth;
-  const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/demo";
   const [loading, setLoading] = useState(false);
@@ -72,9 +71,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
         serverRedirect ?? buildAuthRedirect(next, mode, displayName);
 
       window.setTimeout(() => {
-        router.replace(target);
-        router.refresh();
-      }, 600);
+        window.location.assign(target);
+      }, 350);
     } catch (err) {
       setError(err instanceof Error ? err.message : a.errorGeneric);
       setLoading(false);

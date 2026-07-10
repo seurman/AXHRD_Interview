@@ -10,6 +10,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { getMobileNavLabel } from "./MainNav";
 import { ClipDynamic } from "@/components/ui/ClipDynamic";
+import { useNavSessionContext } from "@/components/layout/NavSessionProvider";
 import { useRouteTransition } from "./RouteTransitionProvider";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import type { AdminNavSection, PrepareLabelKey } from "@/lib/platform/nav-registry";
@@ -94,6 +95,8 @@ export function MobileNav({
   saasLinks,
   userName,
   loggedIn,
+  guestMenu,
+  loading = false,
 }: {
   dashboardHref: string | null;
   prepareLinks: { href: string; labelKey: PrepareLabelKey }[];
@@ -102,11 +105,14 @@ export function MobileNav({
   saasLinks?: SaasLinksConfig | null;
   userName?: string;
   loggedIn: boolean;
+  guestMenu: boolean;
+  loading?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { refreshNav } = useNavSessionContext();
   const { dict, locale } = useI18n();
   const c = dict.common;
 
@@ -297,9 +303,11 @@ export function MobileNav({
         </nav>
 
         <div className="shrink-0 border-t border-card-border pt-4">
-          {loggedIn ? (
-            <LogoutButton variant="drawer" label={c.auth.logout} onStart={closeDrawer} />
-          ) : (
+          {loading ? (
+            <p className="px-3 py-2 text-center text-sm text-muted">{c.menuLoading}</p>
+          ) : loggedIn ? (
+            <LogoutButton variant="drawer" label={c.auth.logout} />
+          ) : guestMenu ? (
             <div className="flex flex-col gap-2">
               <MobileNavLink
                 href="/auth/login"
@@ -316,7 +324,7 @@ export function MobileNav({
                 {c.auth.register}
               </MobileNavLink>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
@@ -326,7 +334,10 @@ export function MobileNav({
     <div className="shrink-0 sm:hidden">
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setOpen(true);
+          void refreshNav();
+        }}
         aria-label={c.menu}
         className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/30 text-gold hover:bg-gold/10"
       >

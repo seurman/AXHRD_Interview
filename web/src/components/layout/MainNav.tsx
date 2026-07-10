@@ -29,6 +29,7 @@ export function MainNav({
   saasLinks,
   userName,
   loggedIn,
+  loading = false,
 }: {
   dashboardHref: string | null;
   prepareLinks: { href: string; labelKey: PrepareLabelKey }[];
@@ -37,10 +38,19 @@ export function MainNav({
   saasLinks?: SaasLinksConfig | null;
   userName?: string;
   loggedIn: boolean;
+  loading?: boolean;
 }) {
   const pathname = usePathname();
   const { dict, locale } = useI18n();
   const c = dict.common;
+
+  if (loading) {
+    return (
+      <nav className="hidden items-center sm:flex" aria-hidden>
+        <span className="h-8 w-28 animate-pulse rounded-full bg-primary/10" />
+      </nav>
+    );
+  }
 
   if (!loggedIn) {
     return (

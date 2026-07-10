@@ -75,6 +75,7 @@ export type Dictionary = {
     explore: string;
     menu: string;
     navigating: string;
+    menuLoading: string;
     userSuffix: string;
   };
   home: {

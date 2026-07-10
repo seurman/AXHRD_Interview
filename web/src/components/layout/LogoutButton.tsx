@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, LogOut } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 async function performLogout(): Promise<void> {
   const res = await fetch("/api/auth/session", {
@@ -17,21 +17,18 @@ async function performLogout(): Promise<void> {
 export function LogoutButton({
   variant = "default",
   label,
-  onStart,
 }: {
   variant?: "default" | "nav" | "drawer";
   label?: string;
-  onStart?: () => void;
 }) {
   const [busy, setBusy] = useState(false);
+  const text = label ?? "Sign out";
 
   async function handleLogout() {
     if (busy) return;
     setBusy(true);
-    onStart?.();
     try {
       await performLogout();
-      // 하드 네비게이션 — 모바일·PWA에서 클라이언트 nav/세션 캐시를 확실히 비운다.
       window.location.assign("/");
     } catch {
       setBusy(false);
@@ -44,14 +41,16 @@ export function LogoutButton({
         type="button"
         disabled={busy}
         onClick={() => void handleLogout()}
-        className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-card-border px-4 py-3 text-sm font-medium text-danger hover:bg-danger/5 disabled:opacity-60"
+        className="relative z-10 flex min-h-[48px] w-full touch-manipulation items-center justify-center rounded-xl border border-card-border px-4 py-3 text-sm font-semibold text-danger hover:bg-danger/5 active:bg-danger/10 disabled:opacity-60"
       >
         {busy ? (
-          <Loader2 className="h-4 w-4 motion-safe:animate-spin" />
+          <>
+            <Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" />
+            {text}…
+          </>
         ) : (
-          <LogOut className="h-4 w-4" />
+          text
         )}
-        <span>{busy ? (label ? `${label}…` : "…") : (label ?? "Sign out")}</span>
       </button>
     );
   }
@@ -63,12 +62,13 @@ export function LogoutButton({
         disabled={busy}
         onClick={() => void handleLogout()}
         className="nav-pill text-white/60 hover:border-white/30 hover:text-white disabled:opacity-60"
-        title={label ?? "Sign out"}
+        title={text}
+        aria-label={text}
       >
         {busy ? (
           <Loader2 className="h-3.5 w-3.5 motion-safe:animate-spin" />
         ) : (
-          <LogOut className="h-3.5 w-3.5" />
+          text
         )}
       </button>
     );
@@ -79,15 +79,14 @@ export function LogoutButton({
       type="button"
       disabled={busy}
       onClick={() => void handleLogout()}
-      className="flex min-h-[44px] items-center gap-1 text-muted hover:text-danger disabled:opacity-60"
-      title={label ?? "Sign out"}
+      className="flex min-h-[44px] touch-manipulation items-center gap-1 text-muted hover:text-danger disabled:opacity-60"
+      title={text}
     >
       {busy ? (
         <Loader2 className="h-4 w-4 motion-safe:animate-spin" />
       ) : (
-        <LogOut className="h-4 w-4" />
+        <span className="text-sm">{text}</span>
       )}
-      {label && <span className="text-sm">{label}</span>}
     </button>
   );
 }
