@@ -44,6 +44,15 @@ export async function GET() {
     platformRole: user.platformRole,
     orgRole: user.orgRole,
     organizationId: user.organizationId,
+  }).catch((e) => {
+    console.error("[api/nav] buildNavigationForUser", e);
+    return {
+      dashboardHref: "/dashboard" as string | null,
+      prepareLinks: [] as { href: string; labelKey: import("@/lib/platform/nav-registry").PrepareLabelKey }[],
+      profileHref: "/profile" as string | null,
+      saasLinks: null,
+      adminSections: [] as import("@/lib/nav/client-types").NavPayload["adminSections"],
+    };
   });
 
   const personalContext = await loadPersonalAccessContext(user.id);

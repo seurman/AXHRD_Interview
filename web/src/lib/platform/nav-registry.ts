@@ -78,6 +78,32 @@ const PLATFORM_NAV_ORDER: AdminNavItem[] = [
 
 const ADMIN_SECTION_ORDER: AdminSectionKey[] = ["content", "diagnostic", "tenants", "security", "billing"];
 
+async function loadOrgAdminFlags(organizationId: string): Promise<{
+  tenantPersonalizationEnabled: boolean;
+  diagnosticEnabled: boolean;
+}> {
+  const { prisma } = await import("@/lib/prisma");
+  try {
+    const org = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { saasPersonalizationEnabled: true, diagnosticEnabled: true },
+    });
+    return {
+      tenantPersonalizationEnabled: org?.saasPersonalizationEnabled ?? false,
+      diagnosticEnabled: org?.diagnosticEnabled ?? false,
+    };
+  } catch {
+    const org = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { saasPersonalizationEnabled: true },
+    });
+    return {
+      tenantPersonalizationEnabled: org?.saasPersonalizationEnabled ?? false,
+      diagnosticEnabled: false,
+    };
+  }
+}
+
 const PREPARE_HREFS: { href: string; labelKey: PrepareLabelKey; capability: CapabilityId }[] = [
   { href: "/demo", labelKey: "trialInterview", capability: "product.demo_trial" },
   { href: "/interview/setup", labelKey: "interview", capability: "product.interview" },
@@ -123,13 +149,9 @@ export async function buildNavigationForUser(
     billingTier = billing.planTier;
   }
   if (user.organizationId && user.orgRole === "ADMIN") {
-    const { prisma } = await import("@/lib/prisma");
-    const org = await prisma.organization.findUnique({
-      where: { id: user.organizationId },
-      select: { saasPersonalizationEnabled: true, diagnosticEnabled: true },
-    });
-    tenantPersonalizationEnabled = org?.saasPersonalizationEnabled ?? false;
-    diagnosticEnabled = org?.diagnosticEnabled ?? false;
+    const flags = await loadOrgAdminFlags(user.organizationId);
+    tenantPersonalizationEnabled = flags.tenantPersonalizationEnabled;
+    diagnosticEnabled = flags.diagnosticEnabled;
   }
 
   const context: AccessContext = {
