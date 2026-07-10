@@ -54,6 +54,7 @@ export function resolveUserCapabilities(
   if (isOrgAdminUser(user) && !context.tenantPersonalizationEnabled) {
     caps.delete("tenant.settings");
     caps.delete("tenant.interview_kit");
+    caps.delete("tenant.custom_competency");
   }
 
   // 회사 어드민이 기관에도 소속된 경우 tenant caps 추가
@@ -62,6 +63,7 @@ export function resolveUserCapabilities(
     if (context.tenantPersonalizationEnabled) {
       caps.add("tenant.settings");
       caps.add("tenant.interview_kit");
+      caps.add("tenant.custom_competency");
     }
   } else if (isCompanyAdminUser(user) && isOrgStaffUser(user)) {
     caps.add("tenant.cohort");
@@ -73,6 +75,7 @@ export function resolveUserCapabilities(
     if (context.tenantPersonalizationEnabled) {
       caps.add("tenant.settings");
       caps.add("tenant.interview_kit");
+      caps.add("tenant.custom_competency");
     }
   } else if (isContentManagerUser(user) && isOrgStaffUser(user)) {
     caps.add("tenant.cohort");

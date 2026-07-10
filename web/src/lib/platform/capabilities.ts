@@ -24,6 +24,7 @@ export type CapabilityId =
   | "tenant.cohort"
   | "tenant.settings"
   | "tenant.interview_kit"
+  | "tenant.custom_competency"
   | "platform.permissions"
   | "platform.users"
   | "platform.organizations"
@@ -136,6 +137,15 @@ export const CAPABILITY_REGISTRY: Record<CapabilityId, CapabilityDef> = {
     descriptionKo: "뱅크에서 역량·문항 매핑 · 루브릭 조정",
     href: "/org/settings/interview-kit",
     designNote: "기관 면접 킷 조립 — 플랫폼 뱅크 기반",
+  },
+  "tenant.custom_competency": {
+    id: "tenant.custom_competency",
+    category: "tenant",
+    labelKo: "기관 맞춤 역량",
+    labelEn: "Custom competencies",
+    descriptionKo: "기본 역량 복제·커스텀 역량·문항 작성",
+    href: "/org/settings/competencies",
+    designNote: "PLATFORM 포크/ORG 소유 — 승격은 수퍼어드민",
   },
   "platform.permissions": {
     id: "platform.permissions",
@@ -269,6 +279,7 @@ export const ROLE_CAPABILITY_MATRIX: Record<PlatformRoleKey, CapabilityId[]> = {
     "tenant.cohort",
     "tenant.settings",
     "tenant.interview_kit",
+    "tenant.custom_competency",
   ],
   ORG_STAFF: [
     "product.dashboard",

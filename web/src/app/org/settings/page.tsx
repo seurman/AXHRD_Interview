@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, ClipboardList, BarChart3 } from "lucide-react";
+import { ChevronRight, ClipboardList, BarChart3, Layers } from "lucide-react";
 import { requirePageUser } from "@/lib/auth/guards";
 import { resolveInterviewKitAccess } from "@/lib/org/interview-kit";
 
@@ -16,6 +16,12 @@ export default async function OrgSettingsPage() {
           title: "인터뷰 킷",
           description: "역량·문항·L1~L5 루브릭을 기관에 맞게 구성합니다.",
           icon: ClipboardList,
+        },
+        {
+          href: "/org/settings/competencies",
+          title: "역량 관리",
+          description: "기본 역량 복제·기관 맞춤 역량·문항 작성.",
+          icon: Layers,
         },
       ]
     : [];

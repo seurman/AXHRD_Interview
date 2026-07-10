@@ -1,6 +1,10 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { COMPETENCY_CODES } from "@/types";
+import {
+  findPlatformCompetencyByCode,
+  platformCompetencyUniqueWhere,
+} from "@/lib/content/ownership";
 
 /** L1–L5 → rough IRT difficulty */
 export function difficultyForLevel(level: number): number {
@@ -57,6 +61,8 @@ export async function ensureNcsClusterLinks(): Promise<void> {
   await prisma.competency.updateMany({
     where: {
       code: { in: [...COMPETENCY_CODES] },
+      ownerScope: "PLATFORM",
+      organizationId: null,
     },
     data: {
       clusterId: cluster.id,
@@ -130,11 +136,11 @@ export async function syncGlobalCompetenciesToUnifiedBank(): Promise<{
 
     for (const gc of gCluster.competencies) {
       const rubricByLevel = rubricFromGlobalLevels(gc.rubricLevels);
-      const existing = await prisma.competency.findUnique({ where: { code: gc.code } });
+      const existing = await findPlatformCompetencyByCode(gc.code);
       const sortOrder = existing?.sortOrder ?? sortBase++;
 
       const comp = await prisma.competency.upsert({
-        where: { code: gc.code },
+        where: platformCompetencyUniqueWhere(gc.code),
         create: {
           code: gc.code,
           nameKo: gc.nameKo,
@@ -144,6 +150,8 @@ export async function syncGlobalCompetenciesToUnifiedBank(): Promise<{
           source: "GLOBAL",
           sortOrder,
           isActive: true,
+          ownerScope: "PLATFORM",
+          organizationId: null,
           rubricByLevel: rubricByLevel as Prisma.InputJsonValue,
         },
         update: {

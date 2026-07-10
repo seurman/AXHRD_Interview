@@ -61,9 +61,8 @@ export function parseResumeSummary(raw: unknown): ResumeSummary | undefined {
   return undefined;
 }
 
-/** TargetCompany.interviewStyle(Json)을 안전하게 파싱한다 — JD 매핑이나 프리셋에서
- *  { tone, rounds, focus } 형태로 저장되지만 형식이 다르면 조용히 무시한다. */
-function parseInterviewStyle(raw: unknown): InterviewStyleHint | undefined {
+/** TargetCompany.interviewStyle(Json)을 안전하게 파싱한다 */
+export function parseInterviewStyle(raw: unknown): InterviewStyleHint | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const obj = raw as Record<string, unknown>;
   if (typeof obj.tone !== "string" || !Array.isArray(obj.focus)) return undefined;

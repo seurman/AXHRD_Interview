@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auditActor, isAdminResponse, requirePlatformAdminApi } from "@/lib/admin/auth";
 import { logAdminAudit } from "@/lib/admin/audit";
+import { findPlatformCompetencyByCode } from "@/lib/content/ownership";
 import {
   normalizeImportLevels,
   parseRubricImportFile,
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
     const code = item.code?.trim()?.toUpperCase();
     if (!code || !item.levels) continue;
 
-    const comp = await prisma.competency.findUnique({ where: { code } });
+    const comp = await findPlatformCompetencyByCode(code);
     if (!comp) continue;
 
     const rubricByLevel = normalizeImportLevels(item.levels);

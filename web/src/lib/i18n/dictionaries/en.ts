@@ -314,7 +314,7 @@ export const dictionary: Dictionary = {
   },
   setup: {
     title: "Mock interview setup",
-    subtitle: "2–3 questions per competency · Saved feedback · Resume optional",
+    subtitle: "1–5 questions per competency · Saved feedback · Resume optional",
     industry: {
       title: "1. Industry",
       hint: "Pick industry and company size together for a more accurate interview tone.",
@@ -330,6 +330,10 @@ export const dictionary: Dictionary = {
       upload: "Upload PDF · Word · TXT",
       parsing: "Extracting text…",
       manual: "Paste text instead",
+      viewEdit: "View / edit text",
+      collapse: "Collapse",
+      remove: "Remove",
+      charsApplied: "{chars} chars applied",
       placeholder: "Paste job description or values keywords…",
       urlLabel: "Job posting URL",
       urlPlaceholder: "https://… public job posting link",
@@ -342,12 +346,17 @@ export const dictionary: Dictionary = {
     persona: { eyebrow: "Your interview persona" },
     competency: {
       title: "3. Competency",
-      hint: "One competency at a time · 2–3 questions",
+      hint: "One competency at a time · choose question count below",
       plan: "Active plan",
       recommended: "Recommended",
       done: "Done",
       inProgress: "In progress",
       notStarted: "Not started",
+    },
+    questionCount: {
+      title: "Question count",
+      hint: "How many questions for this competency (1–5). Follow-ups and JD bonus are extra.",
+      unit: "questions",
     },
     resume: {
       title: "4. Resume (optional)",
@@ -355,6 +364,10 @@ export const dictionary: Dictionary = {
       upload: "Upload PDF · Word · TXT",
       parsing: "Extracting text…",
       manual: "Paste text instead",
+      viewEdit: "View / edit text",
+      collapse: "Collapse",
+      remove: "Remove",
+      charsApplied: "{chars} chars applied",
       placeholder: "Paste your resume or cover letter…",
     },
     resumeReview: {

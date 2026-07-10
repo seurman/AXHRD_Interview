@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IconVolume } from "@/components/ui/icons";
 import { LevelChip } from "./LevelChip";
 import { CompetencyBar } from "./CompetencyBar";
 import { VoiceRecorder } from "./VoiceRecorder";
@@ -255,14 +254,9 @@ export function InterviewSession({
         <div className="card-luxe p-6">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted">
-            {voiceModeEnabled && ttsStatus === "synthesizing" && (
-              <span className="keep-one-line flex items-center gap-1 text-accent">
-                <IconVolume className="h-3 w-3 animate-pulse" /> 음성 준비 중…
-              </span>
-            )}
-            {voiceModeEnabled && ttsStatus === "playing" && (
-              <span className="keep-one-line flex items-center gap-1 text-accent">
-                <IconVolume className="h-3 w-3 animate-pulse" /> 질문 재생 중
+            {voiceModeEnabled && ttsStatus !== "idle" && (
+              <span className="sr-only">
+                {ttsStatus === "synthesizing" ? "음성 준비 중" : "질문 재생 중"}
               </span>
             )}
             {isPersonalized && (
@@ -385,7 +379,7 @@ export function InterviewSession({
         <p className="text-center text-xs text-muted">
           {q?.isBonusQuestion
             ? `보너스 질문 (참고용)${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`
-            : `문항 ${state.totalItems + 1}/${maxItems}${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""} · 역량별 적응형 IRT`}
+            : `문항 ${state.totalItems + 1}/${maxItems}${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`}
         </p>
       </div>
 

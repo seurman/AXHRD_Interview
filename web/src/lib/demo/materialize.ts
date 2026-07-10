@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
+import {
+  findPlatformCompetencyByCode,
+  platformCompetencyUniqueWhere,
+} from "@/lib/content/ownership";
 
 /** L1–L5 → rough IRT difficulty so CAT still has a slope */
 function difficultyForLevel(level: number): number {
@@ -36,7 +40,7 @@ export async function materializeDemoKitToInterviewBank(workspaceId: string): Pr
   let sortBase = 100;
 
   for (const dc of workspace.competencies) {
-    const existing = await prisma.competency.findUnique({ where: { code: dc.code } });
+    const existing = await findPlatformCompetencyByCode(dc.code);
     if (existing) {
       await prisma.competency.update({
         where: { id: existing.id },
@@ -55,6 +59,8 @@ export async function materializeDemoKitToInterviewBank(workspaceId: string): Pr
           description: dc.description,
           sortOrder: sortBase++,
           isActive: true,
+          ownerScope: "PLATFORM",
+          organizationId: null,
           rubricByLevel: (dc.rubricByLevel ?? {}) as Prisma.InputJsonValue,
         },
       });
@@ -82,8 +88,10 @@ export async function materializeDemoKitToInterviewBank(workspaceId: string): Pr
         .map((s) => s.trim())
         .filter(Boolean);
     }
+    const platform = await findPlatformCompetencyByCode(code);
+    if (!platform) continue;
     await prisma.competency.update({
-      where: { code },
+      where: { id: platform.id },
       data: {
         rubricByLevel: rubricByLevel as Prisma.InputJsonValue,
       },
@@ -91,7 +99,11 @@ export async function materializeDemoKitToInterviewBank(workspaceId: string): Pr
   }
 
   const comps = await prisma.competency.findMany({
-    where: { code: { in: codes } },
+    where: {
+      code: { in: codes },
+      ownerScope: "PLATFORM",
+      organizationId: null,
+    },
     select: { id: true, code: true, rubricByLevel: true },
   });
   const idByCode = new Map(comps.map((c) => [c.code, c.id]));

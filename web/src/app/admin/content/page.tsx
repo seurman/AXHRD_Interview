@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireProductionContentAdmin, hasSuperadminAccess } from "@/lib/auth/guards";
 import { loadContentBankSnapshot } from "@/lib/competency/content-bank-data";
-import { ContentMetadataStudio } from "@/components/admin/ContentMetadataStudio";
+import { AdminContentTabs } from "@/components/admin/AdminContentTabs";
 import { MeaningLayerPanel } from "@/components/admin/MeaningLayerPanel";
 
 export const dynamic = "force-dynamic";
@@ -65,7 +65,7 @@ export default async function AdminContentPage() {
           </p>
         </div>
       ) : (
-        <ContentMetadataStudio
+        <AdminContentTabs
           initialClusters={clusters}
           initialCompetencies={competencies}
           initialQuestions={questions}

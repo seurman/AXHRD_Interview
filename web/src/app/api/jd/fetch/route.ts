@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { fetchJdTextFromUrl } from "@/lib/company/fetch-jd-url";
 
-export const maxDuration = 20;
+export const maxDuration = 60;
 
 /** 면접 설정의 채용공고 URL → 본문 텍스트 */
 export async function POST(req: Request) {
@@ -38,5 +38,6 @@ export async function POST(req: Request) {
     bytes: result.bytes,
     ms: result.ms,
     chars: result.text.length,
+    ocrUsed: result.ok ? result.ocrUsed ?? false : false,
   });
 }

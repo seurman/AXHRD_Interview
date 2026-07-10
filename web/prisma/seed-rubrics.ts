@@ -23,7 +23,9 @@ async function main() {
     const code = item.code?.trim()?.toUpperCase();
     if (!code || !item.levels) continue;
 
-    const comp = await prisma.competency.findUnique({ where: { code } });
+    const comp = await prisma.competency.findFirst({
+      where: { code, ownerScope: "PLATFORM", organizationId: null },
+    });
     if (!comp) {
       console.warn(`skip: competency not found — ${code}`);
       continue;

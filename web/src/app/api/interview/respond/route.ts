@@ -5,7 +5,7 @@ import { submitIrtResponse, getIrtSessionSummary } from "@/lib/irt-client";
 import { correctAndEvaluateAnswer, type CorrectedRubricResult } from "@/lib/gemini/evaluate";
 import { parseIrtState, serializeIrtState, type StoredIrtState } from "@/lib/irt-state";
 import { shouldTriggerFollowUp, pickFollowUpQuestion, acceptGroundedSuggestedFollowUp } from "@/lib/interview/follow-up";
-import { buildPersonalizedQuestion, parseResumeSummary } from "@/lib/interview/build-question";
+import { buildPersonalizedQuestion, parseInterviewStyle, parseResumeSummary } from "@/lib/interview/build-question";
 import { buildQuestionRationale } from "@/lib/interview/rationale";
 import { pressureTierFromLevel, pressureTierLabel } from "@/lib/interview/persona";
 import { generateCompetencyFeedback } from "@/lib/claude/competency-feedback";
@@ -21,21 +21,57 @@ import {
   mapResponsesForCompetencyFeedback,
 } from "@/lib/interview/report-response";
 import { generateTripleFeedback } from "@/lib/interview/triple-feedback";
-import { getOrgKitCustomRubric } from "@/lib/org/interview-kit";
+import { getOrgKitCustomRubric, filterQuestionsByOrgKit } from "@/lib/org/interview-kit";
 import {
   appendUserTextRecord,
   formatInterviewAnswerText,
 } from "@/lib/user-text-archive";
+import { poolQuestionsToItemParams, prepareRankedQuestionPool } from "@/lib/interview/question-pool";
 import {
-  COMPETENCY_SESSION_MAX_ITEMS,
-  COMPETENCY_SESSION_MIN_ITEMS,
   BONUS_QUESTION_ID,
+  DEFAULT_QUESTION_COUNT,
   FULL_SESSION_MAX_ITEMS,
   FULL_SESSION_MIN_ITEMS,
+  sessionItemLimits,
 } from "@/lib/interview/session-limits";
 import { generateJdBonusQuestion } from "@/lib/interview/jd-bonus-question";
 import { parseJdRequirements } from "@/lib/company/jd-mapper";
 import type { CompetencyState, ItemParams, InterviewQuestion } from "@/types";
+
+type SessionWithRelations = Prisma.InterviewSessionGetPayload<{
+  include: { resume: true; targetCompany: true; responses: true; plan: true };
+}>;
+
+async function buildItemPoolForSession(
+  session: SessionWithRelations,
+  focusCompetency: string,
+): Promise<ItemParams[]> {
+  const questions = await prisma.question.findMany({
+    where: { isActive: true, competency: { code: focusCompetency, isActive: true } },
+    include: { competency: true },
+  });
+
+  const kitFiltered = await filterQuestionsByOrgKit({
+    organizationId: session.kitOrganizationId,
+    competency: focusCompetency,
+    questions,
+  });
+
+  const ranked = await prepareRankedQuestionPool({
+    userId: session.userId,
+    competency: focusCompetency,
+    questions: kitFiltered,
+    resumeSummary: parseResumeSummary(session.resume?.parsedTags),
+    jobRole: session.jobRole,
+    interviewStyleFocus: parseInterviewStyle(session.targetCompany?.interviewStyle)?.focus,
+  });
+
+  return poolQuestionsToItemParams(ranked);
+}
+
+function competencySessionLimits(stored: StoredIrtState) {
+  return sessionItemLimits(stored.questionCount ?? DEFAULT_QUESTION_COUNT);
+}
 
 export async function POST(req: Request) {
   try {
@@ -149,9 +185,10 @@ async function handleRespond(req: Request, userId: string) {
   const focusCompetency =
     session.focusCompetency ?? question.competency.code;
   const isCompetencyMode = session.mode === "COMPETENCY";
-  const maxItemsPerCompetency = isCompetencyMode
-    ? COMPETENCY_SESSION_MAX_ITEMS
-    : FULL_SESSION_MAX_ITEMS;
+  const itemLimits = isCompetencyMode
+    ? competencySessionLimits(stored)
+    : { minItems: FULL_SESSION_MIN_ITEMS, maxItems: FULL_SESSION_MAX_ITEMS, questionCount: FULL_SESSION_MAX_ITEMS };
+  const maxItemsPerCompetency = itemLimits.maxItems;
 
   // 압박 강도 적응형 조절 — 이 문항이 출제된 시점의 추정 레벨을 그대로 면접관 톤에
   // 재사용한다(이번 턴에 대한 꼬리질문 판단/문구에 적용, 채점 자체에는 영향 없음).
@@ -301,13 +338,15 @@ async function handleRespond(req: Request, userId: string) {
     include: { competency: true },
   });
 
-  const itemPool: ItemParams[] = questions.map((q) => ({
-    item_id: q.externalId,
-    competency: q.competency.code,
-    difficulty: q.difficulty,
-    discrimination: q.discrimination,
-    level: q.level,
-  }));
+  const itemPool: ItemParams[] = isCompetencyMode
+    ? await buildItemPoolForSession(session, focusCompetency)
+    : questions.map((q) => ({
+        item_id: q.externalId,
+        competency: q.competency.code,
+        difficulty: q.difficulty,
+        discrimination: q.discrimination,
+        level: q.level,
+      }));
 
   const irtState = stored.competencies;
   const administeredIds = [
@@ -330,8 +369,8 @@ async function handleRespond(req: Request, userId: string) {
     competencyStates: irtState,
     focusCompetency: isCompetencyMode ? focusCompetency : undefined,
     mode: isCompetencyMode ? "competency" : "full",
-    minItems: isCompetencyMode ? COMPETENCY_SESSION_MIN_ITEMS : FULL_SESSION_MIN_ITEMS,
-    maxItems: isCompetencyMode ? COMPETENCY_SESSION_MAX_ITEMS : FULL_SESSION_MAX_ITEMS,
+    minItems: itemLimits.minItems,
+    maxItems: itemLimits.maxItems,
   });
 
   const chipTypeMap: Record<string, "PASS" | "ATTEMPT" | "DOWNGRADE"> = {
@@ -551,14 +590,10 @@ async function handleRespond(req: Request, userId: string) {
     focusCompetency,
     nextCompetency,
     maxItemsPerCompetency: isCompetencyMode
-      ? COMPETENCY_SESSION_MAX_ITEMS
+      ? competencySessionLimits(stored).maxItems
       : FULL_SESSION_MAX_ITEMS,
   });
 }
-
-type SessionWithRelations = Prisma.InterviewSessionGetPayload<{
-  include: { resume: true; targetCompany: true; responses: true; plan: true };
-}>;
 
 function buildBonusInterviewQuestion(
   bonus: { question: string; groundedRequirement: string },
@@ -738,7 +773,7 @@ async function handleBonusRespond(params: {
     planId,
     focusCompetency,
     nextCompetency,
-    maxItemsPerCompetency: COMPETENCY_SESSION_MAX_ITEMS,
+    maxItemsPerCompetency: competencySessionLimits(stored).maxItems,
   });
 }
 

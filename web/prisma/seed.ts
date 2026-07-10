@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { platformCompetencyUniqueWhere } from "../src/lib/content/ownership";
 
 const prisma = new PrismaClient();
 
@@ -28,16 +29,22 @@ async function main() {
   for (let i = 0; i < data.competencies.length; i++) {
     const comp = data.competencies[i];
     await prisma.competency.upsert({
-      where: { code: comp.code },
+      where: platformCompetencyUniqueWhere(comp.code),
       update: { nameKo: comp.nameKo, description: comp.description, sortOrder: i, isActive: true },
-      create: { ...comp, sortOrder: i, isActive: true },
+      create: {
+        ...comp,
+        sortOrder: i,
+        isActive: true,
+        ownerScope: "PLATFORM",
+        organizationId: null,
+      },
     });
   }
 
   const sortCounters: Record<string, number> = {};
   for (const q of data.questions) {
-    const competency = await prisma.competency.findUnique({
-      where: { code: q.competency },
+    const competency = await prisma.competency.findFirst({
+      where: { code: q.competency, ownerScope: "PLATFORM", organizationId: null },
     });
     if (!competency) continue;
 

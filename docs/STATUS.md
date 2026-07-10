@@ -1,6 +1,26 @@
-# 현재 상태 (2026-07-09 기준)
+# 현재 상태 (2026-07-10 기준)
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
+
+## 최근 작업 — 통합 콘텐츠 오너십(기본/기관 포크/승격) (2026-07-10)
+
+- **스키마**: `ContentOwnerScope` (`PLATFORM` / `ORG` / `DEMO`). `Competency`·`Question`에 `ownerScope`, `organizationId`, `forkedFromId`, `createdByUserId`. `Competency.code` 전역 unique → `@@unique([organizationId, code])` (PLATFORM `null` 중복은 `assertPlatformCompetencyCodeAvailable` 앱 검증).
+- **Survey CMS 스키마만**: `Survey` / `SurveyQuestion` / `SurveyResponse` / `SurveyAnswer` + 동일 오너십 필드 — UI·API는 후속.
+- **code 조회 정리**: seed·sync·start-session·meaning layer 등 `code` 단독 조회 → `ownerScope: PLATFORM, organizationId: null` 명시.
+- **권한**: `tenant.custom_competency` → `ORG_ADMIN` (편집). `ORG_STAFF` 조회. 승격·전체 ORG 목록은 `platform.content`.
+- **API**:
+  - `GET/POST /api/org/content/competencies` — 기관 커스텀 CRUD·플랫폼 목록
+  - `PATCH/DELETE /api/org/content/competencies/[id]`
+  - `POST /api/org/content/competencies/[id]/questions` — ORG 역량에만 문항 추가
+  - `GET /api/admin/content/competencies?scope=ORG` — 기관별 그룹
+  - `POST /api/admin/content/competencies/[id]/promote` · `.../questions/[id]/promote` — `merge_into_base` | `promote_as_new_base`
+- **UI**: `/admin/content` 「기관 커스텀 역량」탭 · `/org/settings/competencies` 역량 관리 · 모바일 인터뷰 킷 바텀시트(역량 마스터 + 풀스크린 문항 시트).
+- **마이그레이션**: `20260710100000_content_ownership_fork`
+- **후속 과제**:
+  - `DemoCompetency`/`DemoQuestion` → `Competency`/`Question` + `ownerScope=DEMO` 통합(데이터 마이그레이션 검증 후 별도 배치)
+  - 기관 커스텀 문항 `difficulty`/`discrimination` IRT 재보정 자동화
+  - 인터뷰 킷 API에 ORG 커스텀 역량·문항 병합
+- 검증: `npx prisma migrate deploy` ✓, `npm run build` ✓
 
 ## 최근 작업 — 세션 길이 확장 + JD 보너스 질문 (2026-07-09)
 

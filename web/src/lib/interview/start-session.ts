@@ -11,7 +11,7 @@ import {
 import { matchPersona } from "@/lib/interview/persona-archetype";
 import { summarizeResume } from "@/lib/interview/resume-summary";
 import { parseResumeSummary } from "@/lib/interview/build-question";
-import { filterAndRankQuestionPool } from "@/lib/interview/question-pool";
+import { poolQuestionsToItemParams, prepareRankedQuestionPool } from "@/lib/interview/question-pool";
 import { filterQuestionsByOrgKit } from "@/lib/org/interview-kit";
 import { getActiveCompetencyCodes } from "@/lib/competency/bank";
 import {
@@ -19,8 +19,8 @@ import {
   formatInterviewSetupText,
 } from "@/lib/user-text-archive";
 import {
-  COMPETENCY_SESSION_MAX_ITEMS,
-  COMPETENCY_SESSION_MIN_ITEMS,
+  DEFAULT_QUESTION_COUNT,
+  sessionItemLimits,
 } from "@/lib/interview/session-limits";
 import { COMPETENCY_CODES, INDUSTRY_CODES, JOB_ROLES, COMPANY_SIZE_CODES } from "@/types";
 import type {
@@ -48,6 +48,8 @@ export type StartSessionBody = {
   tripleFeedbackMode?: boolean;
   /** 공고 맞춤 보너스 질문 — JD가 있을 때만, 기본 OFF */
   jdBonusEnabled?: boolean;
+  /** 역량당 문항 수 (1~5, 기본 3) */
+  questionCount?: number;
 };
 
 /** 공유 링크(OrgInterviewKitShare)로 들어온 세션 등, 사용자 본인 소속 기관과
@@ -107,7 +109,12 @@ export async function startInterviewSession(
     companySize,
     tripleFeedbackMode,
     jdBonusEnabled,
+    questionCount: questionCountBody,
   } = body;
+
+  const { minItems, maxItems, questionCount } = sessionItemLimits(
+    questionCountBody ?? DEFAULT_QUESTION_COUNT,
+  );
 
   const industryCode: IndustryCode = INDUSTRY_CODES.includes(industry as IndustryCode)
     ? (industry as IndustryCode)
@@ -276,7 +283,7 @@ export async function startInterviewSession(
   }
 
   const bankComp = await prisma.competency.findFirst({
-    where: { code: competency, isActive: true },
+    where: { code: competency, isActive: true, ownerScope: "PLATFORM", organizationId: null },
     select: { id: true },
   });
   if (!bankComp) {
@@ -372,7 +379,7 @@ export async function startInterviewSession(
 
   const rankedQuestions = opts.demoMode
     ? kitFilteredQuestions
-    : await filterAndRankQuestionPool({
+    : await prepareRankedQuestionPool({
         userId: user.id,
         competency,
         questions: kitFilteredQuestions,
@@ -381,13 +388,7 @@ export async function startInterviewSession(
         interviewStyleFocus: interviewStyle.focus,
       });
 
-  const itemPool: ItemParams[] = rankedQuestions.map((q) => ({
-    item_id: q.externalId,
-    competency: q.competency.code,
-    difficulty: q.difficulty,
-    discrimination: q.discrimination,
-    level: q.level,
-  }));
+  const itemPool: ItemParams[] = poolQuestionsToItemParams(rankedQuestions);
 
   const priorSnapshots = await prisma.competencySnapshot.findMany({
     where: { userId: user.id, competency },
@@ -410,8 +411,8 @@ export async function startInterviewSession(
         priorTheta,
         focusCompetency: competency,
         mode: "competency",
-        minItems: COMPETENCY_SESSION_MIN_ITEMS,
-        maxItems: COMPETENCY_SESSION_MAX_ITEMS,
+        minItems,
+        maxItems,
       },
       opts.demoMode ? { timeoutMs: 28_000, retries: 1 } : undefined,
     );
@@ -443,6 +444,7 @@ export async function startInterviewSession(
         administeredIds: [],
         focusCompetency: competency,
         planId: plan.id,
+        questionCount,
       }),
     },
   });

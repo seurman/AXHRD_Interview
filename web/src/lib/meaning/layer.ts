@@ -38,8 +38,8 @@ export type MeaningNeighbor = {
 async function resolveNodeLabel(kind: ConceptNodeKind, key: string): Promise<string> {
   switch (kind) {
     case "NCS_COMPETENCY": {
-      const c = await prisma.competency.findUnique({
-        where: { code: key },
+      const c = await prisma.competency.findFirst({
+        where: { code: key, ownerScope: "PLATFORM", organizationId: null },
         select: { nameKo: true },
       });
       return c?.nameKo ?? key;

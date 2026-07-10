@@ -3,6 +3,8 @@
  * SSRF 방지를 위해 private/metadata 호스트를 차단하고, HTML은 단순 텍스트로 정리한다.
  */
 
+import { enrichJdTextWithImageOcr } from "@/lib/company/jd-image-ocr";
+
 const MAX_BYTES = 1_500_000;
 const FETCH_TIMEOUT_MS = 12_000;
 const MAX_TEXT_CHARS = 12_000;
@@ -404,7 +406,7 @@ export function htmlToPlainText(html: string): string {
 }
 
 export type FetchJdUrlResult =
-  | { ok: true; url: string; title: string | null; text: string; bytes: number; ms: number }
+  | { ok: true; url: string; title: string | null; text: string; bytes: number; ms: number; ocrUsed?: boolean }
   | { ok: false; error: string; status?: number };
 
 export async function fetchJdTextFromUrl(rawUrl: string): Promise<FetchJdUrlResult> {
@@ -464,13 +466,17 @@ export async function fetchJdTextFromUrl(rawUrl: string): Promise<FetchJdUrlResu
     const raw = buf.toString("utf-8");
     let text: string;
     let title: string | null = null;
+    let ocrUsed = false;
 
     if (contentType.includes("text/plain") || contentType.includes("markdown")) {
       text = raw.replace(/\r/g, "").trim().slice(0, MAX_TEXT_CHARS);
     } else {
       const titleMatch = raw.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
       title = titleMatch?.[1]?.replace(/<[^>]+>/g, "").trim().slice(0, 200) ?? null;
-      text = htmlToPlainText(raw);
+      const beforeOcr = htmlToPlainText(raw);
+      text = await enrichJdTextWithImageOcr(raw, beforeOcr);
+      ocrUsed = text !== beforeOcr && !/이미지 공고로 제공되어/.test(text);
+      text = text.slice(0, MAX_TEXT_CHARS);
     }
 
     if (text.length < MIN_USEFUL_CHARS || looksLikeNavBoilerplate(text) || looksLikeSaraminPageChrome(text)) {
@@ -488,6 +494,7 @@ export async function fetchJdTextFromUrl(rawUrl: string): Promise<FetchJdUrlResu
       text,
       bytes: buf.byteLength,
       ms: Date.now() - started,
+      ocrUsed: ocrUsed || undefined,
     };
   } catch (e) {
     if (e instanceof Error && e.name === "AbortError") {

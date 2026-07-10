@@ -250,7 +250,7 @@ export function VoiceRecorder({
         </div>
       )}
 
-      {transcript && (
+      {transcript && listening && (
         <div className="rounded-xl border border-card-border bg-background p-4 text-sm text-foreground">
           {transcript}
         </div>

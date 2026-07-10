@@ -56,3 +56,67 @@ export async function generateGeminiText(params: {
     return null;
   }
 }
+
+/** 채용공고 이미지 등 — 멀티모달 OCR/텍스트 추출 */
+export async function generateGeminiVisionText(params: {
+  systemInstruction: string;
+  userPrompt: string;
+  imageBase64: string;
+  mimeType: string;
+  temperature?: number;
+  maxOutputTokens?: number;
+  timeoutMs?: number;
+}): Promise<string | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+
+  const model = process.env.GEMINI_VISION_MODEL ?? process.env.GEMINI_TEXT_MODEL ?? "gemini-2.5-flash-lite";
+
+  try {
+    const res = await fetchWithTimeout(
+      `${GEMINI_BASE}/models/${model}:generateContent`,
+      {
+        method: "POST",
+        headers: {
+          "x-goog-api-key": apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                { text: params.userPrompt },
+                {
+                  inlineData: {
+                    mimeType: params.mimeType,
+                    data: params.imageBase64,
+                  },
+                },
+              ],
+            },
+          ],
+          systemInstruction: { parts: [{ text: params.systemInstruction }] },
+          generationConfig: {
+            temperature: params.temperature ?? 0.1,
+            maxOutputTokens: params.maxOutputTokens ?? 4096,
+          },
+        }),
+        timeoutMs: params.timeoutMs ?? 25_000,
+        retries: 0,
+      },
+    );
+
+    if (!res.ok) {
+      console.error("[Gemini vision] HTTP", res.status, await res.text());
+      return null;
+    }
+
+    const data = await res.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    return text.trim() || null;
+  } catch (e) {
+    console.error("[Gemini vision] 요청 실패:", e);
+    return null;
+  }
+}

@@ -48,6 +48,8 @@ export interface StoredIrtState {
   pendingFollowUp?: PendingFollowUp;
   /** 세션에서 이미 꼬리질문을 한 번 썼는지 — 세션당 최대 1회 */
   followUpUsed?: boolean;
+  /** 피면접자가 선택한 역량당 문항 수 (1~5) */
+  questionCount?: number;
 }
 
 function normalizePersonalizedQuestions(
@@ -89,6 +91,10 @@ export function parseIrtState(raw: unknown): StoredIrtState {
       bonusQuestionOffered: obj.bonusQuestionOffered === true,
       pendingFollowUp: obj.pendingFollowUp as PendingFollowUp | undefined,
       followUpUsed: obj.followUpUsed === true,
+      questionCount:
+        typeof obj.questionCount === "number"
+          ? obj.questionCount
+          : undefined,
     };
   }
 
@@ -111,6 +117,7 @@ export function serializeIrtState(state: StoredIrtState): object {
     bonusQuestionOffered: state.bonusQuestionOffered,
     pendingFollowUp: state.pendingFollowUp,
     followUpUsed: state.followUpUsed,
+    questionCount: state.questionCount,
   };
 }
 

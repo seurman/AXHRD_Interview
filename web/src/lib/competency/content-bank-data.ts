@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { parseFollowUpHints, parseRubricCriteria } from "@/lib/competency/bank";
+import { PLATFORM_OWNER_FILTER } from "@/lib/content/ownership";
 import type { CompetencySource } from "@prisma/client";
 
 export type BankCluster = {
@@ -56,6 +57,7 @@ async function loadContentBankSnapshotInner() {
       include: { _count: { select: { competencies: true } } },
     }),
     prisma.competency.findMany({
+      where: PLATFORM_OWNER_FILTER,
       orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
       include: {
         cluster: { select: { code: true, nameKo: true } },
@@ -63,6 +65,7 @@ async function loadContentBankSnapshotInner() {
       },
     }),
     prisma.question.findMany({
+      where: { ownerScope: "PLATFORM", organizationId: null },
       orderBy: [
         { competencyId: "asc" },
         { level: "asc" },

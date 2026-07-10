@@ -150,6 +150,9 @@ model Organization {
   subscriptions Subscription[]
   interviewKits OrgInterviewKit[]
   interviewKitShares OrgInterviewKitShare[]
+  competencies Competency[]
+  questions    Question[]
+  surveys      Survey[]
 }
 
 // ── User ──
@@ -187,6 +190,10 @@ model User {
   orgInterviewKitUpdates OrgInterviewKit[] @relation("OrgInterviewKitUpdatedBy")
   orgInterviewKitSharesCreated OrgInterviewKitShare[] @relation("OrgInterviewKitShareCreatedBy")
   textRecords     UserTextRecord[]
+  competenciesCreated Competency[] @relation("CompetencyCreatedBy")
+  questionsCreated    Question[]   @relation("QuestionCreatedBy")
+  surveysCreated      Survey[]     @relation("SurveyCreatedBy")
+  surveyResponses     SurveyResponse[]
 
   @@index([organizationId])
 }
@@ -402,6 +409,12 @@ model CompetencyFeedback {
 
 // ── Question bank (unified pool: NCS · Global · custom — source is metadata only) ──
 
+enum ContentOwnerScope {
+  PLATFORM
+  ORG
+  DEMO
+}
+
 enum CompetencySource {
   NCS
   GLOBAL
@@ -422,7 +435,7 @@ model CompetencyCluster {
 
 model Competency {
   id          String   @id @default(cuid())
-  code        String   @unique
+  code        String
   nameKo      String
   nameEn      String?
   description String?
@@ -433,11 +446,22 @@ model Competency {
   isActive    Boolean  @default(true)
   /** 역량·레벨별 기본 채점 루브릭 — { "1": ["기준",...], "2": [...], "default": [...] } */
   rubricByLevel Json?
+  ownerScope      ContentOwnerScope @default(PLATFORM)
+  organizationId  String?
+  organization    Organization?     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  forkedFromId    String?
+  forkedFrom      Competency?       @relation("CompetencyFork", fields: [forkedFromId], references: [id], onDelete: SetNull)
+  forks           Competency[]      @relation("CompetencyFork")
+  createdByUserId String?
+  createdBy       User?             @relation("CompetencyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
   questions   Question[]
   benchmarks  CompetencyBenchmarkRef[]
 
+  @@unique([organizationId, code])
   @@index([clusterId])
   @@index([source])
+  @@index([organizationId])
+  @@index([ownerScope])
 }
 
 model CompetencyBenchmarkRef {
@@ -468,10 +492,101 @@ model Question {
   rubricCriteria Json?
   sortOrder      Int        @default(0)
   isActive       Boolean    @default(true)
+  ownerScope      ContentOwnerScope @default(PLATFORM)
+  organizationId  String?
+  organization    Organization?     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  forkedFromId    String?
+  forkedFrom      Question?         @relation("QuestionFork", fields: [forkedFromId], references: [id], onDelete: SetNull)
+  forks           Question[]        @relation("QuestionFork")
+  createdByUserId String?
+  createdBy       User?             @relation("QuestionCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   responses ResponseRecord[]
 
   @@index([competencyId, level])
+  @@index([organizationId])
+  @@index([ownerScope])
+}
+
+// ── Survey (CMS — 설문) ──
+
+enum SurveyQuestionType {
+  SINGLE_CHOICE
+  MULTI_CHOICE
+  SCALE
+  TEXT
+}
+
+enum SurveyAudience {
+  CANDIDATE
+  ORG_MEMBER
+  PUBLIC
+}
+
+model Survey {
+  id                   String         @id @default(cuid())
+  title                String
+  description          String?        @db.Text
+  audience             SurveyAudience @default(CANDIDATE)
+  linkedCompetencyCode String?
+  ownerScope           ContentOwnerScope @default(PLATFORM)
+  organizationId       String?
+  organization         Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  forkedFromId         String?
+  forkedFrom           Survey?        @relation("SurveyFork", fields: [forkedFromId], references: [id], onDelete: SetNull)
+  forks                Survey[]       @relation("SurveyFork")
+  isActive             Boolean        @default(true)
+  createdByUserId      String?
+  createdBy            User?          @relation("SurveyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt            DateTime       @default(now())
+
+  questions SurveyQuestion[]
+  responses SurveyResponse[]
+
+  @@index([organizationId])
+  @@index([ownerScope])
+  @@index([audience, isActive])
+}
+
+model SurveyQuestion {
+  id          String             @id @default(cuid())
+  surveyId    String
+  survey      Survey             @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  sortOrder   Int                @default(0)
+  type        SurveyQuestionType
+  prompt      String             @db.Text
+  options     Json?
+  scaleConfig Json?
+  isRequired  Boolean            @default(true)
+
+  answers SurveyAnswer[]
+
+  @@index([surveyId, sortOrder])
+}
+
+model SurveyResponse {
+  id          String    @id @default(cuid())
+  surveyId    String
+  survey      Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  submittedAt DateTime  @default(now())
+
+  answers SurveyAnswer[]
+
+  @@index([surveyId])
+  @@index([userId])
+}
+
+model SurveyAnswer {
+  id         String         @id @default(cuid())
+  responseId String
+  response   SurveyResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  questionId String
+  question   SurveyQuestion @relation(fields: [questionId], references: [id])
+  value      Json
+
+  @@unique([responseId, questionId])
 }
 
 // ── Interview session ──

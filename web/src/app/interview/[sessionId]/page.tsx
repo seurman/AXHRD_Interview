@@ -6,8 +6,9 @@ import { parseIrtState, defaultCompetencyStates } from "@/lib/irt-state";
 import { buildPersonalizedQuestion } from "@/lib/interview/build-question";
 import {
   BONUS_QUESTION_ID,
-  COMPETENCY_SESSION_MAX_ITEMS,
+  DEFAULT_QUESTION_COUNT,
   FULL_SESSION_MAX_ITEMS,
+  clampQuestionCount,
 } from "@/lib/interview/session-limits";
 import { getOrgKitCustomRubric } from "@/lib/org/interview-kit";
 import { buildQuestionRationale } from "@/lib/interview/rationale";
@@ -42,6 +43,7 @@ export default async function InterviewPage({ params }: PageProps) {
   if (session.userId !== actor.userId) notFound();
 
   const stored = parseIrtState(session.irtState);
+  const questionCount = clampQuestionCount(stored.questionCount ?? DEFAULT_QUESTION_COUNT);
   const competencyStates =
     Object.keys(stored.competencies).length > 0
       ? stored.competencies
@@ -143,15 +145,15 @@ export default async function InterviewPage({ params }: PageProps) {
           </span>
         </p>
       )}
-      <p className="mb-6 text-sm text-muted">역량당 3~5문항 · 자소서·공고 맞춤 · 완료 후 피드백</p>
+      <p className="mb-6 text-sm text-muted">
+        역량당 {questionCount}문항 · 자소서·공고 맞춤 · 완료 후 피드백
+      </p>
       <InterviewSession
         sessionId={sessionId}
         initialState={initialState}
         focusCompetency={session.focusCompetency ?? undefined}
         maxItems={
-          session.mode === "COMPETENCY"
-            ? COMPETENCY_SESSION_MAX_ITEMS
-            : FULL_SESSION_MAX_ITEMS
+          session.mode === "COMPETENCY" ? questionCount : FULL_SESSION_MAX_ITEMS
         }
         tripleFeedbackMode={session.tripleFeedbackMode}
       />

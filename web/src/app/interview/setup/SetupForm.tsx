@@ -33,6 +33,36 @@ type CompetencyRow = {
   percentile?: number;
 };
 
+function ReflectChip({
+  label,
+  editLabel,
+  removeLabel,
+  onEdit,
+  onRemove,
+}: {
+  label: string;
+  editLabel: string;
+  removeLabel: string;
+  onEdit: () => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-success/30 bg-success/5 px-3 py-2.5">
+      <span className="text-sm text-success">✓ {label}</span>
+      <button type="button" onClick={onEdit} className="text-xs text-primary hover:underline">
+        {editLabel}
+      </button>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="text-xs text-muted hover:text-foreground hover:underline"
+      >
+        {removeLabel}
+      </button>
+    </div>
+  );
+}
+
 export function SetupForm({
   user,
 }: {
@@ -57,16 +87,16 @@ export function SetupForm({
   const [jdFileName, setJdFileName] = useState<string | null>(null);
   const [jdFileError, setJdFileError] = useState<string | null>(null);
   const [parsingJdFile, setParsingJdFile] = useState(false);
-  const [showJdManualInput, setShowJdManualInput] = useState(false);
+  const [showJdEditor, setShowJdEditor] = useState(false);
   const [jobRole, setJobRole] = useState<string>("MARKETING");
-  const [fileResumeText, setFileResumeText] = useState("");
-  const [manualText, setManualText] = useState("");
-  const [showManualInput, setShowManualInput] = useState(true);
+  const [resumeText, setResumeText] = useState("");
+  const [showResumeEditor, setShowResumeEditor] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [focusCompetency, setFocusCompetency] = useState<string>("");
   const [tripleFeedbackMode, setTripleFeedbackMode] = useState(false);
   const [jdBonusEnabled, setJdBonusEnabled] = useState(false);
+  const [questionCount, setQuestionCount] = useState(3);
   // 역량 카드를 직접 클릭했는지 여부 — 산업/직무를 고를 때 자동으로 역량을 바꿔주되,
   // 사용자가 이미 직접 골랐다면(또는 URL의 ?competency=로 왔다면) 덮어쓰지 않기 위한 플래그.
   const competencyManuallyChanged = useRef(false);
@@ -157,27 +187,46 @@ export function SetupForm({
     const isPlainText = ext === "txt" || ext === "md";
 
     try {
+      let text = "";
       if (isPlainText) {
-        const text = await file.text();
-        if (!text.trim()) throw new Error("파일이 비어 있습니다.");
-        setFileResumeText(text.trim());
-        setUploadedFileName(file.name);
-        return;
+        text = (await file.text()).trim();
+        if (!text) throw new Error("파일이 비어 있습니다.");
+      } else {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/resume/parse", { method: "POST", body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "파일을 읽지 못했습니다.");
+        text = typeof data.text === "string" ? data.text : "";
       }
 
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/resume/parse", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "파일을 읽지 못했습니다.");
-      setFileResumeText(data.text);
-      setUploadedFileName(data.fileName ?? file.name);
+      setResumeText(text);
+      setUploadedFileName(file.name);
+      setShowResumeEditor(false);
     } catch (e) {
       setFileError(e instanceof Error ? e.message : "파일 업로드 실패");
       setUploadedFileName(null);
+      setResumeText("");
     } finally {
       setParsingFile(false);
     }
+  };
+
+  const clearResume = () => {
+    setResumeText("");
+    setUploadedFileName(null);
+    setShowResumeEditor(false);
+    setFileError(null);
+  };
+
+  const clearJd = () => {
+    setJdText("");
+    setJdUrl("");
+    setJdUrlStatus(null);
+    setJdUrlError(null);
+    setJdFileName(null);
+    setJdFileError(null);
+    setShowJdEditor(false);
   };
 
   const handleJdFile = async (file: File) => {
@@ -192,6 +241,7 @@ export function SetupForm({
         if (!text.trim()) throw new Error("파일이 비어 있습니다.");
         setJdText(text.trim());
         setJdFileName(file.name);
+        setShowJdEditor(false);
         return;
       }
 
@@ -202,6 +252,7 @@ export function SetupForm({
       if (!res.ok) throw new Error(data.error ?? "파일을 읽지 못했습니다.");
       setJdText(data.text);
       setJdFileName(data.fileName ?? file.name);
+      setShowJdEditor(false);
     } catch (e) {
       setJdFileError(e instanceof Error ? e.message : "파일 업로드 실패");
       setJdFileName(null);
@@ -228,7 +279,7 @@ export function SetupForm({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to fetch JD");
       setJdText(typeof data.text === "string" ? data.text : "");
-      setShowJdManualInput(true);
+      setShowJdEditor(false);
       setJdUrlStatus(
         `${s.jd.urlSuccess}${data.title ? ` · ${data.title}` : ""} (${data.chars ?? data.text?.length ?? 0}자)`,
       );
@@ -259,7 +310,7 @@ export function SetupForm({
           companySize,
           companyName,
           jobRole,
-          resumeText: manualText.trim() || fileResumeText,
+          resumeText: resumeText.trim(),
           resumeFileName: uploadedFileName,
           planId,
           focusCompetency,
@@ -267,6 +318,7 @@ export function SetupForm({
           jdUrl: jdUrl.trim() || undefined,
           tripleFeedbackMode,
           jdBonusEnabled: jdBonusEnabled && (!!jdText.trim() || !!jdUrl.trim()),
+          questionCount,
         }),
       });
 
@@ -292,8 +344,8 @@ export function SetupForm({
   };
 
   const requestResumeReview = async () => {
-    const resumeText = manualText.trim() || fileResumeText;
-    if (resumeText.length < 20) {
+    const trimmedResume = resumeText.trim();
+    if (trimmedResume.length < 20) {
       alert(s.resumeReview.needResume);
       return;
     }
@@ -308,7 +360,7 @@ export function SetupForm({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          resumeText,
+          resumeText: trimmedResume,
           resumeFileName: uploadedFileName,
           industry,
           jobRole,
@@ -329,7 +381,21 @@ export function SetupForm({
   };
 
   const completedCount = competencies.filter((c) => c.status === "COMPLETED").length;
-  const resumeDraft = (manualText.trim() || fileResumeText.trim());
+  const resumeDraft = resumeText.trim();
+  const jdDraft = jdText.trim();
+  const jdReflectLabel = jdUrlStatus
+    ? jdUrlStatus
+    : jdFileName && jdDraft
+      ? `${jdFileName} · ${s.jd.charsApplied.replace("{chars}", String(jdDraft.length))}`
+      : jdDraft
+        ? s.jd.charsApplied.replace("{chars}", String(jdDraft.length))
+        : null;
+  const resumeReflectLabel =
+    resumeDraft.length > 0
+      ? uploadedFileName
+        ? `${uploadedFileName} · ${s.resume.charsApplied.replace("{chars}", String(resumeDraft.length))}`
+        : s.resume.charsApplied.replace("{chars}", String(resumeDraft.length))
+      : null;
   const canRequestReview =
     Boolean(industry) &&
     resumeDraft.length >= 20 &&
@@ -419,7 +485,6 @@ export function SetupForm({
                 {fetchingJdUrl ? s.jd.urlFetching : s.jd.urlFetch}
               </button>
             </div>
-            {jdUrlStatus && <p className="text-sm text-success">✓ {jdUrlStatus}</p>}
             {jdUrlError && (
               <p className="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
                 {jdUrlError}
@@ -456,31 +521,51 @@ export function SetupForm({
               }}
             />
           </label>
-          {jdFileName && !jdFileError && (
-            <p className="text-sm text-success">✓ {jdFileName} 업로드됨</p>
-          )}
           {jdFileError && (
             <p className="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
               {jdFileError}
             </p>
           )}
 
-          {showJdManualInput ? (
-            <textarea
-              value={jdText}
-              onChange={(e) => setJdText(e.target.value)}
-              rows={5}
-              placeholder={s.jd.placeholder}
-              className="input-luxe w-full text-sm"
+          {jdReflectLabel && !showJdEditor && (
+            <ReflectChip
+              label={jdReflectLabel}
+              editLabel={s.jd.viewEdit}
+              removeLabel={s.jd.remove}
+              onEdit={() => setShowJdEditor(true)}
+              onRemove={clearJd}
             />
+          )}
+
+          {showJdEditor ? (
+            <div className="space-y-2">
+              <textarea
+                value={jdText}
+                onChange={(e) => setJdText(e.target.value)}
+                rows={5}
+                placeholder={s.jd.placeholder}
+                className="input-luxe w-full text-sm"
+              />
+              {jdReflectLabel && (
+                <button
+                  type="button"
+                  onClick={() => setShowJdEditor(false)}
+                  className="text-xs text-muted underline hover:text-foreground"
+                >
+                  {s.jd.collapse}
+                </button>
+              )}
+            </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => setShowJdManualInput(true)}
-              className="text-xs text-muted underline hover:text-foreground"
-            >
-              {s.jd.manual}
-            </button>
+            !jdReflectLabel && (
+              <button
+                type="button"
+                onClick={() => setShowJdEditor(true)}
+                className="text-xs text-muted underline hover:text-foreground"
+              >
+                {s.jd.manual}
+              </button>
+            )
           )}
         </div>
       </section>
@@ -564,6 +649,28 @@ export function SetupForm({
             );
           })}
         </div>
+
+        <div className="space-y-2 border-t border-card-border pt-4">
+          <h3 className="text-sm font-semibold text-foreground">{s.questionCount.title}</h3>
+          <p className="text-xs leading-relaxed text-muted">{s.questionCount.hint}</p>
+          <div className="flex flex-wrap gap-2">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setQuestionCount(n)}
+                className={`min-w-[3.25rem] rounded-xl border px-4 py-2.5 text-sm font-medium transition ${
+                  questionCount === n
+                    ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/25"
+                    : "border-card-border text-foreground hover:border-primary/30"
+                }`}
+              >
+                {n}
+                <span className="ml-1 text-xs font-normal opacity-70">{s.questionCount.unit}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="card-luxe space-y-4 p-6">
@@ -599,31 +706,54 @@ export function SetupForm({
             }}
           />
         </label>
-        {uploadedFileName && !fileError && (
-          <p className="text-sm text-success">✓ {uploadedFileName} 업로드됨</p>
-        )}
         {fileError && (
           <p className="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
             {fileError}
           </p>
         )}
 
-        {showManualInput ? (
-          <textarea
-            value={manualText}
-            onChange={(e) => setManualText(e.target.value)}
-            rows={6}
-            placeholder={s.resume.placeholder}
-            className="input-luxe w-full text-sm"
+        {resumeReflectLabel && !showResumeEditor && (
+          <ReflectChip
+            label={resumeReflectLabel}
+            editLabel={s.resume.viewEdit}
+            removeLabel={s.resume.remove}
+            onEdit={() => setShowResumeEditor(true)}
+            onRemove={clearResume}
           />
+        )}
+
+        {showResumeEditor ? (
+          <div className="space-y-2">
+            <textarea
+              value={resumeText}
+              onChange={(e) => {
+                setResumeText(e.target.value);
+                if (uploadedFileName) setUploadedFileName(null);
+              }}
+              rows={6}
+              placeholder={s.resume.placeholder}
+              className="input-luxe w-full text-sm"
+            />
+            {resumeReflectLabel && (
+              <button
+                type="button"
+                onClick={() => setShowResumeEditor(false)}
+                className="text-xs text-muted underline hover:text-foreground"
+              >
+                {s.resume.collapse}
+              </button>
+            )}
+          </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => setShowManualInput(true)}
-            className="text-xs text-muted underline hover:text-foreground"
-          >
-            파일 대신 텍스트로 직접 입력
-          </button>
+          !resumeReflectLabel && (
+            <button
+              type="button"
+              onClick={() => setShowResumeEditor(true)}
+              className="text-xs text-muted underline hover:text-foreground"
+            >
+              {s.resume.manual}
+            </button>
+          )
         )}
         <div className="rounded-xl border border-accent/25 bg-gradient-to-br from-accent/10 via-transparent to-transparent p-4 space-y-3">
           <div className="flex items-start gap-3">

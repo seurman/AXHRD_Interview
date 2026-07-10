@@ -134,7 +134,7 @@ async function main() {
       firstQuestion = (
         await buildPersonalizedQuestion(
           session,
-          { ...dbQ, competency: await prisma.competency.findFirstOrThrow({ where: { code: "COMMUNICATION" } }) },
+          { ...dbQ, competency: await prisma.competency.findFirstOrThrow({ where: { code: "COMMUNICATION", ownerScope: "PLATFORM", organizationId: null } }) },
           buildQuestionRationale({ level: dbQ.level }),
           { skipPersonalization: false },
         )

@@ -15,6 +15,7 @@
 import { prisma } from "@/lib/prisma";
 import type { ResumeSummary } from "@/lib/interview/resume-summary";
 import { jobRoleLabel } from "@/lib/labels";
+import type { ItemParams } from "@/types";
 
 export interface PoolQuestion {
   id: string;
@@ -50,6 +51,37 @@ export async function filterAndRankQuestionPool(params: {
   const pool = eligible.length >= 2 ? eligible : questions;
 
   return rankByRelevance(pool, {
+    resumeSummary: params.resumeSummary,
+    jobRole: params.jobRole,
+    interviewStyleFocus: params.interviewStyleFocus,
+  });
+}
+
+export function poolQuestionsToItemParams(questions: PoolQuestion[]): ItemParams[] {
+  return questions.map((q) => ({
+    item_id: q.externalId,
+    competency: q.competency.code,
+    difficulty: q.difficulty,
+    discrimination: q.discrimination,
+    level: q.level,
+  }));
+}
+
+/** start/respond 공통 — 기관 킷 필터 이후 자소서·JD 연관도 순위 적용 */
+export async function prepareRankedQuestionPool(params: {
+  userId: string;
+  competency: string;
+  questions: PoolQuestion[];
+  resumeSummary?: ResumeSummary | null;
+  jobRole?: string;
+  interviewStyleFocus?: string[];
+  skipRanking?: boolean;
+}): Promise<PoolQuestion[]> {
+  if (params.skipRanking) return params.questions;
+  return filterAndRankQuestionPool({
+    userId: params.userId,
+    competency: params.competency,
+    questions: params.questions,
     resumeSummary: params.resumeSummary,
     jobRole: params.jobRole,
     interviewStyleFocus: params.interviewStyleFocus,

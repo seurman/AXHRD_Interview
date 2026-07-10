@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Plus,
   Minus,
@@ -10,6 +10,8 @@ import {
   Sparkles,
   ListChecks,
   X,
+  Lock,
+  ChevronLeft,
 } from "lucide-react";
 import { MotionReorderList } from "@/components/org/MotionReorderList";
 import { competencyLabel } from "@/lib/labels";
@@ -303,6 +305,8 @@ export function InterviewKitWorkspace(props: WorkspaceProps) {
     });
   }, [questionsByComp, paletteCode, search, levelFilter]);
 
+  const [questionSheetCode, setQuestionSheetCode] = useState<string | null>(null);
+
   const activeComp = compByCode.get(activeCode);
   const activeDraft = drafts[activeCode];
   const activeKitIds = new Set(drafts[paletteCode]?.selectedIds ?? []);
@@ -311,10 +315,161 @@ export function InterviewKitWorkspace(props: WorkspaceProps) {
     0
   );
 
+  const sheetComp = questionSheetCode ? compByCode.get(questionSheetCode) : null;
+  const sheetDraft = questionSheetCode ? drafts[questionSheetCode] : null;
+  const sheetQuestions = questionSheetCode ? questionsByComp.get(questionSheetCode) ?? [] : [];
+  const sheetReadOnly = true;
+
   if (!activeComp || !activeDraft) return null;
 
   return (
     <div className="space-y-4">
+      {/* 모바일: 마스터 역량 목록 + 풀스크린 문항 시트 */}
+      <div className="xl:hidden space-y-3">
+        <div className="rounded-2xl border border-card-border bg-card p-4">
+          <p className="text-xs font-bold uppercase tracking-widest text-gold">역량 마스터</p>
+          <p className="mt-1 text-xs text-muted">탭하여 킷에 담기 · 문항 관리는 시트로 열림</p>
+          <ul className="mt-3 space-y-2">
+            {data.competencies.map((c) => {
+              const inKit = kitCompetencies.includes(c.code);
+              return (
+                <li
+                  key={c.code}
+                  className={`flex items-center gap-2 rounded-xl border p-3 ${
+                    inKit ? "border-gold/40 bg-gold/5" : "border-card-border"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 text-left"
+                    onClick={() => {
+                      if (!inKit) onAddCompetency(c.code);
+                      else {
+                        onActiveCode(c.code);
+                        onPaletteCode(c.code);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Lock className="h-3.5 w-3.5 text-muted" />
+                      <span className="text-sm font-semibold">{c.nameKo}</span>
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-muted">
+                      {inKit ? "킷에 담김" : "탭하여 킷에 추가"}
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-lg bg-accent/10 px-2.5 py-1.5 text-[11px] font-medium text-accent"
+                    onClick={() => {
+                      onPaletteCode(c.code);
+                      setQuestionSheetCode(c.code);
+                    }}
+                  >
+                    문항
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        {kitCompetencies.length > 0 && (
+          <div className="rounded-2xl border border-card-border p-4">
+            <p className="text-sm font-semibold">내 킷 · {kitCompetencies.length}역량 · {totalQuestions}문항</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {kitCompetencies.map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => {
+                    onActiveCode(code);
+                    onPaletteCode(code);
+                  }}
+                  className={`rounded-full px-3 py-1 text-xs ${
+                    activeCode === code ? "bg-accent text-white" : "bg-card-border/50"
+                  }`}
+                >
+                  {compByCode.get(code)?.nameKo ?? code}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="btn-primary mt-3 w-full text-sm"
+              disabled={activeDraft.saving}
+              onClick={() => onSave(activeCode)}
+            >
+              {activeDraft.saving ? "저장 중…" : "킷 저장"}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {questionSheetCode && sheetComp && sheetDraft && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-background xl:hidden">
+          <header className="flex items-center gap-2 border-b border-card-border px-4 py-3">
+            <button type="button" onClick={() => setQuestionSheetCode(null)} aria-label="닫기">
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-semibold">{sheetComp.nameKo}</p>
+              <p className="text-[11px] text-muted">
+                {sheetReadOnly ? "읽기 전용 · 복제 후 커스터마이징" : "문항 편집"}
+              </p>
+            </div>
+          </header>
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 space-y-2">
+            {sheetQuestions.filter((q) => q.isActive).map((q) => {
+              const inKit = sheetDraft.selectedIds.includes(q.id);
+              return (
+                <div
+                  key={q.id}
+                  className={`rounded-xl border p-3 text-sm ${
+                    inKit ? "border-gold/40 bg-gold/5" : "border-card-border"
+                  }`}
+                >
+                  <p className="text-[10px] text-muted">L{q.level}</p>
+                  <p className="mt-1">{previewText(q.template, 200)}</p>
+                  {!sheetReadOnly ? null : inKit ? (
+                    <button
+                      type="button"
+                      className="mt-2 text-xs text-red-600"
+                      onClick={() => onRemoveQuestion(questionSheetCode, q.id)}
+                    >
+                      킷에서 제거
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="mt-2 text-xs text-accent"
+                      onClick={() => {
+                        onAddQuestion(questionSheetCode, q.id);
+                      }}
+                    >
+                      킷에 담기
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <footer className="border-t border-card-border p-4">
+            <button
+              type="button"
+              className="btn-primary w-full text-sm"
+              onClick={() => {
+                void onSave(questionSheetCode);
+                setQuestionSheetCode(null);
+              }}
+            >
+              저장하고 닫기
+            </button>
+          </footer>
+        </div>
+      )}
+
+      <div className="hidden xl:block space-y-4">
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-card-border bg-gradient-to-r from-slate-50 via-white to-gold/5 px-5 py-3">
         <Sparkles className="h-5 w-5 text-gold" />
         <span className="text-sm font-semibold">기관 인터뷰 킷 스튜디오</span>
@@ -614,6 +769,7 @@ export function InterviewKitWorkspace(props: WorkspaceProps) {
             )}
           </div>
         </aside>
+      </div>
       </div>
     </div>
   );

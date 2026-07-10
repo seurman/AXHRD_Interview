@@ -312,7 +312,7 @@ export const dictionary: Dictionary = {
   },
   setup: {
     title: "모의 면접 설정",
-    subtitle: "역량별 2~3문항 · 피드백 저장 · 자소서는 선택 사항",
+    subtitle: "역량별 1~5문항 · 피드백 저장 · 자소서는 선택 사항",
     industry: {
       title: "1. 산업군",
       hint: "산업군과 기업 규모를 함께 고르면 면접 톤이 더 정확해집니다.",
@@ -328,6 +328,10 @@ export const dictionary: Dictionary = {
       upload: "PDF · Word · TXT 업로드",
       parsing: "파일에서 텍스트 추출 중…",
       manual: "파일 대신 텍스트로 직접 입력",
+      viewEdit: "원문 보기/수정",
+      collapse: "접기",
+      remove: "제거",
+      charsApplied: "{chars}자 반영",
       placeholder: "채용공고(JD) 원문이나 인재상 키워드를 붙여넣으세요…",
       urlLabel: "채용공고 URL",
       urlPlaceholder: "https://… 공개 채용공고 링크",
@@ -340,12 +344,17 @@ export const dictionary: Dictionary = {
     persona: { eyebrow: "당신의 면접 페르소나" },
     competency: {
       title: "3. 역량 선택",
-      hint: "한 번에 하나의 역량 · 문항 2~3개",
+      hint: "한 번에 하나의 역량 · 문항 수는 아래에서 선택",
       plan: "진행 중인 플랜",
       recommended: "추천",
       done: "완료",
       inProgress: "진행 중",
       notStarted: "미시작",
+    },
+    questionCount: {
+      title: "문항 수",
+      hint: "이 역량 면접에서 답할 질문 개수입니다 (1~5). 꼬리질문·공고 보너스는 포함되지 않습니다.",
+      unit: "문항",
     },
     resume: {
       title: "4. 자기소개서 (선택)",
@@ -353,6 +362,10 @@ export const dictionary: Dictionary = {
       upload: "PDF · Word · TXT 업로드",
       parsing: "파일에서 텍스트 추출 중…",
       manual: "파일 대신 텍스트로 직접 입력",
+      viewEdit: "내용 보기/수정",
+      collapse: "접기",
+      remove: "제거",
+      charsApplied: "{chars}자 반영",
       placeholder: "자기소개서 내용을 붙여넣으세요…",
     },
     resumeReview: {
