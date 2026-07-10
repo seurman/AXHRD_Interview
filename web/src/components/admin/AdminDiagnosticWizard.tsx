@@ -1,0 +1,273 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+type Org = { id: string; name: string };
+type Instrument = {
+  id: string;
+  code: string;
+  nameKo: string;
+  sections: Array<{ code: string; nameKo: string }>;
+};
+
+type Props = {
+  onClose: () => void;
+  onCreated: (waveId: string) => void;
+};
+
+export function AdminDiagnosticWizard({ onClose, onCreated }: Props) {
+  const router = useRouter();
+  const [step, setStep] = useState(1);
+  const [orgs, setOrgs] = useState<Org[]>([]);
+  const [instruments, setInstruments] = useState<Instrument[]>([]);
+  const [orgId, setOrgId] = useState("");
+  const [newOrgMode, setNewOrgMode] = useState(false);
+  const [newOrgName, setNewOrgName] = useState("");
+  const [instrumentId, setInstrumentId] = useState("");
+  const [enabledSections, setEnabledSections] = useState<string[]>([]);
+  const [label, setLabel] = useState("");
+  const [opensAt, setOpensAt] = useState("");
+  const [closesAt, setClosesAt] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const selectedInstrument = instruments.find((i) => i.id === instrumentId);
+
+  useEffect(() => {
+    void (async () => {
+      const [orgRes, instRes] = await Promise.all([
+        fetch("/api/admin/organizations"),
+        fetch("/api/admin/diagnostic/instruments"),
+      ]);
+      const orgJson = await orgRes.json();
+      const instJson = await instRes.json();
+      if (orgRes.ok) setOrgs(orgJson.organizations ?? []);
+      if (instRes.ok) {
+        const list = instJson.instruments ?? [];
+        setInstruments(list);
+        if (list[0]) {
+          setInstrumentId(list[0].id);
+          setEnabledSections(list[0].sections.map((s: { code: string }) => s.code));
+        }
+      }
+    })();
+  }, []);
+
+  const toggleSection = (code: string) => {
+    setEnabledSections((prev) =>
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code],
+    );
+  };
+
+  const ensureOrgId = async (): Promise<string | null> => {
+    if (!newOrgMode) return orgId || null;
+    const name = newOrgName.trim();
+    if (name.length < 2) {
+      setError("기관명을 2자 이상 입력해 주세요.");
+      return null;
+    }
+    const res = await fetch("/api/admin/organizations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, status: "APPROVED" }),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      setError(json.error ?? "기관 생성 실패");
+      return null;
+    }
+    return json.organization?.id ?? json.id ?? null;
+  };
+
+  const submit = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const organizationId = await ensureOrgId();
+      if (!organizationId) {
+        setLoading(false);
+        return;
+      }
+      if (!instrumentId || enabledSections.length === 0) {
+        setError("진단도구와 섹션을 선택해 주세요.");
+        setLoading(false);
+        return;
+      }
+      const res = await fetch("/api/admin/diagnostic/waves", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          organizationId,
+          instrumentId,
+          enabledSectionCodes: enabledSections,
+          label: label.trim() || undefined,
+          opensAt: opensAt || null,
+          closesAt: closesAt || null,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "생성 실패");
+      onCreated(json.wave.id);
+      router.push(`/admin/diagnostic/waves/${json.wave.id}?created=1`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "생성 중 오류");
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="card-luxe max-h-[90vh] w-full max-w-lg overflow-y-auto p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-foreground">새 진단 시작</h2>
+          <button type="button" onClick={onClose} className="text-sm text-muted hover:text-foreground">
+            닫기
+          </button>
+        </div>
+
+        <p className="mb-4 text-xs text-muted">Step {step} / 3</p>
+
+        {step === 1 && (
+          <div className="space-y-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={newOrgMode}
+                onChange={(e) => setNewOrgMode(e.target.checked)}
+              />
+              신규 기관 등록
+            </label>
+            {newOrgMode ? (
+              <input
+                className="input-luxe w-full text-sm"
+                placeholder="기관명"
+                value={newOrgName}
+                onChange={(e) => setNewOrgName(e.target.value)}
+              />
+            ) : (
+              <select
+                className="input-luxe w-full text-sm"
+                value={orgId}
+                onChange={(e) => setOrgId(e.target.value)}
+              >
+                <option value="">기관 선택…</option>
+                {orgs.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        )}
+
+        {step === 2 && selectedInstrument && (
+          <div className="space-y-4">
+            <select
+              className="input-luxe w-full text-sm"
+              value={instrumentId}
+              onChange={(e) => {
+                const id = e.target.value;
+                setInstrumentId(id);
+                const inst = instruments.find((i) => i.id === id);
+                if (inst) setEnabledSections(inst.sections.map((s) => s.code));
+              }}
+            >
+              {instruments.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.nameKo} ({i.code})
+                </option>
+              ))}
+            </select>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">활성 섹션</p>
+              {selectedInstrument.sections.map((sec) => (
+                <label key={sec.code} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={enabledSections.includes(sec.code)}
+                    onChange={() => toggleSection(sec.code)}
+                  />
+                  {sec.code} — {sec.nameKo}
+                </label>
+              ))}
+            </div>
+            <input
+              className="input-luxe w-full text-sm"
+              placeholder="진단명 (선택)"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+            />
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs text-muted">시작일 (선택)</label>
+              <input
+                type="date"
+                className="input-luxe mt-1 w-full text-sm"
+                value={opensAt}
+                onChange={(e) => setOpensAt(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted">종료일 (선택)</label>
+              <input
+                type="date"
+                className="input-luxe mt-1 w-full text-sm"
+                value={closesAt}
+                onChange={(e) => setClosesAt(e.target.value)}
+              />
+            </div>
+            <p className="text-xs text-muted">비워두면 수동 마감합니다.</p>
+          </div>
+        )}
+
+        {error && <p className="mt-4 text-sm text-rose-600">{error}</p>}
+
+        <div className="mt-6 flex justify-between gap-2">
+          <button
+            type="button"
+            className="btn-secondary px-4 py-2 text-sm"
+            disabled={step === 1}
+            onClick={() => setStep((s) => s - 1)}
+          >
+            이전
+          </button>
+          {step < 3 ? (
+            <button
+              type="button"
+              className="btn-primary px-4 py-2 text-sm"
+              onClick={() => {
+                setError(null);
+                if (step === 1 && !newOrgMode && !orgId) {
+                  setError("기관을 선택해 주세요.");
+                  return;
+                }
+                if (step === 2 && enabledSections.length === 0) {
+                  setError("섹션을 1개 이상 선택해 주세요.");
+                  return;
+                }
+                setStep((s) => s + 1);
+              }}
+            >
+              다음
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
+              disabled={loading}
+              onClick={() => void submit()}
+            >
+              {loading ? "생성 중…" : "생성"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

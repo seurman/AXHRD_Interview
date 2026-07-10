@@ -1273,6 +1273,8 @@ model DiagnosticWave {
   status         DiagnosticWaveStatus @default(DRAFT)
   opensAt        DateTime?
   closesAt       DateTime?
+  /** 이번 웨이브에서 활성화된 섹션 코드(["OHI","ORI","OVI"] 등). null이면 전체 활성화 */
+  enabledSectionCodes Json?
   teams          DiagnosticTeam[]
   responses      DiagnosticResponse[]
   createdAt      DateTime @default(now())

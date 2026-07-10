@@ -25,7 +25,7 @@ type SurveySection = {
 
 type SurveyPayload = {
   wave: { id: string; label: string | null; status: string; estimatedMinutes: number | null };
-  team: { id: string; name: string };
+  team: { id: string; name: string } | null;
   instrument: { nameKo: string; version: string };
   sections: SurveySection[];
   response: {
@@ -38,10 +38,13 @@ type SurveyPayload = {
 
 type Props = {
   waveSlug: string;
-  teamSlug: string;
+  teamSlug?: string;
 };
 
 export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
+  const surveyBase = teamSlug
+    ? `/api/diagnosis/w/${waveSlug}/t/${teamSlug}`
+    : `/api/diagnosis/w/${waveSlug}`;
   const [data, setData] = useState<SurveyPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,8 +70,8 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
     setLoading(true);
     setError(null);
     try {
-      await fetch(`/api/diagnosis/w/${waveSlug}/t/${teamSlug}`, { method: "POST" });
-      const res = await fetch(`/api/diagnosis/w/${waveSlug}/t/${teamSlug}`);
+      await fetch(surveyBase, { method: "POST" });
+      const res = await fetch(surveyBase);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "불러오기 실패");
       setData(json);
@@ -85,7 +88,7 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [waveSlug, teamSlug]);
+  }, [surveyBase, waveSlug, teamSlug]);
 
   useEffect(() => {
     void load();
@@ -122,7 +125,7 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           waveSlug,
-          teamSlug,
+          ...(teamSlug ? { teamSlug } : {}),
           answers: answerPayload,
           demographics: step === "demographics" || submit ? demographics : undefined,
           consent: submit ? consent : undefined,
@@ -163,7 +166,7 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
         <p className="text-xs font-medium uppercase tracking-widest text-gold">ARC Index</p>
         <h1 className="text-2xl font-bold text-foreground">{data.instrument.nameKo}</h1>
         <p className="text-sm text-muted">
-          {data.team.name}
+          {data.team?.name ?? "조직 전체"}
           {data.wave.label ? ` · ${data.wave.label}` : ""}
           {data.wave.estimatedMinutes ? ` · 약 ${data.wave.estimatedMinutes}분` : ""}
         </p>

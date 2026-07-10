@@ -2,6 +2,17 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — ARC Index 진단 CMS 2단계 (2026-07-10)
+
+- **수퍼어드민 전용** `/admin/diagnostic/*` — 1단계 `/org/diagnosis` 셀프서브와 **별개 진입점** (둘 다 유지).
+- **스키마**: `DiagnosticWave.enabledSectionCodes` (`Json?`, null이면 전체 4축 활성). 마이그레이션 `20260710220000_diagnostic_wave_enabled_sections`.
+- **캠페인 마법사** (3단): 기관 선택·신규 등록(`POST /api/admin/organizations` 재사용) → 진단도구·섹션 체크 → 일정 → `DiagnosticWave` 생성 + `diagnosticEnabled` 자동 ON.
+- **캠페인 상세** `/admin/diagnostic/waves/[id]`: 기본 응답 링크(`/diagnosis/w/{slug}`, teamId null) · 선택적 팀별 링크(태그 입력 즉시 생성) · 복사만(발송 없음).
+- **보고서 3탭** `/admin/diagnostic/waves/[id]/report`: 기본 · 상세 · 팀별. `computeAggregateScores()`·`computeTeamGapMatrix()` 재사용. `enabledSectionCodes`에 없는 축은 카드·레이더에서 제외.
+- **조직 전체 응답 API**: `GET/POST /api/diagnosis/w/[waveSlug]` + `loadOrgWideSurvey`.
+- **다음 배치(미구현, 자리만)**: 상세보고서 β회귀 IPA · LPA 구성원유형 · HLM/ICC · 팀 15+ OLS — **「통계분석 엔진 연결 예정」배지만 표시, 가짜 숫자 없음**.
+- 검증: `npx prisma migrate dev` · `npm run build`
+
 ## 최근 작업 — JD 필요역량 추천 + 답변별 4축 레이더 (2026-07-10)
 
 - **PART A — JD → 역량 추천 (새 LLM 호출 없음)**:

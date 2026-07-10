@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AdminDiagnosticWizard } from "@/components/admin/AdminDiagnosticWizard";
 
 type InstrumentSummary = {
   id: string;
@@ -22,8 +23,12 @@ type WaveRow = {
   id: string;
   waveNumber: number;
   label: string | null;
-  status: string;
+  statusLabel: string;
+  sectionBadge: string;
+  instrumentName: string;
   organizationName: string;
+  opensAt: string | null;
+  closesAt: string | null;
   teamCount: number;
   responseCount: number;
 };
@@ -34,10 +39,16 @@ type Props = {
   dbError?: string | null;
 };
 
+function formatDate(iso: string | null): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("ko-KR");
+}
+
 export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: Props) {
   const router = useRouter();
   const [seeding, setSeeding] = useState(false);
   const [seedError, setSeedError] = useState<string | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const seeded = instruments.length > 0;
 
@@ -60,59 +71,25 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 pb-12">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-widest text-gold">PLATFORM</p>
-        <h1 className="mt-1 text-2xl font-bold text-foreground">조직진단 CMS</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted">
-          ARC Index는 <strong className="font-medium text-foreground">플랫폼 문항뱅크(시드)</strong> +
-          <strong className="font-medium text-foreground"> 기관별 웨이브·팀</strong> +
-          <strong className="font-medium text-foreground"> 응답 집계 리포트</strong>로
-          동작합니다. 문항 편집은 코드 시드·정본 문서 기준이며, 운영은 아래 3단계입니다.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-widest text-gold">PLATFORM</p>
+          <h1 className="mt-1 text-2xl font-bold text-foreground">조직진단 CMS</h1>
+          <p className="mt-2 max-w-2xl text-sm text-muted">
+            수퍼어드민 전용 캠페인 관리 화면입니다. 기관 셀프서브{" "}
+            <code className="text-xs">/org/diagnosis</code>와 별개로 운영합니다.
+          </p>
+        </div>
+        {seeded && (
+          <button
+            type="button"
+            className="btn-primary px-4 py-2 text-sm"
+            onClick={() => setWizardOpen(true)}
+          >
+            + 새 진단 시작
+          </button>
+        )}
       </div>
-
-      <section className="card-luxe p-6">
-        <h2 className="font-semibold text-foreground">운영 3단계</h2>
-        <ol className="mt-4 space-y-4 text-sm">
-          <li className="flex gap-3">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-xs font-bold text-accent">
-              1
-            </span>
-            <div>
-              <p className="font-medium text-foreground">문항뱅크 시드 (이 화면)</p>
-              <p className="mt-1 text-muted">
-                OHI·ORI·OVI·OAI 4축 설문지를 DB에 1회 등록합니다. 아래 「문항뱅크 설치」 버튼.
-              </p>
-            </div>
-          </li>
-          <li className="flex gap-3">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-xs font-bold text-accent">
-              2
-            </span>
-            <div>
-              <p className="font-medium text-foreground">기관 SKU 활성화</p>
-              <p className="mt-1 text-muted">
-                <Link href="/admin/organizations" className="text-accent hover:underline">
-                  기관 관리
-                </Link>
-                에서 해당 기관 카드 하단 「ARC 조직진단 SKU」 토글 ON (또는 기관 상세).
-              </p>
-            </div>
-          </li>
-          <li className="flex gap-3">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-xs font-bold text-accent">
-              3
-            </span>
-            <div>
-              <p className="font-medium text-foreground">웨이브·팀·산출물 (기관 콘솔)</p>
-              <p className="mt-1 text-muted">
-                기관 ADMIN이 <code className="text-xs">/org/diagnosis</code>에서 웨이브 생성 → 팀별
-                응답 링크 배포 → 제출 후 집계·OHI/ORI/OVI/OAI 리포트 확인.
-              </p>
-            </div>
-          </li>
-        </ol>
-      </section>
 
       <section className="card-luxe p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -168,23 +145,11 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
                 </div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   {inst.sections.map((sec) => (
-                    <div
-                      key={sec.code}
-                      className="rounded-lg bg-background/60 px-3 py-2 text-xs"
-                    >
+                    <div key={sec.code} className="rounded-lg bg-background/60 px-3 py-2 text-xs">
                       <p className="font-medium text-foreground">
                         {sec.code} — {sec.nameKo}
                       </p>
                       <p className="mt-1 text-muted">문항 {sec.itemCount}개</p>
-                      {sec.subscales.length > 0 && (
-                        <ul className="mt-1 space-y-0.5 text-muted">
-                          {sec.subscales.map((sub) => (
-                            <li key={sub.code}>
-                              {sub.code}: {sub.itemCount}문항
-                            </li>
-                          ))}
-                        </ul>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -195,17 +160,14 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
       </section>
 
       <section className="card-luxe p-6">
-        <h2 className="mb-1 font-semibold text-foreground">②③ 웨이브·산출물 현황</h2>
+        <h2 className="mb-1 font-semibold text-foreground">② 진단 캠페인</h2>
         <p className="mb-4 text-sm text-muted">
-          웨이브 생성은 기관 콘솔에서 합니다. 여기서는 전 기관 제출·리포트를 모니터링합니다.
+          기관 선택·신규 등록 → 진단도구·섹션 → 일정 순으로 캠페인을 생성합니다. 팀별 링크는 생성 후
+          상세 화면에서 선택적으로 추가합니다.
         </p>
         {waves.length === 0 ? (
           <p className="rounded-xl border border-dashed border-card-border p-6 text-sm text-muted">
-            아직 웨이브가 없습니다. 기관 SKU를 켠 뒤 기관 ADMIN이{" "}
-            <Link href="/org/diagnosis" className="text-accent hover:underline">
-              /org/diagnosis
-            </Link>
-            에서 웨이브를 만듭니다.
+            아직 캠페인이 없습니다. 문항뱅크 설치 후 「+ 새 진단 시작」으로 첫 캠페인을 만드세요.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -213,10 +175,12 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
               <thead>
                 <tr className="border-b border-card-border text-xs text-muted">
                   <th className="py-2 pr-4">기관</th>
-                  <th className="py-2 pr-4">Wave</th>
+                  <th className="py-2 pr-4">진단명</th>
+                  <th className="py-2 pr-4">시작일</th>
+                  <th className="py-2 pr-4">종료일</th>
                   <th className="py-2 pr-4">상태</th>
-                  <th className="py-2 pr-4">팀 / 제출</th>
-                  <th className="py-2">산출물</th>
+                  <th className="py-2 pr-4">응답수</th>
+                  <th className="py-2">관리</th>
                 </tr>
               </thead>
               <tbody>
@@ -224,19 +188,23 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
                   <tr key={w.id} className="border-b border-card-border last:border-0">
                     <td className="py-2 pr-4">{w.organizationName}</td>
                     <td className="py-2 pr-4">
-                      {w.waveNumber}
-                      {w.label ? ` — ${w.label}` : ""}
+                      <div>
+                        {w.label ?? `Wave ${w.waveNumber}`}
+                        <span className="mt-0.5 block text-xs text-muted">{w.sectionBadge}</span>
+                      </div>
                     </td>
-                    <td className="py-2 pr-4 text-muted">{w.status}</td>
+                    <td className="py-2 pr-4 text-muted">{formatDate(w.opensAt)}</td>
                     <td className="py-2 pr-4 text-muted">
-                      {w.teamCount}팀 / {w.responseCount}건
+                      {w.closesAt ? formatDate(w.closesAt) : "수동 마감"}
                     </td>
+                    <td className="py-2 pr-4 text-muted">{w.statusLabel}</td>
+                    <td className="py-2 pr-4 text-muted">{w.responseCount}</td>
                     <td className="py-2">
                       <Link
-                        href={`/org/diagnosis/waves/${w.id}`}
+                        href={`/admin/diagnostic/waves/${w.id}`}
                         className="text-accent hover:underline"
                       >
-                        리포트 보기
+                        상세
                       </Link>
                     </td>
                   </tr>
@@ -246,6 +214,13 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
           </div>
         )}
       </section>
+
+      {wizardOpen && (
+        <AdminDiagnosticWizard
+          onClose={() => setWizardOpen(false)}
+          onCreated={() => setWizardOpen(false)}
+        />
+      )}
     </div>
   );
 }

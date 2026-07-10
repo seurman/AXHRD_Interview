@@ -1,6 +1,8 @@
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { AdminDiagnosticCmsPanel } from "@/components/admin/AdminDiagnosticCmsPanel";
+import { parseEnabledSectionCodes, sectionBadgeLabel } from "@/lib/diagnostic/section-filter";
+import { waveStatusLabel } from "@/lib/diagnostic/wave-status";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +33,7 @@ export default async function AdminDiagnosticPage() {
       prisma.diagnosticWave.findMany({
         include: {
           organization: { select: { name: true } },
+          instrument: { select: { nameKo: true } },
           _count: {
             select: {
               responses: { where: { submittedAt: { not: null } } },
@@ -61,15 +64,22 @@ export default async function AdminDiagnosticPage() {
       })),
     }));
 
-    waveRows = waves.map((w) => ({
-      id: w.id,
-      waveNumber: w.waveNumber,
-      label: w.label,
-      status: w.status,
-      organizationName: w.organization.name,
-      teamCount: w._count.teams,
-      responseCount: w._count.responses,
-    }));
+    waveRows = waves.map((w) => {
+      const enabled = parseEnabledSectionCodes(w.enabledSectionCodes);
+      return {
+        id: w.id,
+        waveNumber: w.waveNumber,
+        label: w.label,
+        statusLabel: waveStatusLabel(w.status),
+        sectionBadge: sectionBadgeLabel(enabled),
+        instrumentName: w.instrument.nameKo,
+        organizationName: w.organization.name,
+        opensAt: w.opensAt?.toISOString() ?? null,
+        closesAt: w.closesAt?.toISOString() ?? null,
+        teamCount: w._count.teams,
+        responseCount: w._count.responses,
+      };
+    });
   } catch (e) {
     console.error("[admin/diagnostic]", e);
     dbError =

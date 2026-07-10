@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { DIAGNOSTIC_CONSENT_TEXT } from "@/lib/diagnostic/constants";
+import { orgWideCookieKey, teamCookieKey } from "@/lib/diagnostic/survey-loader";
 
 type AnswerInput = {
   itemId: string;
@@ -12,27 +13,25 @@ type AnswerInput = {
 
 type Body = {
   waveSlug: string;
-  teamSlug: string;
+  teamSlug?: string;
   answers?: AnswerInput[];
   demographics?: Record<string, string>;
   consent?: boolean;
   submit?: boolean;
 };
 
-function cookieKey(waveSlug: string, teamSlug: string) {
-  return `dx_rsp_${waveSlug}_${teamSlug}`;
-}
-
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as Body;
   const waveSlug = body.waveSlug?.trim();
   const teamSlug = body.teamSlug?.trim();
-  if (!waveSlug || !teamSlug) {
-    return NextResponse.json({ error: "waveSlug·teamSlug가 필요합니다." }, { status: 400 });
+  if (!waveSlug) {
+    return NextResponse.json({ error: "waveSlug가 필요합니다." }, { status: 400 });
   }
 
   const jar = await cookies();
-  const token = jar.get(cookieKey(waveSlug, teamSlug))?.value;
+  const isOrgWide = !teamSlug;
+  const ck = isOrgWide ? orgWideCookieKey(waveSlug) : teamCookieKey(waveSlug, teamSlug!);
+  const token = jar.get(ck)?.value;
   if (!token) {
     return NextResponse.json({ error: "응답 세션이 없습니다. 페이지를 새로고침해 주세요." }, { status: 401 });
   }
@@ -41,7 +40,14 @@ export async function POST(req: Request) {
     where: { respondentToken: token },
     include: { wave: true, team: true },
   });
-  if (!response || response.wave.slug !== waveSlug || response.team?.slug !== teamSlug) {
+  if (!response || response.wave.slug !== waveSlug) {
+    return NextResponse.json({ error: "유효하지 않은 응답 세션입니다." }, { status: 403 });
+  }
+  if (isOrgWide) {
+    if (response.teamId != null) {
+      return NextResponse.json({ error: "유효하지 않은 응답 세션입니다." }, { status: 403 });
+    }
+  } else if (response.team?.slug !== teamSlug) {
     return NextResponse.json({ error: "유효하지 않은 응답 세션입니다." }, { status: 403 });
   }
   if (response.submittedAt) {
