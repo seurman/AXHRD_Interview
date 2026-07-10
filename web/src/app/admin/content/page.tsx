@@ -41,6 +41,9 @@ export default async function AdminContentPage() {
           <Link href="/admin/organizations" className="text-accent hover:underline">
             기관 관리 · 테넌트 허브 →
           </Link>
+          <Link href="/admin/repository" className="text-accent hover:underline">
+            역량 리포지토리 · 루브릭 매핑 →
+          </Link>
           {hasSuperadminAccess(user) && (
             <>
               <Link href="/admin/users" className="text-accent hover:underline">

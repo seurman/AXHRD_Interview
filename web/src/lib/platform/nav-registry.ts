@@ -5,6 +5,7 @@ import { type RoleUser } from "@/lib/auth/roles";
 
 export type NavLabelKey =
   | "content"
+  | "repository"
   | "demo"
   | "users"
   | "audit"
@@ -27,6 +28,12 @@ export type AdminNavItem = {
 
 const PLATFORM_NAV_ORDER: AdminNavItem[] = [
   { href: "/admin/content", labelKey: "content", capability: "platform.content", section: "content" },
+  {
+    href: "/admin/repository",
+    labelKey: "repository",
+    capability: "platform.content",
+    section: "content",
+  },
   { href: "/admin/demo", labelKey: "demo", capability: "platform.demo", section: "content" },
   {
     href: "/admin/organizations",

@@ -35,6 +35,7 @@ export const dictionary: Dictionary = {
     admin: {
       title: "관리",
       content: "문항 뱅크 CMS",
+      repository: "역량 리포지토리",
       demo: "고객 데모",
       users: "사용자 권한",
       audit: "감사 로그",

@@ -165,6 +165,7 @@ model Organization {
   competencies Competency[]
   questions    Question[]
   surveys      Survey[]
+  rubricSets   RubricSet[]
 }
 
 // ── User ──
@@ -437,6 +438,19 @@ enum CompetencySource {
   CUSTOM
 }
 
+/** 역량 리포지토리 라이프사이클 — isActive와 동기화 */
+enum CompetencyLifecycleStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum RubricScoringSystem {
+  FIVE_SCALE
+  THREE_SCALE
+  PASS_FAIL
+}
+
 model CompetencyCluster {
   id           String           @id @default(cuid())
   code         String           @unique
@@ -460,6 +474,7 @@ model Competency {
   source      CompetencySource @default(NCS)
   sortOrder   Int      @default(0)
   isActive    Boolean  @default(true)
+  lifecycleStatus CompetencyLifecycleStatus @default(DRAFT)
   /** 역량·레벨별 기본 채점 루브릭 — { "1": ["기준",...], "2": [...], "default": [...] } */
   rubricByLevel Json?
   ownerScope      ContentOwnerScope @default(PLATFORM)
@@ -472,6 +487,7 @@ model Competency {
   createdBy       User?             @relation("CompetencyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
   questions   Question[]
   benchmarks  CompetencyBenchmarkRef[]
+  rubricSets  RubricSet[]
 
   @@unique([organizationId, code])
   @@index([clusterId])
@@ -520,10 +536,54 @@ model Question {
   createdBy       User?             @relation("QuestionCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   responses ResponseRecord[]
+  rubricMappings QuestionRubricMapping[]
 
   @@index([competencyId, level])
   @@index([organizationId])
   @@index([ownerScope])
+}
+
+// ── 역량 리포지토리: 정규화 루브릭 세트 (tenant null = 플랫폼 공통) ──
+
+model RubricSet {
+  id             String              @id @default(cuid())
+  organizationId String?
+  organization   Organization?       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  competencyId   String
+  competency     Competency          @relation(fields: [competencyId], references: [id], onDelete: Cascade)
+  rubricName     String
+  scoringSystem  RubricScoringSystem @default(FIVE_SCALE)
+  isDefault      Boolean             @default(false)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  details          RubricDetail[]
+  questionMappings QuestionRubricMapping[]
+
+  @@index([competencyId])
+  @@index([organizationId])
+}
+
+model RubricDetail {
+  id                  String    @id @default(cuid())
+  rubricSetId         String
+  rubricSet           RubricSet @relation(fields: [rubricSetId], references: [id], onDelete: Cascade)
+  scoreLevel          Int
+  levelName           String?
+  behavioralIndicator String    @db.Text
+
+  @@unique([rubricSetId, scoreLevel])
+}
+
+model QuestionRubricMapping {
+  id          String    @id @default(cuid())
+  questionId  String
+  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  rubricSetId String
+  rubricSet   RubricSet @relation(fields: [rubricSetId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, rubricSetId])
+  @@index([rubricSetId])
 }
 
 // ── Survey (CMS — 설문) ──

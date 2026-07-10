@@ -39,6 +39,7 @@ export type Dictionary = {
     admin: {
       title: string;
       content: string;
+      repository: string;
       demo: string;
       users: string;
       audit: string;
