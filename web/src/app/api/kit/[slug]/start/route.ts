@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
-import { blockPersonalTrialApi } from "@/lib/auth/personal-access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { checkUsageLimit } from "@/lib/billing/usage";
 import { loadPublicKitShare } from "@/lib/org/kit-share";
@@ -22,9 +21,6 @@ export async function POST(req: Request, { params }: Ctx) {
       { status: 401 }
     );
   }
-
-  const trialBlock = await blockPersonalTrialApi(user);
-  if (trialBlock) return trialBlock;
 
   const share = await loadPublicKitShare(slug);
   if (!share) {

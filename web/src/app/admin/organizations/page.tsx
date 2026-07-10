@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { OrgCreatePanel } from "@/components/admin/OrgCreatePanel";
+import { OrgKindBadge } from "@/components/admin/OrgKindBadge";
 import { OrgReviewActions } from "@/components/admin/OrgReviewActions";
 import { OrgStatusBadge } from "@/components/admin/OrgStatusBadge";
 import {
@@ -51,7 +52,7 @@ export default async function AdminOrganizationsPage() {
         <p className="text-xs font-medium uppercase tracking-widest text-gold">Admin · Tenants</p>
         <h1 className="mt-1 text-2xl font-bold text-foreground sm:text-3xl">기관 관리</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted">
-          테넌트 생성·승인·가입 코드·이용 기간·좌석 상한을 한곳에서 관리합니다.
+          테넌트 생성·승인·유형(취업센터/인사팀)·이용 기간·플랜·권한을 한곳에서 관리합니다.
         </p>
         <div className="mt-5">
           <OrgCreatePanel />
@@ -83,6 +84,7 @@ export default async function AdminOrganizationsPage() {
                         {org.name}
                       </Link>
                       <OrgStatusBadge status={org.status} />
+                      <OrgKindBadge kind={org.kind} />
                     </div>
                     <p className="mt-1 text-xs text-muted">
                       {admin ? `${admin.name} · ${admin.email}` : "요청자 미상"} ·{" "}
@@ -123,6 +125,12 @@ export default async function AdminOrganizationsPage() {
                 </h3>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <OrgStatusBadge status={org.status} />
+                  <OrgKindBadge kind={org.kind} />
+                  {org.subscriptions[0] && (
+                    <span className="rounded-full bg-primary/5 px-2 py-0.5 text-[10px] font-semibold text-muted">
+                      {org.subscriptions[0].planTier.replace("ORG_", "")}
+                    </span>
+                  )}
                   {org.saasPersonalizationEnabled && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-2 py-0.5 text-[10px] font-semibold text-gold">
                       <Sparkles className="h-3 w-3" />

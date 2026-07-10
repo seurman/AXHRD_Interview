@@ -1,9 +1,6 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { requirePageUser } from "@/lib/auth/guards";
-import {
-  isPersonalTrialOnlyUser,
-  loadPersonalAccessContext,
-} from "@/lib/auth/personal-access";
+import { loadPersonalAccessContext } from "@/lib/auth/personal-access";
 import { hasCapability, type AccessContext } from "@/lib/platform/access";
 import type { CapabilityId } from "@/lib/platform/capabilities";
 
@@ -27,9 +24,6 @@ export async function requireProductCapability(capability: CapabilityId, nextPat
   const user = await requirePageUser(nextPath);
   const billingContext = await loadPersonalAccessContext(user.id);
   if (!hasCapability(user, capability, billingContext)) {
-    if (isPersonalTrialOnlyUser(user, billingContext)) {
-      redirect("/demo");
-    }
     notFound();
   }
   return user;

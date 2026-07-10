@@ -3,10 +3,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
-import {
-  isPersonalTrialOnlyUser,
-  loadPersonalAccessContext,
-} from "@/lib/auth/personal-access";
 import { CompetencyDashboard } from "@/components/dashboard/CompetencyDashboard";
 import { WelcomeBanner } from "@/components/auth/WelcomeBanner";
 import { competencyLabel } from "@/lib/labels";
@@ -19,11 +15,6 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login?next=/dashboard");
-
-  const personalContext = await loadPersonalAccessContext(user.id);
-  if (isPersonalTrialOnlyUser(user, personalContext)) {
-    redirect("/demo");
-  }
 
   const full = await prisma.user.findUnique({
     where: { id: user.id },

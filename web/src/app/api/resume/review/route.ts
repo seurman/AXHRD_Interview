@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { getCurrentUser } from "@/lib/auth/session";
-import { blockPersonalTrialApi } from "@/lib/auth/personal-access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { deriveInterviewStyleFromJD, parseJdRequirements } from "@/lib/company/jd-mapper";
@@ -28,9 +27,6 @@ export async function POST(req: Request) {
       { status: 401 }
     );
   }
-
-  const trialBlock = await blockPersonalTrialApi(user);
-  if (trialBlock) return trialBlock;
 
   const rl = checkRateLimit(`resume:review:${user.id}`, 5, 60 * 1000);
   if (!rl.allowed) {

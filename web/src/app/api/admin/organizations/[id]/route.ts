@@ -5,18 +5,13 @@ import { hasSuperadminAccess } from "@/lib/auth/guards";
 import { auditActor } from "@/lib/admin/auth";
 import { logAdminAudit } from "@/lib/admin/audit";
 import { generateJoinCode } from "@/lib/org/join-code";
-import type { OrgStatus } from "@prisma/client";
-
-function parseDateInput(value: unknown): Date | null | undefined {
-  if (value === undefined) return undefined;
-  if (value === null || value === "") return null;
-  if (typeof value !== "string") return undefined;
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? undefined : d;
-}
+import { parseDateInput, validateOrgPeriodRange } from "@/lib/org/period";
+import { parseOrgKind } from "@/lib/org/kinds";
+import type { OrgKind, OrgStatus } from "@prisma/client";
 
 function orgSnapshot(org: {
   name: string;
+  kind: OrgKind;
   joinCode: string;
   status: string;
   validFrom: Date | null;
@@ -27,6 +22,7 @@ function orgSnapshot(org: {
 }) {
   return {
     name: org.name,
+    kind: org.kind,
     joinCode: org.joinCode,
     status: org.status,
     validFrom: org.validFrom?.toISOString() ?? null,
@@ -129,8 +125,28 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const validFrom = parseDateInput(body.validFrom);
   const validUntil = parseDateInput(body.validUntil);
+  if (validFrom === undefined && body.validFrom !== undefined && body.validFrom !== null && body.validFrom !== "") {
+    return NextResponse.json({ error: "이용 기간 형식이 올바르지 않습니다." }, { status: 400 });
+  }
+  if (validUntil === undefined && body.validUntil !== undefined && body.validUntil !== null && body.validUntil !== "") {
+    return NextResponse.json({ error: "이용 기간 형식이 올바르지 않습니다." }, { status: 400 });
+  }
+
+  const nextFrom = validFrom !== undefined ? validFrom : org.validFrom;
+  const nextUntil = validUntil !== undefined ? validUntil : org.validUntil;
+  const rangeError = validateOrgPeriodRange(nextFrom, nextUntil);
+  if (rangeError) {
+    return NextResponse.json({ error: rangeError }, { status: 400 });
+  }
+
   if (validFrom !== undefined) data.validFrom = validFrom;
   if (validUntil !== undefined) data.validUntil = validUntil;
+
+  const parsedKind = body.kind !== undefined ? parseOrgKind(body.kind) : null;
+  if (body.kind !== undefined && !parsedKind) {
+    return NextResponse.json({ error: "유효하지 않은 기관 유형입니다." }, { status: 400 });
+  }
+  if (parsedKind) data.kind = parsedKind;
 
   if (body.maxSeats === null || body.maxSeats === "") {
     data.maxSeats = null;

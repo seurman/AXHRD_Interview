@@ -12,9 +12,11 @@ import {
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { getOrgHubSnapshot } from "@/lib/org/hub-data";
 import { OrgContractEditor } from "@/components/admin/OrgContractEditor";
+import { OrgKindBadge } from "@/components/admin/OrgKindBadge";
 import { OrgHubPersonalizationToggle } from "@/components/admin/OrgHubPersonalizationToggle";
 import { OrgReviewActions } from "@/components/admin/OrgReviewActions";
 import { OrgStatusBadge } from "@/components/admin/OrgStatusBadge";
+import { planLabel } from "@/lib/billing/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +55,7 @@ export default async function AdminOrgHubPage({ params }: Props) {
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{hub.name}</h1>
               <OrgStatusBadge status={hub.status} />
+              <OrgKindBadge kind={hub.kind} />
             </div>
             <p className="mt-3 flex flex-wrap items-center gap-2 text-sm text-white/60">
               <KeyRound className="h-4 w-4 shrink-0" />
@@ -62,6 +65,7 @@ export default async function AdminOrgHubPage({ params }: Props) {
               등록 {hub.createdAt.toLocaleDateString("ko-KR")}
               {hub.approvedAt && ` · 승인 ${hub.approvedAt.toLocaleDateString("ko-KR")}`}
               {hub.contractPeriodLabel !== "기간 제한 없음" && ` · ${hub.contractPeriodLabel}`}
+              {hub.subscription && ` · ${planLabel(hub.subscription.planTier)}`}
             </p>
             {hub.seatCap != null && (
               <p className="mt-2 text-xs text-white/50">
@@ -109,6 +113,7 @@ export default async function AdminOrgHubPage({ params }: Props) {
         organizationId={hub.id}
         initial={{
           name: hub.name,
+          kind: hub.kind,
           joinCode: hub.joinCode,
           status: hub.status,
           validFrom: hub.validFrom?.toISOString() ?? null,

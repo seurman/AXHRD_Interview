@@ -35,6 +35,7 @@ export async function PATCH(
   if (typeof body.difficulty === "number") data.difficulty = body.difficulty;
   if (typeof body.discrimination === "number") data.discrimination = body.discrimination;
   if (typeof body.isActive === "boolean") data.isActive = body.isActive;
+  if (typeof body.isShowcase === "boolean") data.isShowcase = body.isShowcase;
   if (typeof body.competencyId === "string") data.competencyId = body.competencyId;
   if (Array.isArray(body.rubricCriteria)) {
     data.rubricCriteria = body.rubricCriteria.filter(

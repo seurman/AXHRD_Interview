@@ -4,7 +4,6 @@ import {
   ArrowRight,
   ArrowLeft,
   BarChart3,
-  Sparkles,
   Upload,
   Layers,
   PlayCircle,
@@ -16,13 +15,10 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
-import {
-  isPersonalTrialOnlyUser,
-  loadPersonalAccessContext,
-} from "@/lib/auth/personal-access";
 import { competencyLabel } from "@/lib/labels";
 import { COMPETENCY_CODES } from "@/types";
 import { Reveal } from "@/components/ui/Reveal";
+import { TrialTeaser } from "@/components/trial/TrialTeaser";
 
 const COMPETENCY_ICONS: Record<string, typeof MessageCircle> = {
   COMMUNICATION: MessageCircle,
@@ -61,23 +57,20 @@ const FAQS = [
     a: "아니요. 영상·음성으로 감정을 추론하는 기능은 의도적으로 넣지 않았습니다. 답변 내용(STT 텍스트)과 루브릭 기준으로만 채점해 편향 논란을 피했습니다.",
   },
   {
-    q: "역량은 제가 직접 골라야 하나요?",
-    a: "네, 자유롭게 고를 수 있어요. 다만 산업·직무를 먼저 선택하면 그 직무에서 특히 중요하게 보는 역량에 ⭐ 추천 표시가 붙어요. NCS 직업기초능력은 직무와 무관하게 공통 평가 대상이라 특정 역량만 강제하지 않습니다.",
+    q: "무료로 얼마나 쓸 수 있나요?",
+    a: "회원가입 후 월 3회 모의면접·자기발견 1회를 무료로 이용할 수 있어요. 계정 없이도 이 페이지에서 1문항 맛보기 체험이 가능합니다.",
   },
   {
     q: "제 답변이나 개인정보는 어떻게 쓰이나요?",
-    a: "자기소개서·답변 내용은 질문 생성과 채점에만 사용되고, 기관 대시보드에는 개인 답변 원문 없이 점수·완료 현황만 집계됩니다.",
+    a: "답변 내용은 질문 개선과 산업별 인사이트 리포트 생성에 익명·집계 형태로 활용될 수 있습니다(가입 시 동의). 개인을 식별할 수 있는 형태로 외부에 제공되지 않습니다.",
   },
 ];
 
 export default async function DemoPage() {
   const user = await getCurrentUser();
-  const trialOnly = user
-    ? isPersonalTrialOnlyUser(user, await loadPersonalAccessContext(user.id))
-    : false;
-  const interviewHref = trialOnly ? "/demo" : "/interview/setup";
-  const secondaryHref = trialOnly ? "/pricing" : user ? "/dashboard" : "/auth/login";
-  const secondaryLabel = trialOnly ? "Pro 업그레이드" : user ? "내 역량 보기" : "로그인";
+  const interviewHref = "/interview/setup";
+  const secondaryHref = user ? "/dashboard" : "/auth/login";
+  const secondaryLabel = user ? "내 역량 보기" : "로그인";
 
   return (
     <div className="space-y-20">
@@ -89,10 +82,14 @@ export default async function DemoPage() {
         홈으로
       </Link>
 
+      <Reveal>
+        <TrialTeaser />
+      </Reveal>
+
       <section className="grid items-center gap-10 md:grid-cols-2">
         <Reveal>
           <p className="mb-4 text-sm font-medium uppercase tracking-widest text-primary">
-            지금 바로 체험해보세요
+            회원가입 = 진짜 FREE
           </p>
           <h1 className="mb-6 text-4xl font-bold leading-tight text-foreground md:text-5xl">
             역량별로 성장하는
@@ -100,18 +97,17 @@ export default async function DemoPage() {
             <span className="text-primary">AI 모의 면접</span>
           </h1>
           <p className="mb-8 max-w-2xl text-lg text-muted">
-            문항 반응 이론(IRT) 기반 적응형 난이도 · 자소서 맞춤 질문 ·
-            역량 θ 장기 트래킹
+            가입하면 월 3회 무료 면접 · 역량 리포트 · 장기 트래킹이 열립니다.
           </p>
           <div className="flex flex-wrap gap-4">
             {user ? (
               <Link href={interviewHref} className="btn-primary">
-                {trialOnly ? "5분 체험 계속하기" : "면접 시작하기"}
+                면접 시작하기
                 <ArrowRight className="h-4 w-4" />
               </Link>
             ) : (
-              <Link href="/auth/register" className="btn-primary">
-                지금 시작하기
+              <Link href="/auth/register?next=/interview/setup" className="btn-primary">
+                무료로 시작하기 (월 3회)
                 <ArrowRight className="h-4 w-4" />
               </Link>
             )}
@@ -186,14 +182,10 @@ export default async function DemoPage() {
           <h2 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
             역량 6개, 전부 다뤄요
           </h2>
-          <p className="mx-auto mt-2 max-w-xl text-sm text-muted">
-            어떤 산업·직무를 고르든 모든 역량이 공통 평가 대상이에요. 산업·직무에
-            따라 특히 중요한 역량은 화면에서 추천으로만 표시돼요.
-          </p>
         </Reveal>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           {COMPETENCY_CODES.map((code, i) => {
-            const Icon = COMPETENCY_ICONS[code] ?? Sparkles;
+            const Icon = COMPETENCY_ICONS[code] ?? MessageCircle;
             return (
               <Reveal key={code} delay={i * 0.05}>
                 <div className="flex items-center gap-2 rounded-full border border-card-border bg-card px-4 py-2.5 shadow-luxe">
@@ -210,9 +202,6 @@ export default async function DemoPage() {
 
       <section className="mx-auto max-w-2xl">
         <Reveal className="text-center">
-          <p className="text-sm font-medium uppercase tracking-widest text-primary">
-            자주 묻는 질문
-          </p>
           <h2 className="mt-2 mb-8 text-2xl font-bold text-foreground sm:text-3xl">
             궁금하신 점이 있으신가요?
           </h2>
@@ -238,7 +227,7 @@ export default async function DemoPage() {
         <section className="band-periwinkle px-6 py-14 text-center sm:px-10">
           <h2 className="text-2xl font-bold sm:text-3xl">다음 면접, 미리 겪어보세요</h2>
           <p className="mx-auto mt-3 max-w-md text-sm text-white/90">
-            역량별 2~3문항, 5분이면 첫 피드백을 받아볼 수 있어요.
+            회원가입 시 월 3회 무료 · 역량 리포트와 장기 트래킹이 열립니다.
           </p>
           <div className="mt-6">
             {user ? (
@@ -246,15 +235,15 @@ export default async function DemoPage() {
                 href={interviewHref}
                 className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-primary transition hover:bg-white/90"
               >
-                {trialOnly ? "5분 체험 계속하기" : "면접 시작하기"}
+                면접 시작하기
                 <ArrowRight className="h-4 w-4" />
               </Link>
             ) : (
               <Link
-                href="/auth/register"
+                href="/auth/register?next=/interview/setup"
                 className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-primary transition hover:bg-white/90"
               >
-                지금 시작하기
+                무료로 시작하기
                 <ArrowRight className="h-4 w-4" />
               </Link>
             )}

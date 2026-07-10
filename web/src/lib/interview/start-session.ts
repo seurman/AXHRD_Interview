@@ -11,7 +11,12 @@ import {
 import { matchPersona } from "@/lib/interview/persona-archetype";
 import { summarizeResume } from "@/lib/interview/resume-summary";
 import { parseResumeSummary } from "@/lib/interview/build-question";
-import { poolQuestionsToItemParams, prepareRankedQuestionPool } from "@/lib/interview/question-pool";
+import { getBillingContext } from "@/lib/billing/subscription";
+import { questionBankAccessWhere } from "@/lib/interview/question-bank-access";
+import {
+  poolQuestionsToItemParams,
+  prepareRankedQuestionPool,
+} from "@/lib/interview/question-pool";
 import { filterQuestionsByOrgKit } from "@/lib/org/interview-kit";
 import { getActiveCompetencyCodes } from "@/lib/competency/bank";
 import {
@@ -362,8 +367,15 @@ export async function startInterviewSession(
     sourceId: session.id,
   });
 
+  const { planTier } = await getBillingContext(user.id);
+  const bankAccess = questionBankAccessWhere(planTier);
+
   const questions = await prisma.question.findMany({
-    where: { isActive: true, competency: { code: competency, isActive: true } },
+    where: {
+      isActive: true,
+      competency: { code: competency, isActive: true },
+      ...bankAccess,
+    },
     include: { competency: true },
   });
 

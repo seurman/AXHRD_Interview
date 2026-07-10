@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { OrgStatus } from "@prisma/client";
+import type { OrgKind, OrgStatus } from "@prisma/client";
+import { ORG_KIND_CONFIG, ORG_KINDS } from "@/lib/org/kinds";
 
 type Props = {
   organizationId: string;
   initial: {
     name: string;
+    kind: OrgKind;
     joinCode: string;
     status: OrgStatus;
     validFrom: string | null;
@@ -27,6 +29,7 @@ function toDateInput(iso: string | null): string {
 export function OrgContractEditor({ organizationId, initial }: Props) {
   const router = useRouter();
   const [name, setName] = useState(initial.name);
+  const [kind, setKind] = useState<OrgKind>(initial.kind);
   const [joinCode, setJoinCode] = useState(initial.joinCode);
   const [status, setStatus] = useState<OrgStatus>(initial.status);
   const [validFrom, setValidFrom] = useState(toDateInput(initial.validFrom));
@@ -46,6 +49,7 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
+          kind,
           joinCode: joinCode.trim().toUpperCase(),
           status,
           validFrom: validFrom || null,
@@ -144,6 +148,21 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
             onChange={(e) => setName(e.target.value)}
             className="input-luxe mt-1 w-full"
           />
+        </label>
+        <label className="block text-sm sm:col-span-2">
+          <span className="font-medium">기관 유형</span>
+          <select
+            value={kind}
+            onChange={(e) => setKind(e.target.value as OrgKind)}
+            className="input-luxe mt-1 w-full"
+          >
+            {ORG_KINDS.map((k) => (
+              <option key={k} value={k}>
+                {ORG_KIND_CONFIG[k].label}
+              </option>
+            ))}
+          </select>
+          <span className="mt-1 block text-xs text-muted">{ORG_KIND_CONFIG[kind].description}</span>
         </label>
         <label className="block text-sm">
           <span className="font-medium">가입 코드</span>

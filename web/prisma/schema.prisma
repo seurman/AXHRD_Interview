@@ -94,6 +94,17 @@ enum OrgStatus {
   REJECTED
 }
 
+/** 기관 유형 — 취업센터 vs 기업 인사팀 등 온보딩·상품 프리셋 구분 */
+enum OrgKind {
+  CAREER_CENTER
+  HR_ENTERPRISE
+}
+
+enum SignupFlag {
+  NONE
+  REVIEW
+}
+
 /** 플랫폼(콘텐츠·운영) 권한 — OrgRole(기관 소속)과 별개.
  *  SUPERADMIN_EMAILS 환경변수도 슈퍼어드민으로 인정(부트스트랩용).
  *  ADMIN — CMS·운영(파괴적 작업 제한, 변경 감사). CONTENT_ADMIN은 ADMIN과 동일(레거시). */
@@ -128,6 +139,7 @@ enum SelfDiscoveryStatus {
 model Organization {
   id         String    @id @default(cuid())
   name       String
+  kind       OrgKind   @default(CAREER_CENTER)
   /** 학생/직원이 소속을 연결할 때 입력하는 코드. 재발급 가능하도록 unique만 보장 */
   joinCode   String    @unique
   status     OrgStatus @default(PENDING)
@@ -170,6 +182,10 @@ model User {
   orgRole         OrgRole  @default(STUDENT)
   /** 문항·역량·루브릭 CMS 및 플랫폼 권한 관리 */
   platformRole    PlatformRole @default(NONE)
+  /** 데이터 활용 동의 시각 (회원가입 시 필수 동의) */
+  dataUseConsentAt DateTime?
+  /** 대량 가입·체험 패턴 의심 시 관리자 검토 플래그 */
+  signupFlag      SignupFlag @default(NONE)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -492,6 +508,8 @@ model Question {
   rubricCriteria Json?
   sortOrder      Int        @default(0)
   isActive       Boolean    @default(true)
+  /** 비로그인 티저·FREE 티어 노출 허용 — 전체 뱅크는 유료 이상만 */
+  isShowcase     Boolean    @default(false)
   ownerScope      ContentOwnerScope @default(PLATFORM)
   organizationId  String?
   organization    Organization?     @relation(fields: [organizationId], references: [id], onDelete: Cascade)

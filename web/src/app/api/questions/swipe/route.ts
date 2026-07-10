@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
-import { blockPersonalTrialApi } from "@/lib/auth/personal-access";
 import {
   appendUserTextRecord,
   formatSwipeSelectionText,
@@ -13,9 +12,6 @@ export async function POST(req: Request) {
   if (!user) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
-
-  const trialBlock = await blockPersonalTrialApi(user);
-  if (trialBlock) return trialBlock;
 
   const body = await req.json();
   const {

@@ -119,6 +119,7 @@ async function loadContentBankSnapshotInner() {
       followUpHints: parseFollowUpHints(q.followUpHints),
       rubricCriteria: parseRubricCriteria(q.rubricCriteria),
       isActive: q.isActive,
+      isShowcase: q.isShowcase,
       sortOrder: q.sortOrder,
     })),
   };

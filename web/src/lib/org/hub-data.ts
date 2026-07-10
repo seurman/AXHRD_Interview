@@ -57,6 +57,7 @@ export async function getOrgHubSnapshot(organizationId: string) {
   return {
     id: org.id,
     name: org.name,
+    kind: org.kind,
     joinCode: org.joinCode,
     status: org.status,
     createdAt: org.createdAt,

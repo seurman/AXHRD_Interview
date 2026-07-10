@@ -2,10 +2,6 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
-import {
-  isPersonalTrialOnlyUser,
-  loadPersonalAccessContext,
-} from "@/lib/auth/personal-access";
 import { jobRoleLabel } from "@/lib/utils";
 import { competencyLabel } from "@/lib/labels";
 import { getUserStrengthDeck } from "@/lib/discover/user-strengths";
@@ -18,11 +14,6 @@ export const dynamic = "force-dynamic";
 export default async function ProfilePage() {
   const sessionUser = await getCurrentUser();
   if (!sessionUser) redirect("/auth/login?next=/profile");
-
-  const personalContext = await loadPersonalAccessContext(sessionUser.id);
-  if (isPersonalTrialOnlyUser(sessionUser, personalContext)) {
-    redirect("/demo");
-  }
 
   const user = await prisma.user.findUnique({
     where: { id: sessionUser.id },

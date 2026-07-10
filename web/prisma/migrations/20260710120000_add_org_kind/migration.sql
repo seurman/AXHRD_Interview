@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "OrgKind" AS ENUM ('CAREER_CENTER', 'HR_ENTERPRISE');
+
+-- AlterTable
+ALTER TABLE "Organization" ADD COLUMN "kind" "OrgKind" NOT NULL DEFAULT 'CAREER_CENTER';

@@ -2,6 +2,18 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 프리미엄 전환 + 데이터 플라이휠 (2026-07-10)
+
+- **FREE 티어 잠금 해제**: `isPersonalTrialOnlyUser`는 **비로그인 방문자** 판별만. 로그인 FREE 사용자는 `checkUsageLimit()`(월 3회 모의면접)만 적용. 6개 API에서 `blockPersonalTrialApi` 제거.
+- **비로그인 1문항 티저**: `POST/GET /api/trial/try` (영업 데모 `/api/demo/[slug]/try`와 분리). `/demo` 최상단 `TrialTeaser` + 가입 CTA.
+- **쇼케이스 문항**: `Question.isShowcase` — FREE·티저는 쇼케이스만, PRO/기관 플랜은 전체 뱅크. CMS `QuestionEditModal` 토글. 마이그레이션 시 역량별 L3 1문항 자동 쇼케이스 지정.
+- **가입 동의**: `User.dataUseConsentAt` + 회원가입 필수 체크박스. **⚠️ 동의 문구는 초안 — 실제 배포 전 법무 검토 필수.** OAuth 가입 경로는 후속.
+- **가입 이상 탐지**: `User.signupFlag` (`NONE`/`REVIEW`), `lib/auth/signup-anomaly.ts`, `/admin/users?flag=review` 필터. 자동 차단 없음.
+- **산업 인사이트(내부만)**: `lib/insight/industry-insight.ts` — 표본 30명 미만 null, UI 미노출.
+- **IRT 재보정(다음 배치)**: `Question.difficulty/discrimination`은 작성 시점 추정치. `ResponseRecord.rubricScore`가 역량×레벨별로 충분히(예: 문항당 100건+) 쌓이면 실제 정답률 분포 기반 2PL MLE 재보정 배치를 **별도 설계** — 이번 배치 미구현.
+- **마이그레이션**: `20260710130000_freemium_showcase_consent`
+- 검증: `npx prisma migrate deploy` · `npm run build` (작업 후 확인)
+
 ## 최근 작업 — 통합 콘텐츠 오너십(기본/기관 포크/승격) (2026-07-10)
 
 - **스키마**: `ContentOwnerScope` (`PLATFORM` / `ORG` / `DEMO`). `Competency`·`Question`에 `ownerScope`, `organizationId`, `forkedFromId`, `createdByUserId`. `Competency.code` 전역 unique → `@@unique([organizationId, code])` (PLATFORM `null` 중복은 `assertPlatformCompetencyCodeAvailable` 앱 검증).

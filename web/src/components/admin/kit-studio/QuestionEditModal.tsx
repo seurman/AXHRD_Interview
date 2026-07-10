@@ -69,6 +69,19 @@ export function QuestionEditModal({
           </div>
         </div>
 
+        <label className="mt-4 flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={draft.isShowcase ?? false}
+            onChange={(e) => setDraft({ ...draft, isShowcase: e.target.checked })}
+            className="rounded border-card-border"
+          />
+          <span>
+            <strong className="text-foreground">쇼케이스 문항</strong> — 비로그인 티저·FREE 티어에만
+            노출
+          </span>
+        </label>
+
         <label className="mt-4 block text-sm font-medium">채점 루브릭 (한 줄에 기준 1개)</label>
         <textarea
           className="input-luxe mt-1 min-h-[120px] w-full font-mono text-xs"

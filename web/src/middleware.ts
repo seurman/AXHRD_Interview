@@ -54,6 +54,7 @@ function isPublicPath(pathname: string) {
   if (pathname.startsWith("/billing/fail")) return true;
   if (pathname.startsWith("/demo")) return true;
   if (pathname.startsWith("/api/demo")) return true;
+  if (pathname.startsWith("/api/trial")) return true;
   return false;
 }
 

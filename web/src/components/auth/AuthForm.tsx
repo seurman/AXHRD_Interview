@@ -21,6 +21,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [dataUseConsent, setDataUseConsent] = useState(false);
 
   useEffect(() => {
     const oauthError = searchParams.get("error");
@@ -37,7 +38,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
     const body =
       mode === "login"
         ? { email, password, next }
-        : { email, password, name, next };
+        : { email, password, name, next, dataUseConsent };
 
     try {
       const res = await fetch(url, {
@@ -168,13 +169,34 @@ export function AuthForm({ mode }: { mode: Mode }) {
             className="input-luxe w-full"
           />
 
+          {mode === "register" && (
+            <label className="flex items-start gap-2 text-xs leading-relaxed text-muted">
+              <input
+                type="checkbox"
+                checked={dataUseConsent}
+                onChange={(e) => setDataUseConsent(e.target.checked)}
+                required
+                className="mt-0.5 rounded border-card-border"
+              />
+              <span>
+                답변 내용은 익명·집계 형태로 문항 개선과 산업별 인사이트 리포트 생성에 활용될 수
+                있습니다. 개인을 식별할 수 있는 형태로 외부에 제공되지 않습니다. (필수 동의 ·{" "}
+                <strong className="text-foreground">법무 검토 전 초안 문구</strong>)
+              </span>
+            </label>
+          )}
+
           {error && (
             <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">
               {error}
             </p>
           )}
 
-          <button type="submit" disabled={loading} className="btn-primary w-full">
+          <button
+            type="submit"
+            disabled={loading || (mode === "register" && !dataUseConsent)}
+            className="btn-primary w-full"
+          >
             {loading ? (
               <>
                 <IconLoader />

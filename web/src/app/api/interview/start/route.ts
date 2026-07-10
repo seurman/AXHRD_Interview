@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
-import { blockPersonalTrialApi } from "@/lib/auth/personal-access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { checkUsageLimit } from "@/lib/billing/usage";
 import { startInterviewSession, type StartSessionBody } from "@/lib/interview/start-session";
@@ -16,11 +15,6 @@ export async function POST(req: Request) {
     );
   }
 
-  const trialBlock = await blockPersonalTrialApi(user);
-  if (trialBlock) return trialBlock;
-
-  // 세션 생성은 회사 enrichment + 자소서 저장 + IRT 초기화를 동반하므로
-  // 사용자당 과도한 반복 생성을 막는다.
   const rl = checkRateLimit(`interview:start:${user.id}`, 10, 10 * 60 * 1000);
   if (!rl.allowed) {
     return NextResponse.json(
