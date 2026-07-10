@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { OrgCreatePanel } from "@/components/admin/OrgCreatePanel";
+import { OrgDiagnosticToggle } from "@/components/admin/OrgDiagnosticToggle";
 import { OrgKindBadge } from "@/components/admin/OrgKindBadge";
 import { OrgReviewActions } from "@/components/admin/OrgReviewActions";
 import { OrgStatusBadge } from "@/components/admin/OrgStatusBadge";
@@ -110,11 +111,11 @@ export default async function AdminOrganizationsPage() {
               const seatCap = resolveOrgSeatCap(org, org.subscriptions[0]);
               const contractStatus = getOrgContractStatus(org);
               return (
-              <Link
+              <div
                 key={org.id}
-                href={`/admin/organizations/${org.id}`}
-                className="group card-luxe block p-5 transition hover:border-gold/30 hover:shadow-md"
+                className="group card-luxe overflow-hidden transition hover:border-gold/30 hover:shadow-md"
               >
+                <Link href={`/admin/organizations/${org.id}`} className="block p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0f172a] text-gold">
                     <Building2 className="h-5 w-5" />
@@ -167,7 +168,14 @@ export default async function AdminOrganizationsPage() {
                 {seatCap != null && org._count.members >= seatCap && (
                   <p className="mt-2 text-xs font-medium text-amber-700">좌석 상한 도달</p>
                 )}
-              </Link>
+                </Link>
+                <OrgDiagnosticToggle
+                  organizationId={org.id}
+                  organizationName={org.name}
+                  enabled={org.diagnosticEnabled}
+                  compact
+                />
+              </div>
             );
             })}
           </div>

@@ -1,20 +1,28 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Activity } from "lucide-react";
+import { useState } from "react";
 
 type Props = {
   organizationId: string;
+  organizationName: string;
   enabled: boolean;
+  compact?: boolean;
 };
 
-export function OrgHubDiagnosticToggle({ organizationId, enabled }: Props) {
+export function OrgDiagnosticToggle({
+  organizationId,
+  organizationName,
+  enabled,
+  compact = false,
+}: Props) {
   const router = useRouter();
   const [on, setOn] = useState(enabled);
   const [busy, setBusy] = useState(false);
 
-  async function toggle() {
+  async function toggle(e?: React.MouseEvent) {
+    e?.preventDefault();
+    e?.stopPropagation();
     setBusy(true);
     try {
       const res = await fetch("/api/admin/organizations/diagnostic", {
@@ -34,6 +42,36 @@ export function OrgHubDiagnosticToggle({ organizationId, enabled }: Props) {
     }
   }
 
+  if (compact) {
+    return (
+      <div
+        className="flex items-center justify-between gap-3 border-t border-card-border px-5 py-3"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-foreground">ARC 조직진단 SKU</p>
+          <p className="text-[11px] text-muted">기관 메뉴 「조직진단」 노출</p>
+        </div>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={(e) => void toggle(e)}
+          className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+            on ? "bg-accent" : "bg-card-border"
+          }`}
+          aria-pressed={on}
+          aria-label={`${organizationName} 조직진단 ${on ? "끄기" : "켜기"}`}
+        >
+          <span
+            className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition ${
+              on ? "left-5" : "left-0.5"
+            }`}
+          />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`rounded-2xl border p-5 transition ${
@@ -42,17 +80,13 @@ export function OrgHubDiagnosticToggle({ organizationId, enabled }: Props) {
     >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <Activity className={`h-5 w-5 ${on ? "text-accent" : "text-muted"}`} />
-            <p className="font-semibold text-foreground">ARC Index 조직진단</p>
-          </div>
+          <p className="font-semibold text-foreground">ARC Index 조직진단</p>
           <p className="mt-2 text-sm text-muted">
-            기관 ADMIN 네비 「기관 → 조직진단」 및 <code className="text-xs">/org/diagnosis</code> 콘솔.
-            계약 SKU 별도 활성화입니다.
+            기관 ADMIN 네비 「기관 → 조직진단」 및 웨이브·팀·산출물 콘솔.
           </p>
           {!on && (
             <p className="mt-2 text-xs text-amber-700">
-              OFF 상태면 기관 관리자 메뉴에 조직진단이 표시되지 않습니다.
+              OFF — 기관 관리자에게 조직진단 메뉴가 보이지 않습니다.
             </p>
           )}
         </div>

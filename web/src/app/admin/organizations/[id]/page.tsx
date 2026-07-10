@@ -15,7 +15,7 @@ import { getOrgHubSnapshot } from "@/lib/org/hub-data";
 import { OrgContractEditor } from "@/components/admin/OrgContractEditor";
 import { OrgKindBadge } from "@/components/admin/OrgKindBadge";
 import { OrgHubPersonalizationToggle } from "@/components/admin/OrgHubPersonalizationToggle";
-import { OrgHubDiagnosticToggle } from "@/components/admin/OrgHubDiagnosticToggle";
+import { OrgDiagnosticToggle } from "@/components/admin/OrgDiagnosticToggle";
 import { OrgReviewActions } from "@/components/admin/OrgReviewActions";
 import { OrgStatusBadge } from "@/components/admin/OrgStatusBadge";
 import { planLabel } from "@/lib/billing/plans";
@@ -111,6 +111,28 @@ export default async function AdminOrgHubPage({ params }: Props) {
         </div>
       </header>
 
+      {hub.status === "APPROVED" && !hub.diagnosticEnabled && (
+        <div className="rounded-2xl border border-amber-300/50 bg-amber-50/80 px-5 py-4 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+          <strong>조직진단 SKU가 꺼져 있습니다.</strong> 아래 「ARC Index 조직진단」 토글을 켜야 기관
+          ADMIN 메뉴에 조직진단이 표시됩니다.
+        </div>
+      )}
+
+      {hub.status === "APPROVED" && (
+        <div className="grid gap-4 md:grid-cols-2">
+          <OrgHubPersonalizationToggle
+            organizationId={hub.id}
+            enabled={hub.personalizationEnabled}
+            enabledAt={hub.personalizationEnabledAt?.toISOString() ?? null}
+          />
+          <OrgDiagnosticToggle
+            organizationId={hub.id}
+            organizationName={hub.name}
+            enabled={hub.diagnosticEnabled}
+          />
+        </div>
+      )}
+
       <OrgContractEditor
         organizationId={hub.id}
         initial={{
@@ -187,17 +209,6 @@ export default async function AdminOrgHubPage({ params }: Props) {
             </Link>
           )}
         </section>
-      )}
-
-      {hub.status === "APPROVED" && (
-        <div className="grid gap-4 md:grid-cols-2">
-          <OrgHubPersonalizationToggle
-            organizationId={hub.id}
-            enabled={hub.personalizationEnabled}
-            enabledAt={hub.personalizationEnabledAt?.toISOString() ?? null}
-          />
-          <OrgHubDiagnosticToggle organizationId={hub.id} enabled={hub.diagnosticEnabled} />
-        </div>
       )}
 
       <section className="card-luxe overflow-hidden">
