@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, Search } from "lucide-react";
+import { competencyLabel, industryLabel, jobRoleLabel } from "@/lib/labels";
+import { INDUSTRY_CODES, JOB_ROLES } from "@/types";
 
 type MapsRow = {
   id: string;
@@ -42,6 +44,13 @@ type Props = {
   embedded?: boolean;
 };
 
+type JdPreviewScore = {
+  code: string;
+  label: string;
+  score: number;
+  matchedSignals: string[];
+};
+
 export function MeaningLayerPanel({ embedded = false }: Props) {
   const [data, setData] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,6 +58,14 @@ export function MeaningLayerPanel({ embedded = false }: Props) {
   const [selectedNcs, setSelectedNcs] = useState<string | null>(null);
   const [neighbors, setNeighbors] = useState<Neighbor[] | null>(null);
   const [neighborLabel, setNeighborLabel] = useState<string | null>(null);
+  const [jdPreviewText, setJdPreviewText] = useState("");
+  const [jdIndustry, setJdIndustry] = useState("");
+  const [jdRole, setJdRole] = useState("");
+  const [jdPreviewScores, setJdPreviewScores] = useState<JdPreviewScore[] | null>(null);
+  const [jdPreviewLoading, setJdPreviewLoading] = useState(false);
+  const [jdPreviewError, setJdPreviewError] = useState<string | null>(null);
+  const [weightDrafts, setWeightDrafts] = useState<Record<string, string>>({});
+  const [savingWeightId, setSavingWeightId] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -109,6 +126,61 @@ export function MeaningLayerPanel({ embedded = false }: Props) {
   const rematerializeNote =
     "시드 재적용: 로컬/운영에서 `npm run db:seed:meaning` (맵핑 + 구조 엣지 동기화)";
 
+  async function previewJdMatch() {
+    const text = jdPreviewText.trim();
+    if (text.length < 10) return;
+    setJdPreviewLoading(true);
+    setJdPreviewError(null);
+    try {
+      const res = await fetch("/api/admin/meaning/jd-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jdText: text,
+          industryCode: jdIndustry || null,
+          jobRoleCode: jdRole || null,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "미리보기 실패");
+      setJdPreviewScores(json.scores ?? []);
+    } catch (e) {
+      setJdPreviewError(e instanceof Error ? e.message : "미리보기 실패");
+      setJdPreviewScores(null);
+    } finally {
+      setJdPreviewLoading(false);
+    }
+  }
+
+  async function saveMapWeight(row: MapsRow) {
+    const draft = weightDrafts[row.id] ?? String(row.weight);
+    const weight = Number(draft);
+    if (!Number.isFinite(weight) || weight <= 0) return;
+    setSavingWeightId(row.id);
+    try {
+      const res = await fetch("/api/admin/meaning", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          edgeType: "MAPS_TO",
+          fromKind: "NCS_COMPETENCY",
+          fromKey: row.fromKey,
+          toKind: "GLOBAL_COMPETENCY",
+          toKey: row.toKey,
+          weight,
+          note: row.note,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "저장 실패");
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "가중치 저장 실패");
+    } finally {
+      setSavingWeightId(null);
+    }
+  }
+
   return (
     <section
       className={`space-y-4 ${embedded ? "" : "border-t border-card-border pt-10"}`}
@@ -118,11 +190,89 @@ export function MeaningLayerPanel({ embedded = false }: Props) {
         <h2 className="mt-1 text-lg font-bold text-foreground sm:text-xl">정렬 · 온톨로지</h2>
         <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted">
           AX 플랫폼 Meaning 층입니다. NCS(IRT)와 Global 20은 합치지 않고{" "}
-          <code className="text-xs">MAPS_TO</code> 엣지로만 연결합니다. Postgres{" "}
-          <code className="text-xs">ConceptRelation</code>이 시스템 오브 레코드이며, 그래프 DB는
-          이후 선택적으로 붙입니다. 명세:{" "}
-          <span className="text-foreground/80">docs/AX-PLATFORM-LAYERS.md</span>
+          <code className="text-xs">MAPS_TO</code> 엣지로만 연결합니다. JD 분석·면접 역량 추천은
+          이 그래프와 <code className="text-xs">CONTEXTUALIZES</code> 맥락 엣지를 함께 사용합니다.
         </p>
+      </div>
+
+      <div className="rounded-xl border border-card-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">JD 매칭 미리보기</h3>
+        <p className="mt-1 text-xs text-muted">
+          면접 설정의 공고 분석과 동일한 Meaning Layer 점수를 CMS에서 검증합니다.
+        </p>
+        <textarea
+          className="input-luxe mt-3 min-h-[88px] w-full text-sm"
+          placeholder="채용공고 일부를 붙여넣으세요…"
+          value={jdPreviewText}
+          onChange={(e) => setJdPreviewText(e.target.value)}
+        />
+        <div className="mt-2 flex flex-wrap gap-2">
+          <select
+            className="input-luxe text-sm"
+            value={jdIndustry}
+            onChange={(e) => setJdIndustry(e.target.value)}
+          >
+            <option value="">산업 (선택)</option>
+            {INDUSTRY_CODES.map((code) => (
+              <option key={code} value={code}>
+                {industryLabel(code)}
+              </option>
+            ))}
+          </select>
+          <select
+            className="input-luxe text-sm"
+            value={jdRole}
+            onChange={(e) => setJdRole(e.target.value)}
+          >
+            <option value="">직무 (선택)</option>
+            {JOB_ROLES.map((code) => (
+              <option key={code} value={code}>
+                {jobRoleLabel(code)}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="btn-primary inline-flex items-center gap-1.5 text-sm"
+            disabled={jdPreviewLoading || jdPreviewText.trim().length < 10}
+            onClick={() => void previewJdMatch()}
+          >
+            {jdPreviewLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Search className="h-4 w-4" />
+            )}
+            그래프 점수 계산
+          </button>
+        </div>
+        {jdPreviewError && (
+          <p className="mt-2 text-sm text-red-600 dark:text-red-400">{jdPreviewError}</p>
+        )}
+        {jdPreviewScores && (
+          <ul className="mt-3 space-y-1.5">
+            {jdPreviewScores.length === 0 ? (
+              <li className="text-sm text-muted">매칭 신호가 없습니다.</li>
+            ) : (
+              jdPreviewScores.map((s) => (
+                <li
+                  key={s.code}
+                  className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-card-border/60 px-3 py-2 text-sm"
+                >
+                  <div>
+                    <span className="font-medium text-foreground">{s.label}</span>
+                    <span className="ml-2 text-xs text-muted">{s.code}</span>
+                    {s.matchedSignals.length > 0 && (
+                      <p className="mt-0.5 text-[11px] text-muted">{s.matchedSignals.join(" · ")}</p>
+                    )}
+                  </div>
+                  <span className="tabular-nums text-xs font-semibold text-accent">
+                    {s.score.toFixed(2)}
+                  </span>
+                </li>
+              ))
+            )}
+          </ul>
+        )}
       </div>
 
       {loading ? (
@@ -203,7 +353,27 @@ export function MeaningLayerPanel({ embedded = false }: Props) {
                           <p className="mt-0.5 text-xs text-muted">{row.note}</p>
                         ) : null}
                       </div>
-                      <span className="tabular-nums text-xs text-accent">w={row.weight.toFixed(2)}</span>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          step="0.05"
+                          min="0.1"
+                          max="2"
+                          className="input-luxe w-16 px-2 py-1 text-xs tabular-nums"
+                          value={weightDrafts[row.id] ?? String(row.weight)}
+                          onChange={(e) =>
+                            setWeightDrafts((prev) => ({ ...prev, [row.id]: e.target.value }))
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="text-xs text-accent hover:underline"
+                          disabled={savingWeightId === row.id}
+                          onClick={() => void saveMapWeight(row)}
+                        >
+                          {savingWeightId === row.id ? "…" : "저장"}
+                        </button>
+                      </div>
                     </li>
                   ))}
                   {(mapsByNcs.get(selectedNcs ?? "") ?? []).length === 0 ? (

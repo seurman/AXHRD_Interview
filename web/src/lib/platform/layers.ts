@@ -28,6 +28,7 @@ export const MODULE_LAYER: Record<string, AxPlatformLayer> = {
   "/admin/demo": "surfaces",
   "/admin/content": "meaning",
   "/api/admin/meaning": "meaning",
+  "/api/admin/meaning/jd-preview": "meaning",
   "/api/admin/global-competencies": "meaning",
   "/api/interview": "intelligence",
   irtEngine: "intelligence",

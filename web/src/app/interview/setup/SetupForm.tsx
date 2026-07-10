@@ -260,15 +260,26 @@ export function SetupForm({
         body: JSON.stringify({
           jdText: trimmed,
           industryLabel: industry ? industryLabel(industry) : undefined,
+          industryCode: industry || undefined,
+          jobRole: jobRole || undefined,
         }),
       });
-      const data = (await res.json()) as JDMapResult & { error?: string };
+      const data = (await res.json()) as JDMapResult & {
+        error?: string;
+        recommendationSource?: "llm" | "meaning_graph" | "blended" | null;
+      };
       if (!res.ok) throw new Error(data.error ?? "공고 분석에 실패했습니다.");
       setJdAnalysis(data);
       setJdAnalysisSource(trimmed);
       if (data.recommendedCompetency) {
+        const sourceLabel =
+          data.recommendationSource === "meaning_graph"
+            ? "Meaning Layer 그래프"
+            : data.recommendationSource === "blended"
+              ? "AI + 그래프"
+              : "공고 AI";
         setJdAnalysisNote(
-          `📄 ${competencyLabel(data.recommendedCompetency)} 역량을 이 공고에 맞게 추천했어요.${
+          `📄 ${competencyLabel(data.recommendedCompetency)} 역량을 ${sourceLabel}로 추천했어요.${
             data.competencyRationale ? ` ${data.competencyRationale}` : ""
           }`,
         );

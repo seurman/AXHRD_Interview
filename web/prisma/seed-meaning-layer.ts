@@ -99,6 +99,34 @@ async function seedMapsTo() {
   return count;
 }
 
+async function seedRoleContext() {
+  const path = join(__dirname, "../../seed/meaning-role-context.json");
+  const file = JSON.parse(readFileSync(path, "utf-8")) as MapsFile;
+
+  const ncs = await prisma.competency.findMany({ select: { id: true, code: true } });
+  const ncsByCode = new Map(ncs.map((c) => [c.code, c.id]));
+
+  let count = 0;
+  for (const mapping of file.mappings) {
+    for (const t of mapping.targets) {
+      const toId = ncsByCode.get(t.toKey) ?? null;
+      await upsertEdge({
+        edgeType: file.edgeType,
+        fromKind: file.fromKind,
+        fromKey: mapping.fromKey,
+        toKind: file.toKind,
+        toKey: t.toKey,
+        toId,
+        weight: t.weight ?? 1,
+        note: t.note ?? null,
+        source: "seed",
+      });
+      count += 1;
+    }
+  }
+  return count;
+}
+
 async function seedStructuralFromGlobal() {
   const clusters = await prisma.globalCompetencyCluster.findMany({
     include: {
@@ -212,6 +240,9 @@ async function main() {
 
   const maps = await seedMapsTo();
   console.log(`  MAPS_TO edges: ${maps}`);
+
+  const roleCtx = await seedRoleContext();
+  console.log(`  CONTEXTUALIZES (role/keyword): ${roleCtx}`);
 
   const structural = await seedStructuralFromGlobal();
   console.log(

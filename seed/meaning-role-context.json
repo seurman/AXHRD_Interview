@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "description": "직무·산업 맥락 → NCS 6역량 CONTEXTUALIZES (JD·면접 추천 보조)",
+  "edgeType": "CONTEXTUALIZES",
+  "fromKind": "ROLE_CONTEXT",
+  "toKind": "NCS_COMPETENCY",
+  "mappings": [
+    {
+      "fromKey": "INDUSTRY:IT_SW",
+      "targets": [
+        { "toKey": "PROBLEM_SOLVING", "weight": 0.9, "note": "IT/SW — 분석·설계" },
+        { "toKey": "GROWTH", "weight": 0.75, "note": "기술 학습 속도" },
+        { "toKey": "JOB_FIT", "weight": 0.7, "note": "기술 스택·도메인" }
+      ]
+    },
+    {
+      "fromKey": "INDUSTRY:FINANCE",
+      "targets": [
+        { "toKey": "ORG_FIT", "weight": 0.85, "note": "규제·리스크 문화" },
+        { "toKey": "PROBLEM_SOLVING", "weight": 0.8, "note": "정량 분석" },
+        { "toKey": "COMMUNICATION", "weight": 0.65, "note": "이해관계자 보고" }
+      ]
+    },
+    {
+      "fromKey": "INDUSTRY:MANUFACTURING",
+      "targets": [
+        { "toKey": "JOB_FIT", "weight": 0.85, "note": "공정·품질 전문성" },
+        { "toKey": "ORG_FIT", "weight": 0.7, "note": "현장·조직 협업" },
+        { "toKey": "PROBLEM_SOLVING", "weight": 0.65, "note": "개선·트러블슈팅" }
+      ]
+    },
+    {
+      "fromKey": "INDUSTRY:PUBLIC",
+      "targets": [
+        { "toKey": "ORG_FIT", "weight": 0.9, "note": "공공 가치·윤리" },
+        { "toKey": "COMMUNICATION", "weight": 0.75, "note": "대민·이해관계자 소통" },
+        { "toKey": "LEADERSHIP", "weight": 0.6, "note": "정책·추진" }
+      ]
+    },
+    {
+      "fromKey": "ROLE:DEVELOPMENT",
+      "targets": [
+        { "toKey": "PROBLEM_SOLVING", "weight": 1.0, "note": "개발 — 문제해결" },
+        { "toKey": "JOB_FIT", "weight": 0.85, "note": "기술 역량" },
+        { "toKey": "GROWTH", "weight": 0.8, "note": "학습·적응" }
+      ]
+    },
+    {
+      "fromKey": "ROLE:MARKETING",
+      "targets": [
+        { "toKey": "COMMUNICATION", "weight": 1.0, "note": "메시지·캠페인" },
+        { "toKey": "PROBLEM_SOLVING", "weight": 0.7, "note": "데이터·인사이트" },
+        { "toKey": "JOB_FIT", "weight": 0.65, "note": "브랜드·채널 이해" }
+      ]
+    },
+    {
+      "fromKey": "ROLE:SALES",
+      "targets": [
+        { "toKey": "COMMUNICATION", "weight": 1.0, "note": "고객 설득" },
+        { "toKey": "JOB_FIT", "weight": 0.8, "note": "상품·시장 이해" },
+        { "toKey": "GROWTH", "weight": 0.6, "note": "목표·회복탄력" }
+      ]
+    },
+    {
+      "fromKey": "ROLE:HR",
+      "targets": [
+        { "toKey": "ORG_FIT", "weight": 0.95, "note": "조직·문화" },
+        { "toKey": "COMMUNICATION", "weight": 0.85, "note": "면담·조율" },
+        { "toKey": "LEADERSHIP", "weight": 0.7, "note": "인재 육성" }
+      ]
+    },
+    {
+      "fromKey": "ROLE:DESIGN",
+      "targets": [
+        { "toKey": "COMMUNICATION", "weight": 0.9, "note": "사용자·이해관계자 소통" },
+        { "toKey": "PROBLEM_SOLVING", "weight": 0.8, "note": "문제 정의·해결" },
+        { "toKey": "JOB_FIT", "weight": 0.75, "note": "UX·도구 숙련" }
+      ]
+    },
+    {
+      "fromKey": "ROLE:FINANCE",
+      "targets": [
+        { "toKey": "PROBLEM_SOLVING", "weight": 0.9, "note": "분석·모델링" },
+        { "toKey": "ORG_FIT", "weight": 0.75, "note": "내부 통제·협업" },
+        { "toKey": "JOB_FIT", "weight": 0.7, "note": "회계·재무 전문성" }
+      ]
+    },
+    {
+      "fromKey": "ROLE:BUSINESS_SUPPORT",
+      "targets": [
+        { "toKey": "ORG_FIT", "weight": 0.85, "note": "조직 지원·협업" },
+        { "toKey": "COMMUNICATION", "weight": 0.8, "note": "내부 커뮤니케이션" },
+        { "toKey": "PROBLEM_SOLVING", "weight": 0.65, "note": "업무 개선" }
+      ]
+    },
+    {
+      "fromKey": "COMBO:IT_SW:DEVELOPMENT",
+      "targets": [
+        { "toKey": "PROBLEM_SOLVING", "weight": 1.0 },
+        { "toKey": "JOB_FIT", "weight": 0.9 },
+        { "toKey": "GROWTH", "weight": 0.85 }
+      ]
+    },
+    {
+      "fromKey": "COMBO:FINANCE:FINANCE",
+      "targets": [
+        { "toKey": "PROBLEM_SOLVING", "weight": 1.0 },
+        { "toKey": "ORG_FIT", "weight": 0.85 },
+        { "toKey": "JOB_FIT", "weight": 0.8 }
+      ]
+    },
+    {
+      "fromKey": "KEYWORD:리더십",
+      "targets": [{ "toKey": "LEADERSHIP", "weight": 1.0, "note": "JD 키워드" }]
+    },
+    {
+      "fromKey": "KEYWORD:커뮤니케이션",
+      "targets": [{ "toKey": "COMMUNICATION", "weight": 1.0, "note": "JD 키워드" }]
+    },
+    {
+      "fromKey": "KEYWORD:의사소통",
+      "targets": [{ "toKey": "COMMUNICATION", "weight": 1.0, "note": "JD 키워드" }]
+    },
+    {
+      "fromKey": "KEYWORD:문제해결",
+      "targets": [{ "toKey": "PROBLEM_SOLVING", "weight": 1.0, "note": "JD 키워드" }]
+    },
+    {
+      "fromKey": "KEYWORD:성장",
+      "targets": [{ "toKey": "GROWTH", "weight": 0.9, "note": "JD 키워드" }]
+    },
+    {
+      "fromKey": "KEYWORD:학습",
+      "targets": [{ "toKey": "GROWTH", "weight": 0.85, "note": "JD 키워드" }]
+    },
+    {
+      "fromKey": "KEYWORD:조직",
+      "targets": [{ "toKey": "ORG_FIT", "weight": 0.85, "note": "JD 키워드" }]
+    },
+    {
+      "fromKey": "KEYWORD:협업",
+      "targets": [
+        { "toKey": "ORG_FIT", "weight": 0.8, "note": "JD 키워드" },
+        { "toKey": "COMMUNICATION", "weight": 0.7, "note": "JD 키워드" }
+      ]
+    }
+  ]
+}
