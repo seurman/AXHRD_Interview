@@ -98,6 +98,16 @@ export function MainNav({
         </Link>
       )}
 
+      {headerLinks.map((link) => (
+        <Link
+          key={link.href}
+          href={link.href}
+          className={`nav-pill ${linkActive(link.href) ? "nav-pill-active" : ""}`}
+        >
+          {link.label}
+        </Link>
+      ))}
+
       <NavDropdownMenu
         title={c.nav.prepare}
         links={prepareLinks.map((l) => ({
@@ -114,16 +124,6 @@ export function MainNav({
           {c.nav.profile}
         </Link>
       )}
-
-      {headerLinks.map((link) => (
-        <Link
-          key={link.href}
-          href={link.href}
-          className={`nav-pill ${linkActive(link.href) ? "nav-pill-active" : ""}`}
-        >
-          {link.label}
-        </Link>
-      ))}
 
       {saasLinks && (
         <SaasNavMenu

@@ -7,6 +7,8 @@ import { Logo } from "@/components/brand/Logo";
 import { MobileNav } from "./MobileNav";
 import { MainNav } from "./MainNav";
 import { BillingPastDueBanner } from "@/components/billing/BillingPastDueBanner";
+import { deriveHeaderLinks } from "@/lib/nav/header-links";
+import { useMemo } from "react";
 
 export function AppHeader() {
   const { dict } = useI18n();
@@ -19,8 +21,8 @@ export function AppHeader() {
   const prepareLinks = nav?.prepareLinks ?? [];
   const profileHref = nav?.profileHref ?? null;
   const saasLinks = nav?.saasLinks ?? null;
-  const headerLinks = nav?.headerLinks ?? [];
   const adminSections = nav?.adminSections ?? [];
+  const headerLinks = useMemo(() => deriveHeaderLinks(nav), [nav]);
   const userName = nav?.userName ?? undefined;
 
   return (
