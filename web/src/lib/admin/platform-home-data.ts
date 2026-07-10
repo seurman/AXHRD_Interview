@@ -56,32 +56,46 @@ export type ContentHomeSnapshot = {
   orgCustomCompetencies: number;
 };
 
-function buildHourlyBuckets(
-  rows: { createdAt: Date }[],
-  hours = 6,
-): HourlyBucket[] {
+function hourBucketRanges(hours = 6) {
   const now = new Date();
-  const buckets: HourlyBucket[] = [];
-
-  for (let i = hours - 1; i >= 0; i--) {
+  return Array.from({ length: hours }, (_, i) => {
     const start = new Date(now);
     start.setMinutes(0, 0, 0);
-    start.setHours(start.getHours() - i);
+    start.setHours(start.getHours() - (hours - 1 - i));
     const end = new Date(start);
     end.setHours(end.getHours() + 1);
-
     const label =
-      i === 0
+      i === hours - 1
         ? "지금"
         : start.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+    return { start, end, label };
+  });
+}
 
-    buckets.push({
-      label,
-      count: rows.filter((r) => r.createdAt >= start && r.createdAt < end).length,
-    });
-  }
+async function loadSessionHourlyBuckets(hours = 6): Promise<HourlyBucket[]> {
+  const ranges = hourBucketRanges(hours);
+  const counts = await Promise.all(
+    ranges.map(({ start, end }) =>
+      prisma.interviewSession.count({
+        where: { createdAt: { gte: start, lt: end } },
+      }),
+    ),
+  );
+  return ranges.map((range, i) => ({ label: range.label, count: counts[i] }));
+}
 
-  return buckets;
+async function loadResponseHourlyBuckets(hours = 6): Promise<HourlyBucket[]> {
+  const ranges = hourBucketRanges(hours);
+  const counts = await Promise.all(
+    ranges.map(({ start, end }) =>
+      prisma.diagnosticResponse
+        .count({
+          where: { submittedAt: { gte: start, lt: end, not: null } },
+        })
+        .catch(() => 0),
+    ),
+  );
+  return ranges.map((range, i) => ({ label: range.label, count: counts[i] }));
 }
 
 export async function loadContentHomeSnapshot(): Promise<ContentHomeSnapshot> {
@@ -117,8 +131,10 @@ export async function loadPlatformHomeSnapshot(): Promise<PlatformHomeSnapshot> 
     arcInstrumentCount,
     activeSubscriptions,
     membersTotal,
-    sessions6hRows,
-    responses6hRows,
+    sessions6h,
+    diagnosticResponses6h,
+    sessionsHourly,
+    responsesHourly,
   ] = await Promise.all([
     prisma.organization.count({ where: { status: "PENDING" } }),
     prisma.organization.count({ where: { status: "APPROVED" } }),
@@ -154,23 +170,15 @@ export async function loadPlatformHomeSnapshot(): Promise<PlatformHomeSnapshot> 
     prisma.diagnosticInstrument.count(),
     prisma.subscription.count({ where: { status: { not: "CANCELED" } } }),
     prisma.user.count({ where: { organizationId: { not: null } } }),
-    prisma.interviewSession.findMany({
-      where: { createdAt: { gte: sixHoursAgo } },
-      select: { createdAt: true },
-    }),
-    prisma.diagnosticResponse.findMany({
-      where: { submittedAt: { gte: sixHoursAgo, not: null } },
-      select: { submittedAt: true },
-    }).catch(() => [] as { submittedAt: Date | null }[]),
+    prisma.interviewSession.count({ where: { createdAt: { gte: sixHoursAgo } } }),
+    prisma.diagnosticResponse
+      .count({ where: { submittedAt: { gte: sixHoursAgo, not: null } } })
+      .catch(() => 0),
+    loadSessionHourlyBuckets(),
+    loadResponseHourlyBuckets(),
   ]);
 
   const arcIndexSeeded = arcInstrumentCount > 0;
-  const sessionsHourly = buildHourlyBuckets(sessions6hRows);
-  const responsesHourly = buildHourlyBuckets(
-    responses6hRows
-      .filter((r): r is { submittedAt: Date } => r.submittedAt != null)
-      .map((r) => ({ createdAt: r.submittedAt })),
-  );
 
   const checklist: OverviewChecklistItem[] = [
     {
@@ -252,8 +260,8 @@ export async function loadPlatformHomeSnapshot(): Promise<PlatformHomeSnapshot> 
     arcIndexSeeded,
     activeSubscriptions,
     membersTotal,
-    sessions6h: sessions6hRows.length,
-    diagnosticResponses6h: responses6hRows.filter((r) => r.submittedAt != null).length,
+    sessions6h,
+    diagnosticResponses6h,
     sessionsHourly,
     responsesHourly,
     platformStatus,

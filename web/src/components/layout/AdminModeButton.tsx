@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useI18n } from "@/lib/i18n/I18nProvider";
@@ -17,6 +17,7 @@ type Props = {
 /** Platform Console — 메인 헤더와 분리된 관리자 창(새 탭) */
 export function AdminModeButton({ label, variant = "nav", className }: Props) {
   const pathname = usePathname();
+  const router = useRouter();
   const { locale } = useI18n();
   const active = pathname === ADMIN_HOME || pathname.startsWith(`${ADMIN_HOME}/`);
   const ariaNewWindow = locale === "ko" ? `${label} (새 창)` : `${label} (new window)`;
@@ -27,6 +28,8 @@ export function AdminModeButton({ label, variant = "nav", className }: Props) {
         href={ADMIN_HOME}
         target="_blank"
         rel="noopener noreferrer"
+        onMouseEnter={() => router.prefetch(ADMIN_HOME)}
+        onFocus={() => router.prefetch(ADMIN_HOME)}
         className={cn(
           "btn-primary mb-2 flex w-full items-center justify-center gap-2 text-center text-sm",
           className,
@@ -44,6 +47,8 @@ export function AdminModeButton({ label, variant = "nav", className }: Props) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={ariaNewWindow}
+      onMouseEnter={() => router.prefetch(ADMIN_HOME)}
+      onFocus={() => router.prefetch(ADMIN_HOME)}
       className={cn(
         "nav-pill nav-pill-gold inline-flex items-center gap-1",
         active && "nav-pill-active",

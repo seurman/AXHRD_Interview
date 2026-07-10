@@ -1,24 +1,15 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
-import { hasSuperadminAccess, isSuperadmin } from "@/lib/auth/guards";
-import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
+import { hasSuperadminAccess } from "@/lib/auth/guards";
 import { buildNavigationForUser } from "@/lib/platform/nav-registry";
 import { canManageDemoWorkspaces } from "@/lib/auth/roles";
-import {
-  isPersonalTrialOnlyUser,
-  loadPersonalAccessContext,
-} from "@/lib/auth/personal-access";
+import { isPersonalTrialOnlyUser } from "@/lib/auth/personal-access";
 import { deriveHeaderLinks, deriveAdminModeEnabled } from "@/lib/nav/header-links";
 import type { NavPayload } from "@/lib/nav/client-types";
 
 /** 클라이언트 헤더용 — 로그인 상태·역할별 네비 구성 */
 export async function GET() {
   const sessionUser = await getCurrentUser();
-  if (sessionUser && hasSuperadminAccess(sessionUser)) {
-    if (isSuperadmin(sessionUser.email)) {
-      await syncSuperadminPlatformRole(sessionUser.id, sessionUser.email);
-    }
-  }
 
   const user =
     sessionUser && hasSuperadminAccess(sessionUser)
@@ -64,8 +55,6 @@ export async function GET() {
     };
   });
 
-  const personalContext = await loadPersonalAccessContext(user.id);
-
   const body: NavPayload = {
     loggedIn: true,
     userName: user.name,
@@ -74,7 +63,7 @@ export async function GET() {
     isSuperAdmin: hasSuperadminAccess(user) || (nav.isSuperAdmin ?? false),
     headerLinks: [],
     adminModeEnabled: false,
-    trialOnly: isPersonalTrialOnlyUser(user, personalContext),
+    trialOnly: isPersonalTrialOnlyUser(user),
     canPresentDemo: canManageDemoWorkspaces({
       email: user.email,
       platformRole: user.platformRole,

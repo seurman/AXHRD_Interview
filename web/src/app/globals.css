@@ -1407,7 +1407,7 @@ html.dark .platform-app {
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--platform-text-muted);
-  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+  transition: background 0.08s, color 0.08s, box-shadow 0.08s;
 }
 
 .platform-nav-item:hover {
@@ -1421,6 +1421,51 @@ html.dark .platform-app {
   font-weight: 700;
   color: var(--platform-text);
   box-shadow: var(--platform-shadow-sm);
+}
+
+.platform-nav-item--pending {
+  background: color-mix(in srgb, var(--platform-accent) 8%, var(--platform-surface));
+}
+
+.platform-route-progress {
+  position: absolute;
+  inset: 0 auto auto 0;
+  z-index: 20;
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--platform-accent) 40%,
+    transparent
+  );
+  animation: platform-route-progress 0.9s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes platform-route-progress {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0.4;
+  }
+}
+
+.route-progress-bar {
+  position: fixed;
+  inset: 0 auto auto 0;
+  z-index: 96;
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, var(--accent, #c9a227) 45%, transparent);
+  animation: platform-route-progress 0.85s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .platform-sidebar-footer-btn {
@@ -1547,12 +1592,16 @@ html.dark .platform-metric-tile {
   font-weight: 650;
   color: var(--platform-surface);
   box-shadow: var(--platform-shadow-sm);
-  transition: opacity 0.15s, box-shadow 0.15s;
+  transition: opacity 0.08s, box-shadow 0.08s, transform 0.08s;
 }
 
 .platform-btn-primary:hover {
   opacity: 0.92;
   box-shadow: var(--platform-shadow);
+}
+
+.platform-btn-primary:active {
+  transform: scale(0.98);
 }
 
 .platform-btn-secondary {
@@ -1567,12 +1616,16 @@ html.dark .platform-metric-tile {
   font-weight: 650;
   color: var(--platform-text);
   box-shadow: var(--platform-shadow-sm);
-  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+  transition: background 0.08s, border-color 0.08s, box-shadow 0.08s, transform 0.08s;
 }
 
 .platform-btn-secondary:hover {
   border-color: color-mix(in srgb, var(--platform-text) 22%, var(--platform-border));
   box-shadow: var(--platform-shadow);
+}
+
+.platform-btn-secondary:active {
+  transform: scale(0.98);
 }
 
 .platform-metric-tile {
@@ -1583,13 +1636,16 @@ html.dark .platform-metric-tile {
   box-shadow:
     var(--platform-shadow-sm),
     inset 0 1px 0 rgb(255 255 255 / 0.85);
-  transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s;
+  transition: border-color 0.08s, box-shadow 0.08s;
 }
 
 .platform-metric-tile:hover {
   border-color: color-mix(in srgb, var(--platform-text) 18%, var(--platform-border));
   box-shadow: var(--platform-shadow);
-  transform: translateY(-1px);
+}
+
+.platform-metric-tile:active {
+  transform: scale(0.99);
 }
 
 .platform-metric-tile--alert {

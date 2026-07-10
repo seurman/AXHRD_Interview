@@ -23,7 +23,9 @@ import {
 import type { CapabilityId } from "@/lib/platform/capabilities";
 import type { AdminSectionKey } from "@/lib/platform/nav-registry";
 import { clearNavSessionCache } from "@/components/layout/NavSessionProvider";
+import { useRouteTransition } from "@/components/layout/RouteTransitionProvider";
 import { useI18n } from "@/lib/i18n/I18nProvider";
+import { cn } from "@/lib/cn";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -56,6 +58,43 @@ type Props = {
   onNavigate?: () => void;
   headerAction?: ReactNode;
 };
+
+function PlatformNavLink({
+  href,
+  active,
+  onNavigate,
+  className,
+  children,
+}: {
+  href: string;
+  active?: boolean;
+  onNavigate?: () => void;
+  className?: string;
+  children: ReactNode;
+}) {
+  const pathname = usePathname();
+  const { pendingHref, startNavigation } = useRouteTransition();
+  const pending = pendingHref === href;
+
+  return (
+    <Link
+      href={href}
+      prefetch
+      onClick={() => {
+        if (href !== pathname) startNavigation(href);
+        onNavigate?.();
+      }}
+      className={cn(
+        className,
+        pending && "platform-nav-item--pending",
+        pending && !active && "opacity-80",
+      )}
+      aria-busy={pending || undefined}
+    >
+      {children}
+    </Link>
+  );
+}
 
 function PlatformLogout({ label }: { label: string }) {
   const [busy, setBusy] = useState(false);
@@ -120,14 +159,15 @@ export function PlatformConsoleSidebar({
       </div>
 
       <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-2 pb-3">
-        <Link
+        <PlatformNavLink
           href="/admin"
-          onClick={onNavigate}
+          active={homeActive}
+          onNavigate={onNavigate}
           className={`platform-nav-item ${homeActive ? "platform-nav-item--active" : ""}`}
         >
           <Home className="h-4 w-4 shrink-0" />
           <span className="truncate">{c.admin.overview}</span>
-        </Link>
+        </PlatformNavLink>
 
         {sections.map((section) => (
           <div key={section.sectionKey}>
@@ -139,15 +179,16 @@ export function PlatformConsoleSidebar({
                   pathname === item.href ||
                   (item.href !== "/admin/permissions" && pathname.startsWith(`${item.href}/`));
                 return (
-                  <Link
+                  <PlatformNavLink
                     key={item.href}
                     href={item.href}
-                    onClick={onNavigate}
+                    active={active}
+                    onNavigate={onNavigate}
                     className={`platform-nav-item ${active ? "platform-nav-item--active" : ""}`}
                   >
                     {Icon && <Icon className="h-4 w-4 shrink-0 opacity-70" />}
                     <span className="truncate">{item.label}</span>
-                  </Link>
+                  </PlatformNavLink>
                 );
               })}
             </div>
@@ -161,10 +202,10 @@ export function PlatformConsoleSidebar({
             {locale === "ko" ? `${userName}${c.userSuffix}` : userName}
           </p>
         )}
-        <Link href="/" onClick={onNavigate} className="platform-sidebar-footer-btn">
+        <PlatformNavLink href="/" onNavigate={onNavigate} className="platform-sidebar-footer-btn">
           <ArrowLeft className="h-4 w-4 shrink-0 opacity-70" />
           {c.admin.backToService}
-        </Link>
+        </PlatformNavLink>
         <PlatformLogout label={c.auth.logout} />
       </div>
     </aside>

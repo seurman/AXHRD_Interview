@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { NavTransitionLink } from "@/components/layout/NavTransitionLink";
 
 type NavLink = { href: string; label: string };
 
@@ -18,9 +18,17 @@ export function SaasNavMenu({ title, links, settingsTitle, settingsLinks }: Prop
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const router = useRouter();
 
   const allHrefs = [...links, ...(settingsLinks ?? [])];
   const active = allHrefs.some((l) => pathname === l.href || pathname.startsWith(`${l.href}/`));
+
+  useEffect(() => {
+    if (!open) return;
+    for (const l of allHrefs) {
+      router.prefetch(l.href);
+    }
+  }, [allHrefs, open, router]);
 
   useEffect(() => {
     if (!open) return;
@@ -51,7 +59,7 @@ export function SaasNavMenu({ title, links, settingsTitle, settingsLinks }: Prop
           className="absolute right-0 top-full z-50 mt-2 min-w-[12rem] overflow-hidden rounded-xl border border-white/10 bg-[#121a2e] py-1 shadow-2xl"
         >
           {links.map((l) => (
-            <Link
+            <NavTransitionLink
               key={l.href}
               href={l.href}
               role="menuitem"
@@ -63,7 +71,7 @@ export function SaasNavMenu({ title, links, settingsTitle, settingsLinks }: Prop
               }`}
             >
               {l.label}
-            </Link>
+            </NavTransitionLink>
           ))}
           {settingsLinks && settingsLinks.length > 0 && (
             <>
@@ -72,7 +80,7 @@ export function SaasNavMenu({ title, links, settingsTitle, settingsLinks }: Prop
                 {settingsTitle ?? "설정"}
               </p>
               {settingsLinks.map((l) => (
-                <Link
+                <NavTransitionLink
                   key={l.href}
                   href={l.href}
                   role="menuitem"
@@ -84,7 +92,7 @@ export function SaasNavMenu({ title, links, settingsTitle, settingsLinks }: Prop
                   }`}
                 >
                   {l.label}
-                </Link>
+                </NavTransitionLink>
               ))}
             </>
           )}

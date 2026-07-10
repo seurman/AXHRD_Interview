@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { NavTransitionLink } from "@/components/layout/NavTransitionLink";
 
 type NavLink = { href: string; label: string };
 
@@ -21,11 +21,19 @@ export function NavDropdownMenu({ title, links = [], sections }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const router = useRouter();
 
   const flat = sections?.length
     ? sections.flatMap((s) => s.links)
     : links;
   const active = flat.some((l) => pathname === l.href || pathname.startsWith(`${l.href}/`));
+
+  useEffect(() => {
+    if (!open) return;
+    for (const l of flat) {
+      router.prefetch(l.href);
+    }
+  }, [flat, open, router]);
 
   useEffect(() => {
     if (!open) return;
@@ -39,7 +47,7 @@ export function NavDropdownMenu({ title, links = [], sections }: Props) {
   if (flat.length === 0) return null;
 
   const renderLink = (l: NavLink) => (
-    <Link
+    <NavTransitionLink
       key={l.href}
       href={l.href}
       role="menuitem"
@@ -51,7 +59,7 @@ export function NavDropdownMenu({ title, links = [], sections }: Props) {
       }`}
     >
       {l.label}
-    </Link>
+    </NavTransitionLink>
   );
 
   return (

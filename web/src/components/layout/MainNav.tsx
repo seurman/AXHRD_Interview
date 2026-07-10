@@ -6,6 +6,7 @@ import { LogoutButton } from "./LogoutButton";
 import { AdminModeButton } from "./AdminModeButton";
 import { NavDropdownMenu } from "./NavDropdownMenu";
 import { SaasNavMenu } from "./SaasNavMenu";
+import { NavTransitionLink } from "./NavTransitionLink";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { ClipDynamic } from "@/components/ui/ClipDynamic";
@@ -91,22 +92,22 @@ export function MainNav({
       )}
 
       {dashboardHref && (
-        <Link
+        <NavTransitionLink
           href={dashboardHref}
           className={`nav-pill ${linkActive(dashboardHref) ? "nav-pill-active" : ""}`}
         >
           {c.nav.dashboard}
-        </Link>
+        </NavTransitionLink>
       )}
 
       {headerLinks.map((link) => (
-        <Link
+        <NavTransitionLink
           key={link.href}
           href={link.href}
           className={`nav-pill ${linkActive(link.href) ? "nav-pill-active" : ""}`}
         >
           {link.label}
-        </Link>
+        </NavTransitionLink>
       ))}
 
       <NavDropdownMenu
@@ -118,12 +119,12 @@ export function MainNav({
       />
 
       {profileHref && (
-        <Link
+        <NavTransitionLink
           href={profileHref}
           className={`nav-pill ${linkActive(profileHref) ? "nav-pill-active" : ""}`}
         >
           {c.nav.profile}
-        </Link>
+        </NavTransitionLink>
       )}
 
       {saasLinks && (

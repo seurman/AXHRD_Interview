@@ -1,51 +1,15 @@
-"use client";
-
 import Link from "next/link";
-import {
-  Area,
-  AreaChart,
-  ResponsiveContainer,
-} from "recharts";
 import { AdminTodoQueue } from "@/components/admin/AdminTodoQueue";
 import {
   OverviewKvRow,
   OverviewPanel,
   OverviewStatusDot,
 } from "@/components/admin/OverviewPanel";
+import { OverviewSparkline } from "@/components/admin/OverviewSparkline";
 import { Badge } from "@/components/admin/Badge";
 import { formatRelativeTime } from "@/lib/admin/relative-time";
-import type { HourlyBucket, PlatformHomeSnapshot } from "@/lib/admin/platform-home-data";
+import type { PlatformHomeSnapshot } from "@/lib/admin/platform-home-data";
 import { Check, ChevronRight, ExternalLink } from "lucide-react";
-
-function MiniSparkline({ data, color }: { data: HourlyBucket[]; color: string }) {
-  if (data.every((d) => d.count === 0)) {
-    return (
-      <div className="flex h-12 items-end gap-0.5 opacity-40">
-        {data.map((d) => (
-          <div key={d.label} className="h-1 flex-1 rounded-sm bg-muted" title={d.label} />
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div className="h-12 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-          <Area
-            type="monotone"
-            dataKey="count"
-            stroke={color}
-            fill={color}
-            fillOpacity={0.12}
-            strokeWidth={1.5}
-            isAnimationActive={false}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
 
 function MetricTile({
   label,
@@ -94,12 +58,12 @@ export function PlatformHomeDashboard({ snapshot }: { snapshot: PlatformHomeSnap
         bodyClassName="p-0"
         title="플랫폼 운영 현황"
         action={
-          <a
+          <Link
             href="/admin/organizations"
             className="text-xs font-medium text-[var(--platform-accent)] hover:underline"
           >
             기관 관리 →
-          </a>
+          </Link>
         }
       >
         <div className="grid lg:grid-cols-[1.1fr_1fr]">
@@ -268,7 +232,7 @@ export function PlatformHomeDashboard({ snapshot }: { snapshot: PlatformHomeSnap
                   {snapshot.sessions6h.toLocaleString("ko-KR")}
                 </p>
               </div>
-              <MiniSparkline data={snapshot.sessionsHourly} color="var(--platform-accent)" />
+              <OverviewSparkline data={snapshot.sessionsHourly} color="var(--platform-accent)" />
             </div>
             <div>
               <div className="flex items-baseline justify-between gap-2">
@@ -277,7 +241,7 @@ export function PlatformHomeDashboard({ snapshot }: { snapshot: PlatformHomeSnap
                   {snapshot.diagnosticResponses6h.toLocaleString("ko-KR")}
                 </p>
               </div>
-              <MiniSparkline data={snapshot.responsesHourly} color="#666" />
+              <OverviewSparkline data={snapshot.responsesHourly} color="#666" />
             </div>
           </div>
           <Link

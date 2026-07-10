@@ -4,6 +4,7 @@
 
 import type { NextResponse } from "next/server";
 import type { PlatformRole } from "@prisma/client";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { isSuperadmin } from "@/lib/auth/superadmin";
@@ -60,7 +61,8 @@ export async function clearSessionCookie() {
   });
 }
 
-export async function getCurrentUser() {
+/** layout + page가 같은 요청에서 중복 DB 조회하지 않도록 요청 단위 캐시 */
+export const getCurrentUser = cache(async function getCurrentUser() {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   if (!token) return null;
@@ -88,7 +90,7 @@ export async function getCurrentUser() {
     }
     return null;
   }
-}
+});
 
 export async function requireUser() {
   const user = await getCurrentUser();

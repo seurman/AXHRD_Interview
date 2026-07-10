@@ -29,21 +29,23 @@ export default async function DashboardPage() {
 
   const strengthDeck = await getUserStrengthDeck(user.id);
 
-  const snapshots = await Promise.all(
-    full.competencyLogs.map(async (log) => {
-      const session = await prisma.interviewSession.findUnique({
-        where: { id: log.sessionId },
-        select: { sessionNumber: true },
-      });
-      return {
-        competency: log.competency,
-        theta: log.theta,
-        percentile: log.percentile,
-        recordedAt: log.recordedAt.toISOString(),
-        sessionNumber: session?.sessionNumber ?? 0,
-      };
-    })
-  );
+  const sessionIds = [...new Set(full.competencyLogs.map((log) => log.sessionId))];
+  const sessions =
+    sessionIds.length > 0
+      ? await prisma.interviewSession.findMany({
+          where: { id: { in: sessionIds } },
+          select: { id: true, sessionNumber: true },
+        })
+      : [];
+  const sessionNumberById = new Map(sessions.map((s) => [s.id, s.sessionNumber]));
+
+  const snapshots = full.competencyLogs.map((log) => ({
+    competency: log.competency,
+    theta: log.theta,
+    percentile: log.percentile,
+    recordedAt: log.recordedAt.toISOString(),
+    sessionNumber: sessionNumberById.get(log.sessionId) ?? 0,
+  }));
 
   const latestByCompetency: Record<
     string,

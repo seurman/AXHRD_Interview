@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { requirePageUser } from "@/lib/auth/guards";
-import { isSuperadmin } from "@/lib/auth/superadmin";
+import { requirePageUser, hasSuperadminAccess } from "@/lib/auth/guards";
 import { hasCapability, resolveUserCapabilities } from "@/lib/platform/access";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 import {
@@ -23,7 +22,7 @@ const CONTENT_LINKS = [
 export default async function AdminHomePage() {
   const user = await requirePageUser("/admin");
 
-  if (isSuperadmin(user.email)) {
+  if (hasSuperadminAccess(user)) {
     const snapshot = await loadPlatformHomeSnapshot();
     return (
       <div className={ADMIN_CONTAINER.default}>

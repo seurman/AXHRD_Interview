@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Menu } from "lucide-react";
 import { PlatformConsoleSidebar, type ConsoleNavSection } from "@/components/admin/PlatformConsoleSidebar";
+import { useRouteTransition } from "@/components/layout/RouteTransitionProvider";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
 /** Vercel식 플랫폼 셸 — 밝은 사이드바 + 콘텐츠 풀폭 */
 export function AdminConsoleFrame({ sections, userName, children }: Props) {
   const { dict } = useI18n();
+  const { pendingHref } = useRouteTransition();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -71,7 +73,10 @@ export function AdminConsoleFrame({ sections, userName, children }: Props) {
         />
       </div>
 
-      <main className="platform-content min-w-0 flex-1 pt-12 lg:pt-0">
+      <main className="platform-content relative min-w-0 flex-1 pt-12 lg:pt-0">
+        {pendingHref ? (
+          <div className="platform-route-progress" aria-hidden />
+        ) : null}
         <div className="platform-content-inner">{children}</div>
       </main>
     </div>

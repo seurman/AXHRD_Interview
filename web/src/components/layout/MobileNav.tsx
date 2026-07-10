@@ -11,8 +11,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { getMobileNavLabel } from "./MainNav";
 import { ClipDynamic } from "@/components/ui/ClipDynamic";
-import { useNavSessionContext } from "@/components/layout/NavSessionProvider";
-import { useRouteTransition } from "./RouteTransitionProvider";
+import { NavTransitionLink } from "@/components/layout/NavTransitionLink";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import type { PrepareLabelKey } from "@/lib/platform/nav-registry";
 
@@ -71,20 +70,10 @@ function MobileNavLink({
   onNavigate: () => void;
   children: React.ReactNode;
 }) {
-  const { startNavigation } = useRouteTransition();
-
   return (
-    <Link
-      href={href}
-      prefetch
-      onClick={() => {
-        startNavigation(href);
-        onNavigate();
-      }}
-      className={className}
-    >
+    <NavTransitionLink href={href} onClick={onNavigate} className={className}>
       {children}
-    </Link>
+    </NavTransitionLink>
   );
 }
 
@@ -115,7 +104,6 @@ export function MobileNav({
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { refreshNav } = useNavSessionContext();
   const { dict, locale } = useI18n();
   const c = dict.common;
 
@@ -152,10 +140,22 @@ export function MobileNav({
 
   useEffect(() => {
     if (!open) return;
-    for (const href of prefetchHrefs) {
+    const priority = [
+      dashboardHref,
+      profileHref,
+      ...prepareLinks.map((l) => l.href),
+    ].filter((h): h is string => !!h);
+    for (const href of priority.slice(0, 4)) {
       router.prefetch(href);
     }
-  }, [open, prefetchHrefs, router]);
+    const rest = prefetchHrefs.filter((h) => !priority.includes(h));
+    const timer = window.setTimeout(() => {
+      for (const href of rest) {
+        router.prefetch(href);
+      }
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [dashboardHref, open, prefetchHrefs, prepareLinks, profileHref, router]);
 
   const linkClass = (href: string, indent = false) =>
     `keep-one-line rounded-lg py-2.5 hover:bg-primary/5 ${indent ? "pl-5 pr-3" : "px-3"} ${
@@ -329,10 +329,7 @@ export function MobileNav({
     <div className="shrink-0 sm:hidden">
       <button
         type="button"
-        onClick={() => {
-          setOpen(true);
-          void refreshNav();
-        }}
+        onClick={() => setOpen(true)}
         aria-label={c.menu}
         className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/30 text-gold hover:bg-gold/10"
       >

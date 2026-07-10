@@ -1,7 +1,5 @@
 import { notFound } from "next/navigation";
-import { requirePageUser } from "@/lib/auth/guards";
-import { isSuperadmin } from "@/lib/auth/superadmin";
-import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
+import { requirePageUser, hasSuperadminAccess } from "@/lib/auth/guards";
 import { canAccessProductionContentBank, canManageDemoWorkspaces } from "@/lib/auth/roles";
 import { hasCapability } from "@/lib/platform/access";
 import { buildNavigationForUser } from "@/lib/platform/nav-registry";
@@ -17,11 +15,8 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const sessionUser = await requirePageUser("/admin");
-  if (isSuperadmin(sessionUser.email)) {
-    await syncSuperadminPlatformRole(sessionUser.id, sessionUser.email);
-  }
   const user =
-    isSuperadmin(sessionUser.email) && sessionUser.platformRole !== "SUPERADMIN"
+    hasSuperadminAccess(sessionUser) && sessionUser.platformRole !== "SUPERADMIN"
       ? { ...sessionUser, platformRole: "SUPERADMIN" as PlatformRole }
       : sessionUser;
 

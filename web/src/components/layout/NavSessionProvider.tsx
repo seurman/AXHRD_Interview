@@ -7,6 +7,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { usePathname } from "next/navigation";
 import { GUEST_NAV, type NavPayload } from "@/lib/nav/client-types";
 
 type NavSessionContextValue = {
@@ -40,8 +41,10 @@ function commitNav(data: NavPayload) {
 }
 
 export function NavSessionProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const skipNavFetch = pathname.startsWith("/admin");
   const [nav, setNav] = useState<NavPayload | null>(() => navCache);
-  const [loading, setLoading] = useState(() => navCache === null);
+  const [loading, setLoading] = useState(() => navCache === null && !skipNavFetch);
 
   const refreshNav = useCallback(async () => {
     const data = commitNav(await fetchNavPayload());
@@ -52,6 +55,11 @@ export function NavSessionProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     let cancelled = false;
+
+    if (skipNavFetch) {
+      setLoading(false);
+      return;
+    }
 
     if (navCache) {
       setNav(navCache);
@@ -81,7 +89,7 @@ export function NavSessionProvider({ children }: { children: React.ReactNode }) 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [skipNavFetch]);
 
   return (
     <NavSessionContext.Provider value={{ nav, loading, refreshNav }}>

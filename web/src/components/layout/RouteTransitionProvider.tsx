@@ -24,8 +24,10 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { dict } = useI18n();
   const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [showOverlay, setShowOverlay] = useState(false);
   const [mounted, setMounted] = useState(false);
   const prevPathRef = useRef(pathname);
+  const isAdminRoute = pathname.startsWith("/admin");
 
   useEffect(() => {
     setMounted(true);
@@ -37,6 +39,18 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
       setPendingHref(null);
     }
   }, [pathname]);
+
+  useEffect(() => {
+    if (!pendingHref || isAdminRoute) {
+      setShowOverlay(false);
+      return;
+    }
+    const t = window.setTimeout(() => setShowOverlay(true), 220);
+    return () => {
+      window.clearTimeout(t);
+      setShowOverlay(false);
+    };
+  }, [pendingHref, isAdminRoute]);
 
   useEffect(() => {
     if (!pendingHref) return;
@@ -56,8 +70,13 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
     [pathname, router]
   );
 
+  const progressBar =
+    pendingHref && mounted && !isAdminRoute ? (
+      <div className="route-progress-bar" aria-hidden />
+    ) : null;
+
   const overlay =
-    pendingHref && mounted ? (
+    showOverlay && pendingHref && mounted && !isAdminRoute ? (
       <div
         className="fixed inset-0 z-[95] flex items-center justify-center bg-background/55 backdrop-blur-[2px]"
         role="status"
@@ -79,6 +98,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   return (
     <RouteTransitionContext.Provider value={{ pendingHref, startNavigation }}>
       {children}
+      {mounted && progressBar ? createPortal(progressBar, document.body) : null}
       {mounted && overlay ? createPortal(overlay, document.body) : null}
     </RouteTransitionContext.Provider>
   );
