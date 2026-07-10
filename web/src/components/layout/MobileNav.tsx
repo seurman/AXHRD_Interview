@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { LogoutButton } from "./LogoutButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { getMobileNavLabel } from "./MainNav";
 import { ClipDynamic } from "@/components/ui/ClipDynamic";
+import { useRouteTransition } from "./RouteTransitionProvider";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import type { AdminNavSection, PrepareLabelKey } from "@/lib/platform/nav-registry";
 
@@ -57,6 +58,34 @@ function AccordionSection({
   );
 }
 
+function MobileNavLink({
+  href,
+  className,
+  onNavigate,
+  children,
+}: {
+  href: string;
+  className: string;
+  onNavigate: () => void;
+  children: React.ReactNode;
+}) {
+  const { startNavigation } = useRouteTransition();
+
+  return (
+    <Link
+      href={href}
+      prefetch
+      onClick={() => {
+        startNavigation(href);
+        onNavigate();
+      }}
+      className={className}
+    >
+      {children}
+    </Link>
+  );
+}
+
 export function MobileNav({
   dashboardHref,
   prepareLinks,
@@ -77,8 +106,26 @@ export function MobileNav({
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { dict, locale } = useI18n();
   const c = dict.common;
+
+  const closeDrawer = () => setOpen(false);
+
+  const prefetchHrefs = useMemo(() => {
+    const hrefs = new Set<string>();
+    if (dashboardHref) hrefs.add(dashboardHref);
+    if (profileHref) hrefs.add(profileHref);
+    prepareLinks.forEach((l) => hrefs.add(l.href));
+    saasLinks?.links.forEach((l) => hrefs.add(l.href));
+    saasLinks?.settingsLinks.forEach((l) => hrefs.add(l.href));
+    adminSections.forEach((s) => s.links.forEach((l) => hrefs.add(l.href)));
+    if (!loggedIn) {
+      hrefs.add("/auth/login");
+      hrefs.add("/auth/register");
+    }
+    return [...hrefs];
+  }, [adminSections, dashboardHref, loggedIn, prepareLinks, profileHref, saasLinks]);
 
   useEffect(() => {
     setMounted(true);
@@ -92,6 +139,13 @@ export function MobileNav({
       document.body.style.overflow = prevOverflow;
     };
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    for (const href of prefetchHrefs) {
+      router.prefetch(href);
+    }
+  }, [open, prefetchHrefs, router]);
 
   const linkClass = (href: string, indent = false) =>
     `keep-one-line rounded-lg py-2.5 hover:bg-primary/5 ${indent ? "pl-5 pr-3" : "px-3"} ${
@@ -122,7 +176,7 @@ export function MobileNav({
 
   const drawer = open && (
     <div className="fixed inset-0 z-[100]">
-      <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
+      <div className="absolute inset-0 bg-black/40" onClick={closeDrawer} />
       <div className="absolute right-0 top-0 flex h-full w-[min(18rem,88vw)] flex-col bg-card p-5 shadow-luxe">
         <div className="mb-4 flex min-w-0 items-center justify-between gap-2">
           {userName ? (
@@ -134,7 +188,7 @@ export function MobileNav({
           )}
           <button
             type="button"
-            onClick={() => setOpen(false)}
+            onClick={closeDrawer}
             aria-label="Close menu"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-primary/5"
           >
@@ -149,13 +203,13 @@ export function MobileNav({
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto text-sm">
           {dashboardHref && (
-            <Link
+            <MobileNavLink
               href={dashboardHref}
-              onClick={() => setOpen(false)}
+              onNavigate={closeDrawer}
               className={linkClass(dashboardHref)}
             >
               {getMobileNavLabel("dashboard", dict)}
-            </Link>
+            </MobileNavLink>
           )}
 
           {prepareLinks.length > 0 && (
@@ -165,39 +219,39 @@ export function MobileNav({
               active={prepareActive}
             >
               {prepareLinks.map((l) => (
-                <Link
+                <MobileNavLink
                   key={l.href}
                   href={l.href}
-                  onClick={() => setOpen(false)}
+                  onNavigate={closeDrawer}
                   className={linkClass(l.href, true)}
                 >
                   {getMobileNavLabel(prepareLabelKey[l.labelKey], dict)}
-                </Link>
+                </MobileNavLink>
               ))}
             </AccordionSection>
           )}
 
           {profileHref && (
-            <Link
+            <MobileNavLink
               href={profileHref}
-              onClick={() => setOpen(false)}
+              onNavigate={closeDrawer}
               className={linkClass(profileHref)}
             >
               {getMobileNavLabel("profile", dict)}
-            </Link>
+            </MobileNavLink>
           )}
 
           {saasLinks && (
             <AccordionSection title={c.saas.title} defaultOpen={saasActive} active={saasActive}>
               {saasLinks.links.map((l) => (
-                <Link
+                <MobileNavLink
                   key={l.href}
                   href={l.href}
-                  onClick={() => setOpen(false)}
+                  onNavigate={closeDrawer}
                   className={linkClass(l.href, true)}
                 >
                   {c.saas[l.labelKey]}
-                </Link>
+                </MobileNavLink>
               ))}
               {saasLinks.settingsLinks.length > 0 && (
                 <>
@@ -205,14 +259,14 @@ export function MobileNav({
                     {c.saas.settings}
                   </p>
                   {saasLinks.settingsLinks.map((l) => (
-                    <Link
+                    <MobileNavLink
                       key={l.href}
                       href={l.href}
-                      onClick={() => setOpen(false)}
+                      onNavigate={closeDrawer}
                       className={linkClass(l.href, true)}
                     >
                       {c.saas[l.labelKey]}
-                    </Link>
+                    </MobileNavLink>
                   ))}
                 </>
               )}
@@ -227,14 +281,14 @@ export function MobileNav({
                     {c.admin.sections[section.sectionKey]}
                   </p>
                   {section.links.map((l) => (
-                    <Link
+                    <MobileNavLink
                       key={l.href}
                       href={l.href}
-                      onClick={() => setOpen(false)}
+                      onNavigate={closeDrawer}
                       className={linkClass(l.href, true)}
                     >
                       {c.admin[l.labelKey]}
-                    </Link>
+                    </MobileNavLink>
                   ))}
                 </div>
               ))}
@@ -244,26 +298,23 @@ export function MobileNav({
 
         <div className="shrink-0 border-t border-card-border pt-4">
           {loggedIn ? (
-            <div className="flex items-center justify-between px-3">
-              <span className="keep-one-line text-sm text-muted">{c.auth.logout}</span>
-              <LogoutButton label={c.auth.logout} />
-            </div>
+            <LogoutButton variant="drawer" label={c.auth.logout} onStart={closeDrawer} />
           ) : (
             <div className="flex flex-col gap-2">
-              <Link
+              <MobileNavLink
                 href="/auth/login"
-                onClick={() => setOpen(false)}
-                className="btn-secondary w-full"
+                onNavigate={closeDrawer}
+                className="btn-secondary w-full text-center"
               >
                 {c.auth.login}
-              </Link>
-              <Link
+              </MobileNavLink>
+              <MobileNavLink
                 href="/auth/register"
-                onClick={() => setOpen(false)}
-                className="btn-primary w-full"
+                onNavigate={closeDrawer}
+                className="btn-primary w-full text-center"
               >
                 {c.auth.register}
-              </Link>
+              </MobileNavLink>
             </div>
           )}
         </div>

@@ -70,6 +70,7 @@ export const dictionary: Dictionary = {
     },
     explore: "자세히 보기",
     menu: "메뉴",
+    navigating: "이동 중",
     userSuffix: "님",
   },
   home: {

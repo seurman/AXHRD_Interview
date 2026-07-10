@@ -71,6 +71,7 @@ export const dictionary: Dictionary = {
     },
     explore: "Explore",
     menu: "Menu",
+    navigating: "Loading",
     userSuffix: "",
   },
   home: {

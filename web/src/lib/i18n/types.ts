@@ -74,6 +74,7 @@ export type Dictionary = {
     };
     explore: string;
     menu: string;
+    navigating: string;
     userSuffix: string;
   };
   home: {

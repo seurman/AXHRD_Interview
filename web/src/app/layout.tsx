@@ -7,6 +7,7 @@ import "./globals.css";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { AppShell } from "@/components/layout/AppShell";
 import { NavSessionProvider } from "@/components/layout/NavSessionProvider";
+import { RouteTransitionProvider } from "@/components/layout/RouteTransitionProvider";
 import { I18nProvider } from "@/lib/i18n/I18nProvider";
 import { PwaRegister } from "@/components/PwaRegister";
 
@@ -48,13 +49,15 @@ export default async function RootLayout({
       </head>
       <body className={`${fontVariables} antialiased`}>
         <I18nProvider locale={locale}>
-          <NavSessionProvider>
-            <PwaRegister />
-            <AppHeader />
-            <main className="min-w-0">
-              <AppShell>{children}</AppShell>
-            </main>
-          </NavSessionProvider>
+          <RouteTransitionProvider>
+            <NavSessionProvider>
+              <PwaRegister />
+              <AppHeader />
+              <main className="min-w-0">
+                <AppShell>{children}</AppShell>
+              </main>
+            </NavSessionProvider>
+          </RouteTransitionProvider>
         </I18nProvider>
       </body>
     </html>
