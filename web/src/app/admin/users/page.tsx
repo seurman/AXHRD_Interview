@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { UserRoleEditor } from "@/components/admin/UserRoleEditor";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminSection } from "@/components/admin/AdminSection";
 import { Badge } from "@/components/admin/Badge";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
@@ -22,7 +24,7 @@ export default async function AdminUsersPage({
   const query = q?.trim();
   const flagReview = flag === "review";
 
-  const [users, organizations] = await Promise.all([
+  const [users, organizations, reviewFlagCount] = await Promise.all([
     prisma.user.findMany({
       where: {
         ...(query
@@ -44,6 +46,9 @@ export default async function AdminUsersPage({
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
+    flagReview
+      ? Promise.resolve(0)
+      : prisma.user.count({ where: { signupFlag: "REVIEW" } }),
   ]);
 
   return (
@@ -58,30 +63,50 @@ export default async function AdminUsersPage({
         ]}
       />
 
-      <form className="flex flex-wrap gap-2">
-        <input
-          type="text"
-          name="q"
-          defaultValue={query}
-          placeholder="이름 또는 이메일 검색"
-          className="input-luxe min-w-[12rem] flex-1"
-        />
-        <label className="flex items-center gap-2 text-sm text-muted">
+      <AdminSection title="검색·필터" description="이름·이메일 부분 일치. REVIEW 플래그는 가입 이상 패턴 검토용입니다.">
+        <form className="flex flex-wrap gap-2">
           <input
-            type="checkbox"
-            name="flag"
-            value="review"
-            defaultChecked={flagReview}
-            className="rounded border-card-border"
+            type="text"
+            name="q"
+            defaultValue={query}
+            placeholder="이름 또는 이메일 검색"
+            className="input-luxe min-w-[12rem] flex-1"
           />
-          REVIEW만
-        </label>
-        <button type="submit" className="btn-primary px-4">
-          검색
-        </button>
-      </form>
+          <label className="flex items-center gap-2 text-sm text-muted">
+            <input
+              type="checkbox"
+              name="flag"
+              value="review"
+              defaultChecked={flagReview}
+              className="rounded border-card-border"
+            />
+            REVIEW만
+          </label>
+          <button type="submit" className="btn-primary px-4">
+            검색
+          </button>
+          {(query || flagReview) && (
+            <Link href="/admin/users" className="btn-secondary px-4 py-2 text-sm">
+              초기화
+            </Link>
+          )}
+        </form>
+      </AdminSection>
 
-      <div className="card-luxe p-6">
+      <AdminSection
+        id={flagReview ? "review" : undefined}
+        title={flagReview ? "REVIEW 플래그 사용자" : "사용자 목록"}
+        description={`최대 200명 · ${users.length}건 표시`}
+        actions={
+          flagReview ? (
+            <Badge tone="warning">{users.length}명</Badge>
+          ) : reviewFlagCount > 0 ? (
+            <Link href="/admin/users?flag=review" className="text-xs text-accent hover:underline">
+              REVIEW {reviewFlagCount}명 →
+            </Link>
+          ) : undefined
+        }
+      >
         {users.length === 0 ? (
           <p className="text-sm text-muted">일치하는 사용자가 없습니다.</p>
         ) : (
@@ -132,7 +157,7 @@ export default async function AdminUsersPage({
             </table>
           </div>
         )}
-      </div>
+      </AdminSection>
     </div>
   );
 }

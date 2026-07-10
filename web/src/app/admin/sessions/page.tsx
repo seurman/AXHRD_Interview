@@ -3,6 +3,7 @@ import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { competencyLabel } from "@/lib/labels";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminSection } from "@/components/admin/AdminSection";
 import { Badge } from "@/components/admin/Badge";
 import { StatusDot, type DotTone } from "@/components/admin/StatusDot";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
@@ -87,30 +88,40 @@ export default async function AdminSessionsPage({
         ]}
       />
 
-      <form className="flex flex-wrap gap-2">
-        <input
-          type="text"
-          name="q"
-          defaultValue={query}
-          placeholder="세션 ID, 이름, 이메일, 역량 코드"
-          className="input-luxe min-w-[14rem] flex-1"
-        />
-        <select name="status" defaultValue={statusFilter ?? ""} className="input-luxe">
-          <option value="">전체 상태</option>
-          <option value="SETUP">준비</option>
-          <option value="IN_PROGRESS">진행 중</option>
-          <option value="COMPLETED">완료</option>
-        </select>
-        <button type="submit" className="btn-primary px-4">
-          검색
-        </button>
-      </form>
+      <AdminSection title="검색·필터" description="세션 ID, 사용자, 역량 코드로 필터합니다.">
+        <form className="flex flex-wrap gap-2">
+          <input
+            type="text"
+            name="q"
+            defaultValue={query}
+            placeholder="세션 ID, 이름, 이메일, 역량 코드"
+            className="input-luxe min-w-[14rem] flex-1"
+          />
+          <select name="status" defaultValue={statusFilter ?? ""} className="input-luxe">
+            <option value="">전체 상태</option>
+            <option value="SETUP">준비</option>
+            <option value="IN_PROGRESS">진행 중</option>
+            <option value="COMPLETED">완료</option>
+          </select>
+          <button type="submit" className="btn-primary px-4">
+            검색
+          </button>
+          {(query || statusFilter) && (
+            <Link href="/admin/sessions" className="btn-secondary px-4 py-2 text-sm">
+              초기화
+            </Link>
+          )}
+        </form>
+      </AdminSection>
 
-      <div className="card-luxe overflow-hidden">
+      <AdminSection
+        title="세션 목록"
+        description={`최대 150건 · ${sessions.length}건 표시`}
+      >
         {sessions.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-muted">조건에 맞는 세션이 없습니다.</p>
+          <p className="text-sm text-muted">조건에 맞는 세션이 없습니다.</p>
         ) : (
-          <ul>
+          <ul className="-mx-6 -mb-6 border-t border-card-border">
             {sessions.map((s) => {
               const signals: string[] = [];
               if (s.pasteDetected) signals.push("붙여넣기");
@@ -120,7 +131,7 @@ export default async function AdminSessionsPage({
                 <li key={s.id} className="border-b border-card-border last:border-0">
                   <Link
                     href={`/admin/sessions/${s.id}`}
-                    className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-3 text-sm transition hover:bg-background/60"
+                    className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-6 py-3 text-sm transition hover:bg-background/60"
                   >
                     <StatusDot tone={STATUS_TONE[s.status] ?? "neutral"} className="w-20 shrink-0">
                       {STATUS_LABEL[s.status] ?? s.status}
@@ -164,7 +175,7 @@ export default async function AdminSessionsPage({
             })}
           </ul>
         )}
-      </div>
+      </AdminSection>
     </div>
   );
 }

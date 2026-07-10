@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AdminDiagnosticWizard } from "@/components/admin/AdminDiagnosticWizard";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminSection } from "@/components/admin/AdminSection";
 import { StatusDot, type DotTone } from "@/components/admin/StatusDot";
 import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 
@@ -102,24 +103,22 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
         }
       />
 
-      <section className="card-luxe p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="font-semibold text-foreground">① 문항뱅크 (ARC Index)</h2>
-            <p className="mt-1 text-sm text-muted">정본: docs/arc-index/source/*.md</p>
-          </div>
-          {!seeded && (
+      <AdminSection
+        title="문항뱅크 (ARC Index)"
+        description="정본: docs/arc-index/source/*.md"
+        actions={
+          !seeded ? (
             <button
               type="button"
               disabled={seeding}
               onClick={() => void runSeed()}
-              className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-50"
+              className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
             >
               {seeding ? "설치 중…" : "문항뱅크 설치"}
             </button>
-          )}
-        </div>
-
+          ) : undefined
+        }
+      >
         {dbError && (
           <div className="mt-4 rounded-xl border border-rose-300/60 bg-rose-50/80 p-4 text-sm text-rose-900 dark:bg-rose-950/30 dark:text-rose-100">
             <p className="font-medium">DB 연결/스키마 오류</p>
@@ -168,14 +167,12 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
             ))}
           </ul>
         )}
-      </section>
+      </AdminSection>
 
-      <section className="card-luxe p-6">
-        <h2 className="mb-1 font-semibold text-foreground">② 진단 캠페인</h2>
-        <p className="mb-4 text-sm text-muted">
-          기관 선택·신규 등록 → 진단도구·섹션 → 일정 순으로 캠페인을 생성합니다. 팀별 링크는 생성 후
-          상세 화면에서 선택적으로 추가합니다.
-        </p>
+      <AdminSection
+        title="진단 캠페인"
+        description="기관 선택 → 섹션 → 일정. 팀별 링크는 생성 후 상세 화면에서 추가합니다."
+      >
         {waves.length === 0 ? (
           <p className="rounded-xl border border-dashed border-card-border p-6 text-sm text-muted">
             아직 캠페인이 없습니다. 문항뱅크 설치 후 「+ 새 진단 시작」으로 첫 캠페인을 만드세요.
@@ -211,7 +208,7 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
             ))}
           </ul>
         )}
-      </section>
+      </AdminSection>
 
       {wizardOpen && (
         <AdminDiagnosticWizard

@@ -2,6 +2,16 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — Platform CMS 운영성 개선 (2026-07-10)
+
+- **운영 할 일 큐**: `/admin` 홈 상단 — 승인 대기 기관·가입 리뷰 플래그를 바로 처리 링크로 표시.
+- **기관 목록**: 카드 그리드 → 스캔 가능한 밀집 목록 + `#pending` / `#active` 앵커.
+- **기관 허브**: 다크 히어로 제거 → KPI·가입코드 복사·SKU 토글·워크스페이스 타일을 `AdminSection`으로 구조화.
+- **공용 컴포넌트**: `AdminSection`, `AdminHubTile`, `AdminCopyField`, `AdminTodoQueue`.
+- **콘텐츠 ADMIN 홈**: 수퍼어드민 외 `platform.content` 권한자용 축소 대시보드.
+- **사용자·세션·감사**: `AdminSection` + 검색 초기화·REVIEW 바로가기·밀집 목록 정렬 통일.
+- 검증: `npx tsc --noEmit` · `npm run build`
+
 ## 최근 작업 — Platform 통합 CMS 셸 (2026-07-10)
 
 - **`/admin` Platform 홈**: 승인 대기·운영 기관·진행 진단·오늘 세션·리뷰 플래그 KPI(실데이터) + 최근 감사 + 모듈 바로가기.

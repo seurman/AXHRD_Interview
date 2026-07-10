@@ -2,6 +2,7 @@ import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { AdminAuditPanel } from "@/components/admin/AdminAuditPanel";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminSection } from "@/components/admin/AdminSection";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 
@@ -28,7 +29,10 @@ export default async function AdminAuditPage() {
         ]}
       />
 
-      <div className="card-luxe p-6">
+      <AdminSection
+        title="최근 100건"
+        description="행별 롤백은 beforeState 기준 복원입니다. SUPERADMIN만 실행 가능합니다."
+      >
         <AdminAuditPanel
           initialLogs={logs.map((l) => ({
             id: l.id,
@@ -42,7 +46,7 @@ export default async function AdminAuditPage() {
             createdAt: l.createdAt.toISOString(),
           }))}
         />
-      </div>
+      </AdminSection>
     </div>
   );
 }

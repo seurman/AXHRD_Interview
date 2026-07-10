@@ -9,20 +9,13 @@ import { OrgDiagnosticToggle } from "@/components/admin/OrgDiagnosticToggle";
 import { OrgKindBadge } from "@/components/admin/OrgKindBadge";
 import { OrgReviewActions } from "@/components/admin/OrgReviewActions";
 import { OrgStatusBadge } from "@/components/admin/OrgStatusBadge";
+import { Badge } from "@/components/admin/Badge";
+import { AdminSection } from "@/components/admin/AdminSection";
+import { StatusDot } from "@/components/admin/StatusDot";
 import {
-  formatOrgPeriod,
   getOrgContractStatus,
   resolveOrgSeatCap,
 } from "@/lib/org/contract";
-import {
-  Building2,
-  CalendarRange,
-  ChevronRight,
-  ClipboardList,
-  Sparkles,
-  Activity,
-  Users,
-} from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -61,20 +54,19 @@ export default async function AdminOrganizationsPage() {
       <OrgCreatePanel />
 
       {pending.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="flex items-center gap-2 font-semibold text-foreground">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/15 text-xs text-amber-700">
-              {pending.length}
-            </span>
-            승인 대기
-          </h2>
+        <AdminSection
+          id="pending"
+          title="승인 대기"
+          description="신규 기관 등록 요청 — 승인 또는 반려 후 허브에서 계약을 설정합니다."
+          actions={<Badge tone="warning">{pending.length}건</Badge>}
+        >
           <div className="space-y-3">
             {pending.map((org) => {
               const admin = org.members[0];
               return (
                 <div
                   key={org.id}
-                  className="card-luxe flex flex-wrap items-center justify-between gap-4 border-amber-500/20 p-5"
+                  className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-amber-500/25 bg-amber-50/30 p-4 dark:bg-amber-950/20"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -97,95 +89,70 @@ export default async function AdminOrganizationsPage() {
               );
             })}
           </div>
-        </section>
+        </AdminSection>
       )}
 
-      <section className="space-y-4">
-        <div>
-          <h2 className="font-semibold text-foreground">운영 중인 기관 ({active.length})</h2>
-          <p className="mt-1 text-sm text-muted">
-            각 기관 카드 <strong className="font-medium text-foreground">하단</strong>의 「ARC
-            조직진단 SKU」 토글로 기관 ADMIN 메뉴에 조직진단을 노출합니다.
-          </p>
-        </div>
+      <AdminSection
+        id="active"
+        title={`운영 중인 기관 (${active.length})`}
+        description="행을 클릭해 허브로 이동합니다. 조직진단 SKU는 목록 하단 토글 또는 허브에서 설정합니다."
+      >
         {active.length === 0 ? (
           <p className="text-sm text-muted">승인된 기관이 없습니다.</p>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <ul className="-mx-6 -mb-4 border-t border-card-border">
             {active.map((org) => {
               const seatCap = resolveOrgSeatCap(org, org.subscriptions[0]);
               const contractStatus = getOrgContractStatus(org);
               return (
-              <div
-                key={org.id}
-                className="group card-luxe overflow-hidden transition hover:border-gold/30 hover:shadow-md"
-              >
-                <Link href={`/admin/organizations/${org.id}`} className="block p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0f172a] text-gold">
-                    <Building2 className="h-5 w-5" />
+                <li key={org.id} className="border-b border-card-border last:border-0">
+                  <Link
+                    href={`/admin/organizations/${org.id}`}
+                    className="block px-6 py-3 transition hover:bg-background/60"
+                  >
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                      <span className="min-w-[10rem] flex-1 font-medium text-foreground">
+                        {org.name}
+                      </span>
+                      <OrgKindBadge kind={org.kind} />
+                      {org.diagnosticEnabled && (
+                        <Badge tone="accent" className="text-[10px]">
+                          진단
+                        </Badge>
+                      )}
+                      {org.saasPersonalizationEnabled && (
+                        <Badge tone="gold" className="text-[10px]">
+                          맞춤
+                        </Badge>
+                      )}
+                      <span className="text-xs text-muted">
+                        {org._count.members}명{seatCap != null ? ` / ${seatCap}` : ""}
+                      </span>
+                      <span className="text-xs text-muted">킷 {org._count.interviewKits}</span>
+                      <span className="font-mono text-xs text-muted">{org.joinCode}</span>
+                      {contractStatus === "expired" && (
+                        <StatusDot tone="danger">만료</StatusDot>
+                      )}
+                      {seatCap != null && org._count.members >= seatCap && (
+                        <StatusDot tone="warning">좌석 초과</StatusDot>
+                      )}
+                      <span className="ml-auto text-xs text-accent">허브 →</span>
+                    </div>
+                  </Link>
+                  <div className="border-t border-card-border/60 px-6 py-2">
+                    <OrgDiagnosticToggle
+                      organizationId={org.id}
+                      organizationName={org.name}
+                      enabled={org.diagnosticEnabled}
+                      compact
+                    />
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted transition group-hover:translate-x-0.5 group-hover:text-gold" />
-                </div>
-                <h3 className="mt-4 font-semibold text-foreground group-hover:text-accent">
-                  {org.name}
-                </h3>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <OrgStatusBadge status={org.status} />
-                  <OrgKindBadge kind={org.kind} />
-                  {org.subscriptions[0] && (
-                    <span className="rounded-full bg-primary/5 px-2 py-0.5 text-[10px] font-semibold text-muted">
-                      {org.subscriptions[0].planTier.replace("ORG_", "")}
-                    </span>
-                  )}
-                  {org.saasPersonalizationEnabled && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-2 py-0.5 text-[10px] font-semibold text-gold">
-                      <Sparkles className="h-3 w-3" />
-                      맞춤 설정 ON
-                    </span>
-                  )}
-                  {org.diagnosticEnabled && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">
-                      <Activity className="h-3 w-3" />
-                      조직진단 ON
-                    </span>
-                  )}
-                </div>
-                <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted">
-                  <span className="inline-flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5" />
-                    {org._count.members}명
-                    {seatCap != null ? ` / ${seatCap}` : ""}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <CalendarRange className="h-3.5 w-3.5" />
-                    {formatOrgPeriod(org.validFrom, org.validUntil)}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <ClipboardList className="h-3.5 w-3.5" />
-                    킷 {org._count.interviewKits}
-                  </span>
-                  <span className="font-mono">{org.joinCode}</span>
-                </div>
-                {contractStatus === "expired" && (
-                  <p className="mt-2 text-xs font-medium text-danger">이용 기간 만료</p>
-                )}
-                {seatCap != null && org._count.members >= seatCap && (
-                  <p className="mt-2 text-xs font-medium text-amber-700">좌석 상한 도달</p>
-                )}
-                </Link>
-                <OrgDiagnosticToggle
-                  organizationId={org.id}
-                  organizationName={org.name}
-                  enabled={org.diagnosticEnabled}
-                  compact
-                />
-              </div>
-            );
+                </li>
+              );
             })}
-          </div>
+          </ul>
         )}
-      </section>
+      </AdminSection>
 
       {inactive.length > 0 && (
         <section className="space-y-3">

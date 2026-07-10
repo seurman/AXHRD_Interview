@@ -27,7 +27,7 @@ export type AdminNavItem = {
   section: AdminSectionKey;
 };
 
-const PLATFORM_NAV_ORDER: AdminNavItem[] = [
+export const PLATFORM_NAV_ORDER: AdminNavItem[] = [
   { href: "/admin/content", labelKey: "content", capability: "platform.content", section: "content" },
   {
     href: "/admin/repository",
