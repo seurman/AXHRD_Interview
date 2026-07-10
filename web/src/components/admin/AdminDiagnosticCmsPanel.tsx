@@ -56,6 +56,7 @@ const WAVE_STATUS_TONE: Record<string, DotTone> = {
 
 export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: Props) {
   const router = useRouter();
+  const [tab, setTab] = useState<"instrument" | "campaign" | "report">("campaign");
   const [seeding, setSeeding] = useState(false);
   const [seedError, setSeedError] = useState<string | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -83,15 +84,15 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
     <div className="space-y-8">
       <AdminPageHeader
         eyebrow={PLATFORM_EYEBROW.diagnostic}
-        title="조직진단 CMS"
+        title="Diagnostic Studio"
         subtitle={
           <>
-            수퍼어드민 전용 캠페인 관리 화면입니다. 기관 셀프서브{" "}
-            <code className="text-xs">/org/diagnosis</code>와 별개로 운영합니다.
+            Instrument · Campaign · Report를 한 콘솔에서 관리합니다. 기관 셀프서브{" "}
+            <code className="text-xs">/org/diagnosis</code>와 동일한 캠페인 엔진을 공유합니다.
           </>
         }
         actions={
-          seeded ? (
+          seeded && tab === "campaign" ? (
             <button
               type="button"
               className="btn-primary px-4 py-2 text-sm"
@@ -103,6 +104,28 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
         }
       />
 
+      <div className="flex flex-wrap gap-2 border-b border-card-border pb-2">
+        {(
+          [
+            ["instrument", "Instrument"],
+            ["campaign", "Campaign"],
+            ["report", "Report"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setTab(id)}
+            className={`rounded-lg px-4 py-2 text-sm font-medium ${
+              tab === id ? "bg-accent text-white" : "text-muted hover:bg-card-border/40"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "instrument" && (
       <AdminSection
         title="문항뱅크 (ARC Index)"
         description="정본: docs/arc-index/source/*.md"
@@ -168,7 +191,9 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
           </ul>
         )}
       </AdminSection>
+      )}
 
+      {tab === "campaign" && (
       <AdminSection
         title="진단 캠페인"
         description="기관 선택 → 섹션 → 일정. 팀별 링크는 생성 후 상세 화면에서 추가합니다."
@@ -209,6 +234,35 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
           </ul>
         )}
       </AdminSection>
+      )}
+
+      {tab === "report" && (
+        <AdminSection
+          title="보고서"
+          description="캠페인별 3탭 보고서(기본·상세·팀별). 통계 추정(β/IPA/HLM)은 Phase 4 이후 연결 예정입니다."
+        >
+          {waves.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-card-border p-6 text-sm text-muted">
+              캠페인을 만든 뒤 각 캠페인 상세에서 보고서를 열 수 있습니다.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {waves.map((w) => (
+                <li key={w.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-card-border px-4 py-3 text-sm">
+                  <span>
+                    <span className="font-medium text-foreground">{w.organizationName}</span>
+                    <span className="text-muted"> · {w.label ?? `Wave ${w.waveNumber}`}</span>
+                    <span className="ml-2 text-xs text-muted">{w.sectionBadge}</span>
+                  </span>
+                  <Link href={`/admin/diagnostic/waves/${w.id}/report`} className="text-xs text-accent hover:underline">
+                    보고서 열기 →
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </AdminSection>
+      )}
 
       {wizardOpen && (
         <AdminDiagnosticWizard

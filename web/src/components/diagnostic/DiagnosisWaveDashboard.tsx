@@ -47,8 +47,16 @@ type WaveMeta = {
   id: string;
   label: string | null;
   waveNumber: number;
+  sectionBadge?: string;
+  orgWideLink?: string;
+  enabledSectionCodes: string[] | null;
   teams: Array<{ id: string; name: string }>;
 };
+
+function isSectionEnabled(code: string, enabled: string[] | null): boolean {
+  if (!enabled?.length) return true;
+  return enabled.includes(code);
+}
 
 export function DiagnosisWaveDashboard({ waveId }: Props) {
   const [tab, setTab] = useState<"overview" | "teams">("overview");
@@ -92,14 +100,24 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
   if (loading) return <p className="text-sm text-muted">집계 중…</p>;
   if (!wave) return <p className="text-sm text-muted">웨이브를 찾을 수 없습니다.</p>;
 
+  const enabled = wave.enabledSectionCodes;
+
   const radarData =
     activeScores?.scores && !activeScores.hidden
       ? [
-          { axis: "OHI", value: activeScores.scores.ohi.overall ?? 0 },
-          { axis: "ORI", value: activeScores.scores.ori.ORI ?? 0 },
-          { axis: "OVI", value: activeScores.scores.ovi.OVI ?? 0 },
-          { axis: "OAI", value: activeScores.scores.oai.OAI ?? 0 },
-        ]
+          isSectionEnabled("OHI", enabled) && activeScores.scores.ohi.overall != null
+            ? { axis: "OHI", value: activeScores.scores.ohi.overall }
+            : null,
+          isSectionEnabled("ORI", enabled) && activeScores.scores.ori.ORI != null
+            ? { axis: "ORI", value: activeScores.scores.ori.ORI }
+            : null,
+          isSectionEnabled("OVI", enabled) && activeScores.scores.ovi.OVI != null
+            ? { axis: "OVI", value: activeScores.scores.ovi.OVI }
+            : null,
+          isSectionEnabled("OAI", enabled) && activeScores.scores.oai.OAI != null
+            ? { axis: "OAI", value: activeScores.scores.oai.OAI }
+            : null,
+        ].filter((d): d is { axis: string; value: number } => d != null)
       : [];
 
   const driverEntries = activeScores?.scores?.ohi.drivers
@@ -112,6 +130,25 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-xs text-muted">
+            Wave {wave.waveNumber}
+            {wave.label ? ` · ${wave.label}` : ""}
+            {wave.sectionBadge ? ` · ${wave.sectionBadge}` : ""}
+          </p>
+        </div>
+        {wave.orgWideLink && (
+          <button
+            type="button"
+            className="text-xs text-accent hover:underline"
+            onClick={() => void navigator.clipboard.writeText(wave.orgWideLink!)}
+          >
+            조직 전체 링크 복사
+          </button>
+        )}
+      </div>
+
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
@@ -153,10 +190,18 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
           ) : (
             <>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <MetricCard label="OHI" value={activeScores?.scores?.ohi.overall} band={activeScores?.scores?.ohi.band} />
-                <MetricCard label="ORI" value={activeScores?.scores?.ori.ORI} band={activeScores?.scores?.ori.band} />
-                <MetricCard label="OVI" value={activeScores?.scores?.ovi.OVI} band={activeScores?.scores?.ovi.band} />
-                <MetricCard label="OAI" value={activeScores?.scores?.oai.OAI} band={activeScores?.scores?.oai.band} />
+                {isSectionEnabled("OHI", enabled) && (
+                  <MetricCard label="OHI" value={activeScores?.scores?.ohi.overall} band={activeScores?.scores?.ohi.band} />
+                )}
+                {isSectionEnabled("ORI", enabled) && (
+                  <MetricCard label="ORI" value={activeScores?.scores?.ori.ORI} band={activeScores?.scores?.ori.band} />
+                )}
+                {isSectionEnabled("OVI", enabled) && (
+                  <MetricCard label="OVI" value={activeScores?.scores?.ovi.OVI} band={activeScores?.scores?.ovi.band} />
+                )}
+                {isSectionEnabled("OAI", enabled) && (
+                  <MetricCard label="OAI" value={activeScores?.scores?.oai.OAI} band={activeScores?.scores?.oai.band} />
+                )}
               </div>
 
               {radarData.length > 0 && (
@@ -193,38 +238,46 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
               )}
 
               <div className="grid gap-4 md:grid-cols-2">
-                <InsightCard
-                  title="Risk Index"
-                  body={
-                    activeScores?.scores?.ohi.riskIndex != null
-                      ? `${Math.round(activeScores.scores.ohi.riskIndex * 100)}% — 번아웃·이탈 위험 신호`
-                      : "—"
-                  }
-                />
-                <InsightCard
-                  title="Opportunity Score"
-                  body={
-                    activeScores?.scores?.ori.opportunity
-                      ? `${activeScores.scores.ori.opportunity.band}: ${activeScores.scores.ori.opportunity.prescription}`
-                      : "—"
-                  }
-                />
-                <InsightCard
-                  title="AX 성숙도"
-                  body={
-                    activeScores?.scores?.ori.axMaturity
-                      ? `${activeScores.scores.ori.axMaturity.stage}단계 — ${activeScores.scores.ori.axMaturity.label}`
-                      : "—"
-                  }
-                />
-                <InsightCard
-                  title="OAI 패턴"
-                  body={
-                    activeScores?.scores?.oaiPattern
-                      ? `${activeScores.scores.oaiPattern.pattern}: ${activeScores.scores.oaiPattern.message}`
-                      : "—"
-                  }
-                />
+                {isSectionEnabled("OHI", enabled) && (
+                  <InsightCard
+                    title="Risk Index"
+                    body={
+                      activeScores?.scores?.ohi.riskIndex != null
+                        ? `${Math.round(activeScores.scores.ohi.riskIndex * 100)}% — 번아웃·이탈 위험 신호`
+                        : "—"
+                    }
+                  />
+                )}
+                {isSectionEnabled("ORI", enabled) && (
+                  <>
+                    <InsightCard
+                      title="Opportunity Score"
+                      body={
+                        activeScores?.scores?.ori.opportunity
+                          ? `${activeScores.scores.ori.opportunity.band}: ${activeScores.scores.ori.opportunity.prescription}`
+                          : "—"
+                      }
+                    />
+                    <InsightCard
+                      title="AX 성숙도"
+                      body={
+                        activeScores?.scores?.ori.axMaturity
+                          ? `${activeScores.scores.ori.axMaturity.stage}단계 — ${activeScores.scores.ori.axMaturity.label}`
+                          : "—"
+                      }
+                    />
+                  </>
+                )}
+                {isSectionEnabled("OAI", enabled) && (
+                  <InsightCard
+                    title="OAI 패턴"
+                    body={
+                      activeScores?.scores?.oaiPattern
+                        ? `${activeScores.scores.oaiPattern.pattern}: ${activeScores.scores.oaiPattern.message}`
+                        : "—"
+                    }
+                  />
+                )}
               </div>
             </>
           )}

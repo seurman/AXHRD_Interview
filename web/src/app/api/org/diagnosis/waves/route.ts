@@ -5,11 +5,21 @@ import {
   DIAGNOSTIC_ACCESS_ERRORS,
   resolveDiagnosticAccess,
 } from "@/lib/diagnostic/org-access";
-import { uniqueSlug, waveSlug } from "@/lib/diagnostic/slug";
+import {
+  campaignErrorResponse,
+  createDiagnosticWave,
+  normalizeEnabledSectionCodes,
+  parseWaveDate,
+  waveListDto,
+  CampaignError,
+} from "@/lib/diagnostic/campaigns";
 
 function accessError(reason: string) {
   return NextResponse.json(
-    { error: DIAGNOSTIC_ACCESS_ERRORS[reason as keyof typeof DIAGNOSTIC_ACCESS_ERRORS] ?? "권한이 없습니다.", code: reason },
+    {
+      error: DIAGNOSTIC_ACCESS_ERRORS[reason as keyof typeof DIAGNOSTIC_ACCESS_ERRORS] ?? "권한이 없습니다.",
+      code: reason,
+    },
     { status: 403 },
   );
 }
@@ -26,41 +36,6 @@ async function resolveAccess(req: Request) {
   return { user, access };
 }
 
-function waveDto(
-  wave: {
-    id: string;
-    slug: string;
-    waveNumber: number;
-    label: string | null;
-    status: string;
-    opensAt: Date | null;
-    closesAt: Date | null;
-    createdAt: Date;
-    teams: Array<{ id: string; name: string; department: string | null; slug: string }>;
-    _count?: { responses: number };
-  },
-  baseUrl: string,
-) {
-  return {
-    id: wave.id,
-    slug: wave.slug,
-    waveNumber: wave.waveNumber,
-    label: wave.label,
-    status: wave.status,
-    opensAt: wave.opensAt?.toISOString() ?? null,
-    closesAt: wave.closesAt?.toISOString() ?? null,
-    createdAt: wave.createdAt.toISOString(),
-    responseCount: wave._count?.responses ?? 0,
-    teams: wave.teams.map((t) => ({
-      id: t.id,
-      name: t.name,
-      department: t.department,
-      slug: t.slug,
-      link: `${baseUrl}/diagnosis/w/${wave.slug}/t/${t.slug}`,
-    })),
-  };
-}
-
 export async function GET(req: Request) {
   const resolved = await resolveAccess(req);
   if ("error" in resolved && resolved.error) return resolved.error;
@@ -70,8 +45,15 @@ export async function GET(req: Request) {
   const waves = await prisma.diagnosticWave.findMany({
     where: { organizationId: access.organizationId },
     include: {
+      organization: { select: { id: true, name: true } },
+      instrument: { select: { nameKo: true } },
       teams: { orderBy: { name: "asc" } },
-      _count: { select: { responses: { where: { submittedAt: { not: null } } } } },
+      _count: {
+        select: {
+          teams: true,
+          responses: { where: { submittedAt: { not: null } } },
+        },
+      },
     },
     orderBy: { waveNumber: "desc" },
   });
@@ -79,13 +61,16 @@ export async function GET(req: Request) {
   return NextResponse.json({
     organizationId: access.organizationId,
     organizationName: access.organizationName,
-    waves: waves.map((w) => waveDto(w, baseUrl)),
+    waves: waves.map((w) => waveListDto(w, baseUrl)),
   });
 }
 
 type PostBody = {
   label?: string;
   teams?: Array<{ name: string; department?: string }>;
+  enabledSectionCodes?: string[];
+  opensAt?: string | null;
+  closesAt?: string | null;
   status?: "DRAFT" | "OPEN" | "CLOSED";
 };
 
@@ -96,59 +81,42 @@ export async function POST(req: Request) {
 
   const body = (await req.json().catch(() => ({}))) as PostBody;
   const teams = Array.isArray(body.teams) ? body.teams : [];
-  if (teams.length === 0) {
-    return NextResponse.json({ error: "팀 목록을 1개 이상 입력해 주세요." }, { status: 400 });
-  }
-
-  const instrument = await prisma.diagnosticInstrument.findUnique({
-    where: { code: "ARC_INDEX" },
-  });
-  if (!instrument) {
-    return NextResponse.json(
-      { error: "ARC Index 문항뱅크가 시드되지 않았습니다. 운영팀에 문의하세요." },
-      { status: 503 },
-    );
-  }
-
-  const last = await prisma.diagnosticWave.findFirst({
-    where: { organizationId: access.organizationId, instrumentId: instrument.id },
-    orderBy: { waveNumber: "desc" },
-    select: { waveNumber: true },
-  });
-  const waveNumber = (last?.waveNumber ?? 0) + 1;
-  const slug = waveSlug(access.organizationId, waveNumber);
-
-  const slugSet = new Set<string>();
-  const teamRows = teams.map((t) => {
-    const name = typeof t.name === "string" ? t.name.trim() : "";
-    if (!name) throw new Error("EMPTY_TEAM");
-    return {
-      name,
-      department: typeof t.department === "string" ? t.department.trim() || null : null,
-      slug: uniqueSlug(name, slugSet),
-    };
-  });
 
   try {
-    const wave = await prisma.diagnosticWave.create({
-      data: {
-        instrumentId: instrument.id,
-        organizationId: access.organizationId,
-        waveNumber,
-        slug,
-        label: typeof body.label === "string" ? body.label.trim() || null : null,
-        status: body.status === "OPEN" ? "OPEN" : "DRAFT",
-        teams: { create: teamRows },
-      },
-      include: { teams: true, _count: { select: { responses: true } } },
+    const instrument = await prisma.diagnosticInstrument.findUnique({
+      where: { code: "ARC_INDEX" },
+      include: { sections: { select: { code: true } } },
+    });
+    if (!instrument) {
+      throw new CampaignError("INSTRUMENT_NOT_FOUND", "ARC Index 문항뱅크가 시드되지 않았습니다. 운영팀에 문의하세요.");
+    }
+
+    const enabled = normalizeEnabledSectionCodes(
+      body.enabledSectionCodes,
+      new Set(instrument.sections.map((s) => s.code)),
+    );
+    if (Array.isArray(body.enabledSectionCodes) && body.enabledSectionCodes.length > 0 && !enabled) {
+      return NextResponse.json({ error: "활성 섹션을 1개 이상 선택해 주세요." }, { status: 400 });
+    }
+
+    const wave = await createDiagnosticWave({
+      organizationId: access.organizationId,
+      instrumentId: instrument.id,
+      label: typeof body.label === "string" ? body.label : null,
+      enabledSectionCodes: enabled,
+      opensAt: parseWaveDate(body.opensAt),
+      closesAt: parseWaveDate(body.closesAt),
+      status: body.status === "OPEN" ? "OPEN" : body.status === "CLOSED" ? "CLOSED" : undefined,
+      teams: teams.map((t) => ({
+        name: typeof t.name === "string" ? t.name : "",
+        department: typeof t.department === "string" ? t.department : null,
+      })),
     });
 
     const baseUrl = new URL(req.url).origin;
-    return NextResponse.json({ ok: true, wave: waveDto(wave, baseUrl) });
+    return NextResponse.json({ ok: true, wave: waveListDto(wave, baseUrl) });
   } catch (e) {
-    if (e instanceof Error && e.message === "EMPTY_TEAM") {
-      return NextResponse.json({ error: "팀 이름을 입력해 주세요." }, { status: 400 });
-    }
-    throw e;
+    const err = campaignErrorResponse(e);
+    return NextResponse.json(err.body, { status: err.status });
   }
 }

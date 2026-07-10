@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireDiagnosticSuperadmin } from "@/lib/diagnostic/admin-access";
+import {
+  campaignErrorResponse,
+  parseWaveDate,
+  patchDiagnosticWave,
+  teamLinksFromWave,
+} from "@/lib/diagnostic/campaigns";
 import { parseEnabledSectionCodes, sectionBadgeLabel } from "@/lib/diagnostic/section-filter";
 import { waveStatusLabel } from "@/lib/diagnostic/wave-status";
+import { prisma } from "@/lib/prisma";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -50,13 +56,51 @@ export async function GET(req: Request, ctx: Ctx) {
       organization: { id: wave.organization.id, name: wave.organization.name },
       memberCount: wave.organization._count.members,
       instrument: wave.instrument,
-      teams: wave.teams.map((t) => ({
-        id: t.id,
-        name: t.name,
-        department: t.department,
-        slug: t.slug,
-        link: `${baseUrl}/diagnosis/w/${wave.slug}/t/${t.slug}`,
-      })),
+      teams: teamLinksFromWave(wave, wave.teams, baseUrl),
     },
   });
+}
+
+type PatchBody = {
+  status?: "DRAFT" | "OPEN" | "CLOSED";
+  label?: string;
+  opensAt?: string | null;
+  closesAt?: string | null;
+  enabledSectionCodes?: string[];
+};
+
+export async function PATCH(req: Request, ctx: Ctx) {
+  const auth = await requireDiagnosticSuperadmin();
+  if ("error" in auth && auth.error) return auth.error;
+
+  const { id } = await ctx.params;
+  const body = (await req.json().catch(() => ({}))) as PatchBody;
+
+  try {
+    const updated = await patchDiagnosticWave(id, {
+      status: body.status,
+      label: typeof body.label === "string" ? body.label : undefined,
+      opensAt: body.opensAt !== undefined ? parseWaveDate(body.opensAt) : undefined,
+      closesAt: body.closesAt !== undefined ? parseWaveDate(body.closesAt) : undefined,
+      enabledSectionCodes: body.enabledSectionCodes,
+    });
+
+    const enabled = parseEnabledSectionCodes(updated.enabledSectionCodes);
+    return NextResponse.json({
+      ok: true,
+      wave: {
+        id: updated.id,
+        status: updated.status,
+        statusLabel: waveStatusLabel(updated.status),
+        label: updated.label,
+        opensAt: updated.opensAt?.toISOString() ?? null,
+        closesAt: updated.closesAt?.toISOString() ?? null,
+        enabledSectionCodes: enabled,
+        sectionBadge: sectionBadgeLabel(enabled),
+      },
+    });
+  } catch (e) {
+    const err = campaignErrorResponse(e);
+    return NextResponse.json(err.body, { status: err.status });
+  }
 }

@@ -1,52 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireDiagnosticSuperadmin } from "@/lib/diagnostic/admin-access";
-import { parseEnabledSectionCodes, sectionBadgeLabel } from "@/lib/diagnostic/section-filter";
-import { deriveInitialWaveStatus, waveStatusLabel } from "@/lib/diagnostic/wave-status";
-import { waveSlug } from "@/lib/diagnostic/slug";
-
-function parseDate(value: unknown): Date | null {
-  if (typeof value !== "string" || !value.trim()) return null;
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
-function waveListDto(
-  wave: {
-    id: string;
-    slug: string;
-    waveNumber: number;
-    label: string | null;
-    status: string;
-    opensAt: Date | null;
-    closesAt: Date | null;
-    enabledSectionCodes: unknown;
-    organization: { id: string; name: string };
-    instrument: { nameKo: string };
-    _count: { responses: number; teams: number };
-  },
-  baseUrl: string,
-) {
-  const enabled = parseEnabledSectionCodes(wave.enabledSectionCodes);
-  return {
-    id: wave.id,
-    slug: wave.slug,
-    waveNumber: wave.waveNumber,
-    label: wave.label,
-    status: wave.status,
-    statusLabel: waveStatusLabel(wave.status as "DRAFT" | "OPEN" | "CLOSED"),
-    opensAt: wave.opensAt?.toISOString() ?? null,
-    closesAt: wave.closesAt?.toISOString() ?? null,
-    enabledSectionCodes: enabled,
-    sectionBadge: sectionBadgeLabel(enabled),
-    organizationId: wave.organization.id,
-    organizationName: wave.organization.name,
-    instrumentName: wave.instrument.nameKo,
-    teamCount: wave._count.teams,
-    responseCount: wave._count.responses,
-    orgWideLink: `${baseUrl}/diagnosis/w/${wave.slug}`,
-  };
-}
+import {
+  campaignErrorResponse,
+  createDiagnosticWave,
+  normalizeEnabledSectionCodes,
+  parseWaveDate,
+  waveListDto,
+  CampaignError,
+} from "@/lib/diagnostic/campaigns";
 
 export async function GET(req: Request) {
   const auth = await requireDiagnosticSuperadmin();
@@ -91,70 +53,39 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "기관과 진단도구를 선택해 주세요." }, { status: 400 });
   }
 
-  const org = await prisma.organization.findUnique({ where: { id: organizationId } });
-  if (!org) return NextResponse.json({ error: "기관을 찾을 수 없습니다." }, { status: 404 });
+  try {
+    const instrument = await prisma.diagnosticInstrument.findUnique({
+      where: { id: instrumentId },
+      include: { sections: { select: { code: true } } },
+    });
+    if (!instrument) throw new CampaignError("INSTRUMENT_NOT_FOUND", "진단도구를 찾을 수 없습니다.");
 
-  const instrument = await prisma.diagnosticInstrument.findUnique({
-    where: { id: instrumentId },
-    include: { sections: { select: { code: true } } },
-  });
-  if (!instrument) return NextResponse.json({ error: "진단도구를 찾을 수 없습니다." }, { status: 404 });
-
-  const sectionCodes = new Set(instrument.sections.map((s) => s.code));
-  let enabledSectionCodes: string[] | null = null;
-  if (Array.isArray(body.enabledSectionCodes) && body.enabledSectionCodes.length > 0) {
-    enabledSectionCodes = body.enabledSectionCodes.filter((c) => sectionCodes.has(c));
-    if (enabledSectionCodes.length === 0) {
+    const enabled = normalizeEnabledSectionCodes(
+      body.enabledSectionCodes,
+      new Set(instrument.sections.map((s) => s.code)),
+    );
+    if (Array.isArray(body.enabledSectionCodes) && body.enabledSectionCodes.length > 0 && !enabled) {
       return NextResponse.json({ error: "활성 섹션을 1개 이상 선택해 주세요." }, { status: 400 });
     }
+
+    const wave = await createDiagnosticWave({
+      organizationId,
+      instrumentId,
+      label: typeof body.label === "string" ? body.label : null,
+      enabledSectionCodes: enabled,
+      opensAt: parseWaveDate(body.opensAt),
+      closesAt: parseWaveDate(body.closesAt),
+      enableDiagnosticSku: true,
+    });
+
+    const baseUrl = new URL(req.url).origin;
+    return NextResponse.json({
+      ok: true,
+      message: "ARC Index 조직진단이 생성되었습니다.",
+      wave: waveListDto(wave, baseUrl),
+    });
+  } catch (e) {
+    const err = campaignErrorResponse(e);
+    return NextResponse.json(err.body, { status: err.status });
   }
-
-  const opensAt = parseDate(body.opensAt);
-  const closesAt = parseDate(body.closesAt);
-  const status = deriveInitialWaveStatus(opensAt, closesAt);
-
-  const last = await prisma.diagnosticWave.findFirst({
-    where: { organizationId, instrumentId },
-    orderBy: { waveNumber: "desc" },
-    select: { waveNumber: true },
-  });
-  const waveNumber = (last?.waveNumber ?? 0) + 1;
-  const slug = waveSlug(organizationId, waveNumber);
-
-  const wave = await prisma.$transaction(async (tx) => {
-    await tx.organization.update({
-      where: { id: organizationId },
-      data: { diagnosticEnabled: true },
-    });
-    return tx.diagnosticWave.create({
-      data: {
-        instrumentId,
-        organizationId,
-        waveNumber,
-        slug,
-        label: typeof body.label === "string" ? body.label.trim() || null : null,
-        status,
-        opensAt,
-        closesAt,
-        enabledSectionCodes: enabledSectionCodes ?? undefined,
-      },
-      include: {
-        organization: { select: { id: true, name: true } },
-        instrument: { select: { nameKo: true } },
-        _count: {
-          select: {
-            teams: true,
-            responses: { where: { submittedAt: { not: null } } },
-          },
-        },
-      },
-    });
-  });
-
-  const baseUrl = new URL(req.url).origin;
-  return NextResponse.json({
-    ok: true,
-    message: "ARC Index 조직진단이 생성되었습니다.",
-    wave: waveListDto(wave, baseUrl),
-  });
 }

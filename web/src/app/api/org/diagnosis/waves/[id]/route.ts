@@ -5,20 +5,16 @@ import {
   DIAGNOSTIC_ACCESS_ERRORS,
   resolveDiagnosticAccess,
 } from "@/lib/diagnostic/org-access";
-import { uniqueSlug } from "@/lib/diagnostic/slug";
+import {
+  campaignErrorResponse,
+  parseWaveDate,
+  patchDiagnosticWave,
+  teamLinksFromWave,
+} from "@/lib/diagnostic/campaigns";
+import { parseEnabledSectionCodes, sectionBadgeLabel } from "@/lib/diagnostic/section-filter";
+import { waveStatusLabel } from "@/lib/diagnostic/wave-status";
 
 type Ctx = { params: Promise<{ id: string }> };
-
-async function getWaveForOrg(waveId: string, organizationId: string) {
-  return prisma.diagnosticWave.findFirst({
-    where: { id: waveId, organizationId },
-    include: {
-      teams: { orderBy: { name: "asc" } },
-      instrument: true,
-      _count: { select: { responses: { where: { submittedAt: { not: null } } } } },
-    },
-  });
-}
 
 export async function GET(req: Request, ctx: Ctx) {
   const user = await getCurrentUser();
@@ -32,10 +28,18 @@ export async function GET(req: Request, ctx: Ctx) {
     );
   }
 
-  const wave = await getWaveForOrg(id, access.organizationId);
+  const wave = await prisma.diagnosticWave.findFirst({
+    where: { id, organizationId: access.organizationId },
+    include: {
+      teams: { orderBy: { name: "asc" } },
+      instrument: true,
+      _count: { select: { responses: { where: { submittedAt: { not: null } } } } },
+    },
+  });
   if (!wave) return NextResponse.json({ error: "웨이브를 찾을 수 없습니다." }, { status: 404 });
 
   const baseUrl = new URL(req.url).origin;
+  const enabled = parseEnabledSectionCodes(wave.enabledSectionCodes);
   return NextResponse.json({
     wave: {
       id: wave.id,
@@ -43,22 +47,26 @@ export async function GET(req: Request, ctx: Ctx) {
       waveNumber: wave.waveNumber,
       label: wave.label,
       status: wave.status,
+      statusLabel: waveStatusLabel(wave.status),
       opensAt: wave.opensAt?.toISOString() ?? null,
       closesAt: wave.closesAt?.toISOString() ?? null,
+      enabledSectionCodes: enabled,
+      sectionBadge: sectionBadgeLabel(enabled),
       responseCount: wave._count.responses,
       minGroupSize: wave.instrument.minGroupSize,
-      teams: wave.teams.map((t) => ({
-        id: t.id,
-        name: t.name,
-        department: t.department,
-        slug: t.slug,
-        link: `${baseUrl}/diagnosis/w/${wave.slug}/t/${t.slug}`,
-      })),
+      orgWideLink: `${baseUrl}/diagnosis/w/${wave.slug}`,
+      teams: teamLinksFromWave(wave, wave.teams, baseUrl),
     },
   });
 }
 
-type PatchBody = { status?: "DRAFT" | "OPEN" | "CLOSED"; label?: string };
+type PatchBody = {
+  status?: "DRAFT" | "OPEN" | "CLOSED";
+  label?: string;
+  opensAt?: string | null;
+  closesAt?: string | null;
+  enabledSectionCodes?: string[];
+};
 
 export async function PATCH(req: Request, ctx: Ctx) {
   const user = await getCurrentUser();
@@ -72,20 +80,37 @@ export async function PATCH(req: Request, ctx: Ctx) {
     );
   }
 
-  const wave = await getWaveForOrg(id, access.organizationId);
-  if (!wave) return NextResponse.json({ error: "웨이브를 찾을 수 없습니다." }, { status: 404 });
-
   const body = (await req.json().catch(() => ({}))) as PatchBody;
-  const data: { status?: "DRAFT" | "OPEN" | "CLOSED"; label?: string | null } = {};
-  if (body.status === "DRAFT" || body.status === "OPEN" || body.status === "CLOSED") {
-    data.status = body.status;
-  }
-  if (typeof body.label === "string") data.label = body.label.trim() || null;
 
-  const updated = await prisma.diagnosticWave.update({
-    where: { id },
-    data,
-    select: { id: true, status: true, label: true },
-  });
-  return NextResponse.json({ ok: true, wave: updated });
+  try {
+    const updated = await patchDiagnosticWave(
+      id,
+      {
+        status: body.status,
+        label: typeof body.label === "string" ? body.label : undefined,
+        opensAt: body.opensAt !== undefined ? parseWaveDate(body.opensAt) : undefined,
+        closesAt: body.closesAt !== undefined ? parseWaveDate(body.closesAt) : undefined,
+        enabledSectionCodes: body.enabledSectionCodes,
+      },
+      { organizationId: access.organizationId },
+    );
+
+    const enabled = parseEnabledSectionCodes(updated.enabledSectionCodes);
+    return NextResponse.json({
+      ok: true,
+      wave: {
+        id: updated.id,
+        status: updated.status,
+        statusLabel: waveStatusLabel(updated.status),
+        label: updated.label,
+        opensAt: updated.opensAt?.toISOString() ?? null,
+        closesAt: updated.closesAt?.toISOString() ?? null,
+        enabledSectionCodes: enabled,
+        sectionBadge: sectionBadgeLabel(enabled),
+      },
+    });
+  } catch (e) {
+    const err = campaignErrorResponse(e);
+    return NextResponse.json(err.body, { status: err.status });
+  }
 }
