@@ -89,6 +89,13 @@ export interface AnswerFeedback {
   competency?: string;
   isInterim?: boolean;
   tripleFeedback?: import("@/lib/interview/triple-feedback").TripleFeedbackResult;
+  dimensions?: {
+    starStructure: number;
+    questionIntent: number;
+    logic: number;
+    delivery: number;
+  };
+  weakestDimension?: string;
 }
 
 export interface NextItem {

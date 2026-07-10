@@ -9,7 +9,7 @@ type InstrumentSummary = {
   code: string;
   nameKo: string;
   version: string;
-  estimatedMinutes: number;
+  estimatedMinutes: number | null;
   sections: {
     code: string;
     nameKo: string;

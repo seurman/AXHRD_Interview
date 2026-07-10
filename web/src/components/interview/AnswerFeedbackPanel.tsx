@@ -3,6 +3,8 @@
 import type { AnswerFeedback, ChipType } from "@/types";
 import { competencyLabel } from "@/lib/labels";
 import { cn } from "@/lib/cn";
+import { AnswerInsightRadar } from "./AnswerInsightRadar";
+import type { AnswerDimensions } from "@/lib/interview/answer-dimensions";
 
 const CHIP_LABEL: Record<ChipType, string> = {
   pass: "통과 ♩",
@@ -16,7 +18,13 @@ const CHIP_STYLE: Record<ChipType, string> = {
   downgrade: "border-warning/30 bg-warning/8 text-warning",
 };
 
-export function AnswerFeedbackPanel({ feedback }: { feedback: AnswerFeedback }) {
+export function AnswerFeedbackPanel({
+  feedback,
+  sessionAverage,
+}: {
+  feedback: AnswerFeedback;
+  sessionAverage?: AnswerDimensions | null;
+}) {
   const scorePct =
     typeof feedback.score === "number" ? Math.round(feedback.score * 100) : null;
   const evidence =
@@ -51,6 +59,14 @@ export function AnswerFeedbackPanel({ feedback }: { feedback: AnswerFeedback }) 
           <span className="text-xs text-muted">{competencyLabel(feedback.competency)}</span>
         )}
       </div>
+
+      {feedback.dimensions && !feedback.isInterim && (
+        <AnswerInsightRadar
+          dimensions={feedback.dimensions}
+          weakestDimension={feedback.weakestDimension}
+          sessionAverage={sessionAverage}
+        />
+      )}
 
       <p className="text-sm leading-relaxed text-foreground">{feedback.summary}</p>
 

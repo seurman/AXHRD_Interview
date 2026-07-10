@@ -6,7 +6,7 @@ describe("mockEvaluate", () => {
     const result = mockEvaluate("그냥 열심히 했습니다.");
     expect(result.score).toBeLessThan(0.5);
     expect(result.briefFeedback.length).toBeGreaterThan(0);
-    expect(result.dimensions.structure).toBeLessThan(0.6);
+    expect(result.dimensions.starStructure).toBeLessThan(0.6);
   });
 
   it("STAR 4요소 + 수치가 있으면 높은 점수를 준다", () => {
@@ -15,7 +15,7 @@ describe("mockEvaluate", () => {
       "SNS 캠페인과 오프라인 부스를 병행해 홍보했고, 결과적으로 35명을 모집해 목표를 117% 달성했습니다.";
     const result = mockEvaluate(answer);
     expect(result.score).toBeGreaterThan(0.7);
-    expect(result.dimensions.specificity).toBeGreaterThan(0.6);
+    expect(result.dimensions.starStructure).toBeGreaterThan(0.6);
     expect(result.briefFeedback).toMatch(/상황|과제|행동|결과/);
   });
 
@@ -28,10 +28,10 @@ describe("mockEvaluate", () => {
     expect(result.briefFeedback.length).toBeGreaterThan(5);
   });
 
-  it("결과(수치)만 강조되면 specificity는 올라가나 structure는 낮을 수 있다", () => {
+  it("결과(수치)만 강조되면 questionIntent는 올라가나 starStructure는 낮을 수 있다", () => {
     const answer = "매출이 20% 증가했습니다.";
     const result = mockEvaluate(answer);
-    expect(result.dimensions.specificity).toBeGreaterThan(0.5);
-    expect(result.dimensions.structure).toBeLessThan(0.6);
+    expect(result.dimensions.delivery).toBeGreaterThan(0.3);
+    expect(result.dimensions.starStructure).toBeLessThan(0.6);
   });
 });

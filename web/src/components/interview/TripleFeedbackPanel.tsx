@@ -4,6 +4,8 @@ import type { AnswerFeedback } from "@/types";
 import type { TripleFeedbackResult } from "@/lib/interview/triple-feedback";
 import { LENS_UI_LABEL } from "@/lib/interview/triple-feedback";
 import { cn } from "@/lib/cn";
+import { AnswerInsightRadar } from "./AnswerInsightRadar";
+import type { AnswerDimensions } from "@/lib/interview/answer-dimensions";
 
 const LENS_ORDER = ["LARGE", "PUBLIC", "STARTUP"] as const;
 
@@ -16,9 +18,11 @@ const LENS_STYLE: Record<(typeof LENS_ORDER)[number], string> = {
 export function TripleFeedbackPanel({
   feedback,
   tripleFeedback,
+  sessionAverage,
 }: {
   feedback: AnswerFeedback;
   tripleFeedback: TripleFeedbackResult;
+  sessionAverage?: AnswerDimensions | null;
 }) {
   const scorePct =
     typeof feedback.score === "number" ? Math.round(feedback.score * 100) : null;
@@ -40,6 +44,14 @@ export function TripleFeedbackPanel({
         동일 답변을 대기업·공공·스타트업 관점에서 각각 해석합니다. 관점마다 판단이 다를 수
         있어요 — IRT 점수는 하나만 유지됩니다.
       </p>
+
+      {feedback.dimensions && !feedback.isInterim && (
+        <AnswerInsightRadar
+          dimensions={feedback.dimensions}
+          weakestDimension={feedback.weakestDimension}
+          sessionAverage={sessionAverage}
+        />
+      )}
 
       <div className="grid gap-3 sm:grid-cols-3">
         {LENS_ORDER.map((lens) => {

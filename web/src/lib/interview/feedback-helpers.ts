@@ -5,6 +5,13 @@
  * (docs/COMMERCIAL.md 특허 회피 원칙 — 텍스트 루브릭만 사용).
  */
 
+import {
+  findWeakestDimension,
+  type AnswerDimensionKey,
+  type AnswerDimensions,
+} from "@/lib/interview/answer-dimensions";
+import { dimensionLabel } from "@/lib/labels";
+
 const STAR_KEYWORDS = {
   situation: /상황|배경|당시|입사|근무하던|맡고\s?있던|진행하던/,
   task: /과제|목표|문제|요구사항|해결해야|맡은\s?일|미션/,
@@ -98,12 +105,7 @@ export interface FeedbackEvidenceItem {
 /** 점수·차원과 답변 인용을 짝지은 근거 목록 (추가 LLM 없음). */
 export function buildEvidenceFromAnswer(params: {
   answer: string;
-  dimensions?: {
-    structure: number;
-    specificity: number;
-    relevance: number;
-    clarity: number;
-  };
+  dimensions?: AnswerDimensions;
   score?: number;
 }): FeedbackEvidenceItem[] {
   const sentences = splitSentences(params.answer);
@@ -122,12 +124,6 @@ export function buildEvidenceFromAnswer(params: {
   }
 
   if (params.dimensions) {
-    const dimLabels: Record<string, string> = {
-      structure: "구조",
-      specificity: "구체성",
-      relevance: "역량 연관",
-      clarity: "명확성",
-    };
     const sorted = Object.entries(params.dimensions).sort((a, b) => b[1] - a[1]);
     const best = sorted[0];
     const weak = sorted[sorted.length - 1];
@@ -138,7 +134,7 @@ export function buildEvidenceFromAnswer(params: {
     if (best && best[1] >= 0.6 && metricSentence && metricSentence !== primary) {
       evidence.push({
         quote: metricSentence.length > 90 ? `${metricSentence.slice(0, 89)}…` : metricSentence,
-        supports: `${dimLabels[best[0]] ?? best[0]} ${Math.round(best[1] * 100)}% — 구체 지표가 드러난 구간`,
+        supports: `${dimensionLabel(best[0])} ${Math.round(best[1] * 100)}% — 구체 지표가 드러난 구간`,
       });
     }
 
@@ -150,7 +146,7 @@ export function buildEvidenceFromAnswer(params: {
       if (fallback && !evidence.some((e) => e.quote === fallback)) {
         evidence.push({
           quote: fallback.length > 90 ? `${fallback.slice(0, 89)}…` : fallback,
-          supports: `${dimLabels[weak[0]] ?? weak[0]} ${Math.round(weak[1] * 100)}% — 이 발화만으로는 보강이 필요함`,
+          supports: `${dimensionLabel(weak[0])} ${Math.round(weak[1] * 100)}% — 이 발화만으로는 보강이 필요함`,
         });
       }
     }
@@ -163,12 +159,7 @@ export function buildEvidenceFromAnswer(params: {
 export function buildAnswerKeyPointFeedback(params: {
   answer: string;
   briefFeedback: string;
-  dimensions?: {
-    structure: number;
-    specificity: number;
-    relevance: number;
-    clarity: number;
-  };
+  dimensions?: AnswerDimensions;
   chipType?: "pass" | "attempt" | "downgrade";
   level?: number;
   competency?: string;
@@ -181,6 +172,8 @@ export function buildAnswerKeyPointFeedback(params: {
   irtNote: string;
   quote: string;
   evidence: FeedbackEvidenceItem[];
+  dimensions?: AnswerDimensions;
+  weakestDimension?: AnswerDimensionKey;
 } {
   const coverage = detectStarCoverage(params.answer);
   const keyPoints: string[] = [];
@@ -190,20 +183,14 @@ export function buildAnswerKeyPointFeedback(params: {
   }
 
   if (params.dimensions) {
-    const dimLabels: Record<string, string> = {
-      structure: "구조",
-      specificity: "구체성",
-      relevance: "역량 연관",
-      clarity: "명확성",
-    };
     const sorted = Object.entries(params.dimensions).sort((a, b) => b[1] - a[1]);
     const best = sorted[0];
     const weak = sorted[sorted.length - 1];
     if (best && best[1] >= 0.6) {
-      keyPoints.push(`강점 — ${dimLabels[best[0]] ?? best[0]} (${Math.round(best[1] * 100)}%)`);
+      keyPoints.push(`강점 — ${dimensionLabel(best[0])} (${Math.round(best[1] * 100)}%)`);
     }
     if (weak && weak[1] < 0.55) {
-      keyPoints.push(`보완 — ${dimLabels[weak[0]] ?? weak[0]} (${Math.round(weak[1] * 100)}%)`);
+      keyPoints.push(`보완 — ${dimensionLabel(weak[0])} (${Math.round(weak[1] * 100)}%)`);
     }
   }
 
@@ -239,6 +226,12 @@ export function buildAnswerKeyPointFeedback(params: {
     irtNote,
     quote,
     evidence,
+    ...(params.dimensions
+      ? {
+          dimensions: params.dimensions,
+          weakestDimension: findWeakestDimension(params.dimensions),
+        }
+      : {}),
   };
 }
 

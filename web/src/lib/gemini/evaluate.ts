@@ -5,31 +5,34 @@
 import { generateGeminiText } from "@/lib/gemini/client";
 import { pressureTierPromptHint, type PressureTier } from "@/lib/interview/persona";
 import { detectStarCoverage, starCoachingNote } from "@/lib/interview/feedback-helpers";
+import {
+  normalizeAnswerDimensions,
+  type AnswerDimensions,
+} from "@/lib/interview/answer-dimensions";
+
+export type { AnswerDimensions };
 
 export interface RubricResult {
   score: number; // 0.0 - 1.0
   briefFeedback: string;
-  dimensions: {
-    structure: number;
-    specificity: number;
-    relevance: number;
-    clarity: number;
-  };
+  dimensions: AnswerDimensions;
 }
 
 const RUBRIC_SYSTEM = `당신은 BEI(행동사건면접) 기법에 능숙한 한국 기업 면접 평가관입니다.
 답변을 0.0~1.0 루브릭 점수로 평가하세요. "채점 기준"이 주어지면 반드시 그 기준을 우선 적용하고,
 briefFeedback에는 STAR(상황-과제-행동-결과) 구조 중 어떤 요소가 드러났고 어떤 요소가 부족한지
 구체적으로 짚어 2~3문장으로 코칭하세요(어떤 기준이 충족/미흡했는지도 함께 언급).
+dimensions는 starStructure(STAR 구조), questionIntent(질문 의도 파악), logic(원인→행동→결과 논리 흐름),
+delivery(명확하고 이해하기 쉬운 전달력) 기준으로 0.0~1.0을 매기세요.
 반드시 JSON만 출력:
 {
   "score": 0.0-1.0,
   "briefFeedback": "STAR 구조 분석을 포함한 2~3문장 한국어 피드백",
   "dimensions": {
-    "structure": 0.0-1.0,
-    "specificity": 0.0-1.0,
-    "relevance": 0.0-1.0,
-    "clarity": 0.0-1.0
+    "starStructure": 0.0-1.0,
+    "questionIntent": 0.0-1.0,
+    "logic": 0.0-1.0,
+    "delivery": 0.0-1.0
   }
 }`;
 
@@ -66,7 +69,19 @@ ${params.resumeContext ? `자소서 맥락: ${params.resumeContext.slice(0, 500)
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       try {
-        return JSON.parse(jsonMatch[0]) as RubricResult;
+        const parsed = JSON.parse(jsonMatch[0]) as {
+          score?: number;
+          briefFeedback?: string;
+          dimensions?: unknown;
+        };
+        const dimensions = normalizeAnswerDimensions(parsed.dimensions);
+        if (typeof parsed.score === "number" && dimensions) {
+          return {
+            score: parsed.score,
+            briefFeedback: parsed.briefFeedback ?? "",
+            dimensions,
+          };
+        }
       } catch (e) {
         console.error("[Gemini evaluate] JSON parse 실패:", e);
       }
@@ -100,6 +115,8 @@ const CORRECT_AND_EVALUATE_SYSTEM = `당신은 BEI(행동사건면접, Behaviora
    작성하세요 — 답변에서 상황·과제·행동·결과 중 어떤 요소가 구체적으로 드러났고 어떤
    요소가 빠졌는지 짚고, 빠진 요소를 보강하려면 무엇을 덧붙이면 좋을지 실질적인 코칭을
    담으세요("채점 기준"이 있으면 그 기준 충족/미흡 여부도 함께 언급).
+   dimensions는 starStructure(STAR 구조), questionIntent(질문 의도 파악), logic(원인→행동→결과 논리 흐름),
+   delivery(명확하고 이해하기 쉬운 전달력) 기준으로 0.0~1.0을 매기세요.
 3. "자소서 맥락"이 주어졌다면, 답변 내용이 자소서와 명백히 모순되는 사실(기간·숫자·역할·
    기술 스택 등)이 있는지만 확인하세요. 모순이 있으면 consistencyNote에 부드러운 코칭 톤
    1문장으로 적으세요(예: "자소서에는 3년으로 적혀 있는데 방금은 1년이라 하셨어요 — 정리해서
@@ -119,10 +136,10 @@ const CORRECT_AND_EVALUATE_SYSTEM = `당신은 BEI(행동사건면접, Behaviora
   "score": 0.0-1.0,
   "briefFeedback": "답변 인용을 포함한 STAR 분석 2~3문장",
   "dimensions": {
-    "structure": 0.0-1.0,
-    "specificity": 0.0-1.0,
-    "relevance": 0.0-1.0,
-    "clarity": 0.0-1.0
+    "starStructure": 0.0-1.0,
+    "questionIntent": 0.0-1.0,
+    "logic": 0.0-1.0,
+    "delivery": 0.0-1.0
   },
   "consistencyNote": "1문장 또는 null",
   "suggestedFollowUp": "답변 구절을 「」로 인용한 1문장 또는 null"
@@ -174,11 +191,12 @@ ${params.pressureTier ? `면접관 태도: ${pressureTierPromptHint(params.press
           correctedAnswer?: string;
           score?: number;
           briefFeedback?: string;
-          dimensions?: RubricResult["dimensions"];
+          dimensions?: unknown;
           consistencyNote?: string | null;
           suggestedFollowUp?: string | null;
         };
-        if (typeof parsed.score === "number" && parsed.dimensions) {
+        const dimensions = normalizeAnswerDimensions(parsed.dimensions);
+        if (typeof parsed.score === "number" && dimensions) {
           let correctedAnswer = parsed.correctedAnswer?.trim() || raw;
           // 결과가 비정상적으로 짧거나(잘림) 너무 길면(내용 추가 의심) 원문을 그대로 사용
           if (
@@ -191,7 +209,7 @@ ${params.pressureTier ? `면접관 태도: ${pressureTierPromptHint(params.press
             correctedAnswer,
             score: parsed.score,
             briefFeedback: parsed.briefFeedback ?? "",
-            dimensions: parsed.dimensions,
+            dimensions,
             consistencyNote:
               typeof parsed.consistencyNote === "string" && parsed.consistencyNote.trim()
                 ? parsed.consistencyNote.trim()
@@ -229,14 +247,21 @@ export function mockEvaluate(answer: string): RubricResult {
   if (hasNumber) score += 0.05;
   score = Math.min(score, 0.95);
 
+  const hasLogic = /그래서|따라서|왜냐하면|결과적으로|이로 인해/.test(answer);
+
   return {
     score,
     briefFeedback: starCoachingNote(coverage),
     dimensions: {
-      structure: coverage.situation && coverage.task ? 0.7 : coverage.situation || coverage.task ? 0.5 : 0.3,
-      specificity: coverage.result && hasNumber ? 0.75 : coverage.result || hasNumber ? 0.55 : 0.3,
-      relevance: coverage.action ? 0.65 : len > 50 ? 0.5 : 0.3,
-      clarity: len > 100 ? 0.65 : 0.4,
+      starStructure:
+        coverage.situation && coverage.task
+          ? 0.7
+          : coverage.situation || coverage.task
+            ? 0.5
+            : 0.3,
+      questionIntent: coverage.action ? 0.65 : len > 50 ? 0.5 : 0.3,
+      logic: hasLogic ? (starHits >= 2 ? 0.7 : 0.55) : starHits >= 1 ? 0.45 : 0.3,
+      delivery: len > 100 ? 0.65 : 0.4,
     },
   };
 }

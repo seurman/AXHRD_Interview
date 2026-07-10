@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { resolveCompanyContext } from "@/lib/company/enrich";
-import { deriveInterviewStyleFromJD } from "@/lib/company/jd-mapper";
+import { deriveInterviewStyleFromJD, type PrecomputedJdAnalysis } from "@/lib/company/jd-mapper";
 import { initIrtSession } from "@/lib/irt-client";
 import { serializeIrtState } from "@/lib/irt-state";
 import {
@@ -55,6 +55,8 @@ export type StartSessionBody = {
   jdBonusEnabled?: boolean;
   /** 역량당 문항 수 (1~5, 기본 3) */
   questionCount?: number;
+  /** SetupForm에서 미리 분석한 JD 결과 — 동일 원문이면 세션 시작 시 Gemini 재호출 생략 */
+  precomputedJdAnalysis?: PrecomputedJdAnalysis;
 };
 
 /** 공유 링크(OrgInterviewKitShare)로 들어온 세션 등, 사용자 본인 소속 기관과
@@ -115,6 +117,7 @@ export async function startInterviewSession(
     tripleFeedbackMode,
     jdBonusEnabled,
     questionCount: questionCountBody,
+    precomputedJdAnalysis,
   } = body;
 
   const { minItems, maxItems, questionCount } = sessionItemLimits(
@@ -166,10 +169,14 @@ export async function startInterviewSession(
   let resolvedSize: CompanySizeCode = companyContext.size;
   let jdRequirements: { skills: string[]; keywords: string[] } | null = null;
   if (!opts.demoMode && trimmedJdText) {
-    const derived = await deriveInterviewStyleFromJD({
-      jdText: trimmedJdText,
-      industryLabel: companyContext.industry,
-    });
+    const precomputed =
+      precomputedJdAnalysis?.sourceText === trimmedJdText ? precomputedJdAnalysis : null;
+    const derived =
+      precomputed ??
+      (await deriveInterviewStyleFromJD({
+        jdText: trimmedJdText,
+        industryLabel: companyContext.industry,
+      }));
     if (derived) {
       interviewStyle = derived.interviewStyle;
       if (derived.companySize) resolvedSize = derived.companySize;

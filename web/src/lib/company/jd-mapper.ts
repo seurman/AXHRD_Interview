@@ -4,7 +4,8 @@
  */
 
 import { generateGeminiText } from "@/lib/gemini/client";
-import type { CompanyContext } from "@/types";
+import type { CompanyContext, CompetencyCode } from "@/types";
+import { COMPETENCY_CODES } from "@/types";
 import {
   inferCompanySizeFromText,
   type CompanySizeCode,
@@ -19,7 +20,11 @@ export type JDMapResult = {
   interviewStyle: CompanyContext["interviewStyle"];
   companySize: CompanySizeCode | null;
   requirements: JdRequirements;
+  recommendedCompetency: CompetencyCode | null;
+  competencyRationale: string | null;
 };
+
+export type PrecomputedJdAnalysis = JDMapResult & { sourceText: string };
 
 const JD_MAP_SYSTEM = `당신은 한국 기업 채용공고(JD)·인재상 자료를 분석해 모의 면접 스타일을 요약하는 도우미입니다.
 주어진 원문에서 이 회사/직무의 면접 톤, 예상 면접 라운드, 중점적으로 평가할 역량 키워드를 뽑고,
@@ -35,7 +40,9 @@ const JD_MAP_SYSTEM = `당신은 한국 기업 채용공고(JD)·인재상 자�
   "requirements": {
     "skills": ["요구 스킬·툴·자격 2~8개"],
     "keywords": ["JD 핵심 키워드·역량·업무 3~10개"]
-  }
+  },
+  "recommendedCompetency": "COMMUNICATION | GROWTH | JOB_FIT | LEADERSHIP | ORG_FIT | PROBLEM_SOLVING 중 공고에 가장 부합하는 하나",
+  "competencyRationale": "공고 원문에서 근거가 된 문구를 살려 1문장으로"
 }`;
 
 const VALID_SIZES = new Set<CompanySizeCode>([
@@ -61,6 +68,29 @@ function requirementsFromFocus(focus: string[]): JdRequirements {
   };
 }
 
+function parseRecommendedCompetency(value: unknown): CompetencyCode | null {
+  if (typeof value !== "string") return null;
+  const code = value.trim();
+  return COMPETENCY_CODES.includes(code as CompetencyCode) ? (code as CompetencyCode) : null;
+}
+
+function parseCompetencyRationale(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed.slice(0, 200) : null;
+}
+
+function withCompetencyFields(
+  base: Omit<JDMapResult, "recommendedCompetency" | "competencyRationale">,
+  parsed?: { recommendedCompetency?: unknown; competencyRationale?: unknown },
+): JDMapResult {
+  return {
+    ...base,
+    recommendedCompetency: parsed ? parseRecommendedCompetency(parsed.recommendedCompetency) : null,
+    competencyRationale: parsed ? parseCompetencyRationale(parsed.competencyRationale) : null,
+  };
+}
+
 export async function deriveInterviewStyleFromJD(params: {
   jdText: string;
   industryLabel: string;
@@ -73,11 +103,11 @@ export async function deriveInterviewStyleFromJD(params: {
 
   if (!process.env.GEMINI_API_KEY) {
     if (!keywordSize) return null;
-    return {
+    return withCompetencyFields({
       interviewStyle: fallback,
       companySize: keywordSize,
       requirements: requirementsFromFocus(fallback.focus),
-    };
+    });
   }
 
   const userPrompt = `
@@ -96,11 +126,11 @@ ${jd.slice(0, 2000)}
 
   if (!content) {
     if (!keywordSize) return null;
-    return {
+    return withCompetencyFields({
       interviewStyle: fallback,
       companySize: keywordSize,
       requirements: requirementsFromFocus(fallback.focus),
-    };
+    });
   }
 
   const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -113,6 +143,8 @@ ${jd.slice(0, 2000)}
       focus?: unknown;
       companySize?: unknown;
       requirements?: { skills?: unknown; keywords?: unknown };
+      recommendedCompetency?: unknown;
+      competencyRationale?: unknown;
     };
 
     const tone = typeof parsed.tone === "string" ? parsed.tone.trim().slice(0, 60) : "";
@@ -139,26 +171,32 @@ ${jd.slice(0, 2000)}
 
     if (!tone || rounds.length === 0 || focus.length === 0) {
       if (!companySize) return null;
-      return {
-        interviewStyle: fallback,
-        companySize,
-        requirements: requirementsFromFocus(fallback.focus),
-      };
+      return withCompetencyFields(
+        {
+          interviewStyle: fallback,
+          companySize,
+          requirements: requirementsFromFocus(fallback.focus),
+        },
+        parsed,
+      );
     }
 
-    return {
-      interviewStyle: { tone, rounds, focus },
-      companySize,
-      requirements,
-    };
+    return withCompetencyFields(
+      {
+        interviewStyle: { tone, rounds, focus },
+        companySize,
+        requirements,
+      },
+      parsed,
+    );
   } catch (e) {
     console.error("[Gemini JD mapper] JSON parse 실패:", e);
     if (!keywordSize) return null;
-    return {
+    return withCompetencyFields({
       interviewStyle: fallback,
       companySize: keywordSize,
       requirements: requirementsFromFocus(fallback.focus),
-    };
+    });
   }
 }
 

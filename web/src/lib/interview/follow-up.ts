@@ -11,10 +11,10 @@ import type { RubricResult } from "@/lib/gemini/evaluate";
 import type { PressureTier } from "@/lib/interview/persona";
 import { extractQuote } from "@/lib/interview/feedback-helpers";
 
-const FOLLOW_UP_THRESHOLDS: Record<PressureTier, { score: number; specificity: number }> = {
-  GENTLE: { score: 0.55, specificity: 0.4 },
-  NEUTRAL: { score: 0.65, specificity: 0.5 },
-  TOUGH: { score: 0.75, specificity: 0.6 },
+const FOLLOW_UP_THRESHOLDS: Record<PressureTier, { score: number; questionIntent: number }> = {
+  GENTLE: { score: 0.55, questionIntent: 0.4 },
+  NEUTRAL: { score: 0.65, questionIntent: 0.5 },
+  TOUGH: { score: 0.75, questionIntent: 0.6 },
 };
 
 /** 문항당 1회·세션당 1회는 호출측에서 보장한다. */
@@ -22,8 +22,8 @@ export function shouldTriggerFollowUp(
   rubric: RubricResult,
   tier: PressureTier = "NEUTRAL"
 ): boolean {
-  const { score, specificity } = FOLLOW_UP_THRESHOLDS[tier];
-  return rubric.score < score && rubric.dimensions.specificity < specificity;
+  const { score, questionIntent } = FOLLOW_UP_THRESHOLDS[tier];
+  return rubric.score < score && rubric.dimensions.questionIntent < questionIntent;
 }
 
 const TIER_TEMPLATES: Record<PressureTier, (quoted: string) => string> = {

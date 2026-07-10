@@ -9,6 +9,7 @@ import { jobRoleLabel, competencyLabel, industryLabel } from "@/lib/labels";
 import { COMPETENCY_CODES, INDUSTRY_CODES, COMPANY_SIZE_CODES } from "@/types";
 import type { IndustryCode, JobRoleCode, CompanySizeCode } from "@/types";
 import { matchPersona } from "@/lib/interview/persona-archetype";
+import type { JDMapResult } from "@/lib/company/jd-mapper";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 const JOB_ROLES = [
@@ -88,6 +89,11 @@ export function SetupForm({
   const [jdFileError, setJdFileError] = useState<string | null>(null);
   const [parsingJdFile, setParsingJdFile] = useState(false);
   const [showJdEditor, setShowJdEditor] = useState(false);
+  const [jdAnalysis, setJdAnalysis] = useState<JDMapResult | null>(null);
+  const [jdAnalysisSource, setJdAnalysisSource] = useState("");
+  const [analyzingJd, setAnalyzingJd] = useState(false);
+  const [jdAnalysisNote, setJdAnalysisNote] = useState<string | null>(null);
+  const [jdAnalysisError, setJdAnalysisError] = useState<string | null>(null);
   const [jobRole, setJobRole] = useState<string>("MARKETING");
   const [resumeText, setResumeText] = useState("");
   const [showResumeEditor, setShowResumeEditor] = useState(false);
@@ -155,12 +161,21 @@ export function SetupForm({
   // 반영한 추천일 뿐이다 — 사용자가 이미 직접 역량을 고른 뒤라면 덮어쓰지 않는다.
   useEffect(() => {
     if (!persona || competencyManuallyChanged.current) return;
+    if (jdAnalysis?.recommendedCompetency) return;
     const recommended = persona.focusCompetencies.find((code) => {
       const row = competencies.find((c) => c.code === code);
       return row && row.status !== "COMPLETED";
     });
     if (recommended) setFocusCompetency(recommended);
-  }, [persona, competencies]);
+  }, [persona, competencies, jdAnalysis?.recommendedCompetency]);
+
+  useEffect(() => {
+    if (!jdAnalysis?.recommendedCompetency || competencyManuallyChanged.current) return;
+    const row = competencies.find((c) => c.code === jdAnalysis.recommendedCompetency);
+    if (row && row.status !== "COMPLETED") {
+      setFocusCompetency(jdAnalysis.recommendedCompetency);
+    }
+  }, [jdAnalysis, competencies]);
 
   useEffect(() => {
     if (companySize === "PUBLIC") setIndustry("PUBLIC");
@@ -227,6 +242,47 @@ export function SetupForm({
     setJdFileName(null);
     setJdFileError(null);
     setShowJdEditor(false);
+    setJdAnalysis(null);
+    setJdAnalysisSource("");
+    setJdAnalysisNote(null);
+    setJdAnalysisError(null);
+  };
+
+  const analyzeJdText = async (text: string) => {
+    const trimmed = text.trim();
+    if (trimmed.length < 15) return;
+    setAnalyzingJd(true);
+    setJdAnalysisError(null);
+    try {
+      const res = await fetch("/api/jd/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jdText: trimmed,
+          industryLabel: industry ? industryLabel(industry) : undefined,
+        }),
+      });
+      const data = (await res.json()) as JDMapResult & { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "공고 분석에 실패했습니다.");
+      setJdAnalysis(data);
+      setJdAnalysisSource(trimmed);
+      if (data.recommendedCompetency) {
+        setJdAnalysisNote(
+          `📄 ${competencyLabel(data.recommendedCompetency)} 역량을 이 공고에 맞게 추천했어요.${
+            data.competencyRationale ? ` ${data.competencyRationale}` : ""
+          }`,
+        );
+      } else {
+        setJdAnalysisNote("📄 공고 분석이 완료됐어요. 원하는 역량을 직접 골라 주세요.");
+      }
+    } catch (e) {
+      setJdAnalysis(null);
+      setJdAnalysisSource("");
+      setJdAnalysisNote(null);
+      setJdAnalysisError(e instanceof Error ? e.message : "공고 분석에 실패했습니다.");
+    } finally {
+      setAnalyzingJd(false);
+    }
   };
 
   const handleJdFile = async (file: File) => {
@@ -278,12 +334,16 @@ export function SetupForm({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to fetch JD");
-      setJdText(typeof data.text === "string" ? data.text : "");
+      const text = typeof data.text === "string" ? data.text : "";
+      setJdText(text);
       setShowJdEditor(false);
       setJdUrlStatus(
         `${s.jd.urlSuccess}${data.title ? ` · ${data.title}` : ""} (${data.chars ?? data.text?.length ?? 0}자)`,
       );
       if (typeof data.url === "string" && data.url !== url) setJdUrl(data.url);
+      if (text.trim().length >= 15) {
+        await analyzeJdText(text);
+      }
     } catch (e) {
       setJdUrlError(e instanceof Error ? e.message : "채용공고를 가져오지 못했습니다.");
     } finally {
@@ -319,6 +379,10 @@ export function SetupForm({
           tripleFeedbackMode,
           jdBonusEnabled: jdBonusEnabled && (!!jdText.trim() || !!jdUrl.trim()),
           questionCount,
+          precomputedJdAnalysis:
+            jdAnalysis && jdDraft && jdAnalysisSource === jdDraft
+              ? { ...jdAnalysis, sourceText: jdDraft }
+              : undefined,
         }),
       });
 
@@ -490,6 +554,16 @@ export function SetupForm({
                 {jdUrlError}
               </p>
             )}
+            {jdAnalysisNote && (
+              <p className="rounded-lg border border-gold/30 bg-gold/10 p-3 text-sm text-foreground">
+                {jdAnalysisNote}
+              </p>
+            )}
+            {jdAnalysisError && (
+              <p className="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+                {jdAnalysisError}
+              </p>
+            )}
           </div>
           <label
             className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed p-5 transition ${
@@ -541,11 +615,28 @@ export function SetupForm({
             <div className="space-y-2">
               <textarea
                 value={jdText}
-                onChange={(e) => setJdText(e.target.value)}
+                onChange={(e) => {
+                  setJdText(e.target.value);
+                  if (jdAnalysisSource && e.target.value.trim() !== jdAnalysisSource) {
+                    setJdAnalysis(null);
+                    setJdAnalysisSource("");
+                    setJdAnalysisNote(null);
+                  }
+                }}
                 rows={5}
                 placeholder={s.jd.placeholder}
                 className="input-luxe w-full text-sm"
               />
+              {jdDraft.length >= 80 && (
+                <button
+                  type="button"
+                  onClick={() => void analyzeJdText(jdDraft)}
+                  disabled={analyzingJd || fetchingJdUrl}
+                  className="btn-secondary px-4 py-2 text-sm disabled:opacity-50"
+                >
+                  {analyzingJd ? "공고 분석 중…" : "AI로 필요역량 분석"}
+                </button>
+              )}
               {jdReflectLabel && (
                 <button
                   type="button"
@@ -608,8 +699,12 @@ export function SetupForm({
           {competencies.map((c) => {
             const done = c.status === "COMPLETED";
             const active = focusCompetency === c.code;
+            const jdRecommended = Boolean(
+              jdAnalysis?.recommendedCompetency === c.code && !done
+            );
             const recommended = Boolean(
-              persona &&
+              !jdRecommended &&
+                persona &&
                 !done &&
                 (persona.focusCompetencies as string[]).includes(c.code)
             );
@@ -632,6 +727,14 @@ export function SetupForm({
               >
                 <span className="font-medium">
                   {c.label}
+                  {jdRecommended && (
+                    <span
+                      className="ml-1.5 rounded-full bg-gold/15 px-1.5 py-0.5 text-[10px] font-semibold text-gold"
+                      title={jdAnalysis?.competencyRationale ?? undefined}
+                    >
+                      📄 공고 분석 추천
+                    </span>
+                  )}
                   {recommended && (
                     <span className="ml-1.5 rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent">
                       ⭐ {s.competency.recommended}

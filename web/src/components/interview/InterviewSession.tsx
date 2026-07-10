@@ -15,6 +15,10 @@ import { displayQuestionText } from "@/lib/interview/build-question";
 import { COMPETENCY_SESSION_MAX_ITEMS } from "@/lib/interview/session-limits";
 import { ttsCacheKeyForQuestion } from "@/lib/interview/tts-cache-key";
 import { cn } from "@/lib/cn";
+import {
+  averageDimensions,
+  type AnswerDimensions,
+} from "@/lib/interview/answer-dimensions";
 import type {
   AnswerFeedback,
   ChipEvent,
@@ -52,6 +56,7 @@ export function InterviewSession({
   const [state, setState] = useState(initialState);
   const [processing, setProcessing] = useState(false);
   const [lastFeedback, setLastFeedback] = useState<AnswerFeedback | null>(null);
+  const [dimensionHistory, setDimensionHistory] = useState<AnswerDimensions[]>([]);
   const [ttsStatus, setTtsStatus] = useState<"idle" | "synthesizing" | "playing">("idle");
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(true);
 
@@ -213,7 +218,11 @@ export function InterviewSession({
       }
 
       if (data.answerFeedback) {
-        setLastFeedback(data.answerFeedback as AnswerFeedback);
+        const fb = data.answerFeedback as AnswerFeedback;
+        setLastFeedback(fb);
+        if (fb.dimensions && !fb.isInterim) {
+          setDimensionHistory((prev) => [...prev, fb.dimensions!]);
+        }
       }
 
       setState((prev) => ({
@@ -247,6 +256,10 @@ export function InterviewSession({
 
   const q = state.currentQuestion;
   const isPersonalized = !!q?.resumePersonalized;
+  const sessionAverage =
+    dimensionHistory.length > 1
+      ? averageDimensions(dimensionHistory.slice(0, -1))
+      : null;
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
@@ -370,9 +383,10 @@ export function InterviewSession({
             <TripleFeedbackPanel
               feedback={lastFeedback}
               tripleFeedback={lastFeedback.tripleFeedback}
+              sessionAverage={sessionAverage}
             />
           ) : (
-            <AnswerFeedbackPanel feedback={lastFeedback} />
+            <AnswerFeedbackPanel feedback={lastFeedback} sessionAverage={sessionAverage} />
           )
         ) : null}
 

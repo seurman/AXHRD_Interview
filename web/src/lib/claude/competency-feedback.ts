@@ -12,6 +12,9 @@ import {
   starRewriteTemplate,
 } from "@/lib/interview/feedback-helpers";
 import type { CompetencySummary } from "@/types";
+import {
+  normalizeCompetencyDimensions,
+} from "@/lib/interview/answer-dimensions";
 
 const DEEPSEEK_BASE = "https://api.deepseek.com";
 
@@ -21,10 +24,10 @@ export interface CompetencyFeedbackData {
   improvements: string[];
   suggestions: string[];
   dimensions: {
-    structure: number;
-    specificity: number;
-    relevance: number;
-    clarity: number;
+    starStructure: number;
+    questionIntent: number;
+    logic: number;
+    delivery: number;
   };
   score: number;
   /** 실제 답변에서 뽑은 인용문 + 코칭 노트 (Yoodli 등 선도 서비스의 "답변 하이라이트" 패턴 참고) */
@@ -53,7 +56,7 @@ const SYSTEM = `당신은 한국 취업 면접 코치입니다.
   "strengths": ["..."],
   "improvements": ["..."],
   "suggestions": ["다음 연습 방법"],
-  "dimensions": {"structure":0-100,"specificity":0-100,"relevance":0-100,"clarity":0-100},
+  "dimensions": {"starStructure":0-100,"questionIntent":0-100,"logic":0-100,"delivery":0-100},
   "score": 0-100,
   "highlights": [{"quote": "실제 답변 인용", "note": "1문장 코칭"}],
   "rewriteExample": "STAR로 다시 쓴 예시 문장",
@@ -128,9 +131,20 @@ export async function generateCompetencyFeedback(params: {
     const text = data?.choices?.[0]?.message?.content ?? "";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]) as CompetencyFeedbackData;
+      const parsed = JSON.parse(jsonMatch[0]) as CompetencyFeedbackData & {
+        dimensions?: unknown;
+      };
+      const normalizedDims = normalizeCompetencyDimensions(parsed.dimensions);
       return {
         ...parsed,
+        dimensions: normalizedDims
+          ? {
+              starStructure: normalizedDims.starStructure,
+              questionIntent: normalizedDims.questionIntent,
+              logic: normalizedDims.logic,
+              delivery: normalizedDims.delivery,
+            }
+          : mockCompetencyFeedback(params).dimensions,
         personaAlignmentNote: parsed.personaAlignmentNote?.trim() || null,
       };
     }
@@ -198,10 +212,10 @@ function mockCompetencyFeedback(params: {
       "다음 역량 면접 전 키워드 3개 메모",
     ],
     dimensions: {
-      structure: Math.round(avg * 100),
-      specificity: Math.round(avg * 90),
-      relevance: Math.round(params.summary.percentile),
-      clarity: Math.round(avg * 95),
+      starStructure: Math.round(avg * 100),
+      questionIntent: Math.round(params.summary.percentile),
+      logic: Math.round(avg * 90),
+      delivery: Math.round(avg * 95),
     },
     score,
     highlights:

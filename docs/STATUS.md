@@ -2,6 +2,20 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — JD 필요역량 추천 + 답변별 4축 레이더 (2026-07-10)
+
+- **PART A — JD → 역량 추천 (새 LLM 호출 없음)**:
+  - `deriveInterviewStyleFromJD`에 `recommendedCompetency`·`competencyRationale` 추가 (`COMPETENCY_CODES` 검증, 실패 시 null).
+  - `POST /api/jd/analyze` — 면접 시작 전 분석(인증·rate-limit은 `/api/jd/fetch`와 동일).
+  - `SetupForm`: URL 가져오기 성공 직후 분석 체이닝 · 붙여넣기 80자+ 「AI로 필요역량 분석」버튼 · 📄 공고 분석 추천 배지.
+  - `/api/interview/start`에 `precomputedJdAnalysis` 전달 → 동일 JD 원문이면 세션 시작 시 Gemini 재호출 생략.
+- **PART B — 답변 직후 4축 레이더 (새 LLM 호출 없음)**:
+  - `correctAndEvaluateAnswer` dimensions → `starStructure` / `questionIntent` / `logic` / `delivery`.
+  - `AnswerInsightRadar` — 골드→퍼플 그라디언트·framer-motion 진입·세션 평균(점선) 오버레이·최약 축 강조.
+  - `InterviewSession` `dimensionHistory`로 클라이언트 세션 평균 · `AnswerFeedbackPanel`·`TripleFeedbackPanel` 연결.
+  - `dimensionLabel()` 신규 라벨 + 구 키(`structure` 등) 폴백.
+- 검증: `npm run build`
+
 ## 최근 작업 — ARC Index 조직진단 1단계 (2026-07-10)
 
 - **별도 도메인 `Diagnostic*`**: 기존 `Survey*` 모델 미변경. `DiagnosticInstrument` / `Section` / `Subscale` / `Item` / `Wave` / `Team` / `Response` / `Answer`.
