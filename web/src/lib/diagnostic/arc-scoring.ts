@@ -1,5 +1,11 @@
 import type { DiagnosticItem } from "@prisma/client";
 
+/**
+ * ARC Index 결정론적 스코어링 — docs/arc-index/source/ARC_Index_산식표_통합설문지.md 정본.
+ * SE.C 헌신 문항은 DB에서 SEC01~03 (드라이버 C01~02 소통 문항과 코드 충돌 방지).
+ * OLS·HLM·LDA는 2~3단계 — 이번 모듈 미포함.
+ */
+
 export type AnswerValue = {
   numericValue?: number | null;
   textValue?: string | null;
@@ -44,6 +50,15 @@ export function pickImportance(answers: ScoredAnswers, codes: string[]): number[
     .filter((v): v is number => v != null && Number.isFinite(v));
 }
 
+export function bandOvi(ovi: number | null): string | null {
+  if (ovi == null) return null;
+  if (ovi >= 4.5) return "빠른 개선";
+  if (ovi >= 3.5) return "개선 중";
+  if (ovi >= 2.5) return "정체";
+  if (ovi >= 1.5) return "악화 중";
+  return "급속 악화";
+}
+
 export function healthBand(score: number | null): string | null {
   if (score == null) return null;
   if (score >= 4.5) return "탁월";
@@ -54,10 +69,11 @@ export function healthBand(score: number | null): string | null {
 
 export function bandOai(oai: number | null): string | null {
   if (oai == null) return null;
-  if (oai >= 4.5) return "방향정렬 탁월";
-  if (oai >= 3.5) return "방향정렬 양호";
+  if (oai >= 4.5) return "방향 정렬 탁월";
+  if (oai >= 3.5) return "방향 정렬 양호";
   if (oai >= 2.5) return "부분 정렬";
-  return "방향이탈";
+  if (oai >= 1.5) return "방향 이탈";
+  return "방향 붕괴";
 }
 
 export function bandOpportunityScore(score: number | null): {
@@ -71,7 +87,7 @@ export function bandOpportunityScore(score: number | null): {
       prescription: "AXG 해소 (거버넌스·가이드라인) 즉각 ROI",
     };
   }
-  if (score >= 0.1) {
+  if (score >= 0.1 && score < 1.0) {
     return { band: "의지·공포 균형", prescription: "AXS·AXC 병행 투자" };
   }
   if (score > -0.1 && score < 0.1) {
@@ -107,9 +123,9 @@ const DRIVER_CODES: Record<string, string[]> = {
   PS: ["PS01", "PS02", "PS03"],
   EM: ["EM01", "EM02", "EM03"],
   PM: ["PM01", "PM02"],
-  LG: ["LG01", "LG02", "LG03"],
+  LG: ["LG01", "LG02"],
   CI: ["CI01", "CI02"],
-  WE: ["WE01", "WE02", "WE03"],
+  WE: ["WE01", "WE02"],
   C: ["C01", "C02"],
 };
 
@@ -148,7 +164,7 @@ export function computeRiskIndex(
 
 export function computeOri(answers: ScoredAnswers, reversed: Set<string>) {
   const CD = average(pickRaw(answers, ["CD01", "CD02", "CD03", "CD04", "CD05"], reversed));
-  const LA = average(pickRaw(answers, ["LA01", "LA02", "LA03"], reversed));
+  const LA = average(pickRaw(answers, ["LA01", "LA02", "LA03", "LA04"], reversed));
   const AXS = average(pickRaw(answers, ["AXS01", "AXS02", "AXS03", "AXS04"], reversed));
   const AXC = average(pickRaw(answers, ["AXC01", "AXC02", "AXC03", "AXC04", "AXC05"], reversed));
   const ORI = average([CD, LA, AXS, AXC]);
@@ -156,6 +172,7 @@ export function computeOri(answers: ScoredAnswers, reversed: Set<string>) {
 }
 
 export function computeOpportunityScore(answers: ScoredAnswers, reversed: Set<string>) {
+  // AXG는 역문항 아님 — 높을수록 거버넌스 공포(구조 미비)
   const AXA = average(pickRaw(answers, ["AXA01", "AXA02"], reversed));
   const AXG = average(pickRaw(answers, ["AXG01", "AXG02"], reversed));
   const oppScore = AXA != null && AXG != null ? AXA - AXG : null;
@@ -177,8 +194,8 @@ export function computeDynamicCongruenceGap(AV: number | null, HV: number | null
 
 export function computeOai(answers: ScoredAnswers, reversed: Set<string>) {
   const SA = average(pickRaw(answers, ["SA01", "SA02", "SA03", "SA04", "SA05", "SA06"], reversed));
-  const EA = average(pickRaw(answers, ["EA01", "EA02", "EA03", "EA05", "EA06"], reversed));
-  const OA = average(pickRaw(answers, ["OA01", "OA02", "OA03", "OA04", "OA06"], reversed));
+  const EA = average(pickRaw(answers, ["EA01", "EA02", "EA03", "EA04", "EA05", "EA06"], reversed));
+  const OA = average(pickRaw(answers, ["OA01", "OA02", "OA03", "OA04", "OA05", "OA06"], reversed));
   const OAI = SA != null && EA != null && OA != null ? SA * 0.4 + EA * 0.35 + OA * 0.25 : null;
   return { SA, EA, OA, OAI, band: bandOai(OAI) };
 }
@@ -192,16 +209,16 @@ export function computeOaiPattern(
   if (OHI == null || ORI == null || OVI == null || OAI == null) return null;
   const hi = (v: number) => v >= 3.5;
   const lo = (v: number) => v < 3.5;
+  if (hi(OHI) && hi(ORI) && hi(OVI) && hi(OAI)) {
+    return {
+      pattern: "이상적 조직",
+      message: "4축 균형 상태. 번아웃 예방과 Wave 2 재진단 설계로 전환.",
+    };
+  }
   if (hi(OHI) && hi(OVI) && lo(OAI)) {
     return {
       pattern: "빠른 오류",
       message: "건강하고 빠른데 방향이 잘못됨. 3축만 보면 최우수 조직으로 오인 가능.",
-    };
-  }
-  if (hi(OHI) && lo(OVI) && lo(OAI)) {
-    return {
-      pattern: "건강한 표류",
-      message: "활력은 있으나 방향도 없고 속도도 없음. 공공기관에서 흔한 패턴.",
     };
   }
   if (lo(OHI) && lo(OVI) && hi(OAI)) {
@@ -210,10 +227,16 @@ export function computeOaiPattern(
       message: "지치고 느리지만 방향은 맞음. OHI·OVI 회복 후 빠른 성과.",
     };
   }
-  if (hi(OHI) && hi(ORI) && hi(OVI) && hi(OAI)) {
+  if (hi(ORI) && lo(OAI)) {
     return {
-      pattern: "이상적 조직",
-      message: "4축 균형 상태. 번아웃 예방과 Wave 2 재진단 설계로 전환.",
+      pattern: "준비됐지만 방향 없음",
+      message: "역량과 의지는 있는데 방향이 없다. 역량이 낭비되고 있다.",
+    };
+  }
+  if (hi(OVI) && lo(OAI)) {
+    return {
+      pattern: "무방향 질주",
+      message: "빠르게 달리는데 방향이 없다. 공공기관에서 두 번째로 흔한 위험 패턴.",
     };
   }
   return { pattern: "복합", message: "4축 교차 패턴 — 세부 축별 처방을 확인하세요." };
@@ -328,7 +351,7 @@ export function computeArcScoresFromAnswers(
     },
     ovi: {
       ...ovi,
-      band: healthBand(ovi.OVI),
+      band: bandOvi(ovi.OVI),
       dynamicCongruenceGap: dynamicGap,
     },
     oai: {

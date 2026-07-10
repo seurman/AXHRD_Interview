@@ -5,8 +5,11 @@
 
 import { enrichJdTextWithImageOcr } from "@/lib/company/jd-image-ocr";
 
-const MAX_BYTES = 1_500_000;
-const FETCH_TIMEOUT_MS = 12_000;
+// 사람인 등 채용 포털 상세페이지는 GTM·지도SDK·중복 메가메뉴 마크업 때문에
+// 실 방문자 눈에 보이는 텍스트보다 원본 HTML 용량이 훨씬 크다(실측 2~4MB대).
+// 기존 1.5MB 상한은 이런 페이지를 "페이지가 너무 큽니다" 에러로 잘못 튕겨냈다.
+const MAX_BYTES = 4_000_000;
+const FETCH_TIMEOUT_MS = 15_000;
 const MAX_TEXT_CHARS = 12_000;
 const MIN_USEFUL_CHARS = 150;
 
@@ -450,6 +453,7 @@ export async function fetchJdTextFromUrl(rawUrl: string): Promise<FetchJdUrlResu
     }
 
     if (!res.ok) {
+      console.warn(`[jd-fetch] non-ok response host=${parsed.hostname} status=${res.status}`);
       return {
         ok: false,
         error: `채용공고 페이지를 불러오지 못했습니다. (${res.status})`,
@@ -460,6 +464,9 @@ export async function fetchJdTextFromUrl(rawUrl: string): Promise<FetchJdUrlResu
     const contentType = (res.headers.get("content-type") ?? "").toLowerCase();
     const buf = Buffer.from(await res.arrayBuffer());
     if (buf.byteLength > MAX_BYTES) {
+      console.warn(
+        `[jd-fetch] page too large host=${parsed.hostname} bytes=${buf.byteLength} cap=${MAX_BYTES}`,
+      );
       return { ok: false, error: "페이지가 너무 큽니다. 텍스트를 직접 붙여넣어 주세요." };
     }
 
@@ -480,6 +487,9 @@ export async function fetchJdTextFromUrl(rawUrl: string): Promise<FetchJdUrlResu
     }
 
     if (text.length < MIN_USEFUL_CHARS || looksLikeNavBoilerplate(text) || looksLikeSaraminPageChrome(text)) {
+      console.warn(
+        `[jd-fetch] extraction too thin host=${parsed.hostname} bytes=${buf.byteLength} extractedChars=${text.length}`,
+      );
       return {
         ok: false,
         error:
@@ -498,11 +508,20 @@ export async function fetchJdTextFromUrl(rawUrl: string): Promise<FetchJdUrlResu
     };
   } catch (e) {
     if (e instanceof Error && e.name === "AbortError") {
+      console.warn(`[jd-fetch] timeout host=${parsed.hostname}`);
       return { ok: false, error: "요청 시간이 초과되었습니다. URL을 확인하거나 텍스트를 붙여넣어 주세요." };
     }
+    // 원본 네트워크 에러(예: "fetch failed")는 사용자에게 그대로 노출하지 않는다 —
+    // 서버 로그에만 남기고, 화면에는 다음 행동을 알려주는 안내 문구를 보여준다.
+    console.warn(
+      `[jd-fetch] network error host=${parsed.hostname} message=${e instanceof Error ? e.message : String(e)} cause=${
+        e instanceof Error && e.cause ? String(e.cause) : "none"
+      }`,
+    );
     return {
       ok: false,
-      error: e instanceof Error ? e.message : "채용공고 URL을 가져오지 못했습니다.",
+      error:
+        "채용공고 페이지에 접속하지 못했습니다. 해당 사이트가 자동 접속을 막고 있을 수 있습니다 — 채용공고 내용을 직접 복사해서 붙여넣어 주세요.",
     };
   } finally {
     clearTimeout(timer);

@@ -1,6 +1,6 @@
 /**
  * ARC Index diagnostic instrument seed data.
- * Item text sourced verbatim from docs/arc-index/source/ (OHI v2, ORI, OVI, OAI final docs).
+ * Item text sourced verbatim from docs/arc-index/source/ (OHI/ORI/OVI/OAI 최종 확정본).
  */
 
 export type SeedItem = {
@@ -102,18 +102,21 @@ export const ARC_INDEX_SEED = {
               itemCode: 'E01',
               textKo: '매일 아침 나는 업무에 대한 의욕과 에너지를 느낀다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 1,
             },
             {
               itemCode: 'E02',
               textKo: '나는 하루 종일 업무에 필요한 에너지를 유지할 수 있다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 2,
             },
             {
               itemCode: 'E03',
               textKo: '업무에서 어렵고 힘든 상황이 생겨도 나는 끈기 있게 계속 나아간다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 3,
             },
           ],
@@ -128,18 +131,21 @@ export const ARC_INDEX_SEED = {
               itemCode: 'SEC01',
               textKo: '내 업무는 나에게 깊은 의미와 성취감을 준다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 1,
             },
             {
               itemCode: 'SEC02',
               textKo: '나는 내가 하는 일에 열정과 자부심을 느낀다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 2,
             },
             {
               itemCode: 'SEC03',
               textKo: '나는 이 조직의 미래가 나의 미래와 연결되어 있다고 느낀다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 3,
             },
           ],
@@ -153,12 +159,14 @@ export const ARC_INDEX_SEED = {
               itemCode: 'F01',
               textKo: '일을 할 때 나는 완전히 집중하여 시간 가는 줄 모를 때가 있다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 1,
             },
             {
               itemCode: 'F02',
               textKo: '업무를 할 때 나는 다른 모든 것을 잊고 완전히 몰두하는 경우가 있다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 2,
             },
             {
@@ -178,18 +186,21 @@ export const ARC_INDEX_SEED = {
               itemCode: 'BO01',
               textKo: '나는 지난 3개월간 업무 개선이나 새로운 아이디어를 자발적으로 제안한 적이 있다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 1,
             },
             {
               itemCode: 'BO02',
               textKo: '나는 담당 업무 범위를 넘어서도 팀의 성공을 위해 자발적으로 기여한다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 2,
             },
             {
               itemCode: 'BO03',
               textKo: '나는 이 조직에서 중요한 문제가 있을 때 침묵하지 않고 목소리를 낸다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 3,
             },
             {
@@ -209,12 +220,14 @@ export const ARC_INDEX_SEED = {
               itemCode: 'TL01',
               textKo: '우리 팀 리더는 내가 어려운 상황에 처했을 때 나를 지지해줄 것이라고 믿는다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 1,
             },
             {
               itemCode: 'TL02',
               textKo: '우리 팀 리더는 팀원 각자의 역량과 판단을 진심으로 존중한다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 2,
             },
           ],
@@ -228,12 +241,14 @@ export const ARC_INDEX_SEED = {
               itemCode: 'TL03',
               textKo: '우리 팀 리더는 내 강점과 성장 가능성에 관심을 갖고 구체적으로 지원한다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 1,
             },
             {
               itemCode: 'TL04',
               textKo: '우리 팀 리더는 내 성과에 대해 도움이 되는 피드백을 적시에 준다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 2,
             },
           ],
@@ -247,12 +262,14 @@ export const ARC_INDEX_SEED = {
               itemCode: 'TL05',
               textKo: '우리 팀 리더 앞에서 나는 모르는 것을 모른다고 편하게 말할 수 있다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 1,
             },
             {
               itemCode: 'TL06',
               textKo: '우리 팀에서 새로운 시도가 잘 안 되더라도 그것이 불이익으로 돌아오지 않는다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 2,
             },
             {
@@ -272,12 +289,14 @@ export const ARC_INDEX_SEED = {
               itemCode: 'D01',
               textKo: '우리 기관의 미션과 전략 방향이 나에게 명확하게 전달된다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 1,
             },
             {
               itemCode: 'D02',
               textKo: '우리 기관은 외부 환경 변화를 빠르게 감지하고 실제로 대응한다',
               scaleType: 'AGREEMENT_5',
+              hasImportanceAxis: true,
               order: 2,
             },
             {
