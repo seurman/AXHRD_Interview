@@ -31,8 +31,6 @@ export async function listRepositoryCompetencies(
     isActive: c.isActive,
     source: c.source,
     questionCount: c._count.questions,
-    createdAt: c.createdAt.toISOString(),
-    updatedAt: c.updatedAt.toISOString(),
   }));
 }
 

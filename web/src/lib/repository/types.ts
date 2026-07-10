@@ -25,8 +25,6 @@ export type RepositoryCompetencyRow = {
   isActive: boolean;
   source: string;
   questionCount: number;
-  createdAt: string;
-  updatedAt: string;
 };
 
 export type RubricDetailInput = {
