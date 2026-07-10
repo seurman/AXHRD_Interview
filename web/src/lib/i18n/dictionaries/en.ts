@@ -32,6 +32,7 @@ export const dictionary: Dictionary = {
       login: "Sign in",
       register: "Sign up",
       logout: "Sign out",
+      adminMode: "Admin console",
     },
     admin: {
       title: "Admin",

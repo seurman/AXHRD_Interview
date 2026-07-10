@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { LogoutButton } from "./LogoutButton";
+import { AdminModeButton } from "./AdminModeButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { getMobileNavLabel } from "./MainNav";
@@ -13,7 +14,7 @@ import { ClipDynamic } from "@/components/ui/ClipDynamic";
 import { useNavSessionContext } from "@/components/layout/NavSessionProvider";
 import { useRouteTransition } from "./RouteTransitionProvider";
 import { useI18n } from "@/lib/i18n/I18nProvider";
-import type { AdminNavSection, PrepareLabelKey } from "@/lib/platform/nav-registry";
+import type { PrepareLabelKey } from "@/lib/platform/nav-registry";
 
 type SaasLinksConfig = {
   titleKey: "saas";
@@ -91,9 +92,9 @@ export function MobileNav({
   dashboardHref,
   prepareLinks,
   profileHref,
-  adminSections,
   saasLinks,
   headerLinks = [],
+  adminModeEnabled = false,
   userName,
   loggedIn,
   guestMenu,
@@ -102,9 +103,9 @@ export function MobileNav({
   dashboardHref: string | null;
   prepareLinks: { href: string; labelKey: PrepareLabelKey }[];
   profileHref: string | null;
-  adminSections: AdminNavSection[];
   saasLinks?: SaasLinksConfig | null;
   headerLinks?: { href: string; label: string }[];
+  adminModeEnabled?: boolean;
   userName?: string;
   loggedIn: boolean;
   guestMenu: boolean;
@@ -128,13 +129,13 @@ export function MobileNav({
     saasLinks?.links.forEach((l) => hrefs.add(l.href));
     saasLinks?.settingsLinks.forEach((l) => hrefs.add(l.href));
     headerLinks.forEach((l) => hrefs.add(l.href));
-    adminSections.forEach((s) => s.links.forEach((l) => hrefs.add(l.href)));
+    if (adminModeEnabled) hrefs.add("/admin");
     if (!loggedIn) {
       hrefs.add("/auth/login");
       hrefs.add("/auth/register");
     }
     return [...hrefs];
-  }, [adminSections, dashboardHref, headerLinks, loggedIn, prepareLinks, profileHref, saasLinks]);
+  }, [adminModeEnabled, dashboardHref, headerLinks, loggedIn, prepareLinks, profileHref, saasLinks]);
 
   useEffect(() => {
     setMounted(true);
@@ -171,9 +172,6 @@ export function MobileNav({
     [...saasLinks.links, ...saasLinks.settingsLinks].some(
       (l) => pathname === l.href || pathname.startsWith(`${l.href}/`)
     );
-  const adminActive = adminSections.some((s) =>
-    s.links.some((l) => pathname === l.href || pathname.startsWith(`${l.href}/`))
-  );
 
   const prepareLabelKey: Record<PrepareLabelKey, PrepareLabelKey> = {
     trialInterview: "trialInterview",
@@ -292,35 +290,18 @@ export function MobileNav({
               )}
             </AccordionSection>
           )}
-
-          {adminSections.length > 0 && (
-            <AccordionSection title={c.admin.title} defaultOpen={adminActive} active={adminActive}>
-              {adminSections.map((section) => (
-                <div key={section.sectionKey} className="mb-1">
-                  <p className="keep-one-line mb-0.5 mt-2 px-5 text-[10px] font-semibold uppercase tracking-wider text-muted">
-                    {c.admin.sections[section.sectionKey]}
-                  </p>
-                  {section.links.map((l) => (
-                    <MobileNavLink
-                      key={l.href}
-                      href={l.href}
-                      onNavigate={closeDrawer}
-                      className={linkClass(l.href, true)}
-                    >
-                      {c.admin[l.labelKey]}
-                    </MobileNavLink>
-                  ))}
-                </div>
-              ))}
-            </AccordionSection>
-          )}
         </nav>
 
         <div className="shrink-0 border-t border-card-border pt-4">
           {loading ? (
             <p className="px-3 py-2 text-center text-sm text-muted">{c.menuLoading}</p>
           ) : loggedIn ? (
-            <LogoutButton variant="drawer" label={c.auth.logout} />
+            <>
+              {adminModeEnabled && (
+                <AdminModeButton label={c.auth.adminMode} variant="drawer" />
+              )}
+              <LogoutButton variant="drawer" label={c.auth.logout} />
+            </>
           ) : guestMenu ? (
             <div className="flex flex-col gap-2">
               <MobileNavLink

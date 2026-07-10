@@ -8,7 +8,7 @@ import {
   isPersonalTrialOnlyUser,
   loadPersonalAccessContext,
 } from "@/lib/auth/personal-access";
-import { deriveHeaderLinks } from "@/lib/nav/header-links";
+import { deriveHeaderLinks, deriveAdminModeEnabled } from "@/lib/nav/header-links";
 import type { NavPayload } from "@/lib/nav/client-types";
 
 /** 클라이언트 헤더용 — 로그인 상태·역할별 네비 구성 */
@@ -33,6 +33,7 @@ export async function GET() {
       organizationId: null,
       isSuperAdmin: false,
       headerLinks: [],
+      adminModeEnabled: false,
       trialOnly: false,
       canPresentDemo: false,
       dashboardHref: null,
@@ -72,6 +73,7 @@ export async function GET() {
     organizationId: user.organizationId,
     isSuperAdmin: hasSuperadminAccess(user) || (nav.isSuperAdmin ?? false),
     headerLinks: [],
+    adminModeEnabled: false,
     trialOnly: isPersonalTrialOnlyUser(user, personalContext),
     canPresentDemo: canManageDemoWorkspaces({
       email: user.email,
@@ -86,6 +88,7 @@ export async function GET() {
 
   body.headerLinks =
     nav.headerLinks?.length > 0 ? nav.headerLinks : deriveHeaderLinks(body);
+  body.adminModeEnabled = deriveAdminModeEnabled(body);
 
   return NextResponse.json(body);
 }

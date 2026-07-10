@@ -7,7 +7,7 @@ import { Logo } from "@/components/brand/Logo";
 import { MobileNav } from "./MobileNav";
 import { MainNav } from "./MainNav";
 import { BillingPastDueBanner } from "@/components/billing/BillingPastDueBanner";
-import { deriveHeaderLinks } from "@/lib/nav/header-links";
+import { deriveHeaderLinks, deriveAdminModeEnabled } from "@/lib/nav/header-links";
 import { useMemo } from "react";
 
 export function AppHeader() {
@@ -20,8 +20,8 @@ export function AppHeader() {
   const prepareLinks = nav?.prepareLinks ?? [];
   const profileHref = nav?.profileHref ?? null;
   const saasLinks = nav?.saasLinks ?? null;
-  const adminSections = nav?.adminSections ?? [];
   const headerLinks = useMemo(() => deriveHeaderLinks(nav), [nav]);
+  const adminModeEnabled = useMemo(() => deriveAdminModeEnabled(nav), [nav]);
   const userName = nav?.userName ?? undefined;
 
   return (
@@ -38,19 +38,18 @@ export function AppHeader() {
           </Link>
 
           <MainNav
-            adminSections={adminSections}
             dashboardHref={dashboardHref}
             loggedIn={loggedIn}
             prepareLinks={prepareLinks}
             profileHref={profileHref}
             saasLinks={saasLinks}
             headerLinks={headerLinks}
+            adminModeEnabled={adminModeEnabled}
             userName={userName}
             loading={!navReady && loading}
           />
 
           <MobileNav
-            adminSections={adminSections}
             dashboardHref={dashboardHref}
             loggedIn={loggedIn}
             guestMenu={navReady && !loggedIn}
@@ -59,6 +58,7 @@ export function AppHeader() {
             profileHref={profileHref}
             saasLinks={saasLinks}
             headerLinks={headerLinks}
+            adminModeEnabled={adminModeEnabled}
             userName={userName}
           />
         </div>

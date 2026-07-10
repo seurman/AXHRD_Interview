@@ -8,29 +8,19 @@ export function deriveHeaderLinks(nav: NavPayload | null): { href: string; label
 
   const links: { href: string; label: string }[] = [];
 
-  if (nav.isSuperAdmin) {
-    if (nav.organizationId) {
-      links.push({ href: "/org/diagnosis", label: "조직진단" });
-    }
-    links.push({ href: "/admin/diagnostic", label: "진단 CMS" });
-    return links;
-  }
-
-  const adminHrefs = new Set(nav.adminSections.flatMap((s) => s.links.map((l) => l.href)));
-
-  const showCms =
-    adminHrefs.has("/admin/diagnostic") || adminHrefs.has("/admin/organizations");
   const showOrgDiagnosis =
     !!nav.organizationId &&
-    (nav.saasLinks?.links.some((l) => l.labelKey === "diagnosticDashboard") ||
-      adminHrefs.has("/admin/organizations"));
+    (nav.saasLinks?.links.some((l) => l.labelKey === "diagnosticDashboard") ?? false);
 
   if (showOrgDiagnosis) {
     links.push({ href: "/org/diagnosis", label: "조직진단" });
   }
-  if (showCms) {
-    links.push({ href: "/admin/diagnostic", label: "진단 CMS" });
-  }
 
   return links;
+}
+
+export function deriveAdminModeEnabled(nav: NavPayload | null): boolean {
+  if (!nav?.loggedIn) return false;
+  if (nav.adminModeEnabled) return true;
+  return nav.adminSections.some((s) => s.links.length > 0);
 }

@@ -31,6 +31,7 @@ export const dictionary: Dictionary = {
       login: "로그인",
       register: "회원가입",
       logout: "로그아웃",
+      adminMode: "관리자 모드",
     },
     admin: {
       title: "관리",

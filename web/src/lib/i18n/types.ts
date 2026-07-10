@@ -35,6 +35,7 @@ export type Dictionary = {
       login: string;
       register: string;
       logout: string;
+      adminMode: string;
     };
     admin: {
       title: string;

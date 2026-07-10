@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoutButton } from "./LogoutButton";
+import { AdminModeButton } from "./AdminModeButton";
 import { NavDropdownMenu } from "./NavDropdownMenu";
 import { SaasNavMenu } from "./SaasNavMenu";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { ClipDynamic } from "@/components/ui/ClipDynamic";
 import { useI18n } from "@/lib/i18n/I18nProvider";
-import type { AdminNavSection, PrepareLabelKey } from "@/lib/platform/nav-registry";
+import type { PrepareLabelKey } from "@/lib/platform/nav-registry";
 
 type SaasLinksConfig = {
   titleKey: "saas";
@@ -25,9 +26,9 @@ export function MainNav({
   dashboardHref,
   prepareLinks,
   profileHref,
-  adminSections,
   saasLinks,
   headerLinks = [],
+  adminModeEnabled = false,
   userName,
   loggedIn,
   loading = false,
@@ -35,9 +36,9 @@ export function MainNav({
   dashboardHref: string | null;
   prepareLinks: { href: string; labelKey: PrepareLabelKey }[];
   profileHref: string | null;
-  adminSections: AdminNavSection[];
   saasLinks?: SaasLinksConfig | null;
   headerLinks?: { href: string; label: string }[];
+  adminModeEnabled?: boolean;
   userName?: string;
   loggedIn: boolean;
   loading?: boolean;
@@ -144,19 +145,9 @@ export function MainNav({
         />
       )}
 
-      <NavDropdownMenu
-        title={c.admin.title}
-        sections={adminSections.map((s) => ({
-          title: c.admin.sections[s.sectionKey],
-          links: s.links.map((l) => ({
-            href: l.href,
-            label: c.admin[l.labelKey],
-          })),
-        }))}
-      />
-
       <LanguageSwitcher />
       <ThemeSwitcher />
+      {adminModeEnabled && <AdminModeButton label={c.auth.adminMode} />}
       <LogoutButton variant="nav" label={c.auth.logout} />
     </nav>
   );

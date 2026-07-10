@@ -238,11 +238,8 @@ export async function buildNavigationForUser(
   }
 
   const headerLinks: { href: string; label: string }[] = [];
-  if (caps.has("platform.diagnostic") || superAdmin) {
-    headerLinks.push({ href: "/admin/diagnostic", label: "진단 CMS" });
-  }
-  if (hasOrgMembership && (caps.has("tenant.diagnostic") || superAdmin)) {
-    headerLinks.unshift({ href: "/org/diagnosis", label: "조직진단" });
+  if (hasOrgMembership && caps.has("tenant.diagnostic")) {
+    headerLinks.push({ href: "/org/diagnosis", label: "조직진단" });
   }
 
   const visibleAdmin = PLATFORM_NAV_ORDER.filter((item) => caps.has(item.capability));

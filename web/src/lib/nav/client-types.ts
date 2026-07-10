@@ -13,8 +13,10 @@ export type NavPayload = {
   orgRole: string | null;
   organizationId: string | null;
   isSuperAdmin: boolean;
-  /** 수퍼어드민 — 헤더 직접 링크 (조직진단·진단 CMS) */
+  /** 기관 조직진단 — 헤더 직접 링크 (플랫폼 CMS는 관리자 모드로 분리) */
   headerLinks: { href: string; label: string }[];
+  /** Platform Console (/admin) 접근 가능 */
+  adminModeEnabled: boolean;
   /** FREE 개인 사용자 — 5분 면접 체험만 허용 */
   trialOnly: boolean;
   canPresentDemo: boolean;
@@ -32,6 +34,7 @@ export const GUEST_NAV: NavPayload = {
   organizationId: null,
   isSuperAdmin: false,
   headerLinks: [],
+  adminModeEnabled: false,
   trialOnly: false,
   canPresentDemo: false,
   dashboardHref: null,
