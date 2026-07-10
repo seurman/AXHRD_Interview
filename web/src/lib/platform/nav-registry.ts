@@ -75,25 +75,32 @@ const ADMIN_SECTION_ORDER: AdminSectionKey[] = ["tenants", "product", "operation
 async function loadOrgAdminFlags(organizationId: string): Promise<{
   tenantPersonalizationEnabled: boolean;
   diagnosticEnabled: boolean;
+  interviewEnabled: boolean;
 }> {
   const { prisma } = await import("@/lib/prisma");
   try {
     const org = await prisma.organization.findUnique({
       where: { id: organizationId },
-      select: { saasPersonalizationEnabled: true, diagnosticEnabled: true },
+      select: {
+        saasPersonalizationEnabled: true,
+        diagnosticEnabled: true,
+        interviewEnabled: true,
+      },
     });
     return {
       tenantPersonalizationEnabled: org?.saasPersonalizationEnabled ?? false,
       diagnosticEnabled: org?.diagnosticEnabled ?? false,
+      interviewEnabled: org?.interviewEnabled ?? true,
     };
   } catch {
     const org = await prisma.organization.findUnique({
       where: { id: organizationId },
-      select: { saasPersonalizationEnabled: true },
+      select: { saasPersonalizationEnabled: true, interviewEnabled: true },
     });
     return {
       tenantPersonalizationEnabled: org?.saasPersonalizationEnabled ?? false,
       diagnosticEnabled: false,
+      interviewEnabled: org?.interviewEnabled ?? true,
     };
   }
 }
@@ -140,6 +147,7 @@ export async function buildNavigationForUser(
   const superAdmin = isSuperAdminUser(user);
   let tenantPersonalizationEnabled = superAdmin;
   let diagnosticEnabled = superAdmin;
+  let interviewEnabled = superAdmin;
   let billingTier: import("@prisma/client").PlanTier | undefined;
   if (user.id) {
     const { getBillingContext } = await import("@/lib/billing/subscription");
@@ -150,9 +158,11 @@ export async function buildNavigationForUser(
     const flags = await loadOrgAdminFlags(user.organizationId);
     tenantPersonalizationEnabled = superAdmin || flags.tenantPersonalizationEnabled;
     diagnosticEnabled = superAdmin || flags.diagnosticEnabled;
+    interviewEnabled = superAdmin || flags.interviewEnabled;
   }
 
   const context: AccessContext = {
+    interviewEnabled,
     tenantPersonalizationEnabled,
     diagnosticEnabled,
     billingTier,

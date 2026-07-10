@@ -5,7 +5,8 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 import { OrgCreatePanel } from "@/components/admin/OrgCreatePanel";
-import { OrgDiagnosticToggle } from "@/components/admin/OrgDiagnosticToggle";
+import { OrgEntitlementsPanel } from "@/components/admin/OrgEntitlementsPanel";
+import { OrgProductBadges } from "@/components/admin/OrgProductBadges";
 import { OrgKindBadge } from "@/components/admin/OrgKindBadge";
 import { OrgReviewActions } from "@/components/admin/OrgReviewActions";
 import { OrgStatusBadge } from "@/components/admin/OrgStatusBadge";
@@ -16,6 +17,7 @@ import {
   getOrgContractStatus,
   resolveOrgSeatCap,
 } from "@/lib/org/contract";
+import { readOrgEntitlements } from "@/lib/org/entitlements";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +51,7 @@ export default async function AdminOrganizationsPage() {
       <AdminPageHeader
         eyebrow={PLATFORM_EYEBROW.tenants}
         title="기관"
-        subtitle="테넌트 생성·승인·유형(취업센터/인사팀)·이용 기간·플랜·권한을 한곳에서 관리합니다."
+        subtitle="테넌트 생성·승인·유형(취업센터/인사팀)·이용 기간·플랜·제품 entitlement를 한곳에서 관리합니다."
         links={[{ href: "/admin/organizations/benchmark", label: "기관 비교 →" }]}
       />
       <OrgCreatePanel />
@@ -96,7 +98,7 @@ export default async function AdminOrganizationsPage() {
       <AdminSection
         id="active"
         title={`운영 중인 기관 (${active.length})`}
-        description="행을 클릭해 허브로 이동합니다. 조직진단 SKU는 목록 하단 토글 또는 허브에서 설정합니다."
+        description="행을 클릭해 허브로 이동합니다. 제품 토글은 목록에서 빠르게 변경하거나 허브에서 상세 설정합니다."
       >
         {active.length === 0 ? (
           <p className="text-sm text-muted">승인된 기관이 없습니다.</p>
@@ -105,6 +107,7 @@ export default async function AdminOrganizationsPage() {
             {active.map((org) => {
               const seatCap = resolveOrgSeatCap(org, org.subscriptions[0]);
               const contractStatus = getOrgContractStatus(org);
+              const entitlements = readOrgEntitlements(org);
               return (
                 <li key={org.id} className="border-b border-card-border last:border-0">
                   <Link
@@ -116,16 +119,7 @@ export default async function AdminOrganizationsPage() {
                         {org.name}
                       </span>
                       <OrgKindBadge kind={org.kind} />
-                      {org.diagnosticEnabled && (
-                        <Badge tone="accent" className="text-[10px]">
-                          진단
-                        </Badge>
-                      )}
-                      {org.saasPersonalizationEnabled && (
-                        <Badge tone="gold" className="text-[10px]">
-                          맞춤
-                        </Badge>
-                      )}
+                      <OrgProductBadges entitlements={entitlements} />
                       <span className="text-xs text-muted">
                         {org._count.members}명{seatCap != null ? ` / ${seatCap}` : ""}
                       </span>
@@ -141,10 +135,10 @@ export default async function AdminOrganizationsPage() {
                     </div>
                   </Link>
                   <div className="border-t border-card-border/60 px-6 py-2">
-                    <OrgDiagnosticToggle
+                    <OrgEntitlementsPanel
                       organizationId={org.id}
                       organizationName={org.name}
-                      enabled={org.diagnosticEnabled}
+                      entitlements={entitlements}
                       compact
                     />
                   </div>

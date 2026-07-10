@@ -9,8 +9,8 @@ import { requireSuperadmin } from "@/lib/auth/guards";
 import { getOrgHubSnapshot } from "@/lib/org/hub-data";
 import { OrgContractEditor } from "@/components/admin/OrgContractEditor";
 import { OrgKindBadge } from "@/components/admin/OrgKindBadge";
-import { OrgHubPersonalizationToggle } from "@/components/admin/OrgHubPersonalizationToggle";
-import { OrgDiagnosticToggle } from "@/components/admin/OrgDiagnosticToggle";
+import { OrgEntitlementsPanel } from "@/components/admin/OrgEntitlementsPanel";
+import { OrgProductBadges } from "@/components/admin/OrgProductBadges";
 import { OrgReviewActions } from "@/components/admin/OrgReviewActions";
 import { OrgStatusBadge } from "@/components/admin/OrgStatusBadge";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -69,8 +69,7 @@ export default async function AdminOrgHubPage({ params }: Props) {
           {hub.subscription && (
             <Badge tone="neutral">{planLabel(hub.subscription.planTier)}</Badge>
           )}
-          {hub.diagnosticEnabled && <Badge tone="accent">조직진단 ON</Badge>}
-          {hub.personalizationEnabled && <Badge tone="gold">맞춤 설정 ON</Badge>}
+          <OrgProductBadges entitlements={hub.entitlements} />
         </div>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -108,9 +107,9 @@ export default async function AdminOrgHubPage({ params }: Props) {
         </div>
       </div>
 
-      {hub.status === "APPROVED" && !hub.diagnosticEnabled && (
+      {hub.status === "APPROVED" && !hub.entitlements.diagnostic && (
         <div className="rounded-xl border border-amber-300/50 bg-amber-50/80 px-5 py-4 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
-          <strong>조직진단 SKU가 꺼져 있습니다.</strong> 아래 토글을 켜야 기관 ADMIN 메뉴에 조직진단이
+          <strong>조직진단 제품이 꺼져 있습니다.</strong> 아래 토글을 켜야 기관 ADMIN 메뉴에 조직진단이
           표시됩니다. 수퍼어드민 캠페인은{" "}
           <Link href="/admin/diagnostic" className="text-accent hover:underline">
             조직진단 CMS
@@ -120,19 +119,16 @@ export default async function AdminOrgHubPage({ params }: Props) {
       )}
 
       {hub.status === "APPROVED" && (
-        <AdminSection title="SKU · 기능 토글" description="기관 ADMIN에게 노출되는 모듈을 제어합니다.">
-          <div className="grid gap-4 md:grid-cols-2">
-            <OrgHubPersonalizationToggle
-              organizationId={hub.id}
-              enabled={hub.personalizationEnabled}
-              enabledAt={hub.personalizationEnabledAt?.toISOString() ?? null}
-            />
-            <OrgDiagnosticToggle
-              organizationId={hub.id}
-              organizationName={hub.name}
-              enabled={hub.diagnosticEnabled}
-            />
-          </div>
+        <AdminSection
+          title="제품 Entitlement"
+          description="기관 1개에 면접·역량평가·조직진단 SKU를 독립적으로 켜고 끕니다."
+        >
+          <OrgEntitlementsPanel
+            organizationId={hub.id}
+            organizationName={hub.name}
+            entitlements={hub.entitlements}
+            competencyEnabledAt={hub.personalizationEnabledAt?.toISOString() ?? null}
+          />
         </AdminSection>
       )}
 
@@ -155,25 +151,29 @@ export default async function AdminOrgHubPage({ params }: Props) {
       {hub.status === "APPROVED" && (
         <AdminSection title="워크스페이스" description="기관 ADMIN이 보는 화면과 동일한 미리보기·편집 진입점">
           <div className="grid gap-4 md:grid-cols-2">
-            <AdminHubTile
-              href={`${hubBase}/cohort`}
-              title="코호트 대시보드"
-              description="학생 면접 현황·역량 집계"
-              meta={
-                hub.cohort?.overallAvgPercentile != null
-                  ? `평균 백분위 ${Math.round(hub.cohort.overallAvgPercentile)}`
-                  : undefined
-              }
-              icon={BarChart3}
-            />
-            <AdminHubTile
-              href={`${hubBase}/interview-kit`}
-              title="인터뷰 킷"
-              description="역량·문항·L1~L5 루브릭 조립"
-              meta={hub.kitCount > 0 ? `${hub.kitCount}개 역량 설정됨` : "아직 설정 없음"}
-              icon={ClipboardList}
-            />
-            {hub.diagnosticEnabled && (
+            {hub.entitlements.interview && (
+              <AdminHubTile
+                href={`${hubBase}/cohort`}
+                title="코호트 대시보드"
+                description="학생 면접 현황·역량 집계"
+                meta={
+                  hub.cohort?.overallAvgPercentile != null
+                    ? `평균 백분위 ${Math.round(hub.cohort.overallAvgPercentile)}`
+                    : undefined
+                }
+                icon={BarChart3}
+              />
+            )}
+            {hub.entitlements.competency && (
+              <AdminHubTile
+                href={`${hubBase}/interview-kit`}
+                title="인터뷰 킷"
+                description="역량·문항·L1~L5 루브릭 조립"
+                meta={hub.kitCount > 0 ? `${hub.kitCount}개 역량 설정됨` : "아직 설정 없음"}
+                icon={ClipboardList}
+              />
+            )}
+            {hub.entitlements.diagnostic && (
               <AdminHubTile
                 href="/admin/diagnostic"
                 title="조직진단 CMS"

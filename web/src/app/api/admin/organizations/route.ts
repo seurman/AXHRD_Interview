@@ -7,6 +7,7 @@ import { logAdminAudit } from "@/lib/admin/audit";
 import { generateJoinCode } from "@/lib/org/join-code";
 import { resolveOrgPeriodForCreate } from "@/lib/org/period";
 import { ORG_KIND_CONFIG, parseOrgKind } from "@/lib/org/kinds";
+import { ORG_KIND_PRODUCT_DEFAULTS } from "@/lib/org/entitlements";
 import { upsertOrgSubscription } from "@/lib/billing/org-subscription";
 import { ORG_PLAN_TIERS } from "@/lib/billing/plans";
 import type { OrgKind, OrgStatus, PlanTier, SubscriptionStatus } from "@prisma/client";
@@ -121,10 +122,24 @@ export async function POST(req: Request) {
   const adminUserEmail =
     typeof body.adminUserEmail === "string" ? body.adminUserEmail.trim().toLowerCase() : "";
 
+  const productDefaults = ORG_KIND_PRODUCT_DEFAULTS[kind];
+
+  const interviewEnabled =
+    typeof body.interviewEnabled === "boolean"
+      ? body.interviewEnabled
+      : productDefaults.interview;
+
+  const diagnosticEnabled =
+    typeof body.diagnosticEnabled === "boolean"
+      ? body.diagnosticEnabled
+      : productDefaults.diagnostic;
+
   const saasPersonalizationEnabled =
     typeof body.saasPersonalizationEnabled === "boolean"
       ? body.saasPersonalizationEnabled
-      : kindPreset.defaultSaas;
+      : typeof body.competencyEnabled === "boolean"
+        ? body.competencyEnabled
+        : productDefaults.competency;
 
   let planTier: PlanTier | null = null;
   if (body.planTier === null || body.planTier === "" || body.planTier === "NONE") {
@@ -159,6 +174,8 @@ export async function POST(req: Request) {
         validUntil,
         maxSeats,
         adminNotes: adminNotes || null,
+        interviewEnabled,
+        diagnosticEnabled,
         saasPersonalizationEnabled,
         saasPersonalizationEnabledAt: saasPersonalizationEnabled ? now : null,
       },
@@ -214,6 +231,8 @@ export async function POST(req: Request) {
       validUntil: result.org.validUntil?.toISOString() ?? null,
       maxSeats: result.org.maxSeats,
       planTier: result.subscription?.planTier ?? null,
+      interviewEnabled: result.org.interviewEnabled,
+      diagnosticEnabled: result.org.diagnosticEnabled,
       saasPersonalizationEnabled: result.org.saasPersonalizationEnabled,
       adminAssigned: result.adminAssigned,
     },

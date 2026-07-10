@@ -168,6 +168,8 @@ model Organization {
   rubricSets   RubricSet[]
   diagnosticWaves DiagnosticWave[]
   diagnosticEnabled Boolean @default(false)
+  /** 면접·코호트·세션 (기본 ON) */
+  interviewEnabled Boolean @default(true)
 }
 
 // ── User ──

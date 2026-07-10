@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCohortData } from "@/lib/org/cohort";
+import { readOrgEntitlements } from "@/lib/org/entitlements";
 import {
   formatOrgPeriod,
   getOrgContractStatus,
@@ -73,6 +74,8 @@ export async function getOrgHubSnapshot(organizationId: string) {
     personalizationEnabled: org.saasPersonalizationEnabled,
     personalizationEnabledAt: org.saasPersonalizationEnabledAt,
     diagnosticEnabled: org.diagnosticEnabled,
+    interviewEnabled: org.interviewEnabled,
+    entitlements: readOrgEntitlements(org),
     kitCount: org.interviewKits.length,
     kits: org.interviewKits,
     subscription,

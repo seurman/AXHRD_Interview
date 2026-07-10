@@ -17,7 +17,9 @@ import {
 } from "@/lib/auth/roles";
 
 export type AccessContext = {
-  /** 기관 개인화(saasPersonalizationEnabled) — tenant.settings / interview_kit */
+  /** 면접·코호트 SKU */
+  interviewEnabled?: boolean;
+  /** 역량평가·맞춤 역량(saasPersonalizationEnabled) */
   tenantPersonalizationEnabled?: boolean;
   /** ARC Index 조직진단 SKU */
   diagnosticEnabled?: boolean;
@@ -45,6 +47,11 @@ export function resolveUserCapabilities(
 
   const role = primaryPlatformRole(user);
   let caps = new Set(ROLE_CAPABILITY_MATRIX[role]);
+  const interviewOn = context.interviewEnabled !== false;
+
+  if (!interviewOn) {
+    caps.delete("tenant.cohort");
+  }
 
   if (isOrgAdminUser(user) && !context.tenantPersonalizationEnabled) {
     caps.delete("tenant.settings");
@@ -56,26 +63,28 @@ export function resolveUserCapabilities(
     caps.delete("tenant.diagnostic");
   }
 
-  if (isCompanyAdminUser(user) && isOrgAdminUser(user)) {
-    caps.add("tenant.cohort");
-    if (context.tenantPersonalizationEnabled) {
-      caps.add("tenant.settings");
-      caps.add("tenant.interview_kit");
-      caps.add("tenant.custom_competency");
+  if (interviewOn) {
+    if (isCompanyAdminUser(user) && isOrgAdminUser(user)) {
+      caps.add("tenant.cohort");
+      if (context.tenantPersonalizationEnabled) {
+        caps.add("tenant.settings");
+        caps.add("tenant.interview_kit");
+        caps.add("tenant.custom_competency");
+      }
+    } else if (isCompanyAdminUser(user) && isOrgStaffUser(user)) {
+      caps.add("tenant.cohort");
     }
-  } else if (isCompanyAdminUser(user) && isOrgStaffUser(user)) {
-    caps.add("tenant.cohort");
-  }
 
-  if (isContentManagerUser(user) && isOrgAdminUser(user)) {
-    caps.add("tenant.cohort");
-    if (context.tenantPersonalizationEnabled) {
-      caps.add("tenant.settings");
-      caps.add("tenant.interview_kit");
-      caps.add("tenant.custom_competency");
+    if (isContentManagerUser(user) && isOrgAdminUser(user)) {
+      caps.add("tenant.cohort");
+      if (context.tenantPersonalizationEnabled) {
+        caps.add("tenant.settings");
+        caps.add("tenant.interview_kit");
+        caps.add("tenant.custom_competency");
+      }
+    } else if (isContentManagerUser(user) && isOrgStaffUser(user)) {
+      caps.add("tenant.cohort");
     }
-  } else if (isContentManagerUser(user) && isOrgStaffUser(user)) {
-    caps.add("tenant.cohort");
   }
 
   return caps;

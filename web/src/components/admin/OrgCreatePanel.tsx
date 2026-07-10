@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Building2, GraduationCap, Plus } from "lucide-react";
 import type { OrgKind, PlanTier } from "@prisma/client";
 import { ORG_KIND_CONFIG, ORG_KINDS } from "@/lib/org/kinds";
+import { ORG_KIND_PRODUCT_DEFAULTS, ORG_PRODUCTS, type OrgEntitlementSnapshot } from "@/lib/org/entitlements";
 import { ORG_PLAN_TIERS, planLabel } from "@/lib/billing/plans";
 
 const KIND_ICONS: Record<OrgKind, typeof GraduationCap> = {
@@ -28,13 +29,15 @@ export function OrgCreatePanel() {
   const [adminUserEmail, setAdminUserEmail] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [approveNow, setApproveNow] = useState(true);
-  const [saasOn, setSaasOn] = useState(false);
+  const [entitlements, setEntitlements] = useState<OrgEntitlementSnapshot>(
+    ORG_KIND_PRODUCT_DEFAULTS.CAREER_CENTER,
+  );
 
   const preset = ORG_KIND_CONFIG[kind];
 
   useEffect(() => {
     const cfg = ORG_KIND_CONFIG[kind];
-    setSaasOn(cfg.defaultSaas);
+    setEntitlements(ORG_KIND_PRODUCT_DEFAULTS[kind]);
     setPlanTier(cfg.defaultPlan);
   }, [kind]);
 
@@ -50,7 +53,7 @@ export function OrgCreatePanel() {
     setAdminUserEmail("");
     setAdminNotes("");
     setApproveNow(true);
-    setSaasOn(false);
+    setEntitlements(ORG_KIND_PRODUCT_DEFAULTS.CAREER_CENTER);
   };
 
   const submit = async () => {
@@ -72,7 +75,9 @@ export function OrgCreatePanel() {
           subscriptionMonths: Number(subscriptionMonths) || 12,
           adminUserEmail: adminUserEmail.trim() || undefined,
           adminNotes: adminNotes.trim() || null,
-          saasPersonalizationEnabled: saasOn,
+          interviewEnabled: entitlements.interview,
+          saasPersonalizationEnabled: entitlements.competency,
+          diagnosticEnabled: entitlements.diagnostic,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -239,7 +244,31 @@ export function OrgCreatePanel() {
 
       {/* 4. 상품·권한 */}
       <fieldset className="space-y-3">
-        <legend className="text-sm font-semibold text-foreground">상품 · 권한</legend>
+        <legend className="text-sm font-semibold text-foreground">제품 Entitlement</legend>
+        <p className="text-xs text-muted">
+          기관 1개에 면접·역량평가·조직진단을 독립적으로 켭니다. 유형 변경 시 아래 기본값이 적용됩니다.
+        </p>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {ORG_PRODUCTS.map((p) => (
+            <label
+              key={p.key}
+              className="flex items-start gap-2 rounded-lg border border-card-border px-3 py-2 text-sm"
+            >
+              <input
+                type="checkbox"
+                checked={entitlements[p.key]}
+                onChange={(e) =>
+                  setEntitlements((prev) => ({ ...prev, [p.key]: e.target.checked }))
+                }
+                className="mt-0.5 rounded border-card-border"
+              />
+              <span>
+                <span className="font-medium text-foreground">{p.label}</span>
+                <span className="mt-0.5 block text-xs text-muted">{p.shortLabel} SKU</span>
+              </span>
+            </label>
+          ))}
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm">
             <span className="font-medium text-foreground">구독 플랜</span>
@@ -267,15 +296,6 @@ export function OrgCreatePanel() {
               className="input-luxe mt-1 w-full"
               disabled={!approveNow}
             />
-          </label>
-          <label className="flex items-center gap-2 text-sm sm:col-span-2">
-            <input
-              type="checkbox"
-              checked={saasOn}
-              onChange={(e) => setSaasOn(e.target.checked)}
-              className="rounded border-card-border"
-            />
-            맞춤 설정(SaaS) — 인터뷰 킷·커스텀 역량 편집 허용
           </label>
           <label className="flex items-center gap-2 text-sm sm:col-span-2">
             <input
