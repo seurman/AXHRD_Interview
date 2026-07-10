@@ -140,6 +140,11 @@ export function CompetencyRubricPanel({
           <p className="text-sm text-muted">
             역량·레벨별 기준을 직접 입력하거나 JSON 템플릿으로 일괄 업로드하세요.
           </p>
+          <p className="mt-2 text-xs text-muted">
+            운영 SSoT는 <strong className="text-foreground">RubricSet</strong>입니다. 여기서 저장하면
+            레거시 <code className="text-[11px]">rubricByLevel</code> JSON과 기본 RubricSet이 함께
+            동기화됩니다. 품질 탭에서 RubricSet 매핑 상태를 확인하세요.
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={downloadTemplate} className="btn-secondary py-2 text-sm">

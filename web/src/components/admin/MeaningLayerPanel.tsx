@@ -38,7 +38,11 @@ type Neighbor = {
   relationId: string;
 };
 
-export function MeaningLayerPanel() {
+type Props = {
+  embedded?: boolean;
+};
+
+export function MeaningLayerPanel({ embedded = false }: Props) {
   const [data, setData] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -106,10 +110,12 @@ export function MeaningLayerPanel() {
     "시드 재적용: 로컬/운영에서 `npm run db:seed:meaning` (맵핑 + 구조 엣지 동기화)";
 
   return (
-    <section className="space-y-4 border-t border-card-border pt-10">
+    <section
+      className={`space-y-4 ${embedded ? "" : "border-t border-card-border pt-10"}`}
+    >
       <div>
         <p className="text-xs font-medium uppercase tracking-widest text-gold">Meaning Layer · L3</p>
-        <h2 className="mt-1 text-lg font-bold text-foreground sm:text-xl">온톨로지 · 개념 관계</h2>
+        <h2 className="mt-1 text-lg font-bold text-foreground sm:text-xl">정렬 · 온톨로지</h2>
         <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted">
           AX 플랫폼 Meaning 층입니다. NCS(IRT)와 Global 20은 합치지 않고{" "}
           <code className="text-xs">MAPS_TO</code> 엣지로만 연결합니다. Postgres{" "}

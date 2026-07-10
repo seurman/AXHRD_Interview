@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, ExternalLink, Loader2, Save } from "lucide-react";
+import { ChevronDown, Download, ExternalLink, Loader2, RefreshCw, Save } from "lucide-react";
 
 type RubricLevel = { id: string; level: number; descriptionKo: string };
 type Question = {
@@ -38,10 +38,15 @@ type Cluster = {
   competencies: Competency[];
 };
 
-export function GlobalCompetencyDictionaryPanel() {
+type Props = {
+  embedded?: boolean;
+};
+
+export function GlobalCompetencyDictionaryPanel({ embedded = false }: Props) {
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
   const [openCluster, setOpenCluster] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftDef, setDraftDef] = useState("");
@@ -88,6 +93,34 @@ export function GlobalCompetencyDictionaryPanel() {
     setNewQuestion("");
     setMessage(null);
   }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function syncToBank() {
+    if (
+      !confirm(
+        "글로벌 사전 내용을 플랫폼 문항 뱅크(Competency/Question)로 동기화할까요?\n\nFramework Studio에서 편집하는 통합 풀이 운영 SSoT입니다.",
+      )
+    ) {
+      return;
+    }
+    setSyncing(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/global-competencies/sync-to-bank", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "동기화 실패");
+      setMessage(
+        `플랫폼 뱅크 동기화 완료 — 역량 ${data.competencies ?? 0}개, 문항 ${data.questions ?? 0}개, RubricSet ${data.rubricSetsSynced ?? 0}개`,
+      );
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "동기화 실패");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  function exportCase() {
+    window.open("/api/admin/global-competencies/export?download=1", "_blank", "noopener,noreferrer");
+  }
 
   async function saveAll() {
     if (!selected) return;
@@ -172,13 +205,41 @@ export function GlobalCompetencyDictionaryPanel() {
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-lg font-bold text-foreground">글로벌 역량사전</h2>
+        {!embedded && (
+          <p className="text-xs font-medium uppercase tracking-widest text-gold">Import Source</p>
+        )}
+        <h2 className={`font-bold text-foreground ${embedded ? "text-lg" : "mt-1 text-lg"}`}>
+          글로벌 역량사전 (원본)
+        </h2>
         <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted">
-          Spencer &amp; Spencer(1993) 클러스터 구조를 참고해 자체 저작한 6군·20역량
-          사전입니다. IRT NCS 6역량과 분리되어 있으며, 향후 자기평가·360용 콘텐츠
-          기반입니다. 영국 Civil Service Behaviours 인용은 OGL v3.0 출처표시를
-          포함합니다.
+          Spencer &amp; Spencer(1993) 클러스터 구조를 참고한 6군·20역량 시드 원본입니다.
+          NCS 6역량과 분리되어 있으며, 면접·자기평가·AC용 콘텐츠의 <strong className="text-foreground">입력 소스</strong>
+          로만 사용합니다. 운영 SSoT는 Framework Studio의 통합 <code className="text-xs">Competency</code>/
+          <code className="text-xs">Question</code> 풀입니다.
         </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="btn-primary inline-flex items-center gap-1.5 text-sm"
+            disabled={syncing}
+            onClick={() => void syncToBank()}
+          >
+            {syncing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            플랫폼 뱅크로 동기화
+          </button>
+          <button
+            type="button"
+            className="btn-secondary inline-flex items-center gap-1.5 text-sm"
+            onClick={exportCase}
+          >
+            <Download className="h-4 w-4" />
+            CASE JSON 보내기
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">

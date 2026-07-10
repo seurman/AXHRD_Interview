@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { requireProductionContentAdmin, hasSuperadminAccess } from "@/lib/auth/guards";
 import { loadContentBankSnapshot } from "@/lib/competency/content-bank-data";
-import { AdminContentTabs } from "@/components/admin/AdminContentTabs";
-import { MeaningLayerPanel } from "@/components/admin/MeaningLayerPanel";
+import { AdminContentTabs, type ContentStudioView } from "@/components/admin/AdminContentTabs";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
@@ -18,8 +17,15 @@ const VALID_TABS = new Set<FrameworkWorkspaceTab>([
   "quality",
 ]);
 
+const VALID_VIEWS = new Set<ContentStudioView>([
+  "platform",
+  "global_source",
+  "alignment",
+  "org_custom",
+]);
+
 type Props = {
-  searchParams: Promise<{ competency?: string; tab?: string }>;
+  searchParams: Promise<{ competency?: string; tab?: string; view?: string }>;
 };
 
 export default async function AdminContentPage({ searchParams }: Props) {
@@ -30,6 +36,11 @@ export default async function AdminContentPage({ searchParams }: Props) {
   const initialTab =
     tabParam && VALID_TABS.has(tabParam as FrameworkWorkspaceTab)
       ? (tabParam as FrameworkWorkspaceTab)
+      : null;
+  const viewParam = params.view?.trim();
+  const initialView =
+    viewParam && VALID_VIEWS.has(viewParam as ContentStudioView)
+      ? (viewParam as ContentStudioView)
       : null;
 
   let clusters: Awaited<ReturnType<typeof loadContentBankSnapshot>>["clusters"] = [];
@@ -53,12 +64,12 @@ export default async function AdminContentPage({ searchParams }: Props) {
         title="Framework Studio"
         subtitle={
           <>
-            역량군 → 역량 → 문항(IRT) · 루브릭 · 품질을 한 워크스페이스에서 관리합니다. 기관 킷 조립은{" "}
+            역량군 → 역량 → 문항(IRT) · 루브릭 · 품질을 한 워크스페이스에서 관리합니다. 글로벌 사전 원본은
+            「글로벌 사전」 탭에서 편집 후 플랫폼 뱅크로 동기화하세요. 기관 킷 조립은{" "}
             <Link href="/org/settings/interview-kit" className="text-accent hover:underline">
               인터뷰 킷 스튜디오
             </Link>
-            에서 합니다. 운영 DB에 글로벌 역량이 없으면{" "}
-            <code className="text-xs">npx tsx scripts/sync-unified-bank.ts</code> 를 실행하세요.
+            에서 합니다.
           </>
         }
         links={[
@@ -89,10 +100,9 @@ export default async function AdminContentPage({ searchParams }: Props) {
           initialQuestions={questions}
           initialCompetencyCode={initialCompetencyCode}
           initialTab={initialTab}
+          initialView={initialView}
         />
       )}
-
-      <MeaningLayerPanel />
     </div>
   );
 }
