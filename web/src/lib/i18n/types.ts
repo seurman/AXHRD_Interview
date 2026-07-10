@@ -49,17 +49,20 @@ export type Dictionary = {
       orgBenchmark: string;
       subscriptions: string;
       permissions: string;
+      diagnostic: string;
       sections: {
         content: string;
         tenants: string;
         security: string;
         billing: string;
+        diagnostic: string;
       };
     };
     saas: {
       title: string;
       settings: string;
       cohortDashboard: string;
+      diagnosticDashboard: string;
       settingsHub: string;
       interviewKit: string;
     };

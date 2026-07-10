@@ -45,8 +45,10 @@ export const dictionary: Dictionary = {
       orgBenchmark: "기관 비교",
       subscriptions: "구독 관리",
       permissions: "권한 설정",
+      diagnostic: "조직진단 CMS",
       sections: {
         content: "콘텐츠",
+        diagnostic: "조직진단",
         tenants: "테넌트",
         security: "계정·보안",
         billing: "결제·구독",
@@ -56,6 +58,7 @@ export const dictionary: Dictionary = {
       title: "기관",
       settings: "설정",
       cohortDashboard: "코호트",
+      diagnosticDashboard: "조직진단",
       settingsHub: "면접 설정",
       interviewKit: "인터뷰 킷 스튜디오",
     },

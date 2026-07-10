@@ -13,7 +13,7 @@ import type { AdminNavSection, PrepareLabelKey } from "@/lib/platform/nav-regist
 
 type SaasLinksConfig = {
   titleKey: "saas";
-  links: { href: string; labelKey: "cohortDashboard" }[];
+  links: { href: string; labelKey: "cohortDashboard" | "diagnosticDashboard" }[];
   settingsTitleKey: "settings";
   settingsLinks: {
     href: string;
@@ -55,6 +55,9 @@ export function MainNav({
   if (!loggedIn) {
     return (
       <nav className="hidden items-center gap-2 sm:flex">
+        <Link href="/diagnosis" className="nav-pill">
+          조직진단
+        </Link>
         <Link href="/pricing" className="nav-pill">
           Pricing
         </Link>

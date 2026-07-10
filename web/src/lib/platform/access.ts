@@ -19,6 +19,8 @@ import {
 export type AccessContext = {
   /** 기관 개인화(saasPersonalizationEnabled) — tenant.settings / interview_kit */
   tenantPersonalizationEnabled?: boolean;
+  /** ARC Index 조직진단 SKU */
+  diagnosticEnabled?: boolean;
   billingTier?: PlanTier;
 };
 
@@ -48,6 +50,10 @@ export function resolveUserCapabilities(
     caps.delete("tenant.settings");
     caps.delete("tenant.interview_kit");
     caps.delete("tenant.custom_competency");
+  }
+
+  if (!context.diagnosticEnabled) {
+    caps.delete("tenant.diagnostic");
   }
 
   if (isCompanyAdminUser(user) && isOrgAdminUser(user)) {

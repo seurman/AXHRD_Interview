@@ -39,6 +39,18 @@ export async function requireInterviewKitUser(
 
 export { isSuperadmin, hasSuperadminAccess } from "@/lib/auth/superadmin";
 
+/** 기관 ADMIN(조직진단 SKU) 또는 슈퍼어드민 */
+export async function requireDiagnosticUser(
+  nextPath?: string,
+  organizationId?: string | null,
+) {
+  const user = await requirePageUser(nextPath);
+  const { resolveDiagnosticAccess } = await import("@/lib/diagnostic/org-access");
+  const access = await resolveDiagnosticAccess(user, organizationId);
+  if (!access.allowed) notFound();
+  return { user, organizationId: access.organizationId, access };
+}
+
 /** 운영 문항 뱅크 CMS — 수퍼어드민 · 콘텐츠 관리자 */
 export function isProductionContentAdmin(user: { email: string; platformRole?: string }) {
   return hasSuperadminAccess(user) || user.platformRole === "CONTENT_ADMIN";

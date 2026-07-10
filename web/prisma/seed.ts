@@ -96,6 +96,9 @@ async function main() {
     competencies: data.competencies.length,
     questions: data.questions.length,
   });
+
+  const { seedArcIndex } = await import("./seed/arc-index");
+  await seedArcIndex(prisma);
 }
 
 main()

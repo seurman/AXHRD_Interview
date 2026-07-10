@@ -2,6 +2,18 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — ARC Index 조직진단 1단계 (2026-07-10)
+
+- **별도 도메인 `Diagnostic*`**: 기존 `Survey*` 모델 미변경. `DiagnosticInstrument` / `Section` / `Subscale` / `Item` / `Wave` / `Team` / `Response` / `Answer`.
+- **스키마**: `Organization.diagnosticEnabled` (기본 `false`, 별도 SKU). 마이그레이션 `20260710150000_arc_index_diagnostic`.
+- **시드**: `web/prisma/seed/arc-index-data.ts` + `arc-index.ts` — 정본 `docs/arc-index/source/*.md` 문항 텍스트. `npx prisma db seed` 또는 `npx tsx prisma/seed/arc-index.ts`.
+- **스코어링**: `lib/diagnostic/arc-scoring.ts` + `aggregate.ts` — 평균·가중합성·임계값 판정만. **회귀(β)·OLS·HLM·LDA는 2~3단계 별도 스크립트 + Python 통계 서비스 필요 — 이번 단계 미구현.**
+- **API**: `POST/GET /api/org/diagnosis/waves`, `POST .../waves/[id]/teams`, `GET .../scores`; 공개 `GET/POST /api/diagnosis/w/[waveSlug]/t/[teamSlug]`, `POST /api/diagnosis/respond`.
+- **UI**: `/org/diagnosis`, `/org/diagnosis/waves/[waveId]`, `/diagnosis/w/.../t/...` (익명 응답), `/diagnosis` 마케팅, `/admin/diagnostic`.
+- **Nav**: `tenant.diagnostic` + `platform.diagnostic` — 채용 메뉴 형제 레벨 「조직진단」. `diagnosticEnabled` 기관만 노출.
+- **원칙**: N&lt;5 집계 숨김 · 팀별 링크만(CSV/복사, 발송 없음) · `respondentToken` 쿠키 · 동의 문구 초안(법무 검토 전 배포 금지).
+- 검증: `npx prisma migrate deploy` · `npm run build`
+
 ## 최근 작업 — 프리미엄 전환 + 데이터 플라이휠 (2026-07-10)
 
 - **FREE 티어 잠금 해제**: `isPersonalTrialOnlyUser`는 **비로그인 방문자** 판별만. 로그인 FREE 사용자는 `checkUsageLimit()`(월 3회 모의면접)만 적용. 6개 API에서 `blockPersonalTrialApi` 제거.

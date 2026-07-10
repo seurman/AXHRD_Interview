@@ -166,6 +166,8 @@ model Organization {
   questions    Question[]
   surveys      Survey[]
   rubricSets   RubricSet[]
+  diagnosticWaves DiagnosticWave[]
+  diagnosticEnabled Boolean @default(false)
 }
 
 // ── User ──
@@ -1177,4 +1179,146 @@ model ConceptRelation {
   @@index([fromKind, fromKey])
   @@index([toKind, toKey])
   @@index([edgeType])
+}
+
+// ── ARC Index / Diagnostic (Survey CMS와 별도 도메인) ──
+
+enum DiagnosticItemScaleType {
+  AGREEMENT_5
+  RETRO_CHANGE_5
+  SPEED_5
+  OPEN_TEXT
+}
+
+enum DiagnosticResponseAxis {
+  CURRENT
+  IMPORTANCE
+}
+
+enum DiagnosticWaveStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
+model DiagnosticInstrument {
+  id               String   @id @default(cuid())
+  code             String   @unique
+  nameKo           String
+  version          String
+  estimatedMinutes Int?
+  minGroupSize     Int      @default(5)
+  sections         DiagnosticSection[]
+  waves            DiagnosticWave[]
+  createdAt        DateTime @default(now())
+}
+
+model DiagnosticSection {
+  id           String   @id @default(cuid())
+  instrumentId String
+  instrument   DiagnosticInstrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+  code         String
+  nameKo       String
+  order        Int
+  subscales    DiagnosticSubscale[]
+  items        DiagnosticItem[]
+
+  @@unique([instrumentId, code])
+}
+
+model DiagnosticSubscale {
+  id        String   @id @default(cuid())
+  sectionId String
+  section   DiagnosticSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  code      String
+  nameKo    String
+  weight    Float?
+  isDriver  Boolean  @default(false)
+  order     Int
+  items     DiagnosticItem[]
+
+  @@unique([sectionId, code])
+}
+
+model DiagnosticItem {
+  id                String   @id @default(cuid())
+  sectionId         String
+  section           DiagnosticSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  subscaleId        String?
+  subscale          DiagnosticSubscale? @relation(fields: [subscaleId], references: [id], onDelete: Cascade)
+  itemCode          String
+  textKo            String
+  scaleType         DiagnosticItemScaleType @default(AGREEMENT_5)
+  scaleLabels       Json?
+  hasImportanceAxis Boolean  @default(false)
+  isReversed        Boolean  @default(false)
+  isDemographic     Boolean  @default(false)
+  choiceOptions     Json?
+  order             Int
+  answers           DiagnosticAnswer[]
+
+  @@unique([sectionId, itemCode])
+  @@index([subscaleId])
+}
+
+model DiagnosticWave {
+  id             String   @id @default(cuid())
+  instrumentId   String
+  instrument     DiagnosticInstrument @relation(fields: [instrumentId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  slug           String   @unique
+  waveNumber     Int
+  label          String?
+  status         DiagnosticWaveStatus @default(DRAFT)
+  opensAt        DateTime?
+  closesAt       DateTime?
+  teams          DiagnosticTeam[]
+  responses      DiagnosticResponse[]
+  createdAt      DateTime @default(now())
+
+  @@unique([organizationId, instrumentId, waveNumber])
+  @@index([organizationId])
+}
+
+model DiagnosticTeam {
+  id         String   @id @default(cuid())
+  waveId     String
+  wave       DiagnosticWave @relation(fields: [waveId], references: [id], onDelete: Cascade)
+  name       String
+  department String?
+  slug       String
+  responses  DiagnosticResponse[]
+
+  @@unique([waveId, slug])
+}
+
+model DiagnosticResponse {
+  id              String   @id @default(cuid())
+  waveId          String
+  wave            DiagnosticWave @relation(fields: [waveId], references: [id], onDelete: Cascade)
+  teamId          String?
+  team            DiagnosticTeam? @relation(fields: [teamId], references: [id])
+  respondentToken String   @unique
+  demographics    Json?
+  consentAt       DateTime?
+  submittedAt     DateTime?
+  createdAt       DateTime @default(now())
+  answers         DiagnosticAnswer[]
+
+  @@index([waveId])
+  @@index([teamId])
+}
+
+model DiagnosticAnswer {
+  id           String   @id @default(cuid())
+  responseId   String
+  response     DiagnosticResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  itemId       String
+  item         DiagnosticItem @relation(fields: [itemId], references: [id])
+  axis         DiagnosticResponseAxis @default(CURRENT)
+  numericValue Int?
+  textValue    String?
+
+  @@unique([responseId, itemId, axis])
 }

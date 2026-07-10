@@ -46,8 +46,10 @@ export const dictionary: Dictionary = {
       orgBenchmark: "Benchmark",
       subscriptions: "Subscriptions",
       permissions: "Permissions",
+      diagnostic: "Diagnostic CMS",
       sections: {
         content: "Content",
+        diagnostic: "Diagnostic",
         tenants: "Tenants",
         security: "Accounts & security",
         billing: "Billing & plans",
@@ -57,6 +59,7 @@ export const dictionary: Dictionary = {
       title: "Organization",
       settings: "Settings",
       cohortDashboard: "Cohort",
+      diagnosticDashboard: "Diagnostic",
       settingsHub: "Interview settings",
       interviewKit: "Interview kit",
     },

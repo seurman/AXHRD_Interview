@@ -17,7 +17,7 @@ import type { AdminNavSection, PrepareLabelKey } from "@/lib/platform/nav-regist
 
 type SaasLinksConfig = {
   titleKey: "saas";
-  links: { href: string; labelKey: "cohortDashboard" }[];
+  links: { href: string; labelKey: "cohortDashboard" | "diagnosticDashboard" }[];
   settingsTitleKey: "settings";
   settingsLinks: { href: string; labelKey: "settingsHub" | "interviewKit" }[];
 };

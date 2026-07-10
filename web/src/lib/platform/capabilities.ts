@@ -25,6 +25,7 @@ export type CapabilityId =
   | "tenant.settings"
   | "tenant.interview_kit"
   | "tenant.custom_competency"
+  | "tenant.diagnostic"
   | "platform.permissions"
   | "platform.users"
   | "platform.organizations"
@@ -33,7 +34,8 @@ export type CapabilityId =
   | "platform.subscriptions"
   | "platform.audit"
   | "platform.sessions"
-  | "platform.benchmark";
+  | "platform.benchmark"
+  | "platform.diagnostic";
 
 export type CapabilityDef = {
   id: CapabilityId;
@@ -147,6 +149,15 @@ export const CAPABILITY_REGISTRY: Record<CapabilityId, CapabilityDef> = {
     href: "/org/settings/competencies",
     designNote: "PLATFORM 포크/ORG 소유 — 승격은 수퍼어드민",
   },
+  "tenant.diagnostic": {
+    id: "tenant.diagnostic",
+    category: "tenant",
+    labelKo: "조직진단",
+    labelEn: "Organization diagnostic",
+    descriptionKo: "ARC Index 웨이브·팀·응답 링크",
+    href: "/org/diagnosis",
+    designNote: "계약 기관 전용 — diagnosticEnabled 플래그",
+  },
   "platform.permissions": {
     id: "platform.permissions",
     category: "platform_ops",
@@ -228,6 +239,15 @@ export const CAPABILITY_REGISTRY: Record<CapabilityId, CapabilityDef> = {
     href: "/admin/organizations/benchmark",
     designNote: "테넌트 간 지표 비교 (AX 벤치마크)",
   },
+  "platform.diagnostic": {
+    id: "platform.diagnostic",
+    category: "platform_content",
+    labelKo: "조직진단 CMS",
+    labelEn: "Diagnostic CMS",
+    descriptionKo: "ARC Index 문항뱅크·웨이브 현황",
+    href: "/admin/diagnostic",
+    designNote: "DiagnosticInstrument · 전 기관 웨이브 허브",
+  },
 };
 
 export const CATEGORY_LABEL: Record<CapabilityCategory, { ko: string; en: string }> = {
@@ -280,6 +300,7 @@ export const ROLE_CAPABILITY_MATRIX: Record<PlatformRoleKey, CapabilityId[]> = {
     "tenant.settings",
     "tenant.interview_kit",
     "tenant.custom_competency",
+    "tenant.diagnostic",
   ],
   ORG_STAFF: [
     "product.dashboard",

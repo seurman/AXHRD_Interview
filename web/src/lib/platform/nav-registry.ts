@@ -1,7 +1,7 @@
 import type { CapabilityId } from "@/lib/platform/capabilities";
 import { dictionary as koDictionary } from "@/lib/i18n/dictionaries/ko";
 import { hasCapability, resolveUserCapabilities, type AccessContext } from "@/lib/platform/access";
-import { type RoleUser } from "@/lib/auth/roles";
+import { type RoleUser, isSuperAdminUser } from "@/lib/auth/roles";
 
 export type NavLabelKey =
   | "content"
@@ -13,11 +13,12 @@ export type NavLabelKey =
   | "orgApprove"
   | "orgBenchmark"
   | "subscriptions"
-  | "permissions";
+  | "permissions"
+  | "diagnostic";
 
 export type PrepareLabelKey = "interview" | "discover" | "cards" | "resumeReview" | "trialInterview";
 
-export type AdminSectionKey = "content" | "tenants" | "security" | "billing";
+export type AdminSectionKey = "content" | "tenants" | "security" | "billing" | "diagnostic";
 
 export type AdminNavItem = {
   href: string;
@@ -33,6 +34,12 @@ const PLATFORM_NAV_ORDER: AdminNavItem[] = [
     labelKey: "repository",
     capability: "platform.content",
     section: "content",
+  },
+  {
+    href: "/admin/diagnostic",
+    labelKey: "diagnostic",
+    capability: "platform.diagnostic",
+    section: "diagnostic",
   },
   { href: "/admin/demo", labelKey: "demo", capability: "platform.demo", section: "content" },
   {
@@ -69,7 +76,7 @@ const PLATFORM_NAV_ORDER: AdminNavItem[] = [
   },
 ];
 
-const ADMIN_SECTION_ORDER: AdminSectionKey[] = ["content", "tenants", "security", "billing"];
+const ADMIN_SECTION_ORDER: AdminSectionKey[] = ["content", "diagnostic", "tenants", "security", "billing"];
 
 const PREPARE_HREFS: { href: string; labelKey: PrepareLabelKey; capability: CapabilityId }[] = [
   { href: "/demo", labelKey: "trialInterview", capability: "product.demo_trial" },
@@ -81,7 +88,7 @@ const PREPARE_HREFS: { href: string; labelKey: PrepareLabelKey; capability: Capa
 
 export type SaasNavConfig = {
   titleKey: "saas";
-  links: { href: string; labelKey: "cohortDashboard" }[];
+  links: { href: string; labelKey: "cohortDashboard" | "diagnosticDashboard" }[];
   settingsTitleKey: "settings";
   settingsLinks: { href: string; labelKey: "settingsHub" | "interviewKit" }[];
 };
@@ -108,6 +115,7 @@ export async function buildNavigationForUser(
   user: RoleUser & { id?: string },
 ): Promise<NavigationConfig> {
   let tenantPersonalizationEnabled = false;
+  let diagnosticEnabled = isSuperAdminUser(user);
   let billingTier: import("@prisma/client").PlanTier | undefined;
   if (user.id) {
     const { getBillingContext } = await import("@/lib/billing/subscription");
@@ -118,12 +126,17 @@ export async function buildNavigationForUser(
     const { prisma } = await import("@/lib/prisma");
     const org = await prisma.organization.findUnique({
       where: { id: user.organizationId },
-      select: { saasPersonalizationEnabled: true },
+      select: { saasPersonalizationEnabled: true, diagnosticEnabled: true },
     });
     tenantPersonalizationEnabled = org?.saasPersonalizationEnabled ?? false;
+    diagnosticEnabled = org?.diagnosticEnabled ?? false;
   }
 
-  const context: AccessContext = { tenantPersonalizationEnabled, billingTier };
+  const context: AccessContext = {
+    tenantPersonalizationEnabled,
+    diagnosticEnabled,
+    billingTier,
+  };
   const caps = resolveUserCapabilities(user, context);
 
   const dashboardHref = caps.has("product.dashboard") ? "/dashboard" : null;
@@ -145,7 +158,8 @@ export async function buildNavigationForUser(
     hasOrgMembership &&
     (caps.has("tenant.cohort") ||
       caps.has("tenant.settings") ||
-      caps.has("tenant.interview_kit"));
+      caps.has("tenant.interview_kit") ||
+      caps.has("tenant.diagnostic"));
 
   if (hasTenantNav) {
     const links: SaasNavConfig["links"] = [];
@@ -155,6 +169,12 @@ export async function buildNavigationForUser(
       links.push({
         href: "/org/dashboard",
         labelKey: "cohortDashboard",
+      });
+    }
+    if (caps.has("tenant.diagnostic")) {
+      links.push({
+        href: "/org/diagnosis",
+        labelKey: "diagnosticDashboard",
       });
     }
 
