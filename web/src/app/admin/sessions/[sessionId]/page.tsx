@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { competencyLabel } from "@/lib/labels";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Badge } from "@/components/admin/Badge";
+import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
+import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 
 export const dynamic = "force-dynamic";
 
@@ -54,14 +58,14 @@ export default async function AdminSessionDetailPage({
     : null;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
-      <div>
-        <Link href="/admin/sessions" className="text-sm text-accent hover:underline">
-          ← 면접 세션 목록
-        </Link>
-        <h1 className="mt-3 text-2xl font-bold text-foreground">세션 상세</h1>
-        <p className="mt-1 font-mono text-xs text-muted">{session.id}</p>
-      </div>
+    <div className={ADMIN_CONTAINER.detail}>
+      <AdminPageHeader
+        eyebrow={PLATFORM_EYEBROW.security}
+        title="세션 상세"
+        backHref="/admin/sessions"
+        backLabel="면접 세션 목록"
+        subtitle={<span className="font-mono text-xs">{session.id}</span>}
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
         <section className="card-luxe p-5 text-sm">
@@ -161,7 +165,7 @@ export default async function AdminSessionDetailPage({
                 )}
                 {r.durationSec != null && <span>{r.durationSec}초</span>}
                 {r.isBonusQuestion ? (
-                  <span className="rounded bg-gold/15 px-1.5 text-gold">보너스</span>
+                  <Badge tone="gold">보너스</Badge>
                 ) : (
                   <span className="font-mono">{r.question?.externalId ?? "—"}</span>
                 )}

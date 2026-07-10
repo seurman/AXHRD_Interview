@@ -19,6 +19,7 @@ import { OrgDiagnosticToggle } from "@/components/admin/OrgDiagnosticToggle";
 import { OrgReviewActions } from "@/components/admin/OrgReviewActions";
 import { OrgStatusBadge } from "@/components/admin/OrgStatusBadge";
 import { planLabel } from "@/lib/billing/plans";
+import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,7 @@ export default async function AdminOrgHubPage({ params }: Props) {
   const hubBase = `/admin/organizations/${hub.id}`;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 pb-12">
+    <div className={ADMIN_CONTAINER.detail}>
       <nav className="flex items-center gap-2 text-sm text-muted">
         <Link href="/admin/organizations" className="inline-flex items-center gap-1 hover:text-accent">
           <ArrowLeft className="h-4 w-4" />

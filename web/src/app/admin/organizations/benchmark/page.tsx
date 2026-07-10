@@ -1,6 +1,8 @@
-import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { getAllOrgBenchmarks } from "@/lib/org/benchmark";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
+import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 
 export const dynamic = "force-dynamic";
 
@@ -9,18 +11,14 @@ export default async function AdminOrgBenchmarkPage() {
   const rows = await getAllOrgBenchmarks();
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-widest text-gold">Admin</p>
-        <h1 className="mt-1 text-2xl font-bold text-foreground">기관 간 퍼포먼스 비교</h1>
-        <p className="mt-1 text-sm text-muted">
-          승인된 기관 전체를 평균 백분위 기준으로 정렬했습니다. 이 화면은 슈퍼어드민에게만
-          보이며, 기관 담당자 화면(코호트 대시보드)에는 다른 기관 이름이 노출되지 않습니다.
-        </p>
-        <Link href="/admin/organizations" className="mt-2 inline-block text-sm text-accent hover:underline">
-          ← 기관 승인 관리로 돌아가기
-        </Link>
-      </div>
+    <div className={ADMIN_CONTAINER.default}>
+      <AdminPageHeader
+        eyebrow={PLATFORM_EYEBROW.tenants}
+        title="기관 간 퍼포먼스 비교"
+        subtitle="승인된 기관 전체를 평균 백분위 기준으로 정렬했습니다. 이 화면은 슈퍼어드민에게만 보이며, 기관 담당자 화면(코호트 대시보드)에는 다른 기관 이름이 노출되지 않습니다."
+        backHref="/admin/organizations"
+        backLabel="기관 승인 관리로 돌아가기"
+      />
 
       <div className="card-luxe p-6">
         {rows.length === 0 ? (

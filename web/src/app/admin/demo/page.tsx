@@ -1,6 +1,9 @@
 import { requireDemoManager } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { DemoWorkspaceList } from "@/components/admin/DemoWorkspaceList";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
+import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 
 export const dynamic = "force-dynamic";
 
@@ -20,15 +23,12 @@ export default async function AdminDemoPage() {
   });
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-widest text-gold">Admin</p>
-        <h1 className="mt-1 text-xl font-bold text-foreground sm:text-2xl">고객 데모 페이지</h1>
-        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">
-          회사 어드민 전용 샌드박스입니다. 고객사 미팅에서 역량·질문·루브릭을 실시간으로 편집하며
-          솔루션을 시연할 수 있습니다. 운영 문항 뱅크와 완전히 분리됩니다.
-        </p>
-      </div>
+    <div className={ADMIN_CONTAINER.default}>
+      <AdminPageHeader
+        eyebrow={PLATFORM_EYEBROW.content}
+        title="고객 데모 페이지"
+        subtitle="회사 어드민 전용 샌드박스입니다. 고객사 미팅에서 역량·질문·루브릭을 실시간으로 편집하며 솔루션을 시연할 수 있습니다. 운영 문항 뱅크와 완전히 분리됩니다."
+      />
       <DemoWorkspaceList
         initialWorkspaces={workspaces.map((w) => ({
           ...w,

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { AdminDiagnosticWaveDetail } from "@/components/admin/AdminDiagnosticWaveDetail";
+import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export default async function AdminDiagnosticWavePage({ params }: Props) {
   await requireSuperadmin("/admin/diagnostic");
   const { id } = await params;
   return (
-    <div className="px-4 pt-6">
+    <div className={ADMIN_CONTAINER.detail}>
       <Suspense fallback={<p className="text-sm text-muted">불러오는 중…</p>}>
         <AdminDiagnosticWaveDetail waveId={id} />
       </Suspense>

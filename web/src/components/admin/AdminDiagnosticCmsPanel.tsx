@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AdminDiagnosticWizard } from "@/components/admin/AdminDiagnosticWizard";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { StatusDot, type DotTone } from "@/components/admin/StatusDot";
+import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 
 type InstrumentSummary = {
   id: string;
@@ -44,6 +47,12 @@ function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString("ko-KR");
 }
 
+const WAVE_STATUS_TONE: Record<string, DotTone> = {
+  "준비중": "neutral",
+  "진행중": "accent",
+  "마감": "success",
+};
+
 export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: Props) {
   const router = useRouter();
   const [seeding, setSeeding] = useState(false);
@@ -70,26 +79,28 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 pb-12">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-widest text-gold">PLATFORM</p>
-          <h1 className="mt-1 text-2xl font-bold text-foreground">조직진단 CMS</h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted">
+    <div className="space-y-8">
+      <AdminPageHeader
+        eyebrow={PLATFORM_EYEBROW.diagnostic}
+        title="조직진단 CMS"
+        subtitle={
+          <>
             수퍼어드민 전용 캠페인 관리 화면입니다. 기관 셀프서브{" "}
             <code className="text-xs">/org/diagnosis</code>와 별개로 운영합니다.
-          </p>
-        </div>
-        {seeded && (
-          <button
-            type="button"
-            className="btn-primary px-4 py-2 text-sm"
-            onClick={() => setWizardOpen(true)}
-          >
-            + 새 진단 시작
-          </button>
-        )}
-      </div>
+          </>
+        }
+        actions={
+          seeded ? (
+            <button
+              type="button"
+              className="btn-primary px-4 py-2 text-sm"
+              onClick={() => setWizardOpen(true)}
+            >
+              + 새 진단 시작
+            </button>
+          ) : undefined
+        }
+      />
 
       <section className="card-luxe p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -170,48 +181,35 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
             아직 캠페인이 없습니다. 문항뱅크 설치 후 「+ 새 진단 시작」으로 첫 캠페인을 만드세요.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-card-border text-xs text-muted">
-                  <th className="py-2 pr-4">기관</th>
-                  <th className="py-2 pr-4">진단명</th>
-                  <th className="py-2 pr-4">시작일</th>
-                  <th className="py-2 pr-4">종료일</th>
-                  <th className="py-2 pr-4">상태</th>
-                  <th className="py-2 pr-4">응답수</th>
-                  <th className="py-2">관리</th>
-                </tr>
-              </thead>
-              <tbody>
-                {waves.map((w) => (
-                  <tr key={w.id} className="border-b border-card-border last:border-0">
-                    <td className="py-2 pr-4">{w.organizationName}</td>
-                    <td className="py-2 pr-4">
-                      <div>
-                        {w.label ?? `Wave ${w.waveNumber}`}
-                        <span className="mt-0.5 block text-xs text-muted">{w.sectionBadge}</span>
-                      </div>
-                    </td>
-                    <td className="py-2 pr-4 text-muted">{formatDate(w.opensAt)}</td>
-                    <td className="py-2 pr-4 text-muted">
-                      {w.closesAt ? formatDate(w.closesAt) : "수동 마감"}
-                    </td>
-                    <td className="py-2 pr-4 text-muted">{w.statusLabel}</td>
-                    <td className="py-2 pr-4 text-muted">{w.responseCount}</td>
-                    <td className="py-2">
-                      <Link
-                        href={`/admin/diagnostic/waves/${w.id}`}
-                        className="text-accent hover:underline"
-                      >
-                        상세
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ul className="-mx-6 -mb-6 border-t border-card-border">
+            {waves.map((w) => (
+              <li key={w.id} className="border-b border-card-border last:border-0">
+                <Link
+                  href={`/admin/diagnostic/waves/${w.id}`}
+                  className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-6 py-3 text-sm transition hover:bg-background/60"
+                >
+                  <StatusDot tone={WAVE_STATUS_TONE[w.statusLabel] ?? "neutral"} className="w-16 shrink-0">
+                    {w.statusLabel}
+                  </StatusDot>
+
+                  <span className="min-w-[10rem] flex-1 truncate">
+                    <span className="font-medium text-foreground">{w.organizationName}</span>
+                    <span className="text-muted"> · {w.label ?? `Wave ${w.waveNumber}`}</span>
+                  </span>
+
+                  <span className="shrink-0 text-xs text-muted">{w.sectionBadge}</span>
+
+                  <span className="shrink-0 text-xs text-muted">
+                    {formatDate(w.opensAt)} → {w.closesAt ? formatDate(w.closesAt) : "수동 마감"}
+                  </span>
+
+                  <span className="shrink-0 text-xs text-muted">응답 {w.responseCount}</span>
+
+                  <span className="ml-auto shrink-0 text-xs text-accent">상세 →</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 

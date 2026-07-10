@@ -1,5 +1,6 @@
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { AdminDiagnosticReport } from "@/components/admin/AdminDiagnosticReport";
+import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export default async function AdminDiagnosticReportPage({ params }: Props) {
   await requireSuperadmin("/admin/diagnostic");
   const { id } = await params;
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <div className={ADMIN_CONTAINER.detail}>
       <AdminDiagnosticReport waveId={id} />
     </div>
   );

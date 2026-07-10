@@ -1,10 +1,12 @@
-import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { AdminSubscriptionEditor } from "@/components/admin/AdminSubscriptionEditor";
 import { BillingMigrationNotice } from "@/components/billing/BillingMigrationNotice";
 import { isMissingBillingTablesError } from "@/lib/billing/errors";
 import { planLabel } from "@/lib/billing/plans";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
+import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 
 export const dynamic = "force-dynamic";
 
@@ -43,25 +45,21 @@ export default async function AdminSubscriptionsPage() {
 
   if (migrationRequired) {
     return (
-      <div className="mx-auto max-w-4xl space-y-8">
+      <div className={ADMIN_CONTAINER.default}>
         <BillingMigrationNotice />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-widest text-gold">Superadmin</p>
-        <h1 className="mt-1 text-2xl font-bold text-foreground">기관 구독 · Enterprise 수동 계약</h1>
-        <p className="mt-1 text-sm text-muted">
-          ORG_ENTERPRISE는 토스페이먼츠 자동결제 없이 세금계산서·계좌이체 계약 후
-          SUPERADMIN이 기간을 직접 부여합니다.
-        </p>
-        <Link href="/admin/users" className="mt-2 inline-block text-sm text-accent hover:underline">
-          ← 사용자 관리
-        </Link>
-      </div>
+    <div className={ADMIN_CONTAINER.default}>
+      <AdminPageHeader
+        eyebrow={PLATFORM_EYEBROW.billing}
+        title="기관 구독 · Enterprise 수동 계약"
+        subtitle="ORG_ENTERPRISE는 토스페이먼츠 자동결제 없이 세금계산서·계좌이체 계약 후 SUPERADMIN이 기간을 직접 부여합니다."
+        backHref="/admin/users"
+        backLabel="사용자 관리"
+      />
 
       <div className="card-luxe p-6 space-y-4">
         <h2 className="text-sm font-semibold text-foreground">수동 구독 등록</h2>

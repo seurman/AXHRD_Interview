@@ -1,11 +1,13 @@
-import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { UserRoleEditor } from "@/components/admin/UserRoleEditor";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Badge } from "@/components/admin/Badge";
+import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
+import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
+import { ORG_ROLE_LABEL, PLATFORM_ROLE_LABEL } from "@/lib/auth/roles";
 
 export const dynamic = "force-dynamic";
-
-import { ORG_ROLE_LABEL, PLATFORM_ROLE_LABEL } from "@/lib/auth/roles";
 
 const ROLE_LABEL = ORG_ROLE_LABEL;
 const PLATFORM_LABEL = PLATFORM_ROLE_LABEL;
@@ -45,23 +47,16 @@ export default async function AdminUsersPage({
   ]);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-widest text-gold">Superadmin</p>
-        <h1 className="mt-1 text-2xl font-bold text-foreground">사용자 권한 관리</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted">
-          수퍼어드민만 플랫폼·기관 역할을 부여할 수 있습니다. 가입 이상 패턴(REVIEW) 사용자는
-          자동 차단되지 않으며 검토만 표시됩니다.
-        </p>
-        <div className="mt-2 flex flex-wrap gap-3 text-sm">
-          <Link href="/admin/audit" className="text-accent hover:underline">
-            감사 로그 · 롤백 →
-          </Link>
-          <Link href="/admin/content" className="text-accent hover:underline">
-            문항 뱅크 관리 →
-          </Link>
-        </div>
-      </div>
+    <div className={ADMIN_CONTAINER.default}>
+      <AdminPageHeader
+        eyebrow={PLATFORM_EYEBROW.security}
+        title="사용자 권한 관리"
+        subtitle="수퍼어드민만 플랫폼·기관 역할을 부여할 수 있습니다. 가입 이상 패턴(REVIEW) 사용자는 자동 차단되지 않으며 검토만 표시됩니다."
+        links={[
+          { href: "/admin/audit", label: "감사 로그 · 롤백 →" },
+          { href: "/admin/content", label: "문항 뱅크 관리 →" },
+        ]}
+      />
 
       <form className="flex flex-wrap gap-2">
         <input
@@ -109,9 +104,7 @@ export default async function AdminUsersPage({
                     <td className="py-2 pr-4 text-muted">{u.email}</td>
                     <td className="py-2 pr-4">
                       {u.signupFlag === "REVIEW" ? (
-                        <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-800">
-                          REVIEW
-                        </span>
+                        <Badge tone="warning">REVIEW</Badge>
                       ) : (
                         <span className="text-xs text-muted">—</span>
                       )}

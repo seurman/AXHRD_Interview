@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { StatusDot } from "@/components/admin/StatusDot";
+import { formatRelativeTime } from "@/lib/admin/relative-time";
 
 const ACTION_LABEL: Record<string, string> = {
   CREATE: "생성",
@@ -63,50 +65,45 @@ export function AdminAuditPanel({ initialLogs }: { initialLogs: AuditLogRow[] })
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-card-border text-xs text-muted">
-            <th className="py-2 pr-3 font-medium">시각</th>
-            <th className="py-2 pr-3 font-medium">수행자</th>
-            <th className="py-2 pr-3 font-medium">작업</th>
-            <th className="py-2 pr-3 font-medium">요약</th>
-            <th className="py-2 pr-3 font-medium">롤백</th>
-          </tr>
-        </thead>
-        <tbody>
-          {logs.map((log) => (
-            <tr key={log.id} className="border-b border-card-border last:border-0">
-              <td className="py-2 pr-3 whitespace-nowrap text-xs text-muted">
-                {new Date(log.createdAt).toLocaleString("ko-KR")}
-              </td>
-              <td className="py-2 pr-3 text-xs">
-                <div className="text-foreground">{log.actorEmail}</div>
-                <div className="text-muted">{ROLE_LABEL[log.actorRole] ?? log.actorRole}</div>
-              </td>
-              <td className="py-2 pr-3 text-xs text-muted">
-                {ACTION_LABEL[log.action] ?? log.action}
-                <div className="text-[0.65rem]">{log.entityType}</div>
-              </td>
-              <td className="py-2 pr-3 text-foreground">{log.summary}</td>
-              <td className="py-2 pr-3">
-                {log.rolledBackAt ? (
-                  <span className="text-xs text-success">롤백됨</span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => rollback(log.id)}
-                    disabled={rolling === log.id}
-                    className="btn-outline-primary px-2 py-1 text-xs disabled:opacity-50"
-                  >
-                    {rolling === log.id ? "…" : "롤백"}
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <ul>
+      {logs.map((log) => (
+        <li
+          key={log.id}
+          className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-card-border px-1 py-3 text-sm last:border-0"
+        >
+          <StatusDot tone={log.rolledBackAt ? "neutral" : "accent"} className="w-24 shrink-0">
+            {ACTION_LABEL[log.action] ?? log.action}
+          </StatusDot>
+
+          <span className="min-w-[10rem] flex-1 truncate">
+            <span className="font-medium text-foreground">{log.actorEmail}</span>
+            <span className="text-muted"> · {ROLE_LABEL[log.actorRole] ?? log.actorRole}</span>
+          </span>
+
+          <span className="shrink-0 text-xs text-muted">{log.entityType}</span>
+
+          <span className="min-w-0 flex-[2] truncate text-xs text-foreground">{log.summary}</span>
+
+          <span className="shrink-0">
+            {log.rolledBackAt ? (
+              <span className="text-xs text-success">롤백됨</span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => rollback(log.id)}
+                disabled={rolling === log.id}
+                className="btn-outline-primary px-2 py-1 text-xs disabled:opacity-50"
+              >
+                {rolling === log.id ? "…" : "롤백"}
+              </button>
+            )}
+          </span>
+
+          <span className="ml-auto shrink-0 text-xs text-muted">
+            {formatRelativeTime(log.createdAt)}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }

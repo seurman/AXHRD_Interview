@@ -6,6 +6,9 @@ import { getOrgHubSnapshot } from "@/lib/org/hub-data";
 import { getCohortData } from "@/lib/org/cohort";
 import { getOrgBenchmark, MIN_PEER_MEMBERS } from "@/lib/org/benchmark";
 import { competencyLabel, formatPercentile } from "@/lib/labels";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
+import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 
 export const dynamic = "force-dynamic";
 
@@ -26,32 +29,23 @@ export default async function AdminOrgCohortPage({ params }: Props) {
   const hubBase = `/admin/organizations/${hub.id}`;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8 pb-12">
-      <nav className="flex items-center gap-2 text-sm text-muted">
-        <Link href="/admin/organizations" className="hover:text-accent">
-          기관 관리
-        </Link>
-        <span>/</span>
-        <Link href={hubBase} className="hover:text-accent">
-          {hub.name}
-        </Link>
-        <span>/</span>
-        <span className="text-foreground">코호트</span>
-      </nav>
-
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent">
-            슈퍼어드민 미리보기
-          </p>
-          <h1 className="mt-2 text-2xl font-bold text-foreground">{data.organizationName}</h1>
-          <p className="mt-1 text-sm text-muted">기관 ADMIN 코호트 대시보드와 동일한 집계</p>
-        </div>
-        <Link href={hubBase} className="btn-secondary inline-flex items-center gap-2 text-sm">
-          <ArrowLeft className="h-4 w-4" />
-          기관 허브
-        </Link>
-      </div>
+    <div className={ADMIN_CONTAINER.detail}>
+      <AdminPageHeader
+        eyebrow={PLATFORM_EYEBROW.tenants}
+        title={data.organizationName}
+        subtitle="기관 ADMIN 코호트 대시보드와 동일한 집계"
+        breadcrumb={[
+          { label: "기관 관리", href: "/admin/organizations" },
+          { label: hub.name, href: hubBase },
+          { label: "코호트" },
+        ]}
+        actions={
+          <Link href={hubBase} className="btn-secondary inline-flex items-center gap-2 text-sm">
+            <ArrowLeft className="h-4 w-4" />
+            기관 허브
+          </Link>
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="card-luxe p-5 text-center">

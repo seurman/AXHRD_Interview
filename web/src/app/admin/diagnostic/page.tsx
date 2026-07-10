@@ -1,6 +1,7 @@
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { AdminDiagnosticCmsPanel } from "@/components/admin/AdminDiagnosticCmsPanel";
+import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 import { parseEnabledSectionCodes, sectionBadgeLabel } from "@/lib/diagnostic/section-filter";
 import { waveStatusLabel } from "@/lib/diagnostic/wave-status";
 
@@ -89,6 +90,8 @@ export default async function AdminDiagnosticPage() {
   }
 
   return (
-    <AdminDiagnosticCmsPanel instruments={instruments} waves={waveRows} dbError={dbError} />
+    <div className={ADMIN_CONTAINER.default}>
+      <AdminDiagnosticCmsPanel instruments={instruments} waves={waveRows} dbError={dbError} />
+    </div>
   );
 }

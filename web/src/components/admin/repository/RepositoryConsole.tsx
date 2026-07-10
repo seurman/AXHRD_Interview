@@ -5,6 +5,8 @@ import Link from "next/link";
 import type { RepositoryCompetencyRow } from "@/lib/repository/types";
 import { CompetencyMasterBoard } from "@/components/admin/repository/CompetencyMasterBoard";
 import { CompetencyWorkspace } from "@/components/admin/repository/CompetencyWorkspace";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 
 export function RepositoryConsole() {
   const [selected, setSelected] = useState<RepositoryCompetencyRow | null>(null);
@@ -12,18 +14,20 @@ export function RepositoryConsole() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-xs font-medium uppercase tracking-widest text-gold">Platform · Content</p>
-        <h1 className="mt-1 text-2xl font-bold text-foreground">역량 뱅크</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
-          플랫폼 마스터 역량의 라이프사이클, 테넌트 루브릭 세트, 질문-채점 연결을 관리합니다.
-          IRT 문항·난이도·문항별 rubricCriteria 편집은{" "}
-          <Link href="/admin/content" className="font-medium text-accent hover:underline">
-            문항 뱅크
-          </Link>
-          에서, 역량 L-루브릭(rubricByLevel) 편집도 동일 CMS에서 할 수 있습니다.
-        </p>
-      </header>
+      <AdminPageHeader
+        eyebrow={PLATFORM_EYEBROW.content}
+        title="역량 뱅크"
+        subtitle={
+          <>
+            플랫폼 마스터 역량의 라이프사이클, 테넌트 루브릭 세트, 질문-채점 연결을 관리합니다.
+            IRT 문항·난이도·문항별 rubricCriteria 편집은{" "}
+            <Link href="/admin/content" className="font-medium text-accent hover:underline">
+              문항 뱅크
+            </Link>
+            에서, 역량 L-루브릭(rubricByLevel) 편집도 동일 CMS에서 할 수 있습니다.
+          </>
+        }
+      />
 
       <div className="grid min-h-[640px] gap-5 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
         <CompetencyMasterBoard

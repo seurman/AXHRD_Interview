@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
+import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 import { OrgCreatePanel } from "@/components/admin/OrgCreatePanel";
 import { OrgDiagnosticToggle } from "@/components/admin/OrgDiagnosticToggle";
 import { OrgKindBadge } from "@/components/admin/OrgKindBadge";
@@ -49,17 +52,13 @@ export default async function AdminOrganizationsPage() {
   const inactive = orgs.filter((o) => o.status === "REJECTED");
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 pb-12">
-      <header>
-        <p className="text-xs font-medium uppercase tracking-widest text-gold">Admin · Tenants</p>
-        <h1 className="mt-1 text-2xl font-bold text-foreground sm:text-3xl">기관 관리</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted">
-          테넌트 생성·승인·유형(취업센터/인사팀)·이용 기간·플랜·권한을 한곳에서 관리합니다.
-        </p>
-        <div className="mt-5">
-          <OrgCreatePanel />
-        </div>
-      </header>
+    <div className={ADMIN_CONTAINER.default}>
+      <AdminPageHeader
+        eyebrow={PLATFORM_EYEBROW.tenants}
+        title="기관 관리"
+        subtitle="테넌트 생성·승인·유형(취업센터/인사팀)·이용 기간·플랜·권한을 한곳에서 관리합니다."
+      />
+      <OrgCreatePanel />
 
       {pending.length > 0 && (
         <section className="space-y-4">

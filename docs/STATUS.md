@@ -2,6 +2,14 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — Platform 통합 CMS 셸 (2026-07-10)
+
+- **`/admin` Platform 홈**: 승인 대기·운영 기관·진행 진단·오늘 세션·리뷰 플래그 KPI(실데이터) + 최근 감사 + 모듈 바로가기.
+- **공용 셸**: `AdminPageHeader`, `ADMIN_CONTAINER`, `Badge`, `StatusDot`, `formatRelativeTime`, `PLATFORM_EYEBROW` — 전 admin 페이지에 적용(Claude 초안 + 마무리).
+- **사이드바**: `PlatformConsoleSidebar` 5섹션 그룹(콘텐츠·조직진단·테넌트·계정·결제) + Platform 홈 링크.
+- **빌드**: `prisma migrate deploy`를 Vercel build에 포함(`d12d33a`) — 운영 DB 스키마 자동 동기화.
+- 검증: `npx tsc --noEmit` · `npm run build`
+
 ## 최근 작업 — ARC Index 진단 CMS 2단계 (2026-07-10)
 
 - **수퍼어드민 전용** `/admin/diagnostic/*` — 1단계 `/org/diagnosis` 셀프서브와 **별개 진입점** (둘 다 유지).
