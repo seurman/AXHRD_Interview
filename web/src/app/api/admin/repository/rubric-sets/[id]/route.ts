@@ -3,6 +3,7 @@ import type { RubricScoringSystem } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isAdminResponse, requirePlatformAdminApi } from "@/lib/admin/auth";
 import { upsertRubricSet } from "@/lib/repository/service";
+import type { RubricDetailInput } from "@/lib/repository/types";
 
 const SCORING: RubricScoringSystem[] = ["FIVE_SCALE", "THREE_SCALE", "PASS_FAIL"];
 
@@ -56,7 +57,10 @@ export async function PATCH(
         behavioralIndicator:
           typeof d.behavioralIndicator === "string" ? d.behavioralIndicator : "",
       }))
-      .filter((d) => Number.isFinite(d.scoreLevel) && d.behavioralIndicator.trim());
+      .filter(
+        (d: RubricDetailInput) =>
+          Number.isFinite(d.scoreLevel) && d.behavioralIndicator.trim().length > 0,
+      );
   }
 
   const rubricSet = await upsertRubricSet({

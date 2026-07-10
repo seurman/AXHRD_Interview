@@ -5,6 +5,7 @@ import {
   listRubricSetsForCompetency,
   upsertRubricSet,
 } from "@/lib/repository/service";
+import type { RubricDetailInput } from "@/lib/repository/types";
 
 const SCORING: RubricScoringSystem[] = ["FIVE_SCALE", "THREE_SCALE", "PASS_FAIL"];
 
@@ -55,7 +56,10 @@ export async function POST(req: Request) {
       behavioralIndicator:
         typeof d.behavioralIndicator === "string" ? d.behavioralIndicator : "",
     }))
-    .filter((d) => Number.isFinite(d.scoreLevel) && d.behavioralIndicator.trim());
+    .filter(
+      (d: RubricDetailInput) =>
+        Number.isFinite(d.scoreLevel) && d.behavioralIndicator.trim().length > 0,
+    );
 
   if (parsedDetails.length === 0) {
     return NextResponse.json(
