@@ -25,7 +25,7 @@ export default async function OrgInterviewKitPage() {
 
       <p className="text-center text-xs text-muted">
         <Link href="/org/settings" className="text-accent hover:underline">
-          면접 설정
+          면접·역량 설정
         </Link>
         {" · "}
         <Link href="/org/dashboard" className="text-accent hover:underline">
