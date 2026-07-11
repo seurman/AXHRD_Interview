@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ORG_ROLE_LABEL, PLATFORM_ROLE_LABEL } from "@/lib/auth/roles";
+import {
+  invalidateApprovedOrgOptionsCache,
+  loadApprovedOrgOptions,
+  type ApprovedOrgOption,
+} from "@/lib/admin/approved-org-options";
 
 const PLATFORM_OPTIONS = [
   { value: "NONE", label: PLATFORM_ROLE_LABEL.NONE },
@@ -17,15 +22,16 @@ export function UserRoleEditor({
   currentRole,
   currentOrgId,
   currentPlatformRole,
-  organizations,
 }: {
   userId: string;
   currentRole: string;
   currentOrgId: string | null;
   currentPlatformRole: string;
-  organizations: { id: string; name: string }[];
 }) {
   const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [organizations, setOrganizations] = useState<ApprovedOrgOption[]>([]);
+  const [loadingOrgs, setLoadingOrgs] = useState(false);
   const [role, setRole] = useState(currentRole);
   const [orgId, setOrgId] = useState(currentOrgId ?? "");
   const [platformRole, setPlatformRole] = useState(currentPlatformRole);
@@ -35,6 +41,20 @@ export function UserRoleEditor({
     role !== currentRole ||
     orgId !== (currentOrgId ?? "") ||
     platformRole !== currentPlatformRole;
+
+  const openEditor = async () => {
+    setOpen(true);
+    if (organizations.length > 0) return;
+    setLoadingOrgs(true);
+    try {
+      setOrganizations(await loadApprovedOrgOptions());
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "기관 목록을 불러오지 못했습니다.");
+      setOpen(false);
+    } finally {
+      setLoadingOrgs(false);
+    }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -52,6 +72,7 @@ export function UserRoleEditor({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? "변경에 실패했습니다.");
       }
+      invalidateApprovedOrgOptionsCache();
       router.refresh();
     } catch (e) {
       alert(e instanceof Error ? e.message : "변경에 실패했습니다.");
@@ -59,6 +80,22 @@ export function UserRoleEditor({
       setSaving(false);
     }
   };
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => void openEditor()}
+        className="btn-secondary px-3 py-1.5 text-xs"
+      >
+        권한 변경
+      </button>
+    );
+  }
+
+  if (loadingOrgs) {
+    return <p className="text-xs text-muted">기관 목록 불러오는 중…</p>;
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -124,6 +161,13 @@ export function UserRoleEditor({
           </button>
         )}
       </div>
+      <button
+        type="button"
+        onClick={() => setOpen(false)}
+        className="self-start text-[10px] text-muted hover:text-foreground"
+      >
+        접기
+      </button>
     </div>
   );
 }

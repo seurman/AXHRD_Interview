@@ -176,6 +176,10 @@ model Organization {
   diagnosticEnabled Boolean @default(false)
   /** 면접·코호트·세션 (기본 ON) */
   interviewEnabled Boolean @default(true)
+
+  @@index([status])
+  @@index([status, name(sort: Asc)])
+  @@index([status, createdAt(sort: Asc)])
 }
 
 // ── User ──
@@ -223,6 +227,12 @@ model User {
   surveyResponses     SurveyResponse[]
 
   @@index([organizationId])
+  @@index([platformRole])
+  @@index([orgRole])
+  @@index([signupFlag])
+  @@index([createdAt(sort: Desc)])
+  @@index([organizationId, orgRole])
+  @@index([signupFlag, createdAt(sort: Desc)])
 }
 
 /** 회원 답변·선택 정보 — 분석·축적용 평문 아카이브 (append-only) */
@@ -504,6 +514,7 @@ model Competency {
   @@index([source])
   @@index([organizationId])
   @@index([ownerScope])
+  @@index([ownerScope, organizationId])
 }
 
 model CompetencyBenchmarkRef {
@@ -551,6 +562,7 @@ model Question {
   @@index([competencyId, level])
   @@index([organizationId])
   @@index([ownerScope])
+  @@index([ownerScope, organizationId])
 }
 
 // ── 역량 리포지토리: 정규화 루브릭 세트 (tenant null = 플랫폼 공통) ──
@@ -731,6 +743,9 @@ model InterviewSession {
   @@index([status])
   @@index([kitOrganizationId])
   @@index([orgKitShareId])
+  @@index([createdAt(sort: Desc)])
+  @@index([status, createdAt(sort: Desc)])
+  @@index([userId, status])
 }
 
 model ResponseRecord {
@@ -762,6 +777,7 @@ model ResponseRecord {
   followUpCorrectedTranscript String? @db.Text
 
   @@index([sessionId])
+  @@index([questionId])
 }
 
 model ChipEvent {
@@ -955,6 +971,8 @@ model Subscription {
   @@index([userId])
   @@index([organizationId])
   @@index([status, currentPeriodEnd])
+  @@index([updatedAt(sort: Desc)])
+  @@index([organizationId, updatedAt(sort: Desc)])
 }
 
 model PaymentTransaction {
@@ -1034,6 +1052,8 @@ model DemoWorkspace {
   updatedAt       DateTime         @updatedAt
   competencies    DemoCompetency[]
   questions       DemoQuestion[]
+
+  @@index([updatedAt(sort: Desc)])
 }
 
 model DemoCompetency {
@@ -1313,6 +1333,9 @@ model DiagnosticWave {
 
   @@unique([organizationId, instrumentId, waveNumber])
   @@index([organizationId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@index([organizationId, waveNumber(sort: Desc)])
 }
 
 model DiagnosticTeam {
@@ -1342,6 +1365,8 @@ model DiagnosticResponse {
 
   @@index([waveId])
   @@index([teamId])
+  @@index([submittedAt(sort: Desc)])
+  @@index([waveId, submittedAt])
 }
 
 model DiagnosticAnswer {

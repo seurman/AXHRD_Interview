@@ -12,27 +12,30 @@ import { Badge } from "@/components/admin/Badge";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 import {
+  fetchUserSegmentCounts,
+  segmentListTotal,
+} from "@/lib/admin/user-segment-counts";
+import {
   parseUserSegment,
   userSegmentWhere,
   USER_SEGMENT_OPTIONS,
-  type UserIdentitySegment,
 } from "@/lib/admin/user-identity";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 50;
 
-async function countBySegment(
-  segment: UserIdentitySegment,
-  baseWhere: Prisma.UserWhereInput,
-): Promise<number> {
-  if (segment === "all") {
-    return prisma.user.count({ where: baseWhere });
-  }
-  return prisma.user.count({
-    where: { AND: [baseWhere, userSegmentWhere(segment)] },
-  });
-}
+const USER_LIST_SELECT = {
+  id: true,
+  name: true,
+  email: true,
+  createdAt: true,
+  platformRole: true,
+  orgRole: true,
+  organizationId: true,
+  signupFlag: true,
+  organization: { select: { name: true } },
+} as const;
 
 export default async function AdminUsersPage({
   searchParams,
@@ -60,34 +63,18 @@ export default async function AdminUsersPage({
       ? baseWhere
       : { AND: [baseWhere, userSegmentWhere(segment)] };
 
-  const [users, organizations, segmentCounts, total] = await Promise.all([
+  const [users, segmentCounts] = await Promise.all([
     prisma.user.findMany({
       where: listWhere,
-      include: { organization: { select: { name: true } } },
+      select: USER_LIST_SELECT,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
-    prisma.organization.findMany({
-      where: { status: "APPROVED" },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-    Promise.all(
-      (
-        [
-          "all",
-          "platform",
-          "org_admin",
-          "org_staff",
-          "member",
-          "personal",
-          "review",
-        ] as UserIdentitySegment[]
-      ).map(async (key) => [key, await countBySegment(key, baseWhere)] as const),
-    ).then((entries) => Object.fromEntries(entries) as Record<UserIdentitySegment, number>),
-    prisma.user.count({ where: listWhere }),
+    fetchUserSegmentCounts(query),
   ]);
+
+  const total = segmentListTotal(segment, segmentCounts);
 
   const paginationParams = {
     q: query,
@@ -197,7 +184,6 @@ export default async function AdminUsersPage({
                         currentRole={u.orgRole}
                         currentOrgId={u.organizationId}
                         currentPlatformRole={u.platformRole}
-                        organizations={organizations}
                       />
                     </td>
                   </tr>

@@ -74,28 +74,38 @@ function hourBucketRanges(hours = 6) {
 
 async function loadSessionHourlyBuckets(hours = 6): Promise<HourlyBucket[]> {
   const ranges = hourBucketRanges(hours);
-  const counts = await Promise.all(
-    ranges.map(({ start, end }) =>
-      prisma.interviewSession.count({
-        where: { createdAt: { gte: start, lt: end } },
-      }),
-    ),
-  );
-  return ranges.map((range, i) => ({ label: range.label, count: counts[i] }));
+  const windowStart = ranges[0]?.start ?? new Date();
+  const rows = await prisma.$queryRaw<{ hour: Date; count: bigint }[]>`
+    SELECT date_trunc('hour', "createdAt") AS hour, COUNT(*)::bigint AS count
+    FROM "InterviewSession"
+    WHERE "createdAt" >= ${windowStart}
+    GROUP BY 1
+  `;
+  const byHour = new Map(rows.map((r) => [r.hour.getTime(), Number(r.count)]));
+  return ranges.map((range) => ({
+    label: range.label,
+    count: byHour.get(range.start.getTime()) ?? 0,
+  }));
 }
 
 async function loadResponseHourlyBuckets(hours = 6): Promise<HourlyBucket[]> {
   const ranges = hourBucketRanges(hours);
-  const counts = await Promise.all(
-    ranges.map(({ start, end }) =>
-      prisma.diagnosticResponse
-        .count({
-          where: { submittedAt: { gte: start, lt: end, not: null } },
-        })
-        .catch(() => 0),
-    ),
-  );
-  return ranges.map((range, i) => ({ label: range.label, count: counts[i] }));
+  const windowStart = ranges[0]?.start ?? new Date();
+  try {
+    const rows = await prisma.$queryRaw<{ hour: Date; count: bigint }[]>`
+      SELECT date_trunc('hour', "submittedAt") AS hour, COUNT(*)::bigint AS count
+      FROM "DiagnosticResponse"
+      WHERE "submittedAt" IS NOT NULL AND "submittedAt" >= ${windowStart}
+      GROUP BY 1
+    `;
+    const byHour = new Map(rows.map((r) => [r.hour.getTime(), Number(r.count)]));
+    return ranges.map((range) => ({
+      label: range.label,
+      count: byHour.get(range.start.getTime()) ?? 0,
+    }));
+  } catch {
+    return ranges.map((range) => ({ label: range.label, count: 0 }));
+  }
 }
 
 export async function loadContentHomeSnapshot(): Promise<ContentHomeSnapshot> {
