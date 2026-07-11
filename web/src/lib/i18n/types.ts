@@ -87,9 +87,13 @@ export type Dictionary = {
       org: string;
     };
     guestProducts: {
+      allProducts: string;
       trialInterview: string;
       discover: string;
+      resume: string;
       interview: string;
+      practice: string;
+      growth: string;
       orgDiagnosis: string;
       forOrganizations: string;
     };
@@ -135,6 +139,9 @@ export type Dictionary = {
       ctaStartLoggedIn: string;
       ctaPersonal: string;
       ctaEnterprise: string;
+      ctaDemo: string;
+      ctaTrial: string;
+      aside: string;
       imageAlt: string;
       bullets: string[];
     };
@@ -164,6 +171,18 @@ export type Dictionary = {
         rows: { label: string; pct: number; delta: string }[];
         legend: string;
       };
+      resume: {
+        label: string;
+        score: string;
+        highlight: string;
+        note: string;
+      };
+      diagnostic: {
+        label: string;
+        wave: string;
+        metric: string;
+        teams: string[];
+      };
     };
     gallery: {
       ariaLabel: string;
@@ -173,6 +192,25 @@ export type Dictionary = {
         desc: string;
         mock: string[];
       }[];
+    };
+    bento: {
+      label: string;
+      open: string;
+    };
+    rail: {
+      title: string;
+      subtitle: string;
+      hint: string;
+      open: string;
+    };
+    doors: {
+      personal: { label: string; title: string; cta: string };
+      org: { label: string; title: string; cta: string };
+    };
+    marquee: string[];
+    paths: {
+      personal: { label: string; headline: string; cta: string };
+      org: { label: string; headline: string; cta: string };
     };
     spotlightVisual: {
       scoreLabel: string;
@@ -200,8 +238,25 @@ export type Dictionary = {
     features: {
       interview: { title: string; desc: string; chips: string[] };
       discover: { title: string; desc: string; chips: string[] };
+      resumeReview: { title: string; desc: string; chips: string[] };
       tracking: { title: string; desc: string; chips: string[] };
       cards: { title: string; desc: string; chips: string[] };
+      diagnostic: { title: string; desc: string; chips: string[] };
+    };
+    pillars: {
+      eyebrow: string;
+      title: string;
+      subtitle: string;
+      personal: {
+        label: string;
+        desc: string;
+        items: { title: string; desc: string }[];
+      };
+      org: {
+        label: string;
+        desc: string;
+        items: { title: string; desc: string }[];
+      };
     };
     spotlight: {
       eyebrow: string;
@@ -234,7 +289,73 @@ export type Dictionary = {
       subtitle: string;
       button: string;
       buttonLoggedIn: string;
+      pricing: string;
     };
+    socialProof: {
+      eyebrow: string;
+      stats: { value: string; label: string }[];
+      orgs: string[];
+      orgsMore: string;
+    };
+    segments: {
+      eyebrow: string;
+      title: string;
+      subtitle: string;
+      items: {
+        icon: "university" | "company" | "student";
+        title: string;
+        desc: string;
+        href: string;
+      }[];
+    };
+    updates: {
+      eyebrow: string;
+      title: string;
+      items: { badge: string; title: string; desc: string }[];
+    };
+    faq: {
+      eyebrow: string;
+      title: string;
+      items: { q: string; a: string }[];
+    };
+  };
+  products: {
+    hub: {
+      eyebrow: string;
+      title: string;
+      subtitle: string;
+      personalLabel: string;
+      orgLabel: string;
+      closingTitle: string;
+      ctaPersonal: string;
+      ctaOrg: string;
+    };
+    common: {
+      hub: string;
+      related: string;
+      learnMore: string;
+    };
+    pages: Record<
+      | "discover"
+      | "resume"
+      | "interview"
+      | "practice"
+      | "growth"
+      | "diagnostic"
+      | "organizations",
+      {
+        eyebrow: string;
+        headline: string;
+        subtitle: string;
+        highlights: { title: string; desc: string }[];
+        capabilitiesTitle: string;
+        capabilities: string[];
+        ctaPrimary: string;
+        ctaSecondaryLabel?: string;
+        ctaSecondaryHref?: string;
+        closingTitle: string;
+      }
+    >;
   };
   swipe: {
     eyebrow: string;

@@ -1,24 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import {
-  ArrowRight,
-  BarChart3,
-  Mic2,
-  Sparkles,
-  Shield,
-  Layers,
-  ChevronRight,
-  Target,
-  TrendingUp,
-  Scale,
-  Check,
-} from "lucide-react";
-import { Reveal } from "@/components/ui/Reveal";
+import { ArrowRight } from "lucide-react";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { LandingProductPreview } from "@/components/landing/LandingProductPreview";
-import { LandingGalleryTiles } from "@/components/landing/LandingGalleryTiles";
-import { LandingSpotlightVisual } from "@/components/landing/LandingSpotlightVisual";
+import { LandingProductRail } from "@/components/landing/LandingProductRail";
+import { LandingAudienceDoors } from "@/components/landing/LandingAudienceDoors";
+import { LandingSocialProof } from "@/components/landing/LandingSocialProof";
+import { LandingSegmentPreview } from "@/components/landing/LandingSegmentPreview";
+import { LandingLatestUpdates } from "@/components/landing/LandingLatestUpdates";
+import { LandingFAQ } from "@/components/landing/LandingFAQ";
+import { landingStartHref } from "@/lib/landing/hrefs";
 import { useLoggedIn, useNavSession } from "@/components/layout/NavSessionProvider";
 
 export function HomeLanding() {
@@ -28,24 +20,10 @@ export function HomeLanding() {
   const { dict } = useI18n();
   const h = dict.home;
 
-  const features = [
-    { icon: Mic2, ...h.features.interview, href: trialOnly ? "/demo" : "/interview/setup" },
-    { icon: Sparkles, ...h.features.discover, href: trialOnly ? "/demo" : "/discover" },
-    { icon: BarChart3, ...h.features.tracking, href: trialOnly ? "/demo" : "/dashboard" },
-    { icon: Layers, ...h.features.cards, href: trialOnly ? "/demo" : "/practice/swipe" },
-  ];
-
-  const values = [
-    { icon: Shield, ...h.values.transparent },
-    { icon: Target, ...h.values.adaptive },
-    { icon: TrendingUp, ...h.values.growth },
-    { icon: Scale, ...h.values.ncs },
-  ];
-
-  const personalHref = loggedIn ? (trialOnly ? "/demo" : "/interview/setup") : "/auth/register";
-  const personalLabel = loggedIn
+  const startHref = landingStartHref(loggedIn, trialOnly);
+  const startLabel = loggedIn
     ? trialOnly
-      ? "5분 면접 체험"
+      ? h.hero.ctaTrial
       : h.hero.ctaStartLoggedIn
     : h.hero.ctaPersonal;
 
@@ -62,168 +40,49 @@ export function HomeLanding() {
         <div className="lp-shell lp-hero-grid">
           <div className="lp-hero-copy lp-hero-copy--intro">
             <p className="lp-kicker">{h.hero.eyebrow}</p>
-            <p className="lp-brand">{h.hero.brand}</p>
+            <p className="lp-brand" aria-hidden>
+              {h.hero.brand}
+            </p>
             <h1 className="lp-display">
               {h.hero.titleLine1}
               <br />
               <em className="lp-display-em">{h.hero.titleHighlight}</em>
             </h1>
             <p className="lp-lead">{h.hero.subtitle}</p>
+            <div className="lp-hero-actions">
+              <Link href={startHref} className="lp-btn-primary">
+                {startLabel}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/demo" className="lp-btn-ghost">
+                {h.hero.ctaDemo}
+              </Link>
+            </div>
           </div>
 
           <LandingProductPreview />
 
-          <div className="lp-hero-copy lp-hero-copy--actions">
-            <ul className="lp-bullets">
-              {h.hero.bullets.map((b) => (
-                <li key={b}>
-                  <span className="lp-check">
-                    <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                  </span>
-                  {b}
-                </li>
-              ))}
-            </ul>
-            <div className="lp-hero-actions">
-              <Link href={personalHref} className="lp-btn-primary">
-                {personalLabel}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href="/org/setup" className="lp-btn-ghost">
-                {h.hero.ctaEnterprise}
-              </Link>
-            </div>
+          <div className="lp-hero-copy lp-hero-copy--actions lp-hero-aside">
+            <p className="lp-hero-aside-text">{h.hero.aside}</p>
+            <Link href="/products/organizations" className="lp-hero-aside-link group">
+              {h.hero.ctaEnterprise}
+              <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+            </Link>
           </div>
         </div>
       </section>
 
-      <LandingGalleryTiles />
+      <LandingSocialProof />
 
-      <section className="lp-section">
-        <div className="lp-shell">
-          <Reveal className="lp-section-head">
-            <p className="lp-kicker lp-kicker--ink">{h.proof.eyebrow}</p>
-            <h2 className="lp-h2">{h.proof.title}</h2>
-            <ul className="lp-proof-row">
-              {h.proof.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </Reveal>
-        </div>
-      </section>
+      <LandingProductRail />
 
-      <section className="lp-section lp-section--paper">
-        <div className="lp-shell">
-          <Reveal className="lp-section-head">
-            <p className="lp-kicker lp-kicker--ink">{h.modules.eyebrow}</p>
-            <h2 className="lp-h2">{h.modules.title}</h2>
-            <p className="lp-lede">{h.modules.subtitle}</p>
-          </Reveal>
-          <div className="lp-feature-grid">
-            {features.map((f, i) => (
-              <Reveal key={f.title} delay={i * 0.04}>
-                <Link href={f.href} className="lp-feature group">
-                  <div className="lp-feature-top">
-                    <span className="lp-feature-icon">
-                      <f.icon className="h-5 w-5" />
-                    </span>
-                    <ChevronRight className="h-4 w-4 text-primary opacity-0 transition group-hover:opacity-100" />
-                  </div>
-                  <h3>{f.title}</h3>
-                  <p>{f.desc}</p>
-                  <div className="lp-chips">
-                    {f.chips.map((c) => (
-                      <span key={c}>{c}</span>
-                    ))}
-                  </div>
-                </Link>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+      <LandingSegmentPreview />
 
-      <section className="lp-spotlight">
-        <div className="lp-shell lp-spotlight-grid">
-          <Reveal>
-            <LandingSpotlightVisual />
-          </Reveal>
-          <Reveal delay={0.06}>
-            <div>
-              <p className="lp-kicker lp-kicker--ink">{h.spotlight.eyebrow}</p>
-              <h2 className="lp-h2">{h.spotlight.title}</h2>
-              <p className="lp-lede">{h.spotlight.desc}</p>
-              <ul className="lp-bullets lp-bullets--ink">
-                {h.spotlight.points.map((p) => (
-                  <li key={p}>
-                    <span className="lp-check lp-check--ink">
-                      <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                    </span>
-                    {p}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href={personalHref}
-                className="lp-btn-primary lp-btn-ink mt-8"
-              >
-                {h.spotlight.cta}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      <LandingAudienceDoors />
 
-      <section className="lp-section">
-        <div className="lp-shell">
-          <Reveal className="lp-section-head">
-            <p className="lp-kicker lp-kicker--ink">{h.values.eyebrow}</p>
-            <h2 className="lp-h2">{h.values.title}</h2>
-            <p className="lp-lede">{h.values.subtitle}</p>
-          </Reveal>
-          <div className="lp-value-grid">
-            {values.map((v, i) => (
-              <Reveal key={v.title} delay={i * 0.04}>
-                <article className="lp-value">
-                  <span className="lp-feature-icon">
-                    <v.icon className="h-5 w-5" />
-                  </span>
-                  <h3>{v.title}</h3>
-                  <p>{v.desc}</p>
-                </article>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+      <LandingLatestUpdates />
 
-      <section className="lp-enterprise">
-        <div className="lp-shell lp-enterprise-inner">
-          <p className="lp-kicker">{h.enterprise.eyebrow}</p>
-          <h2 className="lp-display lp-display--sm">{h.enterprise.title}</h2>
-          <p className="lp-lead lp-lead--narrow">{h.enterprise.desc}</p>
-          <Link href="/org/setup" className="lp-btn-primary mt-8">
-            {h.enterprise.cta}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </section>
-
-      <section className="lp-closing">
-        <div className="lp-shell text-center">
-          <h2 className="lp-h2">{h.cta.title}</h2>
-          <p className="lp-lede mx-auto">{h.cta.subtitle}</p>
-          <Link
-            href={loggedIn ? "/dashboard" : "/auth/register"}
-            className="lp-btn-primary lp-btn-ink mt-8"
-          >
-            {loggedIn ? h.cta.buttonLoggedIn : h.cta.button}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </section>
+      <LandingFAQ />
     </div>
   );
 }

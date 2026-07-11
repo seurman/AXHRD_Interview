@@ -19,9 +19,13 @@ export type NavLabelKey =
 export type PrepareLabelKey = "interview" | "discover" | "cards" | "resumeReview" | "trialInterview";
 
 export type GuestProductLabelKey =
+  | "allProducts"
   | "trialInterview"
   | "discover"
+  | "resume"
   | "interview"
+  | "practice"
+  | "growth"
   | "orgDiagnosis"
   | "forOrganizations";
 
@@ -121,11 +125,14 @@ const PRACTICE_HREFS: { href: string; labelKey: PrepareLabelKey; capability: Cap
 ];
 
 export const GUEST_PRODUCT_HREFS: { href: string; labelKey: GuestProductLabelKey }[] = [
-  { href: "/demo", labelKey: "trialInterview" },
-  { href: "/discover", labelKey: "discover" },
-  { href: "/auth/register?next=/interview/setup", labelKey: "interview" },
-  { href: "/diagnosis", labelKey: "orgDiagnosis" },
-  { href: "/org/setup", labelKey: "forOrganizations" },
+  { href: "/products", labelKey: "allProducts" },
+  { href: "/products/discover", labelKey: "discover" },
+  { href: "/products/resume", labelKey: "resume" },
+  { href: "/products/interview", labelKey: "interview" },
+  { href: "/products/practice", labelKey: "practice" },
+  { href: "/products/growth", labelKey: "growth" },
+  { href: "/products/diagnostic", labelKey: "orgDiagnosis" },
+  { href: "/products/organizations", labelKey: "forOrganizations" },
 ];
 
 function filterNavLinks<T extends { capability: CapabilityId; href: string; labelKey: PrepareLabelKey }>(

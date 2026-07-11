@@ -1,11 +1,18 @@
 "use client";
 
-import { BarChart3, Mic2, Quote, Sparkles } from "lucide-react";
+import {
+  Activity,
+  BarChart3,
+  FileText,
+  Layers,
+  Mic2,
+  Sparkles,
+} from "lucide-react";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
-const ICONS = [Mic2, BarChart3, Sparkles, Quote] as const;
+const ICONS = [Sparkles, FileText, Mic2, Layers, BarChart3, Activity] as const;
 
-/** 갤러리 스트립 — 제품 화면 타일(인물 사진 대체) */
+/** 갤러리 스트립 — 6개 제품 라인업 */
 export function LandingGalleryTiles() {
   const { dict } = useI18n();
   const tiles = dict.home.gallery;
@@ -13,7 +20,7 @@ export function LandingGalleryTiles() {
   return (
     <section className="lp-gallery lp-gallery--product" aria-label={tiles.ariaLabel}>
       {tiles.items.map((item, i) => {
-        const Icon = ICONS[i] ?? Mic2;
+        const Icon = ICONS[i] ?? Sparkles;
         return (
           <div key={item.title} className={`lp-gallery-tile lp-gallery-tile--${i + 1}`}>
             <div className="lp-gallery-tile-inner">
