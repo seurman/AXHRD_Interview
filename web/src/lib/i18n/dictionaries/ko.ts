@@ -831,7 +831,7 @@ export const dictionary: Dictionary = {
     persona: { eyebrow: "당신의 면접 페르소나" },
     competency: {
       title: "3. 역량 선택",
-      hint: "한 번에 하나의 역량 · 문항 수는 아래에서 선택",
+      hint: "산업·직무를 고르면 추천 역량이 자동 체크돼요 · 자유롭게 추가/해제 가능 · 문항 수는 아래에서 선택",
       plan: "진행 중인 플랜",
       recommended: "추천",
       done: "완료",

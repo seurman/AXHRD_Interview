@@ -801,7 +801,7 @@ export const dictionary: Dictionary = {
     persona: { eyebrow: "Your interview persona" },
     competency: {
       title: "3. Competency",
-      hint: "One competency at a time · choose question count below",
+      hint: "Recommended competencies auto-check based on your industry/role · add or remove freely · choose question count below",
       plan: "Active plan",
       recommended: "Recommended",
       done: "Done",

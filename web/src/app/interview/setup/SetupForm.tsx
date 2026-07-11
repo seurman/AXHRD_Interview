@@ -99,7 +99,11 @@ export function SetupForm({
   const [showResumeEditor, setShowResumeEditor] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [focusCompetency, setFocusCompetency] = useState<string>("");
+  // 여러 역량을 한 번에 추천/선택할 수 있도록 배열로 관리한다. 순서 = 진행 우선순위
+  // (0번째가 이번에 시작할 역량). 세션 API 계약은 여전히 역량 1개(focusCompetency)만
+  // 받으므로, 배열의 나머지는 이번 세션 완료 후 이어서 추천하는 용도로만 쓴다.
+  const [focusCompetencies, setFocusCompetencies] = useState<string[]>([]);
+  const focusCompetency = focusCompetencies[0] ?? "";
   const [tripleFeedbackMode, setTripleFeedbackMode] = useState(false);
   const [jdBonusEnabled, setJdBonusEnabled] = useState(false);
   const [questionCount, setQuestionCount] = useState(3);
@@ -136,7 +140,7 @@ export function SetupForm({
             (c: CompetencyRow) =>
               c.status === "IN_PROGRESS" || c.status === "NOT_STARTED"
           );
-          if (next) setFocusCompetency(next.code);
+          if (next) setFocusCompetencies([next.code]);
         }
       }
     },
@@ -148,34 +152,41 @@ export function SetupForm({
     const comp = searchParams.get("competency");
     if (pid) setPlanId(pid);
     if (comp) {
-      setFocusCompetency(comp);
+      setFocusCompetencies([comp]);
       competencyManuallyChanged.current = true;
     }
     loadProgress(pid, Boolean(comp));
   }, [searchParams, loadProgress]);
 
-  // 산업+직무를 다 고르면(페르소나가 계산되면) 그 페르소나가 특히 중요하게 보는 역량
-  // (focusCompetencies) 중 아직 완료하지 않은 첫 번째 역량을 기본 선택으로 추천한다.
-  // NCS "직업기초능력"은 모든 직무 공통이라 역량 선택 자체를 막지는 않되(자유롭게
-  // 다른 역량도 고를 수 있음), 실제 채용에서 직무별로 중점 역량이 다르다는 관행을
-  // 반영한 추천일 뿐이다 — 사용자가 이미 직접 역량을 고른 뒤라면 덮어쓰지 않는다.
+  // 산업+직무를 다 고르면(페르소나가 계산되면) 그 페르소나가 중요하게 보는 역량 세트
+  // (focusCompetencies, 보통 3개) 중 아직 완료하지 않은 것들을 통째로 기본 선택으로
+  // 체크해 준다. NCS "직업기초능력"은 모든 직무 공통이라 역량 선택 자체를 막지는
+  // 않되(자유롭게 추가·해제 가능), 실제 채용에서 직무별로 중점 역량이 다르다는 관행을
+  // 반영한 추천일 뿐이다 — 사용자가 이미 카드를 직접 클릭한 뒤라면 덮어쓰지 않는다.
   useEffect(() => {
     if (!persona || competencyManuallyChanged.current) return;
     if (jdAnalysis?.recommendedCompetency) return;
-    const recommended = persona.focusCompetencies.find((code) => {
+    const recommended = persona.focusCompetencies.filter((code) => {
       const row = competencies.find((c) => c.code === code);
       return row && row.status !== "COMPLETED";
     });
-    if (recommended) setFocusCompetency(recommended);
+    if (recommended.length > 0) setFocusCompetencies(recommended);
   }, [persona, competencies, jdAnalysis?.recommendedCompetency]);
 
+  // 공고 분석이 역량을 추천하면 그 역량을 세트의 맨 앞(=이번에 시작할 역량)으로 올리고,
+  // 나머지는 페르소나 추천 세트를 이어 붙인다 — 공고 추천이 페르소나 추천보다 우선한다.
   useEffect(() => {
     if (!jdAnalysis?.recommendedCompetency || competencyManuallyChanged.current) return;
-    const row = competencies.find((c) => c.code === jdAnalysis.recommendedCompetency);
-    if (row && row.status !== "COMPLETED") {
-      setFocusCompetency(jdAnalysis.recommendedCompetency);
-    }
-  }, [jdAnalysis, competencies]);
+    const rec = jdAnalysis.recommendedCompetency;
+    const row = competencies.find((c) => c.code === rec);
+    if (!row || row.status === "COMPLETED") return;
+    const rest = (persona?.focusCompetencies ?? []).filter((code) => {
+      if (code === rec) return false;
+      const r = competencies.find((c) => c.code === code);
+      return r && r.status !== "COMPLETED";
+    });
+    setFocusCompetencies([rec, ...rest]);
+  }, [jdAnalysis, competencies, persona]);
 
   useEffect(() => {
     if (companySize === "PUBLIC") setIndustry("PUBLIC");
@@ -385,6 +396,10 @@ export function SetupForm({
           resumeFileName: uploadedFileName,
           planId,
           focusCompetency,
+          // 이번 세션 이후 이어서 추천할 나머지 역량들 — 현재 API는 아직 안 읽지만,
+          // 세션 완료 후 "다음 역량 이어가기" 흐름을 붙일 때 그대로 쓸 수 있도록
+          // 미리 함께 보내둔다 (하위 호환: 몰라도 그냥 무시됨).
+          queuedCompetencies: focusCompetencies.slice(1),
           jdText,
           jdUrl: jdUrl.trim() || undefined,
           tripleFeedbackMode,
@@ -406,7 +421,9 @@ export function SetupForm({
         throw new Error(data.error ?? "Failed to start");
       }
 
-      router.push(`/interview/${data.sessionId}`);
+      const rest = focusCompetencies.slice(1);
+      const queueQs = rest.length > 0 ? `?queue=${encodeURIComponent(rest.join(","))}` : "";
+      router.push(`/interview/${data.sessionId}${queueQs}`);
       // 성공 시에는 setLoading(false)를 호출하지 않는다.
       // router.push() 후에도 다음 페이지가 서버에서 렌더링을 마칠 때까지
       // 이 컴포넌트가 잠시 화면에 남아있는데, 여기서 loading을 풀면
@@ -709,12 +726,12 @@ export function SetupForm({
         <div className="grid gap-2 sm:grid-cols-2">
           {competencies.map((c) => {
             const done = c.status === "COMPLETED";
-            const active = focusCompetency === c.code;
+            const active = focusCompetencies.includes(c.code);
             const jdRecommended = Boolean(
               jdAnalysis?.recommendedCompetency === c.code && !done
             );
             const recommended = Boolean(
-              !jdRecommended &&
+              !active &&
                 persona &&
                 !done &&
                 (persona.focusCompetencies as string[]).includes(c.code)
@@ -724,9 +741,14 @@ export function SetupForm({
                 key={c.code}
                 type="button"
                 disabled={done}
+                aria-pressed={active}
                 onClick={() => {
                   competencyManuallyChanged.current = true;
-                  setFocusCompetency(c.code);
+                  setFocusCompetencies((prev) =>
+                    prev.includes(c.code)
+                      ? prev.filter((code) => code !== c.code)
+                      : [...prev, c.code]
+                  );
                 }}
                 className={`rounded-xl border p-3 text-left text-sm transition ${
                   done
@@ -736,23 +758,37 @@ export function SetupForm({
                       : "border-card-border text-foreground hover:border-gold/40"
                 }`}
               >
-                <span className="font-medium">
-                  {c.label}
-                  {jdRecommended && (
-                    <span
-                      className="ml-1.5 rounded-full bg-gold/15 px-1.5 py-0.5 text-[10px] font-semibold text-gold"
-                      title={jdAnalysis?.competencyRationale ?? undefined}
-                    >
-                      📄 공고 분석 추천
-                    </span>
-                  )}
-                  {recommended && (
-                    <span className="ml-1.5 rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent">
-                      ⭐ {s.competency.recommended}
-                    </span>
-                  )}
+                <span className="flex items-start gap-2">
+                  <span
+                    aria-hidden
+                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${
+                      done
+                        ? "border-success/40 bg-success/20"
+                        : active
+                          ? "border-gold bg-gold text-white"
+                          : "border-card-border"
+                    }`}
+                  >
+                    {(active || done) && "✓"}
+                  </span>
+                  <span className="font-medium">
+                    {c.label}
+                    {jdRecommended && (
+                      <span
+                        className="ml-1.5 rounded-full bg-gold/15 px-1.5 py-0.5 text-[10px] font-semibold text-gold"
+                        title={jdAnalysis?.competencyRationale ?? undefined}
+                      >
+                        📄 공고 분석 추천
+                      </span>
+                    )}
+                    {recommended && (
+                      <span className="ml-1.5 rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent">
+                        ⭐ {s.competency.recommended}
+                      </span>
+                    )}
+                  </span>
                 </span>
-                <span className="mt-1 block text-xs opacity-70">
+                <span className="mt-1 block pl-6 text-xs opacity-70">
                   {done
                     ? `${s.competency.done} · L${c.levelEst ?? "-"}`
                     : c.status === "IN_PROGRESS"
@@ -763,6 +799,13 @@ export function SetupForm({
             );
           })}
         </div>
+        {focusCompetencies.length > 1 && (
+          <p className="text-xs text-accent">
+            {locale === "ko"
+              ? `${competencyLabel(focusCompetencies[0])}부터 시작하고, 완료 후 나머지 ${focusCompetencies.length - 1}개도 이어서 추천해 드려요.`
+              : `Starting with ${competencyLabel(focusCompetencies[0])} — we'll suggest the other ${focusCompetencies.length - 1} next.`}
+          </p>
+        )}
 
         <div className="space-y-2 border-t border-card-border pt-4">
           <h3 className="text-sm font-semibold text-foreground">{s.questionCount.title}</h3>
@@ -948,13 +991,17 @@ export function SetupForm({
       <button
         type="button"
         onClick={startInterview}
-        disabled={loading || parsingFile || parsingJdFile || !industry || !focusCompetency}
+        disabled={
+          loading || parsingFile || parsingJdFile || !industry || focusCompetencies.length === 0
+        }
         className="btn-primary w-full py-3.5"
       >
         {loading ? (
           <>
             <IconLoader /> {s.preparing}
           </>
+        ) : focusCompetencies.length > 1 ? (
+          `${competencyLabel(focusCompetency || "COMMUNICATION")} ${s.start} (1/${focusCompetencies.length})`
         ) : (
           `${competencyLabel(focusCompetency || "COMMUNICATION")} ${s.start}`
         )}

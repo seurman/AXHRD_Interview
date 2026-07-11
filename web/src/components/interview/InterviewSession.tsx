@@ -35,6 +35,10 @@ interface InterviewSessionProps {
   focusCompetency?: string;
   maxItems?: number;
   tripleFeedbackMode?: boolean;
+  /** 설정 화면에서 여러 역량을 골랐을 때, 이 세션 다음에 이어갈 나머지 역량 코드들.
+   *  DB에 저장하지 않고 URL로만 들고 다니다가, 세션이 끝나면 리포트 페이지 URL에
+   *  그대로 이어 붙여서 "다음 역량 이어서 시작" 버튼이 읽을 수 있게 한다. */
+  queue?: string[];
 }
 
 function readVoiceModeEnabled(): boolean {
@@ -51,6 +55,7 @@ export function InterviewSession({
   focusCompetency,
   maxItems = COMPETENCY_SESSION_MAX_ITEMS,
   tripleFeedbackMode = false,
+  queue = [],
 }: InterviewSessionProps) {
   const router = useRouter();
   const [state, setState] = useState(initialState);
@@ -239,10 +244,17 @@ export function InterviewSession({
       }));
 
       if (data.shouldTerminate) {
-        router.push(
-          data.redirectUrl ??
-            `/interview/${sessionId}/report`
-        );
+        const base = data.redirectUrl ?? `/interview/${sessionId}/report`;
+        // 남은 역량 큐가 있으면 리포트 페이지 URL에 그대로 이어 붙인다(DB 미저장,
+        // URL로만 전달) — 커스텀 redirectUrl에 이미 쿼리스트링이 있어도 안전하게 합친다.
+        if (queue.length > 0) {
+          const [path, existingQs] = base.split("?");
+          const params = new URLSearchParams(existingQs ?? "");
+          params.set("queue", queue.join(","));
+          router.push(`${path}?${params.toString()}`);
+        } else {
+          router.push(base);
+        }
       }
     } catch (e) {
       console.error(e);

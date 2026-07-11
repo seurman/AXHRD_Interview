@@ -21,10 +21,16 @@ export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ sessionId: string }>;
+  searchParams: Promise<{ queue?: string }>;
 }
 
-export default async function InterviewPage({ params }: PageProps) {
+export default async function InterviewPage({ params, searchParams }: PageProps) {
   const { sessionId } = await params;
+  const { queue: queueParam } = await searchParams;
+  // 설정 화면에서 역량을 여러 개 골랐을 때, 이번 세션 다음에 이어갈 나머지 역량 코드들
+  // (예: "PROBLEM_SOLVING,ORG_FIT"). DB에 저장하지 않고 URL로만 들고 다닌다 — 세션이
+  // 끝나면 InterviewSession이 이 값을 리포트 페이지 URL에 그대로 이어 붙인다.
+  const queue = queueParam ? queueParam.split(",").filter(Boolean) : [];
   const actor = await resolveInterviewActor(sessionId);
   if (!actor) {
     redirect(`/auth/login?next=${encodeURIComponent(`/interview/${sessionId}`)}`);
@@ -110,11 +116,12 @@ export default async function InterviewPage({ params }: PageProps) {
   };
 
   if (session.status === "COMPLETED") {
+    const reportQs = queue.length > 0 ? `?queue=${encodeURIComponent(queue.join(","))}` : "";
     return (
       <div className="text-center">
         <p className="text-muted">이 세션은 완료되었습니다.</p>
         <a
-          href={`/interview/${sessionId}/report`}
+          href={`/interview/${sessionId}/report${reportQs}`}
           className="mt-4 inline-block text-primary hover:underline"
         >
           리포트 보기 →
@@ -156,6 +163,7 @@ export default async function InterviewPage({ params }: PageProps) {
           session.mode === "COMPETENCY" ? questionCount : FULL_SESSION_MAX_ITEMS
         }
         tripleFeedbackMode={session.tripleFeedbackMode}
+        queue={queue}
       />
     </div>
   );

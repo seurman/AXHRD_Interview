@@ -10,6 +10,7 @@ import { BonusQuestionSection } from "@/components/report/BonusQuestionSection";
 import { Logo } from "@/components/brand/Logo";
 import { PrintButton } from "@/components/ui/PrintButton";
 import { SessionIntegrityNotice } from "@/components/interview/SessionIntegrityNotice";
+import { NextCompetencyButton } from "@/components/interview/NextCompetencyButton";
 import { computeDeliveryStats } from "@/lib/interview/feedback-helpers";
 import type { SessionReportData } from "@/types";
 
@@ -17,6 +18,7 @@ export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ sessionId: string }>;
+  searchParams: Promise<{ queue?: string }>;
 }
 
 function formatReportDate(iso: Date | string | null | undefined): string {
@@ -24,8 +26,10 @@ function formatReportDate(iso: Date | string | null | undefined): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export default async function ReportPage({ params }: PageProps) {
+export default async function ReportPage({ params, searchParams }: PageProps) {
   const { sessionId } = await params;
+  const { queue: queueParam } = await searchParams;
+  const queue = queueParam ? queueParam.split(",").filter(Boolean) : [];
   const user = await requirePageUser(`/interview/${sessionId}/report`);
 
   const session = await prisma.interviewSession.findUnique({
@@ -33,6 +37,7 @@ export default async function ReportPage({ params }: PageProps) {
     include: {
       report: true,
       targetCompany: true,
+      resume: true,
       chipEvents: { orderBy: { sequence: "asc" } },
       responses: { include: { question: true } },
     },
@@ -175,6 +180,19 @@ export default async function ReportPage({ params }: PageProps) {
           ))}
         </div>
       </section>
+
+      {queue.length > 0 && session.planId && (
+        <NextCompetencyButton
+          planId={session.planId}
+          queue={queue}
+          industry={session.targetCompany?.industryCode ?? undefined}
+          companySize={session.targetCompany?.size ?? undefined}
+          companyName={session.targetCompany?.name ?? undefined}
+          jobRole={session.jobRole}
+          resumeText={session.resume?.rawText}
+          resumeFileName={session.resume?.fileName}
+        />
+      )}
 
       <div className="print-hide flex gap-4">
         <Link href="/dashboard" className="btn-primary">

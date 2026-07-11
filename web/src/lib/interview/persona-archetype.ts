@@ -16,7 +16,11 @@ export interface PersonaArchetype {
   description: string;
   /** interviewStyle.tone 자리에 대신 쓸 수 있는 짧은 톤 문구 */
   toneHint: string;
-  /** 이 페르소나가 특히 강조하고 싶어할 역량 2~3개 */
+  /**
+   * 이 페르소나가 특히 강조하고 싶어할 역량 세트(우선순위 순, 보통 3개).
+   * 설정 화면에서 산업+직무 선택 시 이 배열 전체가 추천 역량으로 자동 체크된다
+   * (사용자가 자유롭게 추가/해제 가능 — 여전히 채점에는 영향 없음).
+   */
   focusCompetencies: CompetencyCode[];
   traits: string[];
 }
@@ -50,7 +54,7 @@ const PERSONA_ARCHETYPES: PersonaArchetype[] = [
     description:
       "정해진 원칙과 절차를 지키면서도 문제의 본질을 논리적으로 파고드는 사람으로 보이고 싶어합니다. 신뢰를 바탕으로 꾸준히 성과를 쌓는 유형이에요.",
     toneHint: "원칙·신뢰 중심의 논리적 어투",
-    focusCompetencies: ["PROBLEM_SOLVING", "ORG_FIT"],
+    focusCompetencies: ["PROBLEM_SOLVING", "ORG_FIT", "JOB_FIT"],
     traits: ["원칙", "신뢰성", "논리", "문제해결", "절차준수"],
   },
   {
@@ -59,7 +63,7 @@ const PERSONA_ARCHETYPES: PersonaArchetype[] = [
     description:
       "감이 아니라 근거와 숫자로 설득하는 사람으로 보이고 싶어합니다. 트렌드를 빠르게 읽고 데이터로 다음 방향을 제시하는 유형이에요.",
     toneHint: "데이터·근거 중심의 분석적 어투",
-    focusCompetencies: ["PROBLEM_SOLVING", "JOB_FIT"],
+    focusCompetencies: ["PROBLEM_SOLVING", "JOB_FIT", "COMMUNICATION"],
     traits: ["데이터분석", "논리", "트렌드감각", "정확성", "분석력"],
   },
   {
@@ -68,7 +72,7 @@ const PERSONA_ARCHETYPES: PersonaArchetype[] = [
     description:
       "사람과 조직 사이에서 공정하게 균형을 잡는 사람으로 보이고 싶어합니다. 갈등이 있어도 신뢰를 먼저 쌓아 문제를 풀어가는 유형이에요.",
     toneHint: "공정·신뢰 중심의 차분한 어투",
-    focusCompetencies: ["ORG_FIT", "COMMUNICATION"],
+    focusCompetencies: ["ORG_FIT", "COMMUNICATION", "LEADERSHIP"],
     traits: ["공정성", "신뢰성", "소통", "조직이해", "공익"],
   },
   {
@@ -77,7 +81,7 @@ const PERSONA_ARCHETYPES: PersonaArchetype[] = [
     description:
       "말보다 실행으로 증명하는 사람으로 보이고 싶어합니다. 현장 감각과 꼼꼼함으로 책임진 일은 끝까지 완수하는 유형이에요.",
     toneHint: "진중·책임감 중심의 담백한 어투",
-    focusCompetencies: ["JOB_FIT", "GROWTH"],
+    focusCompetencies: ["JOB_FIT", "GROWTH", "ORG_FIT"],
     traits: ["현장감각", "책임감", "꼼꼼함", "지속성", "안전"],
   },
   {
@@ -86,7 +90,7 @@ const PERSONA_ARCHETYPES: PersonaArchetype[] = [
     description:
       "사람을 움직이는 힘이 있는 사람으로 보이고 싶어합니다. 거절과 실패에도 회복탄력성을 발휘해 목표를 향해 가는 유형이에요.",
     toneHint: "설득·목표지향 중심의 에너지 있는 어투",
-    focusCompetencies: ["COMMUNICATION", "LEADERSHIP"],
+    focusCompetencies: ["COMMUNICATION", "LEADERSHIP", "JOB_FIT"],
     traits: ["설득력", "관계관리", "목표지향", "회복탄력성"],
   },
   {
@@ -95,7 +99,7 @@ const PERSONA_ARCHETYPES: PersonaArchetype[] = [
     description:
       "작은 실수도 놓치지 않는 신중한 사람으로 보이고 싶어합니다. 리스크를 먼저 살피고 윤리적 기준을 지키는 유형이에요.",
     toneHint: "신중·윤리 중심의 차분한 어투",
-    focusCompetencies: ["JOB_FIT", "ORG_FIT"],
+    focusCompetencies: ["JOB_FIT", "ORG_FIT", "PROBLEM_SOLVING"],
     traits: ["신중함", "리스크관리", "정확성", "윤리"],
   },
   {
@@ -104,7 +108,7 @@ const PERSONA_ARCHETYPES: PersonaArchetype[] = [
     description:
       "상대의 입장에서 먼저 생각하는 사람으로 보이고 싶어합니다. 디테일과 공감을 바탕으로 세심하게 결과물을 만드는 유형이에요.",
     toneHint: "공감·디테일 중심의 부드러운 어투",
-    focusCompetencies: ["COMMUNICATION", "GROWTH"],
+    focusCompetencies: ["COMMUNICATION", "GROWTH", "ORG_FIT"],
     traits: ["공감", "심미성", "디테일", "소통", "창의성"],
   },
   {
@@ -113,7 +117,7 @@ const PERSONA_ARCHETYPES: PersonaArchetype[] = [
     description:
       "이론보다 되게 만드는 사람으로 보이고 싶어합니다. 빠르게 배우고 협업하며 실제로 동작하는 결과물을 우선하는 유형이에요.",
     toneHint: "실용·협업 중심의 담백한 어투",
-    focusCompetencies: ["PROBLEM_SOLVING", "GROWTH"],
+    focusCompetencies: ["PROBLEM_SOLVING", "GROWTH", "COMMUNICATION"],
     traits: ["논리", "문제해결", "빠른학습", "협업", "실용성"],
   },
 ];
