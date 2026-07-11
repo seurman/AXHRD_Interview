@@ -19,6 +19,7 @@ const VALID_TABS = new Set<FrameworkWorkspaceTab>([
 
 const VALID_VIEWS = new Set<ContentStudioView>([
   "platform",
+  "ncs",
   "global_source",
   "alignment",
   "org_custom",
@@ -64,8 +65,8 @@ export default async function AdminContentPage({ searchParams }: Props) {
         title="Framework Studio"
         subtitle={
           <>
-            역량군 → 역량 → 문항(IRT) · 루브릭 · 품질을 한 워크스페이스에서 관리합니다. 글로벌 사전 원본은
-            「글로벌 사전」 탭에서 편집 후 플랫폼 뱅크로 동기화하세요. 기관 킷 조립은{" "}
+            역량군 → 역량 → 문항(IRT) · 루브릭 · 품질을 한 워크스페이스에서 관리합니다. NCS 6+4역량은
+            「NCS 역량」 탭, 글로벌 20역량은 「글로벌 사전」 탭에서 동기화하세요. 기관 킷 조립은{" "}
             <Link href="/org/settings/interview-kit" className="text-accent hover:underline">
               인터뷰 킷 스튜디오
             </Link>

@@ -12,6 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:ncs": "tsx scripts/sync-ncs-bank.ts",
     "db:seed:real": "tsx prisma/seed-real-questions.ts",
     "db:seed:rubrics": "tsx prisma/seed-rubrics.ts",
     "db:seed:global": "tsx prisma/seed-global-competencies.ts",

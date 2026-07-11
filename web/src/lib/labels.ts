@@ -8,6 +8,10 @@ export function competencyLabel(code: string): string {
     ORG_FIT: "조직적합",
     LEADERSHIP: "리더십",
     GROWTH: "성장·학습",
+    NCS_NUMERACY: "수리능력",
+    NCS_INFORMATION: "정보능력",
+    NCS_TECHNOLOGY: "기술능력",
+    NCS_RESOURCE: "자원관리능력",
   };
   return map[code] ?? code;
 }

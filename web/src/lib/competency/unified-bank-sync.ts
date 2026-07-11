@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { syncNcsCompetencyBank } from "@/lib/competency/ncs-bank-sync";
 import { COMPETENCY_CODES } from "@/types";
 import {
   findPlatformCompetencyByCode,
@@ -220,5 +221,13 @@ export async function syncGlobalCompetenciesToUnifiedBank(): Promise<{
 }
 
 export async function syncUnifiedCompetencyPool() {
-  return syncGlobalCompetenciesToUnifiedBank();
+  const ncs = await syncNcsCompetencyBank(prisma);
+  const global = await syncGlobalCompetenciesToUnifiedBank();
+  return {
+    ncs,
+    global,
+    clusters: global.clusters,
+    competencies: ncs.competencies + global.competencies,
+    questions: ncs.questions + global.questions,
+  };
 }
