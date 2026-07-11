@@ -1,47 +1,68 @@
 import Link from "next/link";
+import type { Prisma } from "@prisma/client";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { UserRoleEditor } from "@/components/admin/UserRoleEditor";
+import { UserIdentityBadges } from "@/components/admin/UserIdentityBadges";
+import { UserSegmentFilters } from "@/components/admin/UserSegmentFilters";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminSection } from "@/components/admin/AdminSection";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import { Badge } from "@/components/admin/Badge";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
-import { ORG_ROLE_LABEL, PLATFORM_ROLE_LABEL } from "@/lib/auth/roles";
+import {
+  parseUserSegment,
+  userSegmentWhere,
+  USER_SEGMENT_OPTIONS,
+  type UserIdentitySegment,
+} from "@/lib/admin/user-identity";
 
 export const dynamic = "force-dynamic";
 
-const ROLE_LABEL = ORG_ROLE_LABEL;
-const PLATFORM_LABEL = PLATFORM_ROLE_LABEL;
 const PAGE_SIZE = 50;
+
+async function countBySegment(
+  segment: UserIdentitySegment,
+  baseWhere: Prisma.UserWhereInput,
+): Promise<number> {
+  if (segment === "all") {
+    return prisma.user.count({ where: baseWhere });
+  }
+  return prisma.user.count({
+    where: { AND: [baseWhere, userSegmentWhere(segment)] },
+  });
+}
 
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; flag?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; flag?: string; segment?: string; page?: string }>;
 }) {
   await requireSuperadmin("/admin/users");
-  const { q, flag, page: pageParam } = await searchParams;
+  const { q, flag, segment: segmentParam, page: pageParam } = await searchParams;
   const query = q?.trim();
-  const flagReview = flag === "review";
+  const segment =
+    flag === "review" ? ("review" as const) : parseUserSegment(segmentParam);
   const page = Math.max(1, Number(pageParam) || 1);
 
-  const where = {
-    ...(query
-      ? {
-          OR: [
-            { name: { contains: query, mode: "insensitive" as const } },
-            { email: { contains: query, mode: "insensitive" as const } },
-          ],
-        }
-      : {}),
-    ...(flagReview ? { signupFlag: "REVIEW" as const } : {}),
-  };
+  const baseWhere: Prisma.UserWhereInput = query
+    ? {
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { email: { contains: query, mode: "insensitive" } },
+        ],
+      }
+    : {};
 
-  const [users, organizations, reviewFlagCount, total] = await Promise.all([
+  const listWhere: Prisma.UserWhereInput =
+    segment === "all"
+      ? baseWhere
+      : { AND: [baseWhere, userSegmentWhere(segment)] };
+
+  const [users, organizations, segmentCounts, total] = await Promise.all([
     prisma.user.findMany({
-      where,
+      where: listWhere,
       include: { organization: { select: { name: true } } },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
@@ -52,26 +73,49 @@ export default async function AdminUsersPage({
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
-    flagReview
-      ? Promise.resolve(0)
-      : prisma.user.count({ where: { signupFlag: "REVIEW" } }),
-    prisma.user.count({ where }),
+    Promise.all(
+      (
+        [
+          "all",
+          "platform",
+          "org_admin",
+          "org_staff",
+          "member",
+          "personal",
+          "review",
+        ] as UserIdentitySegment[]
+      ).map(async (key) => [key, await countBySegment(key, baseWhere)] as const),
+    ).then((entries) => Object.fromEntries(entries) as Record<UserIdentitySegment, number>),
+    prisma.user.count({ where: listWhere }),
   ]);
 
+  const paginationParams = {
+    q: query,
+    segment: segment === "all" ? undefined : segment,
+  };
+
   return (
-    <div className={ADMIN_CONTAINER.default}>
+    <div className={ADMIN_CONTAINER.wide}>
       <AdminPageHeader
         eyebrow={PLATFORM_EYEBROW.security}
         title="사용자 권한 관리"
-        subtitle="수퍼어드민만 플랫폼·기관 역할을 부여할 수 있습니다. 가입 이상 패턴(REVIEW) 사용자는 자동 차단되지 않으며 검토만 표시됩니다."
+        subtitle="플랫폼 운영·기관 담당·구성원을 한 화면에서 구분합니다. 수퍼어드민만 역할을 변경할 수 있습니다."
         links={[
           { href: "/admin/audit", label: "감사 로그 · 롤백 →" },
-          { href: "/admin/content", label: "문항 뱅크 관리 →" },
+          { href: "/admin/organizations", label: "기관 목록 →" },
         ]}
       />
 
-      <AdminSection title="검색·필터" description="이름·이메일 부분 일치. REVIEW 플래그는 가입 이상 패턴 검토용입니다.">
+      <AdminSection
+        title="신원 구분"
+        description="플랫폼 직원(내부)과 기관 역할(고객사)을 탭으로 필터합니다. 한 사람이 둘 다 가질 수 있으며, 플랫폼 권한이 있으면 「플랫폼 운영」으로 분류됩니다."
+      >
+        <UserSegmentFilters active={segment} counts={segmentCounts} query={query} />
+      </AdminSection>
+
+      <AdminSection title="검색" description="이름·이메일 부분 일치. 위 신원 필터와 함께 적용됩니다.">
         <form className="flex flex-wrap gap-2">
+          <input type="hidden" name="segment" value={segment === "all" ? "" : segment} />
           <input
             type="text"
             name="q"
@@ -79,20 +123,10 @@ export default async function AdminUsersPage({
             placeholder="이름 또는 이메일 검색"
             className="input-luxe min-w-[12rem] flex-1"
           />
-          <label className="flex items-center gap-2 text-sm text-muted">
-            <input
-              type="checkbox"
-              name="flag"
-              value="review"
-              defaultChecked={flagReview}
-              className="rounded border-card-border"
-            />
-            REVIEW만
-          </label>
           <button type="submit" className="btn-primary px-4">
             검색
           </button>
-          {(query || flagReview) && (
+          {(query || segment !== "all") && (
             <Link href="/admin/users" className="btn-secondary px-4 py-2 text-sm">
               초기화
             </Link>
@@ -101,15 +135,19 @@ export default async function AdminUsersPage({
       </AdminSection>
 
       <AdminSection
-        id={flagReview ? "review" : undefined}
-        title={flagReview ? "REVIEW 플래그 사용자" : "사용자 목록"}
+        title={
+          segment === "all"
+            ? "사용자 목록"
+            : `사용자 목록 · ${USER_SEGMENT_OPTIONS.find((o) => o.key === segment)?.label ?? segment}`
+        }
         description={`총 ${total}건 중 ${users.length}건 표시`}
         actions={
-          flagReview ? (
-            <Badge tone="warning">{users.length}명</Badge>
-          ) : reviewFlagCount > 0 ? (
-            <Link href="/admin/users?flag=review" className="text-xs text-accent hover:underline">
-              REVIEW {reviewFlagCount}명 →
+          segmentCounts.review > 0 && segment !== "review" ? (
+            <Link
+              href={`/admin/users?segment=review${query ? `&q=${encodeURIComponent(query)}` : ""}`}
+              className="text-xs text-accent hover:underline"
+            >
+              REVIEW {segmentCounts.review}명 →
             </Link>
           ) : undefined
         }
@@ -121,35 +159,39 @@ export default async function AdminUsersPage({
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-card-border text-xs text-muted">
-                  <th className="py-2 pr-4 font-medium">이름</th>
-                  <th className="py-2 pr-4 font-medium">이메일</th>
-                  <th className="py-2 pr-4 font-medium">가입 플래그</th>
-                  <th className="py-2 pr-4 font-medium">현재 소속 · 역할</th>
-                  <th className="py-2 pr-4 font-medium">플랫폼 권한</th>
-                  <th className="py-2 pr-4 font-medium">변경</th>
+                  <th className="py-2 pr-4 font-medium">사용자</th>
+                  <th className="py-2 pr-4 font-medium">신원</th>
+                  <th className="py-2 pr-4 font-medium">플래그</th>
+                  <th className="py-2 pr-4 font-medium">권한 변경</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((u) => (
-                  <tr key={u.id} className="border-b border-card-border last:border-0">
-                    <td className="py-2 pr-4 text-foreground">{u.name}</td>
-                    <td className="py-2 pr-4 text-muted">{u.email}</td>
-                    <td className="py-2 pr-4">
+                  <tr key={u.id} className="border-b border-card-border align-top last:border-0">
+                    <td className="py-3 pr-4">
+                      <p className="font-medium text-foreground">{u.name}</p>
+                      <p className="text-xs text-muted">{u.email}</p>
+                      <p className="mt-1 text-[10px] text-muted/80">
+                        가입 {u.createdAt.toLocaleDateString("ko-KR")}
+                      </p>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <UserIdentityBadges
+                        platformRole={u.platformRole}
+                        orgRole={u.orgRole}
+                        organizationId={u.organizationId}
+                        organizationName={u.organization?.name}
+                        signupFlag={u.signupFlag}
+                      />
+                    </td>
+                    <td className="py-3 pr-4">
                       {u.signupFlag === "REVIEW" ? (
                         <Badge tone="warning">REVIEW</Badge>
                       ) : (
                         <span className="text-xs text-muted">—</span>
                       )}
                     </td>
-                    <td className="py-2 pr-4 text-muted">
-                      {u.organization
-                        ? `${u.organization.name} · ${ROLE_LABEL[u.orgRole]}`
-                        : "소속 없음"}
-                    </td>
-                    <td className="py-2 pr-4 text-xs text-muted">
-                      {PLATFORM_LABEL[u.platformRole] ?? u.platformRole}
-                    </td>
-                    <td className="py-2 pr-4">
+                    <td className="py-3 pr-4">
                       <UserRoleEditor
                         userId={u.id}
                         currentRole={u.orgRole}
@@ -169,7 +211,7 @@ export default async function AdminUsersPage({
           pageSize={PAGE_SIZE}
           total={total}
           basePath="/admin/users"
-          searchParams={{ q: query, flag }}
+          searchParams={paginationParams}
         />
       </AdminSection>
     </div>

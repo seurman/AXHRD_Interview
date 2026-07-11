@@ -61,57 +61,69 @@ export function UserRoleEditor({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <select
-        value={orgId}
-        onChange={(e) => {
-          const next = e.target.value;
-          setOrgId(next);
-          if (!next) setRole("MEMBER");
-        }}
-        className="input-luxe px-2 py-1 text-xs"
-      >
-        <option value="">소속 없음</option>
-        {organizations.map((o) => (
-          <option key={o.id} value={o.id}>
-            {o.name}
-          </option>
-        ))}
-      </select>
-      <select
-        value={role}
-        onChange={(e) => setRole(e.target.value)}
-        disabled={!orgId}
-        className="input-luxe px-2 py-1 text-xs disabled:opacity-50"
-      >
-        {Object.entries(ORG_ROLE_LABEL).map(([value, label]) => (
-          <option key={value} value={value}>
-            {label}
-          </option>
-        ))}
-      </select>
-      <select
-        value={platformRole}
-        onChange={(e) => setPlatformRole(e.target.value)}
-        className="input-luxe px-2 py-1 text-xs"
-        title="플랫폼 권한 (SUPERADMIN만 부여 가능)"
-      >
-        {PLATFORM_OPTIONS.map(({ value, label }) => (
-          <option key={value} value={value}>
-            {label}
-          </option>
-        ))}
-      </select>
-      {dirty && (
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving}
-          className="btn-primary px-3 py-1 text-xs"
-        >
-          {saving ? "저장 중…" : "저장"}
-        </button>
-      )}
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-end gap-2 rounded-lg border border-card-border/80 bg-background/40 p-2">
+        <label className="flex min-w-[8rem] flex-1 flex-col gap-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+          소속 기관
+          <select
+            value={orgId}
+            onChange={(e) => {
+              const next = e.target.value;
+              setOrgId(next);
+              if (!next) setRole("MEMBER");
+            }}
+            className="input-luxe px-2 py-1.5 text-xs"
+          >
+            <option value="">없음 (개인)</option>
+            {organizations.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex min-w-[6.5rem] flex-col gap-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+          기관 역할
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            disabled={!orgId}
+            className="input-luxe px-2 py-1.5 text-xs disabled:opacity-50"
+            title={!orgId ? "기관을 먼저 선택하세요" : undefined}
+          >
+            {Object.entries(ORG_ROLE_LABEL).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex min-w-[7rem] flex-col gap-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+          플랫폼 (내부)
+          <select
+            value={platformRole}
+            onChange={(e) => setPlatformRole(e.target.value)}
+            className="input-luxe px-2 py-1.5 text-xs"
+            title="AXHRD 운영·영업 권한"
+          >
+            {PLATFORM_OPTIONS.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        {dirty && (
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving}
+            className="btn-primary mb-0.5 px-3 py-1.5 text-xs"
+          >
+            {saving ? "저장 중…" : "저장"}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
