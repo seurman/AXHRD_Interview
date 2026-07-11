@@ -13,6 +13,7 @@ import {
 } from "@/lib/diagnostic/campaigns";
 import { parseEnabledSectionCodes, sectionBadgeLabel } from "@/lib/diagnostic/section-filter";
 import { waveStatusLabel } from "@/lib/diagnostic/wave-status";
+import { resolveReportConfigForWave } from "@/lib/diagnostic/report-profile";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -40,6 +41,7 @@ export async function GET(req: Request, ctx: Ctx) {
 
   const baseUrl = new URL(req.url).origin;
   const enabled = parseEnabledSectionCodes(wave.enabledSectionCodes);
+  const reportConfig = await resolveReportConfigForWave(wave.id);
   return NextResponse.json({
     wave: {
       id: wave.id,
@@ -51,9 +53,10 @@ export async function GET(req: Request, ctx: Ctx) {
       opensAt: wave.opensAt?.toISOString() ?? null,
       closesAt: wave.closesAt?.toISOString() ?? null,
       enabledSectionCodes: enabled,
-      sectionBadge: sectionBadgeLabel(enabled),
+      sectionBadge: sectionBadgeLabel(reportConfig?.activeSectionCodes ?? enabled),
+      reportConfig,
       responseCount: wave._count.responses,
-      minGroupSize: wave.instrument.minGroupSize,
+      minGroupSize: reportConfig?.minGroupSize ?? wave.instrument.minGroupSize,
       orgWideLink: `${baseUrl}/diagnosis/w/${wave.slug}`,
       teams: teamLinksFromWave(wave, wave.teams, baseUrl),
     },

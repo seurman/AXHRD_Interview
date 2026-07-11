@@ -1,1 +1,2 @@
-export { seedArcIndex } from "../../../prisma/seed/arc-index";
+export { seedArcIndex, syncArcIndexFromSeed } from "./instrument-sync";
+export type { InstrumentSyncResult } from "./instrument-sync";

@@ -8,6 +8,7 @@ import {
 } from "@/lib/diagnostic/campaigns";
 import { parseEnabledSectionCodes, sectionBadgeLabel } from "@/lib/diagnostic/section-filter";
 import { waveStatusLabel } from "@/lib/diagnostic/wave-status";
+import { resolveReportConfigForWave } from "@/lib/diagnostic/report-profile";
 import { prisma } from "@/lib/prisma";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -37,6 +38,7 @@ export async function GET(req: Request, ctx: Ctx) {
   if (!wave) return NextResponse.json({ error: "캠페인을 찾을 수 없습니다." }, { status: 404 });
 
   const enabled = parseEnabledSectionCodes(wave.enabledSectionCodes);
+  const reportConfig = await resolveReportConfigForWave(wave.id);
 
   return NextResponse.json({
     wave: {
@@ -49,9 +51,11 @@ export async function GET(req: Request, ctx: Ctx) {
       opensAt: wave.opensAt?.toISOString() ?? null,
       closesAt: wave.closesAt?.toISOString() ?? null,
       enabledSectionCodes: enabled,
-      sectionBadge: sectionBadgeLabel(enabled),
+      sectionBadge: sectionBadgeLabel(reportConfig?.activeSectionCodes ?? enabled),
+      instrumentVersionSnapshot: wave.instrumentVersionSnapshot,
+      reportConfig,
       responseCount: wave._count.responses,
-      minGroupSize: wave.instrument.minGroupSize,
+      minGroupSize: reportConfig?.minGroupSize ?? wave.instrument.minGroupSize,
       orgWideLink: `${baseUrl}/diagnosis/w/${wave.slug}`,
       organization: { id: wave.organization.id, name: wave.organization.name },
       memberCount: wave.organization._count.members,

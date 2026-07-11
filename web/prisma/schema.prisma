@@ -1212,7 +1212,28 @@ model DiagnosticInstrument {
   minGroupSize     Int      @default(5)
   sections         DiagnosticSection[]
   waves            DiagnosticWave[]
+  reportProfiles   DiagnosticReportProfile[]
   createdAt        DateTime @default(now())
+}
+
+model DiagnosticReportProfile {
+  id                  String   @id @default(cuid())
+  instrumentId        String
+  instrument          DiagnosticInstrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+  waveId              String?  @unique
+  wave                DiagnosticWave? @relation(fields: [waveId], references: [id], onDelete: Cascade)
+  name                String
+  isInstrumentDefault Boolean  @default(false)
+  presetCode          String?
+  activeTabs          Json     @default("[\"basic\",\"detail\",\"teams\"]")
+  activeSectionCodes  Json?
+  minGroupSize        Int?
+  showNarratives      Boolean  @default(true)
+  showGapMatrix       Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([instrumentId])
 }
 
 model DiagnosticSection {
@@ -1277,6 +1298,9 @@ model DiagnosticWave {
   closesAt       DateTime?
   /** 이번 웨이브에서 활성화된 섹션 코드(["OHI","ORI","OVI"] 등). null이면 전체 활성화 */
   enabledSectionCodes Json?
+  /** 캠페인 생성 시점 Instrument.version 스냅샷 */
+  instrumentVersionSnapshot String?
+  reportProfile    DiagnosticReportProfile?
   teams          DiagnosticTeam[]
   responses      DiagnosticResponse[]
   createdAt      DateTime @default(now())

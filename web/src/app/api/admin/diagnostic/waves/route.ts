@@ -75,7 +75,6 @@ export async function POST(req: Request) {
       enabledSectionCodes: enabled,
       opensAt: parseWaveDate(body.opensAt),
       closesAt: parseWaveDate(body.closesAt),
-      enableDiagnosticSku: true,
     });
 
     const baseUrl = new URL(req.url).origin;

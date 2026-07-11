@@ -132,6 +132,7 @@ export async function createDiagnosticWave(input: CreateWaveInput) {
         opensAt,
         closesAt,
         enabledSectionCodes: enabledSectionCodes ?? undefined,
+        instrumentVersionSnapshot: instrument.version,
         teams: teamRows.length > 0 ? { create: teamRows } : undefined,
       },
       include: {

@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { DiagnosticLongitudinalPanel } from "@/components/diagnostic/DiagnosticLongitudinalPanel";
+import type { ResolvedReportConfig } from "@/lib/diagnostic/report-profile";
+import { isSectionEnabledInReport, isTabEnabledInReport } from "@/lib/diagnostic/report-profile";
 import {
   RadarChart,
   PolarGrid,
@@ -50,12 +53,14 @@ type WaveMeta = {
   sectionBadge?: string;
   orgWideLink?: string;
   enabledSectionCodes: string[] | null;
+  reportConfig?: ResolvedReportConfig | null;
   teams: Array<{ id: string; name: string }>;
 };
 
-function isSectionEnabled(code: string, enabled: string[] | null): boolean {
-  if (!enabled?.length) return true;
-  return enabled.includes(code);
+function sectionEnabled(code: string, config: ResolvedReportConfig | null | undefined, fallback: string[] | null) {
+  if (config) return isSectionEnabledInReport(code, config);
+  if (!fallback?.length) return true;
+  return fallback.includes(code);
 }
 
 export function DiagnosisWaveDashboard({ waveId }: Props) {
@@ -100,21 +105,24 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
   if (loading) return <p className="text-sm text-muted">집계 중…</p>;
   if (!wave) return <p className="text-sm text-muted">웨이브를 찾을 수 없습니다.</p>;
 
-  const enabled = wave.enabledSectionCodes;
+  const reportConfig = wave.reportConfig ?? null;
+  const enabled = reportConfig?.activeSectionCodes ?? wave.enabledSectionCodes;
+  const isEnabled = (code: string) => sectionEnabled(code, reportConfig, wave.enabledSectionCodes);
+  const showTeamsTab = !reportConfig || isTabEnabledInReport("teams", reportConfig);
 
   const radarData =
     activeScores?.scores && !activeScores.hidden
       ? [
-          isSectionEnabled("OHI", enabled) && activeScores.scores.ohi.overall != null
+          isEnabled("OHI") && activeScores.scores.ohi.overall != null
             ? { axis: "OHI", value: activeScores.scores.ohi.overall }
             : null,
-          isSectionEnabled("ORI", enabled) && activeScores.scores.ori.ORI != null
+          isEnabled("ORI") && activeScores.scores.ori.ORI != null
             ? { axis: "ORI", value: activeScores.scores.ori.ORI }
             : null,
-          isSectionEnabled("OVI", enabled) && activeScores.scores.ovi.OVI != null
+          isEnabled("OVI") && activeScores.scores.ovi.OVI != null
             ? { axis: "OVI", value: activeScores.scores.ovi.OVI }
             : null,
-          isSectionEnabled("OAI", enabled) && activeScores.scores.oai.OAI != null
+          isEnabled("OAI") && activeScores.scores.oai.OAI != null
             ? { axis: "OAI", value: activeScores.scores.oai.OAI }
             : null,
         ].filter((d): d is { axis: string; value: number } => d != null)
@@ -149,6 +157,8 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
         )}
       </div>
 
+      <DiagnosticLongitudinalPanel waveId={waveId} apiBase="org" />
+
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
@@ -157,13 +167,15 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
         >
           종합
         </button>
-        <button
-          type="button"
-          className={`nav-pill ${tab === "teams" ? "nav-pill-active" : ""}`}
-          onClick={() => setTab("teams")}
-        >
-          팀
-        </button>
+        {showTeamsTab && (
+          <button
+            type="button"
+            className={`nav-pill ${tab === "teams" ? "nav-pill-active" : ""}`}
+            onClick={() => setTab("teams")}
+          >
+            팀
+          </button>
+        )}
       </div>
 
       {tab === "overview" && (
@@ -190,16 +202,16 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
           ) : (
             <>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {isSectionEnabled("OHI", enabled) && (
+                {isEnabled("OHI") && (
                   <MetricCard label="OHI" value={activeScores?.scores?.ohi.overall} band={activeScores?.scores?.ohi.band} />
                 )}
-                {isSectionEnabled("ORI", enabled) && (
+                {isEnabled("ORI") && (
                   <MetricCard label="ORI" value={activeScores?.scores?.ori.ORI} band={activeScores?.scores?.ori.band} />
                 )}
-                {isSectionEnabled("OVI", enabled) && (
+                {isEnabled("OVI") && (
                   <MetricCard label="OVI" value={activeScores?.scores?.ovi.OVI} band={activeScores?.scores?.ovi.band} />
                 )}
-                {isSectionEnabled("OAI", enabled) && (
+                {isEnabled("OAI") && (
                   <MetricCard label="OAI" value={activeScores?.scores?.oai.OAI} band={activeScores?.scores?.oai.band} />
                 )}
               </div>
@@ -238,7 +250,7 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
               )}
 
               <div className="grid gap-4 md:grid-cols-2">
-                {isSectionEnabled("OHI", enabled) && (
+                {isEnabled("OHI") && (
                   <InsightCard
                     title="Risk Index"
                     body={
@@ -248,7 +260,7 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
                     }
                   />
                 )}
-                {isSectionEnabled("ORI", enabled) && (
+                {isEnabled("ORI") && (
                   <>
                     <InsightCard
                       title="Opportunity Score"
@@ -268,7 +280,7 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
                     />
                   </>
                 )}
-                {isSectionEnabled("OAI", enabled) && (
+                {isEnabled("OAI") && (
                   <InsightCard
                     title="OAI 패턴"
                     body={

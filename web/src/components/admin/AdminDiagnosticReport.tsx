@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { DiagnosticLongitudinalPanel } from "@/components/diagnostic/DiagnosticLongitudinalPanel";
+import type { ResolvedReportConfig, ReportTab } from "@/lib/diagnostic/report-profile";
+import { isSectionEnabledInReport, isTabEnabledInReport } from "@/lib/diagnostic/report-profile";
 import {
   RadarChart,
   PolarGrid,
@@ -21,7 +24,7 @@ import {
   Legend,
 } from "recharts";
 
-type Tab = "basic" | "detail" | "teams";
+type Tab = ReportTab;
 
 type Scores = {
   hidden: boolean;
@@ -73,12 +76,14 @@ type WaveMeta = {
   memberCount: number | null;
   enabledSectionCodes: string[] | null;
   sectionBadge: string;
+  reportConfig: ResolvedReportConfig | null;
   teams: Array<{ id: string; name: string }>;
 };
 
-function isSectionEnabled(code: string, enabled: string[] | null): boolean {
-  if (!enabled?.length) return true;
-  return enabled.includes(code);
+function sectionEnabled(code: string, config: ResolvedReportConfig | null, fallback: string[] | null) {
+  if (config) return isSectionEnabledInReport(code, config);
+  if (!fallback?.length) return true;
+  return fallback.includes(code);
 }
 
 function driverInsights(drivers: Record<string, { current: number | null; importance: number | null }>) {
@@ -144,12 +149,16 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
         memberCount: w.memberCount ?? null,
         enabledSectionCodes: w.enabledSectionCodes,
         sectionBadge: w.sectionBadge,
+        reportConfig: w.reportConfig ?? null,
         teams: w.teams.map((t: { id: string; name: string }) => ({ id: t.id, name: t.name })),
       });
-      const enabled = w.enabledSectionCodes as string[] | null;
+      const config = w.reportConfig as ResolvedReportConfig | null;
+      const enabled = config?.activeSectionCodes ?? (w.enabledSectionCodes as string[] | null);
       const first =
-        ["OHI", "ORI", "OVI", "OAI"].find((c) => isSectionEnabled(c, enabled)) ?? "OHI";
+        ["OHI", "ORI", "OVI", "OAI"].find((c) => sectionEnabled(c, config, enabled)) ?? "OHI";
       setDetailSection(first);
+      const tabs = config?.activeTabs ?? ["basic", "detail", "teams"];
+      if (tabs.length && !tabs.includes(tab)) setTab(tabs[0] as Tab);
     }
     setAggregate(scoreJson);
     setLoading(false);
@@ -174,7 +183,16 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
     }
   }, [tab, wave, aggregate?.teams, teamScores, waveId]);
 
-  const enabled = wave?.enabledSectionCodes ?? null;
+  const reportConfig = wave?.reportConfig ?? null;
+  const enabled = reportConfig?.activeSectionCodes ?? wave?.enabledSectionCodes ?? null;
+  const isEnabled = (code: string) => sectionEnabled(code, reportConfig, enabled);
+  const visibleTabs = (
+    [
+      ["basic", "기본"],
+      ["detail", "상세"],
+      ["teams", "팀별"],
+    ] as const
+  ).filter(([key]) => !reportConfig || isTabEnabledInReport(key, reportConfig));
   const collectionRate =
     wave?.memberCount && wave.memberCount > 0
       ? Math.round((wave.responseCount / wave.memberCount) * 100)
@@ -184,19 +202,19 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
     if (!aggregate?.scores || aggregate.hidden) return [];
     const s = aggregate.scores;
     const axes: { axis: string; value: number }[] = [];
-    if (isSectionEnabled("OHI", enabled) && s.ohi.overall != null)
+    if (isEnabled("OHI") && s.ohi.overall != null)
       axes.push({ axis: "OHI", value: s.ohi.overall });
-    if (isSectionEnabled("ORI", enabled) && s.ori.ORI != null)
+    if (isEnabled("ORI") && s.ori.ORI != null)
       axes.push({ axis: "ORI", value: s.ori.ORI });
-    if (isSectionEnabled("OVI", enabled) && s.ovi.OVI != null)
+    if (isEnabled("OVI") && s.ovi.OVI != null)
       axes.push({ axis: "OVI", value: s.ovi.OVI });
-    if (isSectionEnabled("OAI", enabled) && s.oai.OAI != null)
+    if (isEnabled("OAI") && s.oai.OAI != null)
       axes.push({ axis: "OAI", value: s.oai.OAI });
     return axes;
   }, [aggregate, enabled]);
 
   const driverEntries =
-    aggregate?.scores && !aggregate.hidden && isSectionEnabled("OHI", enabled)
+    aggregate?.scores && !aggregate.hidden && isEnabled("OHI")
       ? Object.entries(aggregate.scores.ohi.drivers).map(([code, d]) => ({
           code,
           current: d.current ?? 0,
@@ -205,7 +223,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
       : [];
 
   const insights =
-    aggregate?.scores && !aggregate.hidden && isSectionEnabled("OHI", enabled)
+    aggregate?.scores && !aggregate.hidden && isEnabled("OHI")
       ? driverInsights(aggregate.scores.ohi.drivers)
       : null;
 
@@ -224,7 +242,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
   if (loading) return <p className="text-sm text-muted">집계 중…</p>;
   if (!wave) return <p className="text-sm text-muted">캠페인을 찾을 수 없습니다.</p>;
 
-  const detailSections = ["OHI", "ORI", "OVI", "OAI"].filter((c) => isSectionEnabled(c, enabled));
+  const detailSections = ["OHI", "ORI", "OVI", "OAI"].filter((c) => isEnabled(c));
 
   return (
     <div className="space-y-6">
@@ -245,14 +263,10 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
         </p>
       </div>
 
+      <DiagnosticLongitudinalPanel waveId={waveId} apiBase="admin" />
+
       <div className="flex flex-wrap gap-2">
-        {(
-          [
-            ["basic", "기본"],
-            ["detail", "상세"],
-            ["teams", "팀별"],
-          ] as const
-        ).map(([key, label]) => (
+        {visibleTabs.map(([key, label]) => (
           <button
             key={key}
             type="button"
@@ -271,16 +285,16 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
           ) : (
             <>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {isSectionEnabled("OHI", enabled) && (
+                {isEnabled("OHI") && (
                   <MetricCard label="OHI" value={aggregate?.scores?.ohi.overall} band={aggregate?.scores?.ohi.band} />
                 )}
-                {isSectionEnabled("ORI", enabled) && (
+                {isEnabled("ORI") && (
                   <MetricCard label="ORI" value={aggregate?.scores?.ori.ORI} band={aggregate?.scores?.ori.band} />
                 )}
-                {isSectionEnabled("OVI", enabled) && (
+                {isEnabled("OVI") && (
                   <MetricCard label="OVI" value={aggregate?.scores?.ovi.OVI} band={aggregate?.scores?.ovi.band} />
                 )}
-                {isSectionEnabled("OAI", enabled) && (
+                {isEnabled("OAI") && (
                   <MetricCard label="OAI" value={aggregate?.scores?.oai.OAI} band={aggregate?.scores?.oai.band} />
                 )}
               </div>
@@ -301,7 +315,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
               )}
 
               <div className="grid gap-4 md:grid-cols-2">
-                {isSectionEnabled("OHI", enabled) && (
+                {isEnabled("OHI") && (
                   <InsightCard
                     title="Risk Index"
                     body={
@@ -311,7 +325,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                     }
                   />
                 )}
-                {isSectionEnabled("ORI", enabled) && (
+                {isEnabled("ORI") && (
                   <InsightCard
                     title="Opportunity Score"
                     body={
@@ -367,7 +381,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
             <SampleInsufficient sampleSize={aggregate.sampleSize} minGroupSize={aggregate.minGroupSize} />
           ) : (
             <>
-              {detailSection === "OHI" && isSectionEnabled("OHI", enabled) && (
+              {detailSection === "OHI" && isEnabled("OHI") && (
                 <>
                   {driverEntries.length > 0 ? (
                     <div className="card-luxe p-4">
@@ -395,7 +409,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                 </>
               )}
 
-              {detailSection === "ORI" && isSectionEnabled("ORI", enabled) && (
+              {detailSection === "ORI" && isEnabled("ORI") && (
                 <div className="grid gap-4 md:grid-cols-2">
                   <InsightCard
                     title="AX 성숙도 5단계"
@@ -416,7 +430,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                 </div>
               )}
 
-              {detailSection === "OVI" && isSectionEnabled("OVI", enabled) && (
+              {detailSection === "OVI" && isEnabled("OVI") && (
                 <InsightCard
                   title="Dynamic Congruence Gap"
                   body={
@@ -427,7 +441,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                 />
               )}
 
-              {detailSection === "OAI" && isSectionEnabled("OAI", enabled) && (
+              {detailSection === "OAI" && isEnabled("OAI") && (
                 <InsightCard
                   title="OAI 패턴"
                   body={
@@ -509,10 +523,10 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                         <YAxis domain={[1, 5]} />
                         <Tooltip />
                         <Legend />
-                        {isSectionEnabled("OHI", enabled) && <Bar dataKey="OHI" fill="#c9a227" />}
-                        {isSectionEnabled("ORI", enabled) && <Bar dataKey="ORI" fill="#64748b" />}
-                        {isSectionEnabled("OVI", enabled) && <Bar dataKey="OVI" fill="#94a3b8" />}
-                        {isSectionEnabled("OAI", enabled) && <Bar dataKey="OAI" fill="#475569" />}
+                        {isEnabled("OHI") && <Bar dataKey="OHI" fill="#c9a227" />}
+                        {isEnabled("ORI") && <Bar dataKey="ORI" fill="#64748b" />}
+                        {isEnabled("OVI") && <Bar dataKey="OVI" fill="#94a3b8" />}
+                        {isEnabled("OAI") && <Bar dataKey="OAI" fill="#475569" />}
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -523,7 +537,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                 {(aggregate?.teams ?? []).map((t) => {
                   const sc = teamScores[t.teamId];
                   const teamInsights =
-                    sc?.scores && !sc.hidden && isSectionEnabled("OHI", enabled)
+                    sc?.scores && !sc.hidden && isEnabled("OHI")
                       ? driverInsights(sc.scores.ohi.drivers)
                       : null;
                   return (

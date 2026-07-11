@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AdminDiagnosticWizard } from "@/components/admin/AdminDiagnosticWizard";
+import { AdminDiagnosticInstrumentStudio } from "@/components/admin/AdminDiagnosticInstrumentStudio";
+import { AdminDiagnosticReportStudio } from "@/components/admin/AdminDiagnosticReportStudio";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminSection } from "@/components/admin/AdminSection";
 import { StatusDot, type DotTone } from "@/components/admin/StatusDot";
@@ -64,16 +66,17 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
   const seeded = instruments.length > 0;
 
   async function runSeed() {
-    if (!confirm("ARC Index 문항뱅크(OHI·ORI·OVI·OAI)를 DB에 등록합니다. 계속할까요?")) return;
+    if (!confirm("docs/arc-index/source 정본을 DB와 동기화합니다. 계속할까요?")) return;
     setSeeding(true);
     setSeedError(null);
     try {
       const res = await fetch("/api/admin/diagnostic/seed", { method: "POST" });
       const json = await res.json();
       if (!res.ok) {
-        setSeedError(json.error ?? "시드 실패");
+        setSeedError(json.error ?? "동기화 실패");
         return;
       }
+      if (json.message) alert(json.message);
       router.refresh();
     } finally {
       setSeeding(false);
@@ -127,19 +130,17 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
 
       {tab === "instrument" && (
       <AdminSection
-        title="문항뱅크 (ARC Index)"
-        description="정본: docs/arc-index/source/*.md"
+        title="Instrument Studio"
+        description="정본: docs/arc-index/source/*.md — 원본 동기화 후 문항 편집"
         actions={
-          !seeded ? (
-            <button
-              type="button"
-              disabled={seeding}
-              onClick={() => void runSeed()}
-              className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
-            >
-              {seeding ? "설치 중…" : "문항뱅크 설치"}
-            </button>
-          ) : undefined
+          <button
+            type="button"
+            disabled={seeding}
+            onClick={() => void runSeed()}
+            className="btn-secondary px-4 py-2 text-sm disabled:opacity-50"
+          >
+            {seeding ? "동기화 중…" : "원본 동기화"}
+          </button>
         }
       >
         {dbError && (
@@ -159,36 +160,21 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
         {!seeded ? (
           <div className="mt-6 rounded-xl border border-dashed border-amber-300/60 bg-amber-50/50 p-6 dark:bg-amber-950/20">
             <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
-              문항뱅크가 아직 설치되지 않았습니다.
+              문항뱅크가 아직 등록되지 않았습니다.
             </p>
             <p className="mt-2 text-sm text-amber-800/80 dark:text-amber-200/80">
-              운영 DB에 마이그레이션 후 위 「문항뱅크 설치」를 누르거나, 서버에서{" "}
+              「원본 동기화」를 누르거나 서버에서{" "}
               <code className="text-xs">npx tsx prisma/seed/arc-index.ts</code> 를 실행하세요.
             </p>
           </div>
         ) : (
-          <ul className="mt-6 space-y-4">
-            {instruments.map((inst) => (
-              <li key={inst.id} className="rounded-xl border border-card-border p-4">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="font-semibold text-foreground">{inst.nameKo}</p>
-                  <span className="text-xs text-muted">
-                    {inst.code} · {inst.version} · 약 {inst.estimatedMinutes}분
-                  </span>
-                </div>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  {inst.sections.map((sec) => (
-                    <div key={sec.code} className="rounded-lg bg-background/60 px-3 py-2 text-xs">
-                      <p className="font-medium text-foreground">
-                        {sec.code} — {sec.nameKo}
-                      </p>
-                      <p className="mt-1 text-muted">문항 {sec.itemCount}개</p>
-                    </div>
-                  ))}
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-6">
+            <AdminDiagnosticInstrumentStudio
+              instrumentId={instruments[0]!.id}
+              onSync={() => void runSeed()}
+              syncing={seeding}
+            />
+          </div>
         )}
       </AdminSection>
       )}
@@ -238,29 +224,17 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
 
       {tab === "report" && (
         <AdminSection
-          title="보고서"
-          description="캠페인별 3탭 보고서(기본·상세·팀별). 통계 추정(β/IPA/HLM)은 Phase 4 이후 연결 예정입니다."
+          title="Report Studio"
+          description="보고서 탭·축·최소 표본 프리셋. 캠페인별 override 가능."
         >
-          {waves.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-card-border p-6 text-sm text-muted">
-              캠페인을 만든 뒤 각 캠페인 상세에서 보고서를 열 수 있습니다.
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {waves.map((w) => (
-                <li key={w.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-card-border px-4 py-3 text-sm">
-                  <span>
-                    <span className="font-medium text-foreground">{w.organizationName}</span>
-                    <span className="text-muted"> · {w.label ?? `Wave ${w.waveNumber}`}</span>
-                    <span className="ml-2 text-xs text-muted">{w.sectionBadge}</span>
-                  </span>
-                  <Link href={`/admin/diagnostic/waves/${w.id}/report`} className="text-xs text-accent hover:underline">
-                    보고서 열기 →
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
+          <AdminDiagnosticReportStudio
+            instruments={instruments.map((i) => ({
+              id: i.id,
+              code: i.code,
+              nameKo: i.nameKo,
+            }))}
+            waves={waves}
+          />
         </AdminSection>
       )}
 
