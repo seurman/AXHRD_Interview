@@ -86,16 +86,28 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
     return steps;
   }, [data, demographicItems.length, surveySections]);
 
-  const currentStep = flowSteps[stepIndex] ?? flowSteps[0];
+  const lastSectionStepIndex = useMemo(() => {
+    let last = -1;
+    flowSteps.forEach((step, i) => {
+      if (step.kind === "section") last = i;
+    });
+    return last;
+  }, [flowSteps]);
+
+  const currentStep = flowSteps[stepIndex];
   const isLastSection =
-    currentStep?.kind === "section" &&
-    flowSteps[stepIndex + 1] == null;
+    currentStep?.kind === "section" && stepIndex === lastSectionStepIndex;
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      await fetch(surveyBase, { method: "POST", ...fetchOpts });
+      const postRes = await fetch(surveyBase, { method: "POST", ...fetchOpts });
+      const postJson = (await postRes.json().catch(() => ({}))) as { error?: string };
+      if (!postRes.ok) {
+        throw new Error(postJson.error ?? "응답 세션을 시작하지 못했습니다.");
+      }
+
       const res = await fetch(surveyBase, fetchOpts);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "불러오기 실패");
@@ -132,6 +144,13 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
     setSaving(true);
     setError(null);
     try {
+      if (currentStep?.kind === "demographics" && advance) {
+        const missing = demographicItems.filter((item) => !demographics[item.itemCode]?.trim());
+        if (missing.length > 0) {
+          throw new Error("기본 정보 항목을 모두 선택해 주세요.");
+        }
+      }
+
       const itemsToSave =
         currentStep?.kind === "section"
           ? itemsForSection(currentStep.section)
@@ -148,10 +167,10 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
         }> = [];
         if (item.scaleType === "OPEN_TEXT" && a.text) {
           rows.push({ itemId: item.id, axis: "CURRENT", textValue: a.text });
-        } else if (a.current) {
+        } else if (a.current != null && a.current >= 1) {
           rows.push({ itemId: item.id, axis: "CURRENT", numericValue: a.current });
         }
-        if (a.importance) {
+        if (a.importance != null && a.importance >= 1) {
           rows.push({ itemId: item.id, axis: "IMPORTANCE", numericValue: a.importance });
         }
         return rows;
@@ -175,10 +194,29 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
       if (!res.ok) throw new Error(json.error ?? "저장 실패");
 
       if (submit) {
+        setData((prev) =>
+          prev
+            ? {
+                ...prev,
+                response: {
+                  ...(prev.response ?? {
+                    demographics: null,
+                    consentAt: null,
+                    answers: {},
+                  }),
+                  demographics: prev.response?.demographics ?? demographics,
+                  consentAt: new Date().toISOString(),
+                  submittedAt: json.submittedAt ?? new Date().toISOString(),
+                  answers: prev.response?.answers ?? answers,
+                },
+              }
+            : prev,
+        );
         setStepIndex(flowSteps.length);
-      } else if (advance && stepIndex < flowSteps.length - 1) {
-        setStepIndex((i) => i + 1);
-      } else if (currentStep?.kind === "demographics") {
+      } else if (advance) {
+        if (stepIndex >= flowSteps.length - 1) {
+          throw new Error("다음 설문 영역이 없습니다. 관리자에게 문의해 주세요.");
+        }
         setStepIndex((i) => i + 1);
       }
     } catch (e) {
@@ -190,13 +228,29 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
 
   if (loading) return <p className="text-sm text-muted">설문을 불러오는 중…</p>;
   if (error && !data) return <p className="text-sm text-rose-600">{error}</p>;
-  if (!data || !currentStep) return null;
+  if (!data) return null;
 
-  if (currentStep.kind === "done" || data.response?.submittedAt) {
+  if (
+    currentStep?.kind === "done" ||
+    data.response?.submittedAt ||
+    stepIndex >= flowSteps.length
+  ) {
     return (
       <div className="card-luxe space-y-4 p-8 text-center">
         <h1 className="text-xl font-bold text-foreground">응답이 제출되었습니다</h1>
         <p className="text-sm text-muted">소중한 의견 감사합니다. 결과는 팀 단위로만 집계됩니다.</p>
+      </div>
+    );
+  }
+
+  if (!currentStep) {
+    return (
+      <div className="card-luxe space-y-3 p-8 text-center">
+        <h1 className="text-lg font-bold text-foreground">설문 구성을 불러올 수 없습니다</h1>
+        <p className="text-sm text-muted">
+          활성화된 진단 영역이 없습니다. 링크를 확인하거나 관리자에게 문의해 주세요.
+        </p>
+        {error && <p className="text-sm text-rose-600">{error}</p>}
       </div>
     );
   }
@@ -240,7 +294,7 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
             type="button"
             className="btn-primary"
             disabled={saving}
-            onClick={() => void saveProgress({ advance: false })}
+            onClick={() => void saveProgress({ advance: true })}
           >
             {saving ? "저장 중…" : "다음 — 본 설문"}
           </button>
