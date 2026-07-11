@@ -267,6 +267,9 @@ export type Dictionary = {
     recordAgain: string;
   };
   dashboard: {
+    pageTitle: string;
+    pageSubtitle: string;
+    competencySection: string;
     differentiation: {
       title: string;
       items: string[];

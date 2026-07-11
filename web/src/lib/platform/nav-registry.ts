@@ -220,10 +220,7 @@ export async function buildNavigationForUser(
         { href: "/org/diagnosis", labelKey: "diagnosticDashboard" },
       ],
       settingsTitleKey: "settings",
-      settingsLinks: [
-        { href: "/org/settings", labelKey: "settingsHub" },
-        { href: "/org/settings/interview-kit", labelKey: "interviewKit" },
-      ],
+      settingsLinks: [{ href: "/org/settings", labelKey: "settingsHub" }],
     };
   } else {
     const hasTenantNav =
@@ -250,11 +247,8 @@ export async function buildNavigationForUser(
         });
       }
 
-      if (caps.has("tenant.settings")) {
+      if (caps.has("tenant.settings") || caps.has("tenant.interview_kit")) {
         settingsLinks.push({ href: "/org/settings", labelKey: "settingsHub" });
-      }
-      if (caps.has("tenant.interview_kit")) {
-        settingsLinks.push({ href: "/org/settings/interview-kit", labelKey: "interviewKit" });
       }
 
       if (links.length > 0 || settingsLinks.length > 0) {

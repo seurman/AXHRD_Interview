@@ -19,7 +19,7 @@ export default async function OrgInterviewKitPage() {
         </p>
       </div>
 
-      <OrgKitStudioEditor backHref="/org/settings" backLabel="면접 설정으로" />
+      <OrgKitStudioEditor backHref="/org/settings" backLabel="면접·역량 설정으로" />
 
       <KitShareManager />
 

@@ -13,8 +13,8 @@ export default async function OrgSettingsPage() {
     ? [
         {
           href: "/org/settings/interview-kit",
-          title: "인터뷰 킷",
-          description: "역량·문항·L1~L5 루브릭을 기관에 맞게 구성합니다.",
+          title: "인터뷰 킷 스튜디오",
+          description: "역량·문항·L1~L5 루브릭을 조립하고 공유 링크로 실행합니다.",
           icon: ClipboardList,
         },
         {
@@ -40,9 +40,9 @@ export default async function OrgSettingsPage() {
         <p className="text-xs font-medium uppercase tracking-widest text-gold">
           {access.allowed ? access.organizationName : "기관"}
         </p>
-        <h1 className="mt-1 text-2xl font-bold text-foreground">면접 설정</h1>
+        <h1 className="mt-1 text-2xl font-bold text-foreground">면접·역량 설정</h1>
         <p className="mt-2 text-sm text-muted">
-          소속 학생의 AI 모의 면접 경험을 기관 정책에 맞게 조정합니다.
+          인터뷰 킷 조립·역량 관리 등 기관 면접 경험을 한곳에서 설정합니다.
         </p>
       </div>
 

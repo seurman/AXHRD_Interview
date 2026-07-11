@@ -74,7 +74,7 @@ export const dictionary: Dictionary = {
       settings: "설정",
       cohortDashboard: "코호트",
       diagnosticDashboard: "조직진단",
-      settingsHub: "면접 설정",
+      settingsHub: "면접·역량 설정",
       interviewKit: "인터뷰 킷 스튜디오",
     },
     workspace: {
@@ -102,7 +102,7 @@ export const dictionary: Dictionary = {
       more: "더보기",
       cohort: "코호트",
       diagnostic: "진단",
-      settings: "설정",
+      settings: "면접·역량",
     },
     language: {
       label: "언어",
@@ -338,6 +338,9 @@ export const dictionary: Dictionary = {
     recordAgain: "다시 녹음하기",
   },
   dashboard: {
+    pageTitle: "홈",
+    pageSubtitle: "역량·활동·다음 할 일을 한곳에서 확인하세요",
+    competencySection: "역량 트래킹",
     differentiation: {
       title: "AXHRD만의 방식",
       items: [

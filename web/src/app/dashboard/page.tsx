@@ -10,6 +10,8 @@ import { competencyLabel } from "@/lib/labels";
 import { COMPETENCY_CODES } from "@/types";
 import { getUserStrengthDeck } from "@/lib/discover/user-strengths";
 import { buildCareerQuests } from "@/lib/dashboard/quests";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { getDictionary } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +34,10 @@ export default async function DashboardPage() {
   });
 
   if (!full) redirect("/auth/login");
+
+  const locale = await getLocale();
+  const d = getDictionary(locale).dashboard;
+  const userSuffix = getDictionary(locale).common.userSuffix;
 
   const strengthDeck = await getUserStrengthDeck(user.id);
 
@@ -127,9 +133,11 @@ export default async function DashboardPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">AX-HRD Career OS</p>
-          <h1 className="text-2xl font-bold text-foreground">역량 트래킹</h1>
+          <h1 className="text-2xl font-bold text-foreground">{d.pageTitle}</h1>
           <p className="mt-1 text-muted">
-            {full.name}님 · Lv.{level} · IRT θ 기반 장기 성장 기록
+            {locale === "ko"
+              ? `${full.name}${userSuffix} · Lv.${level} · ${d.pageSubtitle}`
+              : `${full.name} · Lv.${level} · ${d.pageSubtitle}`}
           </p>
         </div>
         <div className="flex gap-2">
@@ -161,7 +169,9 @@ export default async function DashboardPage() {
           </div>
         </div>
       ) : (
-        <CompetencyDashboard
+        <>
+          <h2 className="text-lg font-semibold text-foreground">{d.competencySection}</h2>
+          <CompetencyDashboard
           snapshots={snapshots}
           latestByCompetency={latestByCompetency}
           sessionCount={full.sessions.length}
@@ -179,6 +189,7 @@ export default async function DashboardPage() {
               : null
           }
         />
+        </>
       )}
 
       <RecentActivityPanel items={activityItems} />

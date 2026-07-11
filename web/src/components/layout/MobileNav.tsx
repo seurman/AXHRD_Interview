@@ -272,20 +272,16 @@ export function MobileNav({
                   {c.saas[l.labelKey]}
                 </MobileNavLink>
               ))}
-              {saasLinks.settingsLinks.length > 0 && (
-                <AccordionSection title={c.saas.settings} defaultOpen={saasActive} active={saasActive}>
-                  {saasLinks.settingsLinks.map((l) => (
-                    <MobileNavLink
-                      key={l.href}
-                      href={l.href}
-                      onNavigate={closeDrawer}
-                      className={linkClass(l.href, true)}
-                    >
-                      {c.saas[l.labelKey]}
-                    </MobileNavLink>
-                  ))}
-                </AccordionSection>
-              )}
+              {saasLinks.settingsLinks.map((l) => (
+                <MobileNavLink
+                  key={l.href}
+                  href={l.href}
+                  onNavigate={closeDrawer}
+                  className={linkClass(l.href)}
+                >
+                  {c.saas[l.labelKey]}
+                </MobileNavLink>
+              ))}
             </>
           ) : (
             <>

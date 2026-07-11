@@ -101,15 +101,15 @@ export function MainNav({
           </NavTransitionLink>
         ))}
 
-        {saasLinks.settingsLinks.length > 0 && (
-          <NavDropdownMenu
-            title={c.saas.settings}
-            links={saasLinks.settingsLinks.map((l) => ({
-              href: l.href,
-              label: c.saas[l.labelKey],
-            }))}
-          />
-        )}
+        {saasLinks.settingsLinks.map((l) => (
+          <NavTransitionLink
+            key={l.href}
+            href={l.href}
+            className={`nav-pill ${linkActive(l.href) ? "nav-pill-active" : ""}`}
+          >
+            {c.saas[l.labelKey]}
+          </NavTransitionLink>
+        ))}
 
         <AvatarMenu
           userName={userName}

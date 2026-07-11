@@ -75,7 +75,7 @@ export const dictionary: Dictionary = {
       settings: "Settings",
       cohortDashboard: "Cohort",
       diagnosticDashboard: "Diagnostic",
-      settingsHub: "Interview settings",
+      settingsHub: "Interview & competency",
       interviewKit: "Interview kit",
     },
     workspace: {
@@ -340,6 +340,9 @@ export const dictionary: Dictionary = {
     recordAgain: "Record again",
   },
   dashboard: {
+    pageTitle: "Home",
+    pageSubtitle: "Competencies, activity, and what to do next — in one place",
+    competencySection: "Competency tracking",
     differentiation: {
       title: "The AXHRD approach",
       items: [
