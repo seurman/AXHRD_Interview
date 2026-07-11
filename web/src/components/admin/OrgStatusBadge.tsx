@@ -1,7 +1,9 @@
-const STYLES: Record<string, string> = {
-  PENDING: "bg-amber-500/15 text-amber-700 ring-amber-500/30",
-  APPROVED: "bg-emerald-500/15 text-emerald-700 ring-emerald-500/30",
-  REJECTED: "bg-red-500/15 text-red-700 ring-red-500/30",
+import { Badge, type BadgeTone } from "@/components/admin/Badge";
+
+const TONE: Record<string, BadgeTone> = {
+  PENDING: "warning",
+  APPROVED: "success",
+  REJECTED: "danger",
 };
 
 const LABELS: Record<string, string> = {
@@ -12,12 +14,6 @@ const LABELS: Record<string, string> = {
 
 export function OrgStatusBadge({ status }: { status: string }) {
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${
-        STYLES[status] ?? "bg-muted text-muted"
-      }`}
-    >
-      {LABELS[status] ?? status}
-    </span>
+    <Badge tone={TONE[status] ?? "neutral"}>{LABELS[status] ?? status}</Badge>
   );
 }

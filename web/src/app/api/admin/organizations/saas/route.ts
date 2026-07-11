@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { hasSuperadminAccess } from "@/lib/auth/guards";
+import { auditActor } from "@/lib/admin/auth";
+import { logAdminAudit } from "@/lib/admin/audit";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -50,6 +52,14 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "enabled(boolean)가 필요합니다." }, { status: 400 });
   }
 
+  const before = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { id: true, name: true, saasPersonalizationEnabled: true },
+  });
+  if (!before) {
+    return NextResponse.json({ error: "기관을 찾을 수 없습니다." }, { status: 404 });
+  }
+
   const org = await prisma.organization.update({
     where: { id: organizationId },
     data: {
@@ -62,6 +72,16 @@ export async function PATCH(req: Request) {
       saasPersonalizationEnabled: true,
       saasPersonalizationEnabledAt: true,
     },
+  });
+
+  await logAdminAudit({
+    actor: auditActor(user),
+    action: "ORG_UPDATE",
+    entityType: "organization",
+    entityId: organizationId,
+    summary: `[${org.name}] SaaS 개인화 권한 ${body.enabled ? "부여" : "회수"}`,
+    beforeState: { saasPersonalizationEnabled: before.saasPersonalizationEnabled },
+    afterState: { saasPersonalizationEnabled: org.saasPersonalizationEnabled },
   });
 
   return NextResponse.json({

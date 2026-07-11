@@ -8,6 +8,7 @@ import { AdminDiagnosticInstrumentStudio } from "@/components/admin/AdminDiagnos
 import { AdminDiagnosticReportStudio } from "@/components/admin/AdminDiagnosticReportStudio";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminSection } from "@/components/admin/AdminSection";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { StatusDot, type DotTone } from "@/components/admin/StatusDot";
 import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 
@@ -43,6 +44,9 @@ type Props = {
   instruments: InstrumentSummary[];
   waves: WaveRow[];
   dbError?: string | null;
+  wavePage?: number;
+  wavePageSize?: number;
+  waveTotal?: number;
 };
 
 function formatDate(iso: string | null): string {
@@ -56,7 +60,14 @@ const WAVE_STATUS_TONE: Record<string, DotTone> = {
   "마감": "success",
 };
 
-export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: Props) {
+export function AdminDiagnosticCmsPanel({
+  instruments,
+  waves,
+  dbError = null,
+  wavePage = 1,
+  wavePageSize = waves.length,
+  waveTotal = waves.length,
+}: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<"instrument" | "campaign" | "report">("campaign");
   const [seeding, setSeeding] = useState(false);
@@ -219,6 +230,12 @@ export function AdminDiagnosticCmsPanel({ instruments, waves, dbError = null }: 
             ))}
           </ul>
         )}
+        <AdminPagination
+          page={wavePage}
+          pageSize={wavePageSize}
+          total={waveTotal}
+          basePath="/admin/diagnostic"
+        />
       </AdminSection>
       )}
 

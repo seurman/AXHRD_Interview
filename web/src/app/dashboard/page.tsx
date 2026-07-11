@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { CompetencyDashboard } from "@/components/dashboard/CompetencyDashboard";
+import { RecentActivityPanel, type ActivityItem } from "@/components/dashboard/RecentActivityPanel";
 import { WelcomeBanner } from "@/components/auth/WelcomeBanner";
 import { competencyLabel } from "@/lib/labels";
 import { COMPETENCY_CODES } from "@/types";
@@ -19,9 +20,14 @@ export default async function DashboardPage() {
   const full = await prisma.user.findUnique({
     where: { id: user.id },
     include: {
-      sessions: { where: { status: "COMPLETED" } },
+      sessions: { where: { status: "COMPLETED" }, orderBy: { completedAt: "desc" }, take: 6 },
       competencyLogs: { orderBy: { recordedAt: "asc" } },
-      selfDiscoverySessions: { where: { status: "COMPLETED" }, take: 1 },
+      selfDiscoverySessions: {
+        where: { status: "COMPLETED" },
+        orderBy: { completedAt: "desc" },
+        take: 4,
+      },
+      resumeReviews: { orderBy: { createdAt: "desc" }, take: 4 },
     },
   });
 
@@ -84,6 +90,35 @@ export default async function DashboardPage() {
     weakestCompetency: weakest ? competencyLabel(weakest[0]) : undefined,
   });
 
+  const activityItems: ActivityItem[] = [
+    ...full.sessions.map((s) => ({
+      id: s.id,
+      kind: "interview" as const,
+      title: `모의면접 #${s.sessionNumber}`,
+      subtitle: "면접 리포트 보기",
+      href: `/interview/${s.id}/report`,
+      completedAt: (s.completedAt ?? s.startedAt ?? s.createdAt).toISOString(),
+    })),
+    ...full.selfDiscoverySessions.map((s) => ({
+      id: s.id,
+      kind: "discover" as const,
+      title: "자기발견 인터뷰",
+      subtitle: "강점 리포트 보기",
+      href: `/discover/${s.id}/report`,
+      completedAt: (s.completedAt ?? s.startedAt).toISOString(),
+    })),
+    ...full.resumeReviews.map((r) => ({
+      id: r.id,
+      kind: "resume" as const,
+      title: "자소서 첨삭",
+      subtitle: "첨삭 결과 보기",
+      href: `/resume-review/${r.id}`,
+      completedAt: r.createdAt.toISOString(),
+    })),
+  ]
+    .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())
+    .slice(0, 8);
+
   return (
     <div className="space-y-8">
       <Suspense fallback={null}>
@@ -145,6 +180,8 @@ export default async function DashboardPage() {
           }
         />
       )}
+
+      <RecentActivityPanel items={activityItems} />
     </div>
   );
 }

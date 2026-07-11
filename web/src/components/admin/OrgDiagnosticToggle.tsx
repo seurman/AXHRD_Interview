@@ -23,12 +23,22 @@ export function OrgDiagnosticToggle({
   async function toggle(e?: React.MouseEvent) {
     e?.preventDefault();
     e?.stopPropagation();
+    const next = !on;
+    if (
+      !confirm(
+        `${organizationName}의 「ARC Index 조직진단」을(를) ${next ? "활성화" : "비활성화"}할까요?${
+          next ? "" : "\n비활성화하면 기관 관리자에게 조직진단 메뉴가 즉시 숨겨집니다."
+        }`
+      )
+    ) {
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch("/api/admin/organizations/diagnostic", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId, enabled: !on }),
+        body: JSON.stringify({ organizationId, enabled: next }),
       });
       const json = await res.json();
       if (!res.ok) {

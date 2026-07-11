@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { requireSuperadmin } from "@/lib/auth/guards";
+import { requireOrganizationsViewer, hasSuperadminAccess } from "@/lib/auth/guards";
+import { isBusinessAdminUser } from "@/lib/auth/platform-ops";
 import { prisma } from "@/lib/prisma";
 import { OrgKitStudioEditor } from "@/components/admin/OrgKitStudioEditor";
 import { KitShareManager } from "@/components/org/KitShareManager";
@@ -16,7 +17,8 @@ type Props = {
 };
 
 export default async function AdminOrgInterviewKitPage({ params }: Props) {
-  await requireSuperadmin("/admin/organizations");
+  const user = await requireOrganizationsViewer("/admin/organizations");
+  const readOnlyConsole = isBusinessAdminUser(user) && !hasSuperadminAccess(user);
   const { id } = await params;
   const org = await prisma.organization.findUnique({
     where: { id },
@@ -44,6 +46,12 @@ export default async function AdminOrgInterviewKitPage({ params }: Props) {
           </Link>
         }
       />
+
+      {readOnlyConsole && (
+        <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-muted">
+          조회 전용 모드 — 킷 저장·공유 링크 발급은 슈퍼어드민만 가능합니다.
+        </p>
+      )}
 
       <OrgKitStudioEditor
         organizationId={org.id}

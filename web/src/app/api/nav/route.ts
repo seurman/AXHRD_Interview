@@ -29,6 +29,10 @@ export async function GET() {
       canPresentDemo: false,
       dashboardHref: null,
       prepareLinks: [],
+      growthLinks: [],
+      practiceLinks: [],
+      activityHref: null,
+      orgWorkspaceAvailable: false,
       profileHref: null,
       saasLinks: null,
       adminSections: [],
@@ -46,7 +50,11 @@ export async function GET() {
     const superAdmin = user ? hasSuperadminAccess(user) : false;
     return {
       dashboardHref: "/dashboard" as string | null,
-      prepareLinks: [] as { href: string; labelKey: import("@/lib/platform/nav-registry").PrepareLabelKey }[],
+      prepareLinks: [] as import("@/lib/platform/nav-registry").NavLinkItem[],
+      growthLinks: [] as import("@/lib/platform/nav-registry").NavLinkItem[],
+      practiceLinks: [] as import("@/lib/platform/nav-registry").NavLinkItem[],
+      activityHref: "/dashboard#activity" as string | null,
+      orgWorkspaceAvailable: false,
       profileHref: "/profile" as string | null,
       saasLinks: null,
       headerLinks: [] as { href: string; label: string }[],
@@ -70,13 +78,16 @@ export async function GET() {
     }),
     dashboardHref: nav.dashboardHref,
     prepareLinks: nav.prepareLinks,
+    growthLinks: nav.growthLinks,
+    practiceLinks: nav.practiceLinks,
+    activityHref: nav.activityHref,
+    orgWorkspaceAvailable: nav.orgWorkspaceAvailable,
     profileHref: nav.profileHref,
     saasLinks: nav.saasLinks,
     adminSections: nav.adminSections,
   };
 
-  body.headerLinks =
-    nav.headerLinks?.length > 0 ? nav.headerLinks : deriveHeaderLinks(body);
+  body.headerLinks = deriveHeaderLinks(body);
   body.adminModeEnabled = deriveAdminModeEnabled(body);
 
   return NextResponse.json(body);

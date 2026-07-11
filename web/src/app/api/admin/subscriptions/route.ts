@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import type { PlanTier, SubscriptionStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { isAdminResponse, requireSuperadminApi } from "@/lib/admin/auth";
+import { isAdminResponse, requireSuperadminApi, auditActor } from "@/lib/admin/auth";
+import { logAdminAudit } from "@/lib/admin/audit";
 import { addBillingPeriod } from "@/lib/billing/subscription";
 import { ORG_PLAN_TIERS } from "@/lib/billing/plans";
 import { isMissingBillingTablesError } from "@/lib/billing/errors";
@@ -41,6 +42,14 @@ export async function POST(req: Request) {
       where: { organizationId, planTier, status: { not: "CANCELED" } },
     });
 
+    const beforeState = existing
+      ? {
+          id: existing.id,
+          status: existing.status,
+          currentPeriodEnd: existing.currentPeriodEnd.toISOString(),
+        }
+      : null;
+
     const sub = existing
       ? await prisma.subscription.update({
           where: { id: existing.id },
@@ -63,6 +72,21 @@ export async function POST(req: Request) {
             currentPeriodEnd: periodEnd,
           },
         });
+
+    await logAdminAudit({
+      actor: auditActor(auth),
+      action: existing ? "UPDATE" : "CREATE",
+      entityType: "subscription",
+      entityId: sub.id,
+      summary: `[${org.name}] 수동 구독 ${existing ? "갱신" : "등록"} · ${planTier} · ${months}개월`,
+      beforeState,
+      afterState: {
+        id: sub.id,
+        planTier: sub.planTier,
+        status: sub.status,
+        currentPeriodEnd: sub.currentPeriodEnd.toISOString(),
+      },
+    });
 
     return NextResponse.json({
       id: sub.id,

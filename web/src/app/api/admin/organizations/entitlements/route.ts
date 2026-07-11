@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { hasSuperadminAccess } from "@/lib/auth/guards";
+import { auditActor } from "@/lib/admin/auth";
+import { logAdminAudit } from "@/lib/admin/audit";
 import {
   entitlementDbPatch,
   readOrgEntitlements,
@@ -71,6 +73,22 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "enabled(boolean)가 필요합니다." }, { status: 400 });
   }
 
+  const before = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: {
+      id: true,
+      name: true,
+      interviewEnabled: true,
+      saasPersonalizationEnabled: true,
+      saasPersonalizationEnabledAt: true,
+      diagnosticEnabled: true,
+    },
+  });
+  if (!before) {
+    return NextResponse.json({ error: "기관을 찾을 수 없습니다." }, { status: 404 });
+  }
+  const beforeEntitlements = readOrgEntitlements(before);
+
   const org = await prisma.organization.update({
     where: { id: organizationId },
     data: entitlementDbPatch(body.product, body.enabled),
@@ -83,13 +101,24 @@ export async function PATCH(req: Request) {
       diagnosticEnabled: true,
     },
   });
+  const afterEntitlements = readOrgEntitlements(org);
+
+  await logAdminAudit({
+    actor: auditActor(user),
+    action: "ORG_UPDATE",
+    entityType: "organization",
+    entityId: organizationId,
+    summary: `[${org.name}] ${body.product} entitlement ${body.enabled ? "활성화" : "비활성화"}`,
+    beforeState: { entitlements: beforeEntitlements },
+    afterState: { entitlements: afterEntitlements },
+  });
 
   return NextResponse.json({
     ok: true,
     organization: {
       id: org.id,
       name: org.name,
-      entitlements: readOrgEntitlements(org),
+      entitlements: afterEntitlements,
       competencyEnabledAt: org.saasPersonalizationEnabledAt?.toISOString() ?? null,
     },
   });

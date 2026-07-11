@@ -1,9 +1,11 @@
 import Link from "next/link";
+import type { Prisma } from "@prisma/client";
 import { requireSessionsViewer } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { competencyLabel } from "@/lib/labels";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminSection } from "@/components/admin/AdminSection";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { Badge } from "@/components/admin/Badge";
 import { StatusDot, type DotTone } from "@/components/admin/StatusDot";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
@@ -24,45 +26,54 @@ const STATUS_TONE: Record<string, DotTone> = {
   COMPLETED: "success",
 };
 
+const PAGE_SIZE = 50;
+
 export default async function AdminSessionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
 }) {
   await requireSessionsViewer("/admin/sessions");
-  const { q, status } = await searchParams;
+  const { q, status, page: pageParam } = await searchParams;
   const query = q?.trim();
   const statusFilter =
     status === "SETUP" || status === "IN_PROGRESS" || status === "COMPLETED" ? status : undefined;
+  const page = Math.max(1, Number(pageParam) || 1);
 
-  const sessions = await prisma.interviewSession.findMany({
-    where: {
-      ...(statusFilter ? { status: statusFilter } : {}),
-      ...(query
-        ? {
-            OR: [
-              { id: { contains: query, mode: "insensitive" } },
-              { user: { name: { contains: query, mode: "insensitive" } } },
-              { user: { email: { contains: query, mode: "insensitive" } } },
-              { focusCompetency: { contains: query, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          organization: { select: { name: true } },
+  const where: Prisma.InterviewSessionWhereInput = {
+    ...(statusFilter ? { status: statusFilter } : {}),
+    ...(query
+      ? {
+          OR: [
+            { id: { contains: query, mode: "insensitive" as const } },
+            { user: { name: { contains: query, mode: "insensitive" as const } } },
+            { user: { email: { contains: query, mode: "insensitive" as const } } },
+            { focusCompetency: { contains: query, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
+
+  const [sessions, total] = await Promise.all([
+    prisma.interviewSession.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            organization: { select: { name: true } },
+          },
         },
+        _count: { select: { responses: true, chipEvents: true } },
       },
-      _count: { select: { responses: true, chipEvents: true } },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 150,
-  });
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.interviewSession.count({ where }),
+  ]);
 
   const kitOrgIds = [
     ...new Set(sessions.map((s) => s.kitOrganizationId).filter(Boolean)),
@@ -116,7 +127,7 @@ export default async function AdminSessionsPage({
 
       <AdminSection
         title="세션 목록"
-        description={`최대 150건 · ${sessions.length}건 표시`}
+        description={`총 ${total}건 중 ${sessions.length}건 표시`}
       >
         {sessions.length === 0 ? (
           <p className="text-sm text-muted">조건에 맞는 세션이 없습니다.</p>
@@ -175,6 +186,13 @@ export default async function AdminSessionsPage({
             })}
           </ul>
         )}
+        <AdminPagination
+          page={page}
+          pageSize={PAGE_SIZE}
+          total={total}
+          basePath="/admin/sessions"
+          searchParams={{ q: query, status: statusFilter }}
+        />
       </AdminSection>
     </div>
   );

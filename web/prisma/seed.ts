@@ -30,9 +30,11 @@ async function main() {
   await seedArcIndex(prisma);
 
   const { ensureShowcaseOrganization } = await import("../src/lib/platform/showcase-org");
+  const { seedShowcaseDemoData } = await import("../src/lib/platform/showcase-seed");
   await ensureShowcaseOrganization();
+  const showcase = await seedShowcaseDemoData(prisma);
 
-  console.log("Seed completed:", ncs);
+  console.log("Seed completed:", { ncs, showcase });
 }
 
 main()

@@ -1,4 +1,4 @@
-import type { AdminNavSection, PrepareLabelKey } from "@/lib/platform/nav-registry";
+import type { AdminNavSection, NavLinkItem } from "@/lib/platform/nav-registry";
 
 export type SaasNavPayload = {
   titleKey: "saas";
@@ -13,15 +13,18 @@ export type NavPayload = {
   orgRole: string | null;
   organizationId: string | null;
   isSuperAdmin: boolean;
-  /** 기관 조직진단 — 헤더 직접 링크 (플랫폼 CMS는 관리자 모드로 분리) */
+  /** @deprecated — 빈 배열 유지 */
   headerLinks: { href: string; label: string }[];
-  /** Platform Console (/admin) 접근 가능 */
   adminModeEnabled: boolean;
-  /** FREE 개인 사용자 — 5분 면접 체험만 허용 */
   trialOnly: boolean;
   canPresentDemo: boolean;
   dashboardHref: string | null;
-  prepareLinks: { href: string; labelKey: PrepareLabelKey }[];
+  /** @deprecated use growthLinks + practiceLinks */
+  prepareLinks: NavLinkItem[];
+  growthLinks: NavLinkItem[];
+  practiceLinks: NavLinkItem[];
+  activityHref: string | null;
+  orgWorkspaceAvailable: boolean;
   profileHref: string | null;
   saasLinks: SaasNavPayload | null;
   adminSections: AdminNavSection[];
@@ -39,6 +42,10 @@ export const GUEST_NAV: NavPayload = {
   canPresentDemo: false,
   dashboardHref: null,
   prepareLinks: [],
+  growthLinks: [],
+  practiceLinks: [],
+  activityHref: null,
+  orgWorkspaceAvailable: false,
   profileHref: null,
   saasLinks: null,
   adminSections: [],

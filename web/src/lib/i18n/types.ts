@@ -13,7 +13,13 @@ export type Dictionary = {
     brand: string;
     nav: {
       dashboard: string;
+      home: string;
       prepare: string;
+      growth: string;
+      practice: string;
+      activity: string;
+      products: string;
+      pricing: string;
       discover: string;
       interview: string;
       resumeReview: string;
@@ -74,6 +80,33 @@ export type Dictionary = {
       diagnosticDashboard: string;
       settingsHub: string;
       interviewKit: string;
+    };
+    workspace: {
+      label: string;
+      personal: string;
+      org: string;
+    };
+    guestProducts: {
+      trialInterview: string;
+      discover: string;
+      interview: string;
+      orgDiagnosis: string;
+      forOrganizations: string;
+    };
+    avatar: {
+      menu: string;
+      profile: string;
+      billing: string;
+    };
+    mobileNav: {
+      home: string;
+      growth: string;
+      practice: string;
+      org: string;
+      more: string;
+      cohort: string;
+      diagnostic: string;
+      settings: string;
     };
     language: {
       label: string;

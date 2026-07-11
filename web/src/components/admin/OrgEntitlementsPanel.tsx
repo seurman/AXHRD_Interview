@@ -45,6 +45,16 @@ export function OrgEntitlementsPanel({
     e?.preventDefault();
     e?.stopPropagation();
     const next = !entitlements[product];
+    const label = ORG_PRODUCTS.find((p) => p.key === product)?.label ?? product;
+    if (
+      !confirm(
+        `${organizationName}의 「${label}」을(를) ${next ? "활성화" : "비활성화"}할까요?${
+          next ? "" : "\n비활성화하면 기관 관리자에게 해당 메뉴가 즉시 숨겨집니다."
+        }`
+      )
+    ) {
+      return;
+    }
     setBusy(product);
     try {
       const res = await fetch("/api/admin/organizations/entitlements", {

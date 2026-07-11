@@ -1,28 +1,41 @@
 "use client";
 
-import Link from "next/link";
-import { useI18n } from "@/lib/i18n/I18nProvider";
+import { useEffect, useMemo, useState } from "react";
 import { useNavSessionContext } from "@/components/layout/NavSessionProvider";
-import { Logo } from "@/components/brand/Logo";
-import { MobileNav } from "./MobileNav";
+import { deriveAdminModeEnabled } from "@/lib/nav/header-links";
 import { MainNav } from "./MainNav";
+import { MobileNav } from "./MobileNav";
+import { MobileBottomNav } from "./MobileBottomNav";
+import { useWorkspaceMode } from "@/lib/nav/workspace";
+import Link from "next/link";
+import { Logo } from "@/components/brand/Logo";
 import { BillingPastDueBanner } from "@/components/billing/BillingPastDueBanner";
-import { deriveHeaderLinks, deriveAdminModeEnabled } from "@/lib/nav/header-links";
-import { useMemo } from "react";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 
 export function AppHeader() {
   const { dict } = useI18n();
   const { nav, loading } = useNavSessionContext();
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   const navReady = nav !== null;
   const loggedIn = nav?.loggedIn === true;
-  const dashboardHref = nav?.dashboardHref ?? null;
-  const prepareLinks = nav?.prepareLinks ?? [];
-  const profileHref = nav?.profileHref ?? null;
-  const saasLinks = nav?.saasLinks ?? null;
-  const headerLinks = useMemo(() => deriveHeaderLinks(nav), [nav]);
-  const adminModeEnabled = useMemo(() => deriveAdminModeEnabled(nav), [nav]);
-  const userName = nav?.userName ?? undefined;
+  const orgWorkspaceAvailable = nav?.orgWorkspaceAvailable ?? false;
+  const { mode } = useWorkspaceMode(orgWorkspaceAvailable);
+  const adminModeEnabled = useMemo(
+    () => deriveAdminModeEnabled(nav),
+    [nav],
+  );
+
+  const showBottomNav = loggedIn && navReady;
+
+  useEffect(() => {
+    if (!showBottomNav) {
+      document.body.classList.remove("has-mobile-bottom-nav");
+      return;
+    }
+    document.body.classList.add("has-mobile-bottom-nav");
+    return () => document.body.classList.remove("has-mobile-bottom-nav");
+  }, [showBottomNav]);
 
   return (
     <>
@@ -38,31 +51,47 @@ export function AppHeader() {
           </Link>
 
           <MainNav
-            dashboardHref={dashboardHref}
-            loggedIn={loggedIn}
-            prepareLinks={prepareLinks}
-            profileHref={profileHref}
-            saasLinks={saasLinks}
-            headerLinks={headerLinks}
+            dashboardHref={nav?.dashboardHref ?? null}
+            growthLinks={nav?.growthLinks ?? []}
+            practiceLinks={nav?.practiceLinks ?? []}
+            activityHref={nav?.activityHref ?? null}
+            profileHref={nav?.profileHref ?? null}
+            saasLinks={nav?.saasLinks ?? null}
+            orgWorkspaceAvailable={orgWorkspaceAvailable}
             adminModeEnabled={adminModeEnabled}
-            userName={userName}
+            userName={nav?.userName ?? undefined}
+            loggedIn={loggedIn}
             loading={!navReady && loading}
           />
 
           <MobileNav
-            dashboardHref={dashboardHref}
+            dashboardHref={nav?.dashboardHref ?? null}
+            growthLinks={nav?.growthLinks ?? []}
+            practiceLinks={nav?.practiceLinks ?? []}
+            activityHref={nav?.activityHref ?? null}
+            profileHref={nav?.profileHref ?? null}
+            saasLinks={nav?.saasLinks ?? null}
+            orgWorkspaceAvailable={orgWorkspaceAvailable}
             loggedIn={loggedIn}
             guestMenu={navReady && !loggedIn}
             loading={!navReady && loading}
-            prepareLinks={prepareLinks}
-            profileHref={profileHref}
-            saasLinks={saasLinks}
-            headerLinks={headerLinks}
             adminModeEnabled={adminModeEnabled}
-            userName={userName}
+            userName={nav?.userName ?? undefined}
+            drawerOpen={mobileDrawerOpen}
+            onDrawerOpenChange={setMobileDrawerOpen}
+            hideTrigger={showBottomNav}
           />
         </div>
       </header>
+
+      {showBottomNav && (
+        <MobileBottomNav
+          loggedIn={loggedIn}
+          mode={mode}
+          orgAvailable={orgWorkspaceAvailable}
+          onMore={() => setMobileDrawerOpen(true)}
+        />
+      )}
     </>
   );
 }

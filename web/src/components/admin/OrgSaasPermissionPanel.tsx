@@ -43,12 +43,20 @@ export function OrgSaasPermissionPanel() {
   }, [load]);
 
   async function toggle(org: OrgRow) {
+    const next = !org.saasPersonalizationEnabled;
+    if (
+      !confirm(
+        `${org.name}의 「SaaS 개인화」 권한을 ${next ? "부여" : "회수"}할까요?`
+      )
+    ) {
+      return;
+    }
     setBusyId(org.id);
     try {
       const res = await fetch("/api/admin/organizations/saas", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId: org.id, enabled: !org.saasPersonalizationEnabled }),
+        body: JSON.stringify({ organizationId: org.id, enabled: next }),
       });
       const json = await res.json();
       if (!res.ok) {

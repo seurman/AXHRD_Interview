@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { requireSuperadmin } from "@/lib/auth/guards";
+import { requireOrganizationsViewer } from "@/lib/auth/guards";
 import { getOrgHubSnapshot } from "@/lib/org/hub-data";
 import { getCohortData } from "@/lib/org/cohort";
 import { getOrgBenchmark, MIN_PEER_MEMBERS } from "@/lib/org/benchmark";
@@ -17,7 +17,7 @@ type Props = {
 };
 
 export default async function AdminOrgCohortPage({ params }: Props) {
-  await requireSuperadmin("/admin/organizations");
+  await requireOrganizationsViewer("/admin/organizations");
   const { id } = await params;
   const hub = await getOrgHubSnapshot(id);
   if (!hub) notFound();

@@ -131,10 +131,23 @@ export function PlatformConsoleSidebar({
   const pathname = usePathname();
   const { dict, locale } = useI18n();
   const c = dict.common;
+  const [query, setQuery] = useState("");
 
   if (sections.length === 0) return null;
 
   const homeActive = pathname === "/admin";
+  const q = query.trim().toLowerCase();
+  const visibleSections =
+    q.length === 0
+      ? sections
+      : sections
+          .map((section) => ({
+            ...section,
+            items: section.items.filter((item) => item.label.toLowerCase().includes(q)),
+          }))
+          .filter((section) => section.items.length > 0);
+  const showHome = q.length === 0 || c.admin.overview.toLowerCase().includes(q);
+  const noResults = q.length > 0 && visibleSections.length === 0 && !showHome;
 
   return (
     <aside className="platform-sidebar flex h-full min-h-screen w-[240px] shrink-0 flex-col">
@@ -151,7 +164,8 @@ export function PlatformConsoleSidebar({
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--platform-text-muted)]" />
           <input
             type="search"
-            disabled
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             placeholder="Find…"
             className="platform-search w-full"
           />
@@ -159,17 +173,25 @@ export function PlatformConsoleSidebar({
       </div>
 
       <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-2 pb-3">
-        <PlatformNavLink
-          href="/admin"
-          active={homeActive}
-          onNavigate={onNavigate}
-          className={`platform-nav-item ${homeActive ? "platform-nav-item--active" : ""}`}
-        >
-          <Home className="h-4 w-4 shrink-0" />
-          <span className="truncate">{c.admin.overview}</span>
-        </PlatformNavLink>
+        {showHome && (
+          <PlatformNavLink
+            href="/admin"
+            active={homeActive}
+            onNavigate={onNavigate}
+            className={`platform-nav-item ${homeActive ? "platform-nav-item--active" : ""}`}
+          >
+            <Home className="h-4 w-4 shrink-0" />
+            <span className="truncate">{c.admin.overview}</span>
+          </PlatformNavLink>
+        )}
 
-        {sections.map((section) => (
+        {noResults && (
+          <p className="px-2.5 py-2 text-xs font-medium text-[var(--platform-text-muted)]">
+            일치하는 메뉴가 없습니다.
+          </p>
+        )}
+
+        {visibleSections.map((section) => (
           <div key={section.sectionKey}>
             <p className="platform-nav-section-label">{c.admin.workspaces[section.sectionKey]}</p>
             <div className="flex flex-col gap-0.5">

@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogoutButton } from "./LogoutButton";
-import { AdminModeButton } from "./AdminModeButton";
 import { NavDropdownMenu } from "./NavDropdownMenu";
-import { SaasNavMenu } from "./SaasNavMenu";
 import { NavTransitionLink } from "./NavTransitionLink";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ThemeSwitcher } from "./ThemeSwitcher";
-import { ClipDynamic } from "@/components/ui/ClipDynamic";
+import { GuestProductMenu } from "./GuestProductMenu";
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
+import { AvatarMenu } from "./AvatarMenu";
 import { useI18n } from "@/lib/i18n/I18nProvider";
-import type { PrepareLabelKey } from "@/lib/platform/nav-registry";
+import { useWorkspaceMode } from "@/lib/nav/workspace";
+import type { NavLinkItem } from "@/lib/platform/nav-registry";
 
 type SaasLinksConfig = {
   titleKey: "saas";
@@ -25,28 +25,33 @@ type SaasLinksConfig = {
 
 export function MainNav({
   dashboardHref,
-  prepareLinks,
+  growthLinks,
+  practiceLinks,
+  activityHref,
   profileHref,
   saasLinks,
-  headerLinks = [],
+  orgWorkspaceAvailable,
   adminModeEnabled = false,
   userName,
   loggedIn,
   loading = false,
 }: {
   dashboardHref: string | null;
-  prepareLinks: { href: string; labelKey: PrepareLabelKey }[];
+  growthLinks: NavLinkItem[];
+  practiceLinks: NavLinkItem[];
+  activityHref: string | null;
   profileHref: string | null;
   saasLinks?: SaasLinksConfig | null;
-  headerLinks?: { href: string; label: string }[];
+  orgWorkspaceAvailable: boolean;
   adminModeEnabled?: boolean;
   userName?: string;
   loggedIn: boolean;
   loading?: boolean;
 }) {
   const pathname = usePathname();
-  const { dict, locale } = useI18n();
+  const { dict } = useI18n();
   const c = dict.common;
+  const { mode, setMode } = useWorkspaceMode(orgWorkspaceAvailable);
 
   if (loading) {
     return (
@@ -59,11 +64,9 @@ export function MainNav({
   if (!loggedIn) {
     return (
       <nav className="hidden items-center gap-2 sm:flex">
-        <Link href="/diagnosis" className="nav-pill">
-          조직진단
-        </Link>
+        <GuestProductMenu />
         <Link href="/pricing" className="nav-pill">
-          Pricing
+          {c.nav.pricing}
         </Link>
         <LanguageSwitcher />
         <ThemeSwitcher />
@@ -77,87 +80,112 @@ export function MainNav({
     );
   }
 
-  const linkActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const linkActive = (href: string) => {
+    const base = href.split("#")[0];
+    if (href.includes("#")) return pathname === base || pathname.startsWith(`${base}/`);
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  if (mode === "org" && orgWorkspaceAvailable && saasLinks) {
+    return (
+      <nav className="hidden items-center gap-1.5 lg:gap-2 sm:flex">
+        {orgWorkspaceAvailable && <WorkspaceSwitcher mode={mode} onChange={setMode} />}
+
+        {saasLinks.links.map((l) => (
+          <NavTransitionLink
+            key={l.href}
+            href={l.href}
+            className={`nav-pill ${linkActive(l.href) ? "nav-pill-active" : ""}`}
+          >
+            {c.saas[l.labelKey]}
+          </NavTransitionLink>
+        ))}
+
+        {saasLinks.settingsLinks.length > 0 && (
+          <NavDropdownMenu
+            title={c.saas.settings}
+            links={saasLinks.settingsLinks.map((l) => ({
+              href: l.href,
+              label: c.saas[l.labelKey],
+            }))}
+          />
+        )}
+
+        <AvatarMenu
+          userName={userName}
+          profileHref={profileHref}
+          adminModeEnabled={adminModeEnabled}
+        />
+      </nav>
+    );
+  }
 
   return (
     <nav className="hidden items-center gap-1.5 lg:gap-2 sm:flex">
-      {userName && (
-        <ClipDynamic
-          as="span"
-          className="mr-1 hidden max-w-[9rem] text-xs font-medium user-greeting xl:inline xl:max-w-[11rem]"
-          title={locale === "ko" ? `${userName}${c.userSuffix}` : userName}
-        >
-          {locale === "ko" ? `${userName}${c.userSuffix}` : userName}
-        </ClipDynamic>
-      )}
+      {orgWorkspaceAvailable && <WorkspaceSwitcher mode={mode} onChange={setMode} />}
 
       {dashboardHref && (
         <NavTransitionLink
           href={dashboardHref}
           className={`nav-pill ${linkActive(dashboardHref) ? "nav-pill-active" : ""}`}
         >
-          {c.nav.dashboard}
+          {c.nav.home}
         </NavTransitionLink>
       )}
 
-      {headerLinks.map((link) => (
-        <NavTransitionLink
-          key={link.href}
-          href={link.href}
-          className={`nav-pill ${linkActive(link.href) ? "nav-pill-active" : ""}`}
-        >
-          {link.label}
-        </NavTransitionLink>
-      ))}
-
-      <NavDropdownMenu
-        title={c.nav.prepare}
-        links={prepareLinks.map((l) => ({
-          href: l.href,
-          label: c.nav[l.labelKey],
-        }))}
-      />
-
-      {profileHref && (
-        <NavTransitionLink
-          href={profileHref}
-          className={`nav-pill ${linkActive(profileHref) ? "nav-pill-active" : ""}`}
-        >
-          {c.nav.profile}
-        </NavTransitionLink>
-      )}
-
-      {saasLinks && (
-        <SaasNavMenu
-          title={c.saas.title}
-          links={saasLinks.links.map((l) => ({
+      {growthLinks.length > 0 && (
+        <NavDropdownMenu
+          title={c.nav.growth}
+          links={growthLinks.map((l) => ({
             href: l.href,
-            label: c.saas[l.labelKey],
+            label: c.nav[l.labelKey],
           }))}
-          settingsTitle={c.saas.settings}
-          settingsLinks={
-            saasLinks.settingsLinks.length > 0
-              ? saasLinks.settingsLinks.map((l) => ({
-                  href: l.href,
-                  label: c.saas[l.labelKey],
-                }))
-              : undefined
-          }
         />
       )}
 
-      <LanguageSwitcher />
-      <ThemeSwitcher />
-      {adminModeEnabled && <AdminModeButton label={c.auth.adminMode} />}
-      <LogoutButton variant="nav" label={c.auth.logout} />
+      {practiceLinks.length > 0 && (
+        <NavDropdownMenu
+          title={c.nav.practice}
+          links={practiceLinks.map((l) => ({
+            href: l.href,
+            label: c.nav[l.labelKey],
+          }))}
+        />
+      )}
+
+      {activityHref && (
+        <NavTransitionLink href={activityHref} className="nav-pill">
+          {c.nav.activity}
+        </NavTransitionLink>
+      )}
+
+      <AvatarMenu
+        userName={userName}
+        profileHref={profileHref}
+        adminModeEnabled={adminModeEnabled}
+      />
     </nav>
   );
 }
 
 /** 모바일용 긴 라벨 */
 export function getMobileNavLabel(
-  key: "dashboard" | "discover" | "interview" | "resumeReview" | "cards" | "trialInterview" | "profile",
-  dict: ReturnType<typeof useI18n>["dict"]
+  key:
+    | "dashboard"
+    | "discover"
+    | "interview"
+    | "resumeReview"
+    | "cards"
+    | "trialInterview"
+    | "profile"
+    | "home"
+    | "growth"
+    | "practice"
+    | "activity",
+  dict: ReturnType<typeof import("@/lib/i18n/I18nProvider").useI18n>["dict"],
 ): string {
+  if (key === "home" || key === "growth" || key === "practice" || key === "activity") {
+    return dict.common.nav[key];
+  }
   return dict.common.navLong[key];
 }

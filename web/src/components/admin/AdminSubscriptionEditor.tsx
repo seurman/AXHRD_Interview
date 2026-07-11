@@ -16,6 +16,14 @@ export function AdminSubscriptionEditor({
 
   const save = async () => {
     if (!orgId) return;
+    const orgName = organizations.find((o) => o.id === orgId)?.name ?? orgId;
+    if (
+      !confirm(
+        `${orgName}에 ${planTier} 구독을 ${months}개월간 수동 등록할까요?\n기존 활성 구독이 있으면 갱신됩니다.`
+      )
+    ) {
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch("/api/admin/subscriptions", {

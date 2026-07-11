@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { UserRoleEditor } from "@/components/admin/UserRoleEditor";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminSection } from "@/components/admin/AdminSection";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { Badge } from "@/components/admin/Badge";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
@@ -13,33 +14,38 @@ export const dynamic = "force-dynamic";
 
 const ROLE_LABEL = ORG_ROLE_LABEL;
 const PLATFORM_LABEL = PLATFORM_ROLE_LABEL;
+const PAGE_SIZE = 50;
 
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; flag?: string }>;
+  searchParams: Promise<{ q?: string; flag?: string; page?: string }>;
 }) {
   await requireSuperadmin("/admin/users");
-  const { q, flag } = await searchParams;
+  const { q, flag, page: pageParam } = await searchParams;
   const query = q?.trim();
   const flagReview = flag === "review";
+  const page = Math.max(1, Number(pageParam) || 1);
 
-  const [users, organizations, reviewFlagCount] = await Promise.all([
+  const where = {
+    ...(query
+      ? {
+          OR: [
+            { name: { contains: query, mode: "insensitive" as const } },
+            { email: { contains: query, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+    ...(flagReview ? { signupFlag: "REVIEW" as const } : {}),
+  };
+
+  const [users, organizations, reviewFlagCount, total] = await Promise.all([
     prisma.user.findMany({
-      where: {
-        ...(query
-          ? {
-              OR: [
-                { name: { contains: query, mode: "insensitive" } },
-                { email: { contains: query, mode: "insensitive" } },
-              ],
-            }
-          : {}),
-        ...(flagReview ? { signupFlag: "REVIEW" } : {}),
-      },
+      where,
       include: { organization: { select: { name: true } } },
       orderBy: { createdAt: "desc" },
-      take: 200,
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
     }),
     prisma.organization.findMany({
       where: { status: "APPROVED" },
@@ -49,6 +55,7 @@ export default async function AdminUsersPage({
     flagReview
       ? Promise.resolve(0)
       : prisma.user.count({ where: { signupFlag: "REVIEW" } }),
+    prisma.user.count({ where }),
   ]);
 
   return (
@@ -96,7 +103,7 @@ export default async function AdminUsersPage({
       <AdminSection
         id={flagReview ? "review" : undefined}
         title={flagReview ? "REVIEW 플래그 사용자" : "사용자 목록"}
-        description={`최대 200명 · ${users.length}건 표시`}
+        description={`총 ${total}건 중 ${users.length}건 표시`}
         actions={
           flagReview ? (
             <Badge tone="warning">{users.length}명</Badge>
@@ -157,6 +164,13 @@ export default async function AdminUsersPage({
             </table>
           </div>
         )}
+        <AdminPagination
+          page={page}
+          pageSize={PAGE_SIZE}
+          total={total}
+          basePath="/admin/users"
+          searchParams={{ q: query, flag }}
+        />
       </AdminSection>
     </div>
   );

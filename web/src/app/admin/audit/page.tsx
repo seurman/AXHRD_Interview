@@ -3,18 +3,31 @@ import { prisma } from "@/lib/prisma";
 import { AdminAuditPanel } from "@/components/admin/AdminAuditPanel";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminSection } from "@/components/admin/AdminSection";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminAuditPage() {
-  await requireSuperadmin("/admin/audit");
+const PAGE_SIZE = 50;
 
-  const logs = await prisma.adminAuditLog.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
+export default async function AdminAuditPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  await requireSuperadmin("/admin/audit");
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, Number(pageParam) || 1);
+
+  const [logs, total] = await Promise.all([
+    prisma.adminAuditLog.findMany({
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.adminAuditLog.count(),
+  ]);
 
   return (
     <div className={ADMIN_CONTAINER.default}>
@@ -30,7 +43,7 @@ export default async function AdminAuditPage() {
       />
 
       <AdminSection
-        title="최근 100건"
+        title={`감사 로그 (총 ${total}건)`}
         description="행별 롤백은 beforeState 기준 복원입니다. SUPERADMIN만 실행 가능합니다."
       >
         <AdminAuditPanel
@@ -46,6 +59,7 @@ export default async function AdminAuditPage() {
             createdAt: l.createdAt.toISOString(),
           }))}
         />
+        <AdminPagination page={page} pageSize={PAGE_SIZE} total={total} basePath="/admin/audit" />
       </AdminSection>
     </div>
   );

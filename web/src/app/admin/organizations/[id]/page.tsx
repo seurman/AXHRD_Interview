@@ -64,7 +64,8 @@ export default async function AdminOrgHubPage({ params }: Props) {
         }
       />
 
-      <div className="card-luxe p-6">
+      <div className="platform-panel overflow-hidden">
+        <div className="platform-panel-body">
         <div className="flex flex-wrap items-center gap-2">
           <OrgStatusBadge status={hub.status} />
           <OrgKindBadge kind={hub.kind} />
@@ -106,6 +107,7 @@ export default async function AdminOrgHubPage({ params }: Props) {
               </p>
             )}
           </div>
+        </div>
         </div>
       </div>
 

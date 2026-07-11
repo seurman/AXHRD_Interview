@@ -7,15 +7,24 @@ import { waveStatusLabel } from "@/lib/diagnostic/wave-status";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminDiagnosticPage() {
+const PAGE_SIZE = 50;
+
+export default async function AdminDiagnosticPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await requireDiagnosticConsoleViewer("/admin/diagnostic");
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, Number(pageParam) || 1);
 
   let dbError: string | null = null;
   let instruments: Parameters<typeof AdminDiagnosticCmsPanel>[0]["instruments"] = [];
   let waveRows: Parameters<typeof AdminDiagnosticCmsPanel>[0]["waves"] = [];
+  let waveTotal = 0;
 
   try {
-    const [rawInstruments, waves] = await Promise.all([
+    const [rawInstruments, waves, count] = await Promise.all([
       prisma.diagnosticInstrument.findMany({
         include: {
           sections: {
@@ -43,9 +52,13 @@ export default async function AdminDiagnosticPage() {
           },
         },
         orderBy: { createdAt: "desc" },
-        take: 50,
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
       }),
+      prisma.diagnosticWave.count(),
     ]);
+
+    waveTotal = count;
 
     instruments = rawInstruments.map((i) => ({
       id: i.id,
@@ -91,7 +104,14 @@ export default async function AdminDiagnosticPage() {
 
   return (
     <div className={ADMIN_CONTAINER.default}>
-      <AdminDiagnosticCmsPanel instruments={instruments} waves={waveRows} dbError={dbError} />
+      <AdminDiagnosticCmsPanel
+        instruments={instruments}
+        waves={waveRows}
+        dbError={dbError}
+        wavePage={page}
+        wavePageSize={PAGE_SIZE}
+        waveTotal={waveTotal}
+      />
     </div>
   );
 }

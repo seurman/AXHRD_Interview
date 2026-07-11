@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { requireSuperadmin } from "@/lib/auth/guards";
+import { requireDiagnosticConsoleViewer } from "@/lib/auth/guards";
 import { AdminDiagnosticWaveDetail } from "@/components/admin/AdminDiagnosticWaveDetail";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
 
 export default async function AdminDiagnosticWavePage({ params }: Props) {
-  await requireSuperadmin("/admin/diagnostic");
+  await requireDiagnosticConsoleViewer("/admin/diagnostic");
   const { id } = await params;
   return (
     <div className={ADMIN_CONTAINER.detail}>

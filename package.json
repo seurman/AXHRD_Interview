@@ -14,6 +14,7 @@
     "web:seed": "npm run db:seed --prefix web",
     "db:seed": "npm run db:seed --prefix web",
     "db:seed:ncs": "npm run db:seed:ncs --prefix web",
+    "db:seed:showcase": "npm run db:seed:showcase --prefix web",
     "db:seed:real": "npm run db:seed:real --prefix web",
     "db:migrate": "npm run db:migrate --prefix web"
   }

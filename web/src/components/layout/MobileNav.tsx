@@ -7,13 +7,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { LogoutButton } from "./LogoutButton";
 import { AdminModeButton } from "./AdminModeButton";
-import { LanguageSwitcher } from "./LanguageSwitcher";
-import { ThemeSwitcher } from "./ThemeSwitcher";
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { getMobileNavLabel } from "./MainNav";
 import { ClipDynamic } from "@/components/ui/ClipDynamic";
 import { NavTransitionLink } from "@/components/layout/NavTransitionLink";
 import { useI18n } from "@/lib/i18n/I18nProvider";
-import type { PrepareLabelKey } from "@/lib/platform/nav-registry";
+import { useWorkspaceMode } from "@/lib/nav/workspace";
+import type { NavLinkItem } from "@/lib/platform/nav-registry";
 
 type SaasLinksConfig = {
   titleKey: "saas";
@@ -44,9 +44,7 @@ function AccordionSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-xs font-semibold ${
-          active ? "text-gold" : "text-gold"
-        }`}
+        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-xs font-semibold text-gold"
         aria-expanded={open}
       >
         <span className="keep-one-line">{title}</span>
@@ -79,33 +77,47 @@ function MobileNavLink({
 
 export function MobileNav({
   dashboardHref,
-  prepareLinks,
+  growthLinks,
+  practiceLinks,
+  activityHref,
   profileHref,
   saasLinks,
-  headerLinks = [],
+  orgWorkspaceAvailable,
   adminModeEnabled = false,
   userName,
   loggedIn,
   guestMenu,
   loading = false,
+  drawerOpen,
+  onDrawerOpenChange,
+  hideTrigger = false,
 }: {
   dashboardHref: string | null;
-  prepareLinks: { href: string; labelKey: PrepareLabelKey }[];
+  growthLinks: NavLinkItem[];
+  practiceLinks: NavLinkItem[];
+  activityHref: string | null;
   profileHref: string | null;
   saasLinks?: SaasLinksConfig | null;
-  headerLinks?: { href: string; label: string }[];
+  orgWorkspaceAvailable: boolean;
   adminModeEnabled?: boolean;
   userName?: string;
   loggedIn: boolean;
   guestMenu: boolean;
   loading?: boolean;
+  drawerOpen?: boolean;
+  onDrawerOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = drawerOpen ?? internalOpen;
+  const setOpen = onDrawerOpenChange ?? setInternalOpen;
+
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { dict, locale } = useI18n();
   const c = dict.common;
+  const { mode, setMode } = useWorkspaceMode(orgWorkspaceAvailable);
 
   const closeDrawer = () => setOpen(false);
 
@@ -113,17 +125,30 @@ export function MobileNav({
     const hrefs = new Set<string>();
     if (dashboardHref) hrefs.add(dashboardHref);
     if (profileHref) hrefs.add(profileHref);
-    prepareLinks.forEach((l) => hrefs.add(l.href));
+    if (activityHref) hrefs.add(activityHref);
+    growthLinks.forEach((l) => hrefs.add(l.href));
+    practiceLinks.forEach((l) => hrefs.add(l.href));
     saasLinks?.links.forEach((l) => hrefs.add(l.href));
     saasLinks?.settingsLinks.forEach((l) => hrefs.add(l.href));
-    headerLinks.forEach((l) => hrefs.add(l.href));
     if (adminModeEnabled) hrefs.add("/admin");
     if (!loggedIn) {
       hrefs.add("/auth/login");
       hrefs.add("/auth/register");
+      hrefs.add("/pricing");
+      hrefs.add("/diagnosis");
+      hrefs.add("/demo");
     }
     return [...hrefs];
-  }, [adminModeEnabled, dashboardHref, headerLinks, loggedIn, prepareLinks, profileHref, saasLinks]);
+  }, [
+    activityHref,
+    adminModeEnabled,
+    dashboardHref,
+    growthLinks,
+    loggedIn,
+    practiceLinks,
+    profileHref,
+    saasLinks,
+  ]);
 
   useEffect(() => {
     setMounted(true);
@@ -143,43 +168,36 @@ export function MobileNav({
     const priority = [
       dashboardHref,
       profileHref,
-      ...prepareLinks.map((l) => l.href),
+      ...growthLinks.map((l) => l.href),
     ].filter((h): h is string => !!h);
     for (const href of priority.slice(0, 4)) {
       router.prefetch(href);
     }
     const rest = prefetchHrefs.filter((h) => !priority.includes(h));
     const timer = window.setTimeout(() => {
-      for (const href of rest) {
-        router.prefetch(href);
-      }
+      for (const href of rest) router.prefetch(href);
     }, 120);
     return () => window.clearTimeout(timer);
-  }, [dashboardHref, open, prefetchHrefs, prepareLinks, profileHref, router]);
+  }, [dashboardHref, growthLinks, open, prefetchHrefs, profileHref, router]);
 
   const linkClass = (href: string, indent = false) =>
     `keep-one-line rounded-lg py-2.5 hover:bg-primary/5 ${indent ? "pl-5 pr-3" : "px-3"} ${
-      pathname === href || pathname.startsWith(`${href}/`)
+      pathname === href.split("#")[0] || pathname.startsWith(`${href.split("#")[0]}/`)
         ? "bg-primary/5 font-medium text-primary"
         : "text-foreground"
     }`;
 
-  const prepareActive = prepareLinks.some(
-    (l) => pathname === l.href || pathname.startsWith(`${l.href}/`)
+  const growthActive = growthLinks.some(
+    (l) => pathname === l.href || pathname.startsWith(`${l.href}/`),
+  );
+  const practiceActive = practiceLinks.some(
+    (l) => pathname === l.href || pathname.startsWith(`${l.href}/`),
   );
   const saasActive =
     !!saasLinks &&
     [...saasLinks.links, ...saasLinks.settingsLinks].some(
-      (l) => pathname === l.href || pathname.startsWith(`${l.href}/`)
+      (l) => pathname === l.href || pathname.startsWith(`${l.href}/`),
     );
-
-  const prepareLabelKey: Record<PrepareLabelKey, PrepareLabelKey> = {
-    trialInterview: "trialInterview",
-    interview: "interview",
-    resumeReview: "resumeReview",
-    discover: "discover",
-    cards: "cards",
-  };
 
   const drawer = open && (
     <div className="fixed inset-0 z-[100]">
@@ -187,7 +205,11 @@ export function MobileNav({
       <div className="absolute right-0 top-0 flex h-full w-[min(18rem,88vw)] flex-col bg-card p-5 shadow-luxe">
         <div className="mb-4 flex min-w-0 items-center justify-between gap-2">
           {userName ? (
-            <ClipDynamic as="span" className="font-medium text-foreground" title={locale === "ko" ? `${userName}${c.userSuffix}` : userName}>
+            <ClipDynamic
+              as="span"
+              className="font-medium text-foreground"
+              title={locale === "ko" ? `${userName}${c.userSuffix}` : userName}
+            >
               {locale === "ko" ? `${userName}${c.userSuffix}` : userName}
             </ClipDynamic>
           ) : (
@@ -203,79 +225,55 @@ export function MobileNav({
           </button>
         </div>
 
-        <div className="mb-4 flex items-center gap-2">
-          <LanguageSwitcher compact />
-          <ThemeSwitcher compact />
-        </div>
+        {loggedIn && orgWorkspaceAvailable && (
+          <div className="mb-4">
+            <WorkspaceSwitcher mode={mode} onChange={setMode} />
+          </div>
+        )}
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto text-sm">
-          {dashboardHref && (
-            <MobileNavLink
-              href={dashboardHref}
-              onNavigate={closeDrawer}
-              className={linkClass(dashboardHref)}
-            >
-              {getMobileNavLabel("dashboard", dict)}
-            </MobileNavLink>
-          )}
-
-          {prepareLinks.length > 0 && (
-            <AccordionSection
-              title={c.nav.prepare}
-              defaultOpen={prepareActive}
-              active={prepareActive}
-            >
-              {prepareLinks.map((l) => (
-                <MobileNavLink
-                  key={l.href}
-                  href={l.href}
-                  onNavigate={closeDrawer}
-                  className={linkClass(l.href, true)}
-                >
-                  {getMobileNavLabel(prepareLabelKey[l.labelKey], dict)}
-                </MobileNavLink>
-              ))}
-            </AccordionSection>
-          )}
-
-          {profileHref && (
-            <MobileNavLink
-              href={profileHref}
-              onNavigate={closeDrawer}
-              className={linkClass(profileHref)}
-            >
-              {getMobileNavLabel("profile", dict)}
-            </MobileNavLink>
-          )}
-
-          {headerLinks.map((link) => (
-            <MobileNavLink
-              key={link.href}
-              href={link.href}
-              onNavigate={closeDrawer}
-              className={linkClass(link.href)}
-            >
-              {link.label}
-            </MobileNavLink>
-          ))}
-
-          {saasLinks && (
-            <AccordionSection title={c.saas.title} defaultOpen={saasActive} active={saasActive}>
+          {!loggedIn && guestMenu ? (
+            <>
+              <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted">
+                {c.nav.products}
+              </p>
+              <MobileNavLink href="/demo" onNavigate={closeDrawer} className={linkClass("/demo")}>
+                {c.guestProducts.trialInterview}
+              </MobileNavLink>
+              <MobileNavLink href="/discover" onNavigate={closeDrawer} className={linkClass("/discover")}>
+                {c.guestProducts.discover}
+              </MobileNavLink>
+              <MobileNavLink
+                href="/auth/register?next=/interview/setup"
+                onNavigate={closeDrawer}
+                className={linkClass("/auth/register")}
+              >
+                {c.guestProducts.interview}
+              </MobileNavLink>
+              <MobileNavLink href="/diagnosis" onNavigate={closeDrawer} className={linkClass("/diagnosis")}>
+                {c.guestProducts.orgDiagnosis}
+              </MobileNavLink>
+              <MobileNavLink href="/org/setup" onNavigate={closeDrawer} className={linkClass("/org/setup")}>
+                {c.guestProducts.forOrganizations}
+              </MobileNavLink>
+              <MobileNavLink href="/pricing" onNavigate={closeDrawer} className={linkClass("/pricing")}>
+                {c.nav.pricing}
+              </MobileNavLink>
+            </>
+          ) : mode === "org" && orgWorkspaceAvailable && saasLinks ? (
+            <>
               {saasLinks.links.map((l) => (
                 <MobileNavLink
                   key={l.href}
                   href={l.href}
                   onNavigate={closeDrawer}
-                  className={linkClass(l.href, true)}
+                  className={linkClass(l.href)}
                 >
                   {c.saas[l.labelKey]}
                 </MobileNavLink>
               ))}
               {saasLinks.settingsLinks.length > 0 && (
-                <>
-                  <p className="keep-one-line mb-0.5 mt-2 px-5 text-[10px] font-semibold uppercase tracking-wider text-muted">
-                    {c.saas.settings}
-                  </p>
+                <AccordionSection title={c.saas.settings} defaultOpen={saasActive} active={saasActive}>
                   {saasLinks.settingsLinks.map((l) => (
                     <MobileNavLink
                       key={l.href}
@@ -286,9 +284,79 @@ export function MobileNav({
                       {c.saas[l.labelKey]}
                     </MobileNavLink>
                   ))}
-                </>
+                </AccordionSection>
               )}
-            </AccordionSection>
+            </>
+          ) : (
+            <>
+              {dashboardHref && (
+                <MobileNavLink
+                  href={dashboardHref}
+                  onNavigate={closeDrawer}
+                  className={linkClass(dashboardHref)}
+                >
+                  {getMobileNavLabel("home", dict)}
+                </MobileNavLink>
+              )}
+
+              {activityHref && (
+                <MobileNavLink
+                  href={activityHref}
+                  onNavigate={closeDrawer}
+                  className={linkClass(activityHref)}
+                >
+                  {getMobileNavLabel("activity", dict)}
+                </MobileNavLink>
+              )}
+
+              {growthLinks.length > 0 && (
+                <AccordionSection
+                  title={c.nav.growth}
+                  defaultOpen={growthActive}
+                  active={growthActive}
+                >
+                  {growthLinks.map((l) => (
+                    <MobileNavLink
+                      key={l.href}
+                      href={l.href}
+                      onNavigate={closeDrawer}
+                      className={linkClass(l.href, true)}
+                    >
+                      {dict.common.navLong[l.labelKey]}
+                    </MobileNavLink>
+                  ))}
+                </AccordionSection>
+              )}
+
+              {practiceLinks.length > 0 && (
+                <AccordionSection
+                  title={c.nav.practice}
+                  defaultOpen={practiceActive}
+                  active={practiceActive}
+                >
+                  {practiceLinks.map((l) => (
+                    <MobileNavLink
+                      key={l.href}
+                      href={l.href}
+                      onNavigate={closeDrawer}
+                      className={linkClass(l.href, true)}
+                    >
+                      {dict.common.navLong[l.labelKey]}
+                    </MobileNavLink>
+                  ))}
+                </AccordionSection>
+              )}
+
+              {profileHref && (
+                <MobileNavLink
+                  href={profileHref}
+                  onNavigate={closeDrawer}
+                  className={linkClass(profileHref)}
+                >
+                  {getMobileNavLabel("profile", dict)}
+                </MobileNavLink>
+              )}
+            </>
           )}
         </nav>
 
@@ -327,14 +395,16 @@ export function MobileNav({
 
   return (
     <div className="shrink-0 sm:hidden">
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label={c.menu}
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/30 text-gold hover:bg-gold/10"
-      >
-        <Menu className="h-6 w-6" />
-      </button>
+      {!hideTrigger && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label={c.menu}
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/30 text-gold hover:bg-gold/10"
+        >
+          <Menu className="h-6 w-6" />
+        </button>
+      )}
 
       {mounted && drawer ? createPortal(drawer, document.body) : null}
     </div>

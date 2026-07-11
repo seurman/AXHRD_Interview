@@ -1,6 +1,7 @@
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { AdminSubscriptionEditor } from "@/components/admin/AdminSubscriptionEditor";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { BillingMigrationNotice } from "@/components/billing/BillingMigrationNotice";
 import { isMissingBillingTablesError } from "@/lib/billing/errors";
 import { planLabel } from "@/lib/billing/plans";
@@ -10,8 +11,16 @@ import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminSubscriptionsPage() {
+const PAGE_SIZE = 50;
+
+export default async function AdminSubscriptionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await requireSuperadmin("/admin/subscriptions");
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, Number(pageParam) || 1);
 
   let subscriptions: Array<
     Awaited<ReturnType<typeof prisma.subscription.findMany>>[number] & {
@@ -19,21 +28,24 @@ export default async function AdminSubscriptionsPage() {
     }
   > = [];
   let organizations: { id: string; name: string }[] = [];
+  let total = 0;
   let migrationRequired = false;
 
   try {
-    [subscriptions, organizations] = await Promise.all([
+    [subscriptions, organizations, total] = await Promise.all([
       prisma.subscription.findMany({
         where: { organizationId: { not: null } },
         include: { organization: { select: { name: true } } },
         orderBy: { updatedAt: "desc" },
-        take: 100,
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
       }),
       prisma.organization.findMany({
         where: { status: "APPROVED" },
         select: { id: true, name: true },
         orderBy: { name: "asc" },
       }),
+      prisma.subscription.count({ where: { organizationId: { not: null } } }),
     ]);
   } catch (e) {
     if (isMissingBillingTablesError(e)) {
@@ -67,7 +79,9 @@ export default async function AdminSubscriptionsPage() {
       </div>
 
       <div className="card-luxe p-6">
-        <h2 className="mb-4 text-sm font-semibold text-foreground">기관 구독 목록</h2>
+        <h2 className="mb-4 text-sm font-semibold text-foreground">
+          기관 구독 목록 (총 {total}건)
+        </h2>
         {subscriptions.length === 0 ? (
           <p className="text-sm text-muted">등록된 기관 구독이 없습니다.</p>
         ) : (
@@ -100,6 +114,7 @@ export default async function AdminSubscriptionsPage() {
             </table>
           </div>
         )}
+        <AdminPagination page={page} pageSize={PAGE_SIZE} total={total} basePath="/admin/subscriptions" />
       </div>
     </div>
   );

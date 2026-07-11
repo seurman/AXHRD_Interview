@@ -18,6 +18,15 @@ export type NavLabelKey =
 
 export type PrepareLabelKey = "interview" | "discover" | "cards" | "resumeReview" | "trialInterview";
 
+export type GuestProductLabelKey =
+  | "trialInterview"
+  | "discover"
+  | "interview"
+  | "orgDiagnosis"
+  | "forOrganizations";
+
+export type NavLinkItem = { href: string; labelKey: PrepareLabelKey };
+
 export type AdminSectionKey = "tenants" | "product" | "operations" | "settings";
 
 export type AdminNavItem = {
@@ -99,13 +108,32 @@ async function loadOrgAdminFlags(organizationId: string): Promise<{
   }
 }
 
-const PREPARE_HREFS: { href: string; labelKey: PrepareLabelKey; capability: CapabilityId }[] = [
-  { href: "/demo", labelKey: "trialInterview", capability: "product.demo_trial" },
-  { href: "/interview/setup", labelKey: "interview", capability: "product.interview" },
-  { href: "/resume-review", labelKey: "resumeReview", capability: "product.resume_review" },
+/** 여정 순서: 탐색 → 준비 → 실전 */
+const GROWTH_HREFS: { href: string; labelKey: PrepareLabelKey; capability: CapabilityId }[] = [
   { href: "/discover", labelKey: "discover", capability: "product.discover" },
+  { href: "/resume-review", labelKey: "resumeReview", capability: "product.resume_review" },
+  { href: "/interview/setup", labelKey: "interview", capability: "product.interview" },
+];
+
+const PRACTICE_HREFS: { href: string; labelKey: PrepareLabelKey; capability: CapabilityId }[] = [
+  { href: "/demo", labelKey: "trialInterview", capability: "product.demo_trial" },
   { href: "/practice/swipe", labelKey: "cards", capability: "product.practice" },
 ];
+
+export const GUEST_PRODUCT_HREFS: { href: string; labelKey: GuestProductLabelKey }[] = [
+  { href: "/demo", labelKey: "trialInterview" },
+  { href: "/discover", labelKey: "discover" },
+  { href: "/auth/register?next=/interview/setup", labelKey: "interview" },
+  { href: "/diagnosis", labelKey: "orgDiagnosis" },
+  { href: "/org/setup", labelKey: "forOrganizations" },
+];
+
+function filterNavLinks<T extends { capability: CapabilityId; href: string; labelKey: PrepareLabelKey }>(
+  items: T[],
+  caps: Set<CapabilityId>,
+): NavLinkItem[] {
+  return items.filter((p) => caps.has(p.capability)).map(({ href, labelKey }) => ({ href, labelKey }));
+}
 
 export type SaasNavConfig = {
   titleKey: "saas";
@@ -120,13 +148,18 @@ export type AdminNavSection = {
 };
 
 export type NavigationConfig = {
-  /** @deprecated flat list — prefer dashboardHref / prepareLinks / profileHref */
+  /** @deprecated flat list — prefer workspace nav fields */
   mainHrefs: string[];
   dashboardHref: string | null;
-  prepareLinks: { href: string; labelKey: PrepareLabelKey }[];
+  /** @deprecated use growthLinks + practiceLinks */
+  prepareLinks: NavLinkItem[];
+  growthLinks: NavLinkItem[];
+  practiceLinks: NavLinkItem[];
+  activityHref: string | null;
+  orgWorkspaceAvailable: boolean;
   profileHref: string | null;
   saasLinks: SaasNavConfig | null;
-  /** 수퍼어드민 전용 — 헤더에 직접 노출되는 운영 링크 */
+  /** @deprecated — 조직진단은 기관 워크스페이스에서만 */
   headerLinks: { href: string; label: string }[];
   isSuperAdmin: boolean;
   adminLinks: { href: string; labelKey: NavLabelKey }[];
@@ -164,11 +197,11 @@ export async function buildNavigationForUser(
   const caps = resolveUserCapabilities(user, context);
 
   const dashboardHref = caps.has("product.dashboard") ? "/dashboard" : null;
-  const prepareLinks = PREPARE_HREFS.filter((p) => caps.has(p.capability)).map(({ href, labelKey }) => ({
-    href,
-    labelKey,
-  }));
+  const growthLinks = filterNavLinks(GROWTH_HREFS, caps);
+  const practiceLinks = filterNavLinks(PRACTICE_HREFS, caps);
+  const prepareLinks = [...growthLinks, ...practiceLinks];
   const profileHref = caps.has("product.profile") ? "/profile" : null;
+  const activityHref = dashboardHref ? `${dashboardHref}#activity` : null;
 
   const mainHrefs = [
     ...(dashboardHref ? [dashboardHref] : []),
@@ -235,10 +268,7 @@ export async function buildNavigationForUser(
     }
   }
 
-  const headerLinks: { href: string; label: string }[] = [];
-  if (hasOrgMembership && caps.has("tenant.diagnostic")) {
-    headerLinks.push({ href: "/org/diagnosis", label: "조직진단" });
-  }
+  const orgWorkspaceAvailable = saasLinks !== null;
 
   const visibleAdmin = PLATFORM_NAV_ORDER.filter((item) => caps.has(item.capability));
   const adminLinks = visibleAdmin.map(({ href, labelKey }) => ({ href, labelKey }));
@@ -260,9 +290,13 @@ export async function buildNavigationForUser(
     mainHrefs,
     dashboardHref,
     prepareLinks,
+    growthLinks,
+    practiceLinks,
+    activityHref,
+    orgWorkspaceAvailable,
     profileHref,
     saasLinks,
-    headerLinks,
+    headerLinks: [],
     isSuperAdmin: superAdmin,
     adminLinks,
     adminSections,
