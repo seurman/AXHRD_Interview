@@ -2,7 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { platformCompetencyUniqueWhere } from "@/lib/content/ownership";
+import { findPlatformCompetencyByCode } from "@/lib/content/ownership";
 import { normalizeImportLevels, parseRubricImportFile } from "@/lib/competency/rubric";
 import { COMPETENCY_CODES } from "@/types";
 
@@ -103,34 +103,36 @@ export async function syncNcsCompetencyBank(prisma?: PrismaClient) {
     const levels = rubricByCode.get(code);
     const rubricByLevel = levels ? normalizeImportLevels(levels) : {};
 
-    await db.competency.upsert({
-      where: platformCompetencyUniqueWhere(code),
-      update: {
-        nameKo: comp.nameKo,
-        description: comp.description,
-        sortOrder: i,
-        isActive: true,
-        lifecycleStatus: "ACTIVE",
-        clusterId: cluster.id,
-        source: "NCS",
-        ...(Object.keys(rubricByLevel).length > 0
-          ? { rubricByLevel: rubricByLevel as Prisma.InputJsonValue }
-          : {}),
-      },
-      create: {
-        code,
-        nameKo: comp.nameKo,
-        description: comp.description,
-        sortOrder: i,
-        isActive: true,
-        lifecycleStatus: "ACTIVE",
-        ownerScope: "PLATFORM",
-        organizationId: null,
-        clusterId: cluster.id,
-        source: "NCS",
-        rubricByLevel: rubricByLevel as Prisma.InputJsonValue,
-      },
-    });
+    const existing = await findPlatformCompetencyByCode(code);
+    const competencyData = {
+      nameKo: comp.nameKo,
+      description: comp.description,
+      sortOrder: i,
+      isActive: true,
+      lifecycleStatus: "ACTIVE" as const,
+      clusterId: cluster.id,
+      source: "NCS" as const,
+      ...(Object.keys(rubricByLevel).length > 0
+        ? { rubricByLevel: rubricByLevel as Prisma.InputJsonValue }
+        : {}),
+    };
+
+    if (existing) {
+      await db.competency.update({
+        where: { id: existing.id },
+        data: competencyData,
+      });
+    } else {
+      await db.competency.create({
+        data: {
+          code,
+          ownerScope: "PLATFORM",
+          organizationId: null,
+          rubricByLevel: rubricByLevel as Prisma.InputJsonValue,
+          ...competencyData,
+        },
+      });
+    }
     competencyCount += 1;
   }
 
