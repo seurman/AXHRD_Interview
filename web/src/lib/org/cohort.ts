@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { OrgStatus } from "@prisma/client";
+import { COHORT_MEMBER_ROLES } from "@/lib/auth/roles";
 
 export interface CohortMemberRow {
   id: string;
@@ -30,15 +31,13 @@ export interface CohortData {
   members: CohortMemberRow[];
 }
 
-/** 기관 소속 학생(STUDENT)들의 결과를 집계한다.
- *  개인 답변 원문(transcript)은 절대 포함하지 않고, 점수·완료 현황만 노출한다
- *  — 담당자 화면이라도 학생 개개인의 답변 내용까지 볼 필요는 없다는 원칙. */
+/** 기관 소속 구성원(학생·직장인·지원자) 결과 집계 */
 export async function getCohortData(organizationId: string): Promise<CohortData | null> {
   const org = await prisma.organization.findUnique({ where: { id: organizationId } });
   if (!org) return null;
 
   const students = await prisma.user.findMany({
-    where: { organizationId, orgRole: "STUDENT" },
+    where: { organizationId, orgRole: { in: [...COHORT_MEMBER_ROLES] } },
     select: { id: true, name: true, email: true, createdAt: true },
   });
   const studentIds = students.map((s) => s.id);

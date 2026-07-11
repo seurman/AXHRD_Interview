@@ -1,4 +1,4 @@
-import { requireSuperadmin } from "@/lib/auth/guards";
+import { requireOrganizationsViewer } from "@/lib/auth/guards";
 import { getAllOrgBenchmarks } from "@/lib/org/benchmark";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
@@ -7,7 +7,7 @@ import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 export const dynamic = "force-dynamic";
 
 export default async function AdminOrgBenchmarkPage() {
-  await requireSuperadmin("/admin/organizations/benchmark");
+  await requireOrganizationsViewer("/admin/organizations/benchmark");
   const rows = await getAllOrgBenchmarks();
 
   return (

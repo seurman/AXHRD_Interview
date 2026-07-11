@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth/session";
-import { hasSuperadminAccess } from "@/lib/auth/guards";
-import { auditActor } from "@/lib/admin/auth";
+import { requireOrganizationsReadApi, requireOrganizationsWriteApi, auditActor } from "@/lib/admin/auth";
 import { logAdminAudit } from "@/lib/admin/audit";
 import { generateJoinCode } from "@/lib/org/join-code";
 import { resolveOrgPeriodForCreate } from "@/lib/org/period";
@@ -40,10 +38,8 @@ function parseMaxSeats(body: Record<string, unknown>): { ok: true; value: number
 
 /** 슈퍼어드민 — 기관 목록(JSON) 또는 신규 생성 */
 export async function GET() {
-  const user = await getCurrentUser();
-  if (!user || !hasSuperadminAccess(user)) {
-    return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
-  }
+  const user = await requireOrganizationsReadApi();
+  if (user instanceof NextResponse) return user;
 
   const orgs = await prisma.organization.findMany({
     orderBy: [{ status: "asc" }, { name: "asc" }],
@@ -77,10 +73,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const user = await getCurrentUser();
-  if (!user || !hasSuperadminAccess(user)) {
-    return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
-  }
+  const user = await requireOrganizationsWriteApi();
+  if (user instanceof NextResponse) return user;
 
   const body = await req.json().catch(() => ({}));
   const name = typeof body.name === "string" ? body.name.trim() : "";

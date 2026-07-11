@@ -222,7 +222,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   await prisma.$transaction([
     prisma.user.updateMany({
       where: { organizationId: id },
-      data: { organizationId: null, orgRole: "STUDENT" },
+      data: { organizationId: null, orgRole: "MEMBER" },
     }),
     prisma.organization.delete({ where: { id } }),
   ]);

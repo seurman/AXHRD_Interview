@@ -6,7 +6,8 @@ import { ORG_ROLE_LABEL, PLATFORM_ROLE_LABEL } from "@/lib/auth/roles";
 
 const PLATFORM_OPTIONS = [
   { value: "NONE", label: PLATFORM_ROLE_LABEL.NONE },
-  { value: "ADMIN", label: PLATFORM_ROLE_LABEL.ADMIN },
+  { value: "BUSINESS_ADMIN", label: PLATFORM_ROLE_LABEL.BUSINESS_ADMIN },
+  { value: "DEMO_ADMIN", label: PLATFORM_ROLE_LABEL.DEMO_ADMIN },
   { value: "CONTENT_ADMIN", label: PLATFORM_ROLE_LABEL.CONTENT_ADMIN },
   { value: "SUPERADMIN", label: PLATFORM_ROLE_LABEL.SUPERADMIN },
 ] as const;
@@ -66,7 +67,7 @@ export function UserRoleEditor({
         onChange={(e) => {
           const next = e.target.value;
           setOrgId(next);
-          if (!next) setRole("STUDENT");
+          if (!next) setRole("MEMBER");
         }}
         className="input-luxe px-2 py-1 text-xs"
       >

@@ -9,8 +9,15 @@ import {
 import { auditActor } from "@/lib/admin/auth";
 import { logAdminAudit } from "@/lib/admin/audit";
 
-const VALID_ROLES = ["STUDENT", "STAFF", "ADMIN"] as const;
-const VALID_PLATFORM_ROLES = ["NONE", "ADMIN", "CONTENT_ADMIN", "SUPERADMIN"] as const;
+const VALID_ROLES = ["MEMBER", "STUDENT", "STAFF", "ADMIN"] as const;
+const VALID_PLATFORM_ROLES = [
+  "NONE",
+  "BUSINESS_ADMIN",
+  "DEMO_ADMIN",
+  "ADMIN",
+  "CONTENT_ADMIN",
+  "SUPERADMIN",
+] as const;
 type OrgRoleValue = (typeof VALID_ROLES)[number];
 type PlatformRoleValue = (typeof VALID_PLATFORM_ROLES)[number];
 
@@ -30,9 +37,18 @@ export async function PATCH(
   }
 
   const body = await req.json().catch(() => ({}));
-  const rawRole = body.orgRole;
+  let rawRole = body.orgRole as OrgRoleValue | undefined;
   const rawOrgId = body.organizationId;
   let rawPlatformRole = body.platformRole as PlatformRoleValue | undefined;
+
+  // 레거시 ADMIN → DEMO_ADMIN 정규화
+  if (rawPlatformRole === "ADMIN") {
+    rawPlatformRole = "DEMO_ADMIN";
+  }
+
+  if (rawRole === "STUDENT") {
+    rawRole = "MEMBER";
+  }
 
   if (rawRole !== undefined && !VALID_ROLES.includes(rawRole)) {
     return NextResponse.json({ error: "유효하지 않은 역할입니다." }, { status: 400 });
@@ -87,7 +103,7 @@ export async function PATCH(
     (rawRole as OrgRoleValue | undefined) ?? (target.orgRole as OrgRoleValue);
 
   if (!resultingOrgId) {
-    resultingRole = "STUDENT";
+    resultingRole = "MEMBER";
   }
 
   const beforeUser = {

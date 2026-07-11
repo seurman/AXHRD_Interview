@@ -80,9 +80,10 @@ enum OAuthProvider {
 // ── Organization (대학 취업센터 등 B2B2C 코호트) ──
 
 enum OrgRole {
-  STUDENT // 소속 학생/구직자 — 본인 결과만 조회
-  STAFF   // 취업센터 담당자 — 소속 기관 코호트 집계 조회
-  ADMIN   // 기관 생성자 — STAFF 권한 + 가입 코드 재발급 등 관리
+  MEMBER  // 구성원 — 학생·직장인·지원자 (개인 제품 이용)
+  STUDENT // @deprecated — MEMBER와 동일, 마이그레이션 호환
+  STAFF   // 기관 담당자 — 코호트 집계 조회
+  ADMIN   // 기관 관리자 — 설정·킷·진단
 }
 
 /** 기관 생성 승인 절차. 아무나 로그인해서 기관을 만들고 ADMIN이 되는 것을
@@ -107,10 +108,15 @@ enum SignupFlag {
 
 /** 플랫폼(콘텐츠·운영) 권한 — OrgRole(기관 소속)과 별개.
  *  SUPERADMIN_EMAILS 환경변수도 슈퍼어드민으로 인정(부트스트랩용).
- *  ADMIN — CMS·운영(파괴적 작업 제한, 변경 감사). CONTENT_ADMIN은 ADMIN과 동일(레거시). */
+ *  BUSINESS_ADMIN — 솔루션 매뉴얼·고객 시연(전 모듈 조회·체험, 설정/권한 변경 불가)
+ *  DEMO_ADMIN — 영업·데모 샌드박스·Presenter 시연
+ *  CONTENT_ADMIN — CMS 운영
+ *  ADMIN — @deprecated DEMO_ADMIN으로 마이그레이션 */
 enum PlatformRole {
   NONE
   ADMIN
+  DEMO_ADMIN
+  BUSINESS_ADMIN
   CONTENT_ADMIN
   SUPERADMIN
 }
@@ -184,7 +190,7 @@ model User {
   certificateSlug String?  @unique
   organizationId  String?
   organization    Organization? @relation(fields: [organizationId], references: [id])
-  orgRole         OrgRole  @default(STUDENT)
+  orgRole         OrgRole  @default(MEMBER)
   /** 문항·역량·루브릭 CMS 및 플랫폼 권한 관리 */
   platformRole    PlatformRole @default(NONE)
   /** 데이터 활용 동의 시각 (회원가입 시 필수 동의) */

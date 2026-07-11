@@ -5,7 +5,7 @@ import {
   ClipboardList,
   Activity,
 } from "lucide-react";
-import { requireSuperadmin } from "@/lib/auth/guards";
+import { requireOrganizationsViewer } from "@/lib/auth/guards";
 import { getOrgHubSnapshot } from "@/lib/org/hub-data";
 import { OrgContractEditor } from "@/components/admin/OrgContractEditor";
 import { OrgKindBadge } from "@/components/admin/OrgKindBadge";
@@ -27,12 +27,14 @@ export const dynamic = "force-dynamic";
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: "기관 관리자",
   STAFF: "담당자",
-  STUDENT: "학생",
+  MEMBER: "구성원",
+  STUDENT: "구성원",
 };
 
 const ROLE_BADGE: Record<string, "gold" | "accent" | "neutral"> = {
   ADMIN: "gold",
   STAFF: "accent",
+  MEMBER: "neutral",
   STUDENT: "neutral",
 };
 
@@ -41,7 +43,7 @@ type Props = {
 };
 
 export default async function AdminOrgHubPage({ params }: Props) {
-  await requireSuperadmin("/admin/organizations");
+  await requireOrganizationsViewer("/admin/organizations");
   const { id } = await params;
   const hub = await getOrgHubSnapshot(id);
   if (!hub) notFound();

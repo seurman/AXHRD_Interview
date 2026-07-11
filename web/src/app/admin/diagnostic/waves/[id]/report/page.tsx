@@ -1,4 +1,4 @@
-import { requireSuperadmin } from "@/lib/auth/guards";
+import { requireDiagnosticConsoleViewer } from "@/lib/auth/guards";
 import { AdminDiagnosticReport } from "@/components/admin/AdminDiagnosticReport";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
 
 export default async function AdminDiagnosticReportPage({ params }: Props) {
-  await requireSuperadmin("/admin/diagnostic");
+  await requireDiagnosticConsoleViewer("/admin/diagnostic");
   const { id } = await params;
   return (
     <div className={ADMIN_CONTAINER.detail}>

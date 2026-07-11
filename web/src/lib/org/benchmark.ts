@@ -40,7 +40,7 @@ function average(nums: number[]): number | null {
  *  전체 기관을 순회하며 가볍게 계산하기 위한 최소 쿼리 버전. */
 export async function computeOrgAggregate(organizationId: string): Promise<OrgAggregate> {
   const students = await prisma.user.findMany({
-    where: { organizationId, orgRole: "STUDENT" },
+    where: { organizationId, orgRole: { in: ["MEMBER", "STUDENT"] } },
     select: { id: true },
   });
   const studentIds = students.map((s) => s.id);

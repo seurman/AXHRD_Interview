@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { requirePageUser, hasSuperadminAccess } from "@/lib/auth/guards";
+import { isBusinessAdminUser, isDemoAdminUser } from "@/lib/auth/platform-ops";
 import { hasCapability, resolveUserCapabilities } from "@/lib/platform/access";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
 import {
@@ -28,6 +29,14 @@ export default async function AdminHomePage() {
         <PlatformHomeDashboard snapshot={snapshot} />
       </div>
     );
+  }
+
+  if (isBusinessAdminUser(user)) {
+    redirect("/admin/organizations");
+  }
+
+  if (isDemoAdminUser(user)) {
+    redirect("/admin/demo");
   }
 
   const contentLinks = CONTENT_LINKS.filter((l) => {

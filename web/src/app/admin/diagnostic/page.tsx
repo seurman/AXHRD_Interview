@@ -1,4 +1,4 @@
-import { requireSuperadmin } from "@/lib/auth/guards";
+import { requireDiagnosticConsoleViewer } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { AdminDiagnosticCmsPanel } from "@/components/admin/AdminDiagnosticCmsPanel";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
@@ -8,7 +8,7 @@ import { waveStatusLabel } from "@/lib/diagnostic/wave-status";
 export const dynamic = "force-dynamic";
 
 export default async function AdminDiagnosticPage() {
-  await requireSuperadmin("/admin/diagnostic");
+  await requireDiagnosticConsoleViewer("/admin/diagnostic");
 
   let dbError: string | null = null;
   let instruments: Parameters<typeof AdminDiagnosticCmsPanel>[0]["instruments"] = [];

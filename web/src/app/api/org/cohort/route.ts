@@ -8,7 +8,8 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
-  if (user.orgRole === "STUDENT" || !user.organizationId) {
+  const { isOrgMemberUser } = await import("@/lib/auth/roles");
+  if (isOrgMemberUser(user) || !user.organizationId) {
     return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
   }
 

@@ -4,6 +4,7 @@ import { canAccessProductionContentBank, canManageDemoWorkspaces } from "@/lib/a
 import { hasCapability } from "@/lib/platform/access";
 import { buildNavigationForUser } from "@/lib/platform/nav-registry";
 import { AdminConsoleFrame } from "@/components/admin/AdminConsoleFrame";
+import { InternalRoleBanner } from "@/components/admin/InternalRoleBanner";
 import { dictionary as koDictionary } from "@/lib/i18n/dictionaries/ko";
 import type { PlatformRole } from "@prisma/client";
 
@@ -45,6 +46,7 @@ export default async function AdminLayout({
 
   return (
     <AdminConsoleFrame sections={sidebarSections} userName={user.name}>
+      <InternalRoleBanner user={user} />
       {children}
     </AdminConsoleFrame>
   );

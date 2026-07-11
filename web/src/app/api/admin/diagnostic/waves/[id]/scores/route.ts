@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { computeAggregateScores } from "@/lib/diagnostic/aggregate";
 import { resolveReportConfigForWave } from "@/lib/diagnostic/report-profile";
-import { requireDiagnosticSuperadmin } from "@/lib/diagnostic/admin-access";
+import { requireDiagnosticConsoleRead, requireDiagnosticSuperadmin } from "@/lib/diagnostic/admin-access";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(req: Request, ctx: Ctx) {
-  const auth = await requireDiagnosticSuperadmin();
+  const auth = await requireDiagnosticConsoleRead();
   if ("error" in auth && auth.error) return auth.error;
 
   const { id } = await ctx.params;

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireSuperadmin } from "@/lib/auth/guards";
+import { requireOrganizationsViewer } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
@@ -22,7 +22,7 @@ import { readOrgEntitlements } from "@/lib/org/entitlements";
 export const dynamic = "force-dynamic";
 
 export default async function AdminOrganizationsPage() {
-  await requireSuperadmin("/admin/organizations");
+  await requireOrganizationsViewer("/admin/organizations");
 
   const orgs = await prisma.organization.findMany({
     orderBy: [{ status: "asc" }, { name: "asc" }],

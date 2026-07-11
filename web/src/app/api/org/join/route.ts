@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 
   await prisma.user.update({
     where: { id: user.id },
-    data: { organizationId: org.id, orgRole: "STUDENT" },
+    data: { organizationId: org.id, orgRole: "MEMBER" },
   });
 
   return NextResponse.json({ organizationName: org.name });

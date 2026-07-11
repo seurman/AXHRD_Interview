@@ -29,6 +29,9 @@ async function main() {
   const { seedArcIndex } = await import("./seed/arc-index");
   await seedArcIndex(prisma);
 
+  const { ensureShowcaseOrganization } = await import("../src/lib/platform/showcase-org");
+  await ensureShowcaseOrganization();
+
   console.log("Seed completed:", ncs);
 }
 

@@ -140,7 +140,9 @@ export default async function ProfilePage() {
           <p className="mt-1 font-semibold text-foreground">
             {user.organizationId
               ? `${user.organization?.name ?? "소속 기관"} · ${
-                  user.orgRole === "STUDENT" ? "학생" : "코호트 대시보드"
+                  user.orgRole === "MEMBER" || user.orgRole === "STUDENT"
+                    ? "구성원"
+                    : "코호트 대시보드"
                 }`
               : "기관 연결하기"}
           </p>

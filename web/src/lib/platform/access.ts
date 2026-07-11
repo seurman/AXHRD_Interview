@@ -10,11 +10,12 @@ import {
   isCompanyAdminUser,
   isContentManagerUser,
   isOrgAdminUser,
-  isOrgStaffUser,
+  isOrgCoordinatorUser,
+  isOrgMemberUser,
   isSuperAdminUser,
-  isStudentUser,
   type RoleUser,
 } from "@/lib/auth/roles";
+import { isBusinessAdminUser } from "@/lib/auth/platform-ops";
 
 export type AccessContext = {
   /** 면접·코호트 SKU */
@@ -28,12 +29,13 @@ export type AccessContext = {
 
 function primaryPlatformRole(user: RoleUser): PlatformRoleKey {
   if (isSuperAdminUser(user)) return "SUPERADMIN";
-  if (isCompanyAdminUser(user)) return "ADMIN";
+  if (isBusinessAdminUser(user)) return "BUSINESS_ADMIN";
+  if (isCompanyAdminUser(user)) return "DEMO_ADMIN";
   if (isContentManagerUser(user)) return "CONTENT_ADMIN";
   if (isOrgAdminUser(user)) return "ORG_ADMIN";
-  if (isOrgStaffUser(user)) return "ORG_STAFF";
-  if (isStudentUser(user)) return "STUDENT";
-  return "STUDENT";
+  if (isOrgCoordinatorUser(user)) return "ORG_STAFF";
+  if (isOrgMemberUser(user)) return "MEMBER";
+  return "MEMBER";
 }
 
 /** 사용자에게 허용된 capability 집합 */
@@ -71,8 +73,16 @@ export function resolveUserCapabilities(
         caps.add("tenant.interview_kit");
         caps.add("tenant.custom_competency");
       }
-    } else if (isCompanyAdminUser(user) && isOrgStaffUser(user)) {
+    } else if (isCompanyAdminUser(user) && isOrgCoordinatorUser(user)) {
       caps.add("tenant.cohort");
+    }
+
+    if (isBusinessAdminUser(user)) {
+      caps.add("tenant.cohort");
+      caps.add("tenant.settings");
+      caps.add("tenant.interview_kit");
+      caps.add("tenant.custom_competency");
+      caps.add("tenant.diagnostic");
     }
 
     if (isContentManagerUser(user) && isOrgAdminUser(user)) {
@@ -82,7 +92,7 @@ export function resolveUserCapabilities(
         caps.add("tenant.interview_kit");
         caps.add("tenant.custom_competency");
       }
-    } else if (isContentManagerUser(user) && isOrgStaffUser(user)) {
+    } else if (isContentManagerUser(user) && isOrgCoordinatorUser(user)) {
       caps.add("tenant.cohort");
     }
   }

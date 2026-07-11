@@ -7,7 +7,7 @@ import {
   resolveOrgSeatCap,
 } from "@/lib/org/contract";
 
-const ROLE_ORDER = { ADMIN: 0, STAFF: 1, STUDENT: 2 } as const;
+const ROLE_ORDER = { ADMIN: 0, STAFF: 1, MEMBER: 2, STUDENT: 2 } as const;
 
 export async function getOrgHubSnapshot(organizationId: string) {
   const org = await prisma.organization.findUnique({
@@ -53,7 +53,9 @@ export async function getOrgHubSnapshot(organizationId: string) {
 
   const admins = members.filter((m) => m.orgRole === "ADMIN");
   const staff = members.filter((m) => m.orgRole === "STAFF");
-  const students = members.filter((m) => m.orgRole === "STUDENT");
+  const learners = members.filter(
+    (m) => m.orgRole === "MEMBER" || m.orgRole === "STUDENT",
+  );
 
   return {
     id: org.id,
@@ -82,9 +84,10 @@ export async function getOrgHubSnapshot(organizationId: string) {
     members,
     admins,
     staff,
-    students,
+    learners,
+    students: learners,
     memberCount: members.length,
-    studentCount: students.length,
+    studentCount: learners.length,
     cohort: cohort
       ? {
           totalCompletedSessions: cohort.totalCompletedSessions,

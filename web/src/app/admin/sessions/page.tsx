@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireSuperadmin } from "@/lib/auth/guards";
+import { requireSessionsViewer } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { competencyLabel } from "@/lib/labels";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -29,7 +29,7 @@ export default async function AdminSessionsPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string }>;
 }) {
-  await requireSuperadmin("/admin/sessions");
+  await requireSessionsViewer("/admin/sessions");
   const { q, status } = await searchParams;
   const query = q?.trim();
   const statusFilter =

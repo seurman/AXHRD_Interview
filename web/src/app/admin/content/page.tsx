@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { requireProductionContentAdmin, hasSuperadminAccess } from "@/lib/auth/guards";
+import { requireContentConsoleViewer, hasSuperadminAccess } from "@/lib/auth/guards";
+import { isBusinessAdminUser } from "@/lib/auth/platform-ops";
 import { loadContentBankSnapshot } from "@/lib/competency/content-bank-data";
 import { AdminContentTabs, type ContentStudioView } from "@/components/admin/AdminContentTabs";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -30,7 +31,8 @@ type Props = {
 };
 
 export default async function AdminContentPage({ searchParams }: Props) {
-  const user = await requireProductionContentAdmin("/admin/content");
+  const user = await requireContentConsoleViewer("/admin/content");
+  const readOnlyConsole = isBusinessAdminUser(user) && !hasSuperadminAccess(user);
   const params = await searchParams;
   const initialCompetencyCode = params.competency?.trim() || null;
   const tabParam = params.tab?.trim();
@@ -83,6 +85,12 @@ export default async function AdminContentPage({ searchParams }: Props) {
             : []),
         ]}
       />
+
+      {readOnlyConsole && (
+        <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-muted">
+          조회 전용 모드 — 콘텐츠 변경·동기화는 콘텐츠 관리자 또는 수퍼어드민만 가능합니다.
+        </p>
+      )}
 
       {loadError ? (
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-4 text-sm text-red-700 dark:text-red-300">

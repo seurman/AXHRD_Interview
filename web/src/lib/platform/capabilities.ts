@@ -260,33 +260,55 @@ export const CATEGORY_LABEL: Record<CapabilityCategory, { ko: string; en: string
 
 export const ALL_CAPABILITY_IDS = Object.keys(CAPABILITY_REGISTRY) as CapabilityId[];
 
+const PRODUCT_CAPS: CapabilityId[] = [
+  "product.dashboard",
+  "product.discover",
+  "product.interview",
+  "product.resume_review",
+  "product.practice",
+  "product.profile",
+  "product.demo_trial",
+];
+
 export type PlatformRoleKey =
   | "SUPERADMIN"
+  | "BUSINESS_ADMIN"
+  | "DEMO_ADMIN"
   | "ADMIN"
   | "CONTENT_ADMIN"
   | "ORG_ADMIN"
   | "ORG_STAFF"
-  | "STUDENT";
+  | "MEMBER";
 
 /** 역할별 기본 capability (테넌트 플래그는 resolve 시 병합) */
 export const ROLE_CAPABILITY_MATRIX: Record<PlatformRoleKey, CapabilityId[]> = {
   SUPERADMIN: ALL_CAPABILITY_IDS,
-  ADMIN: [
-    "product.dashboard",
-    "product.discover",
-    "product.interview",
-    "product.resume_review",
-    "product.practice",
-    "product.profile",
+  BUSINESS_ADMIN: [
+    ...PRODUCT_CAPS,
     "platform.demo",
+    "platform.organizations",
+    "platform.content",
+    "platform.diagnostic",
+    "platform.sessions",
+    "platform.benchmark",
+    "tenant.cohort",
+    "tenant.settings",
+    "tenant.interview_kit",
+    "tenant.custom_competency",
+    "tenant.diagnostic",
+  ],
+  DEMO_ADMIN: [
+    ...PRODUCT_CAPS,
+    "platform.demo",
+    "platform.sessions",
+  ],
+  ADMIN: [
+    ...PRODUCT_CAPS,
+    "platform.demo",
+    "platform.sessions",
   ],
   CONTENT_ADMIN: [
-    "product.dashboard",
-    "product.discover",
-    "product.interview",
-    "product.resume_review",
-    "product.practice",
-    "product.profile",
+    ...PRODUCT_CAPS.filter((c) => c !== "product.demo_trial"),
     "platform.content",
   ],
   ORG_ADMIN: [
@@ -311,7 +333,7 @@ export const ROLE_CAPABILITY_MATRIX: Record<PlatformRoleKey, CapabilityId[]> = {
     "product.profile",
     "tenant.cohort",
   ],
-  STUDENT: [
+  MEMBER: [
     "product.dashboard",
     "product.discover",
     "product.interview",
@@ -333,9 +355,19 @@ export const PLATFORM_ROLE_ROWS: {
     scopeNote: "플랫폼 전체 · 권한·기관·콘텐츠·데모 무제한",
   },
   {
+    key: "BUSINESS_ADMIN",
+    labelKo: "비즈니스 어드민",
+    scopeNote: "전 모듈 조회·체험 · 매뉴얼·고객 시연 · 설정/권한 변경 불가",
+  },
+  {
+    key: "DEMO_ADMIN",
+    labelKo: "데모 어드민",
+    scopeNote: "영업·Presenter · 데모 샌드박스 · 사용량 면제",
+  },
+  {
     key: "ADMIN",
-    labelKo: "회사 어드민",
-    scopeNote: "영업·데모 워크스페이스 · 사용량 면제",
+    labelKo: "데모 어드민 (레거시)",
+    scopeNote: "DEMO_ADMIN과 동일 — 마이그레이션 호환",
   },
   {
     key: "CONTENT_ADMIN",
@@ -349,12 +381,12 @@ export const PLATFORM_ROLE_ROWS: {
   },
   {
     key: "ORG_STAFF",
-    labelKo: "회사원",
-    scopeNote: "코호트 조회 중심 · 제한된 설정",
+    labelKo: "담당자",
+    scopeNote: "코호트 조회 · 제한된 설정",
   },
   {
-    key: "STUDENT",
-    labelKo: "학생",
-    scopeNote: "자기발견·면접·스킬트리 · 개인 성장",
+    key: "MEMBER",
+    labelKo: "구성원",
+    scopeNote: "학생·직장인·지원자 · 개인 성장·면접",
   },
 ];

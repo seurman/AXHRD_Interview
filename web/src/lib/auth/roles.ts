@@ -1,19 +1,26 @@
 /**
  * HR_IN 권한 체계
  *
- * 플랫폼(platformRole) — HR_IN 운영·회사
- *   SUPERADMIN     수퍼어드민
- *   ADMIN          회사 어드민 (고객 데모·무제한 테스트)
- *   CONTENT_ADMIN  콘텐츠 관리자 (운영 문항 뱅크)
- *   NONE           일반
+ * 플랫폼(platformRole) — HR_IN 운영·영업
+ *   SUPERADMIN      수퍼어드민
+ *   BUSINESS_ADMIN  비즈니스 어드민 (매뉴얼·전 기능 체험, 설정/권한 불가)
+ *   DEMO_ADMIN      데모 어드민 (영업·Presenter·데모 샌드박스)
+ *   CONTENT_ADMIN   콘텐츠 관리자 (운영 CMS)
+ *   ADMIN           @deprecated → DEMO_ADMIN
+ *   NONE            일반
  *
- * 기관(orgRole) — 고객사 테넌트
- *   ADMIN   기관 어드민
- *   STAFF   회사원(기관 담당자)
- *   STUDENT 학생
+ * 기관(orgRole) — 고객사 테넌트 (Salesforce Standard User / Manager 유사)
+ *   MEMBER   구성원 — 학생·직장인·지원자
+ *   STAFF    담당자 — 코호트 조회
+ *   ADMIN    기관 관리자
  */
 
 import { hasSuperadminAccess } from "@/lib/auth/superadmin";
+import {
+  canManageDemoWorkspaces as canManageDemoWorkspacesOps,
+  canViewContentConsole,
+  isInternalUsageExempt,
+} from "@/lib/auth/platform-ops";
 
 export type RoleUser = {
   email: string;
@@ -25,26 +32,28 @@ export type RoleUser = {
 export const PLATFORM_ROLE_LABEL: Record<string, string> = {
   NONE: "일반",
   SUPERADMIN: "수퍼어드민",
-  ADMIN: "회사 어드민",
+  BUSINESS_ADMIN: "비즈니스 어드민",
+  DEMO_ADMIN: "데모 어드민",
+  ADMIN: "데모 어드민 (레거시)",
   CONTENT_ADMIN: "콘텐츠 관리자",
 };
 
 export const ORG_ROLE_LABEL: Record<string, string> = {
-  STUDENT: "학생",
-  STAFF: "회사원",
-  ADMIN: "기관 어드민",
+  MEMBER: "구성원",
+  STUDENT: "구성원",
+  STAFF: "담당자",
+  ADMIN: "기관 관리자",
 };
 
 export function isSuperAdminUser(user: RoleUser): boolean {
   return hasSuperadminAccess(user);
 }
 
-/** 회사 어드민 — 고객 데모·무제한 테스트 (운영 CMS·기관 승인 제외) */
 export function isCompanyAdminUser(user: RoleUser): boolean {
-  return user.platformRole === "ADMIN";
+  const r = user.platformRole;
+  return r === "DEMO_ADMIN" || r === "ADMIN";
 }
 
-/** 콘텐츠 관리자 — 운영 문항 뱅크 CMS */
 export function isContentManagerUser(user: RoleUser): boolean {
   return user.platformRole === "CONTENT_ADMIN";
 }
@@ -53,32 +62,41 @@ export function isOrgAdminUser(user: RoleUser): boolean {
   return !!user.organizationId && user.orgRole === "ADMIN";
 }
 
-export function isOrgStaffUser(user: RoleUser): boolean {
+export function isOrgCoordinatorUser(user: RoleUser): boolean {
   return !!user.organizationId && user.orgRole === "STAFF";
 }
 
+/** @deprecated isOrgCoordinatorUser */
+export function isOrgStaffUser(user: RoleUser): boolean {
+  return isOrgCoordinatorUser(user);
+}
+
+/** 학생·직장인·지원자 — 개인 제품 이용 (소속 없으면 동일 취급) */
+export function isOrgMemberUser(user: RoleUser): boolean {
+  return !user.organizationId || user.orgRole === "MEMBER" || user.orgRole === "STUDENT";
+}
+
+/** @deprecated isOrgMemberUser */
 export function isStudentUser(user: RoleUser): boolean {
-  return !user.organizationId || user.orgRole === "STUDENT";
+  return isOrgMemberUser(user);
 }
 
-/** 운영 문항 뱅크 CMS */
 export function canAccessProductionContentBank(user: RoleUser): boolean {
-  return (
-    isSuperAdminUser(user) || isContentManagerUser(user)
-  );
+  return isSuperAdminUser(user) || isContentManagerUser(user);
 }
 
-/** 데모 워크스페이스 편집 */
+export function canViewProductionContentBank(user: RoleUser): boolean {
+  return canViewContentConsole(user);
+}
+
 export function canManageDemoWorkspaces(user: RoleUser): boolean {
-  return isSuperAdminUser(user) || isCompanyAdminUser(user);
+  return canManageDemoWorkspacesOps(user);
 }
 
-/** 월간 면접·자기발견 횟수 제한 없음 */
 export function isUsageExemptUser(user: RoleUser): boolean {
-  return isSuperAdminUser(user) || isCompanyAdminUser(user);
+  return isInternalUsageExempt(user);
 }
 
-/** 슈퍼어드민 전용 — 기관 승인·사용자 권한·감사 */
 export function canAccessSuperadminConsole(user: RoleUser): boolean {
   return isSuperAdminUser(user);
 }
@@ -91,6 +109,9 @@ export function describeUserRoles(user: RoleUser): string {
   if (user.organizationId && user.orgRole) {
     parts.push(ORG_ROLE_LABEL[user.orgRole] ?? user.orgRole);
   }
-  if (parts.length === 0) return "학생";
+  if (parts.length === 0) return "구성원";
   return parts.join(" · ");
 }
+
+/** 코호트 집계 대상 orgRole 값 */
+export const COHORT_MEMBER_ROLES = ["MEMBER", "STUDENT"] as const;
