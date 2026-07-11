@@ -230,6 +230,30 @@ export type Dictionary = {
       title: string;
       items: string[];
     };
+    painPoints: {
+      eyebrow: string;
+      title: string;
+      subtitle: string;
+      items: { title: string; desc: string }[];
+      closing: string;
+      contactCta: string;
+    };
+    howItWorks: {
+      eyebrow: string;
+      title: string;
+      steps: { num: string; title: string; desc: string; points: string[] }[];
+    };
+    platformTour: {
+      eyebrow: string;
+      title: string;
+      tabs: {
+        id: "personal" | "org";
+        label: string;
+        headline: string;
+        cta: string;
+        steps: { step: string; title: string; desc: string }[];
+      }[];
+    };
     modules: {
       eyebrow: string;
       title: string;

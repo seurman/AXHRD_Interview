@@ -139,7 +139,11 @@ export const dictionary: Dictionary = {
       ctaTrial: "Try demo",
       aside: "Universities and employers run kits and org diagnostics.",
       imageAlt: "AXHRD product preview",
-      bullets: [],
+      bullets: [
+        "Questions cite only what is on your resume",
+        "One grounded follow-up per session — no invented facts",
+        "Scores ship with the exact quote used",
+      ],
     },
     preview: {
       interview: {
@@ -265,6 +269,129 @@ export const dictionary: Dictionary = {
       eyebrow: "Platform",
       title: "Personal growth and org operations on the same data layer",
       items: ["Job seekers", "Career centers", "Hiring & HR", "Diagnostics & cohorts"],
+    },
+    painPoints: {
+      eyebrow: "Problem",
+      title: "Sound familiar?",
+      subtitle: "When resume, interview, and org diagnostics live in silos, neither prep nor operations compounds.",
+      items: [
+        {
+          title: "Hard to verify competency in interviews alone",
+          desc: "Without linking resume facts to answers, it is difficult to judge what someone can actually do.",
+        },
+        {
+          title: "Prep tools are scattered",
+          desc: "Resume coaching, mock interviews, and competency tracking sit in different products — data never stacks.",
+        },
+        {
+          title: "Cohort outcomes are hard to measure",
+          desc: "Completion, competency averages, and team gaps are painful to report on.",
+        },
+        {
+          title: "Opaque scoring standards",
+          desc: "Evaluator-by-evaluator variance makes fairness and reproducibility hard to defend.",
+        },
+      ],
+      closing: "Solve it with clear competency standards and connected prep-to-report flows.",
+      contactCta: "Contact sales",
+    },
+    howItWorks: {
+      eyebrow: "Process",
+      title: "How AXHRD works",
+      steps: [
+        {
+          num: "1",
+          title: "Start",
+          desc: "Individuals sign up; organizations design kits or diagnostic waves and invite participants.",
+          points: ["3 free interviews per month on signup", "Org kits and share links", "Cohorts at any scale"],
+        },
+        {
+          num: "2",
+          title: "Prepare",
+          desc: "Discovery, resume review, and question decks sharpen stories before the session.",
+          points: ["Strength & value cards", "JD-aligned resume coaching", "Role-based swipe practice"],
+        },
+        {
+          num: "3",
+          title: "Interview & diagnose",
+          desc: "Answer resume-grounded questions by voice, or join an org diagnostic wave.",
+          points: ["Resume-cited structured questions", "Adaptive IRT difficulty", "ARC Index org waves"],
+        },
+        {
+          num: "4",
+          title: "Score & analyze",
+          desc: "Same rubric for every session, with quoted evidence in the feedback.",
+          points: ["NCS-based competency rubrics", "Scores with cited quotes", "Team and department slices"],
+        },
+        {
+          num: "5",
+          title: "Report",
+          desc: "Individuals get growth curves; organizations get cohort and benchmark reports.",
+          points: ["θ, skill tree, growth curve", "Cohort completion & averages", "Wave-over-wave trends"],
+        },
+      ],
+    },
+    platformTour: {
+      eyebrow: "All-in-one",
+      title: "One platform for every moment of growth",
+      tabs: [
+        {
+          id: "personal",
+          label: "Individual",
+          headline: "A growth loop from discovery to interview",
+          cta: "See personal products",
+          steps: [
+            {
+              step: "STEP 1",
+              title: "Self-discovery",
+              desc: "Structure strengths and values into interview-ready stories.",
+            },
+            {
+              step: "STEP 2",
+              title: "Resume review",
+              desc: "Align lines with the JD and build evidence anchors.",
+            },
+            {
+              step: "STEP 3",
+              title: "Structured AI interview",
+              desc: "Voice answers to cited questions, plus one grounded follow-up.",
+            },
+            {
+              step: "STEP 4",
+              title: "Deck & tracking",
+              desc: "Swipe practice and θ tracking make growth visible.",
+            },
+          ],
+        },
+        {
+          id: "org",
+          label: "Organization",
+          headline: "Kit design through cohorts and diagnostics — one console",
+          cta: "See org platform",
+          steps: [
+            {
+              step: "STEP 1",
+              title: "Interview kit studio",
+              desc: "Design questions, rubrics, and share links.",
+            },
+            {
+              step: "STEP 2",
+              title: "Cohort operations",
+              desc: "Monitor completion, averages, and weak competencies live.",
+            },
+            {
+              step: "STEP 3",
+              title: "ARC Index diagnostic",
+              desc: "Run org and team waves on a schedule.",
+            },
+            {
+              step: "STEP 4",
+              title: "Reports & benchmark",
+              desc: "Team reports and anonymous org benchmarks for decisions.",
+            },
+          ],
+        },
+      ],
     },
     pillars: {
       eyebrow: "Two journeys",
