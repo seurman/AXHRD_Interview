@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\" && next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && node scripts/migrate-deploy.mjs && next build",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "prisma generate",
@@ -13,6 +13,7 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:ncs": "tsx scripts/sync-ncs-bank.ts",
+    "db:seed:showcase": "tsx scripts/seed-showcase.ts",
     "db:seed:real": "tsx prisma/seed-real-questions.ts",
     "db:seed:rubrics": "tsx prisma/seed-rubrics.ts",
     "db:seed:global": "tsx prisma/seed-global-competencies.ts",
