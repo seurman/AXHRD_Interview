@@ -36,10 +36,17 @@ type SurveyPayload = {
   } | null;
 };
 
+type FlowStep =
+  | { kind: "demographics" }
+  | { kind: "section"; section: SurveySection }
+  | { kind: "done" };
+
 type Props = {
   waveSlug: string;
   teamSlug?: string;
 };
+
+const fetchOpts: RequestInit = { credentials: "same-origin" };
 
 export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
   const surveyBase = teamSlug
@@ -48,7 +55,7 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
   const [data, setData] = useState<SurveyPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<"demographics" | "survey" | "done">("survey");
+  const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, { current?: number; importance?: number; text?: string }>>({});
   const [demographics, setDemographics] = useState<Record<string, string>>({});
   const [consent, setConsent] = useState(false);
@@ -59,36 +66,49 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
     return data.sections.flatMap((s) => s.directItems.filter((i) => i.isDemographic));
   }, [data]);
 
-  const surveyItems = useMemo(() => {
+  const surveySections = useMemo(() => {
     if (!data) return [];
-    const fromSub = data.sections.flatMap((s) => s.subscales.flatMap((sub) => sub.items));
-    const direct = data.sections.flatMap((s) => s.directItems.filter((i) => !i.isDemographic));
-    return [...fromSub, ...direct];
+    return data.sections.filter((s) => s.code !== "DM");
   }, [data]);
+
+  const flowSteps = useMemo((): FlowStep[] => {
+    if (!data) return [];
+    if (data.response?.submittedAt) return [{ kind: "done" }];
+
+    const steps: FlowStep[] = [];
+    const needsDemographics =
+      demographicItems.length > 0 &&
+      (!data.response?.demographics || Object.keys(data.response.demographics).length === 0);
+    if (needsDemographics) steps.push({ kind: "demographics" });
+    for (const section of surveySections) {
+      steps.push({ kind: "section", section });
+    }
+    return steps;
+  }, [data, demographicItems.length, surveySections]);
+
+  const currentStep = flowSteps[stepIndex] ?? flowSteps[0];
+  const isLastSection =
+    currentStep?.kind === "section" &&
+    flowSteps[stepIndex + 1] == null;
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      await fetch(surveyBase, { method: "POST" });
-      const res = await fetch(surveyBase);
+      await fetch(surveyBase, { method: "POST", ...fetchOpts });
+      const res = await fetch(surveyBase, fetchOpts);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "불러오기 실패");
       setData(json);
       setAnswers(json.response?.answers ?? {});
       setDemographics((json.response?.demographics as Record<string, string>) ?? {});
-      const demoItems = (json.sections as SurveySection[]).flatMap((s) =>
-        s.directItems.filter((i) => i.isDemographic),
-      );
-      if (json.response?.submittedAt) setStep("done");
-      else if (demoItems.length && !json.response?.demographics) setStep("demographics");
-      else setStep("survey");
+      setStepIndex(0);
     } catch (e) {
       setError(e instanceof Error ? e.message : "오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
-  }, [surveyBase, waveSlug, teamSlug]);
+  }, [surveyBase]);
 
   useEffect(() => {
     void load();
@@ -101,14 +121,31 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
     }));
   };
 
-  const saveProgress = async (submit = false) => {
+  const itemsForSection = (section: SurveySection) => {
+    const fromSub = section.subscales.flatMap((sub) => sub.items);
+    const direct = section.directItems.filter((i) => !i.isDemographic);
+    return [...fromSub, ...direct];
+  };
+
+  const saveProgress = async (opts: { submit?: boolean; advance?: boolean } = {}) => {
+    const { submit = false, advance = false } = opts;
     setSaving(true);
     setError(null);
     try {
-      const answerPayload = surveyItems.flatMap((item) => {
+      const itemsToSave =
+        currentStep?.kind === "section"
+          ? itemsForSection(currentStep.section)
+          : surveySections.flatMap(itemsForSection);
+
+      const answerPayload = itemsToSave.flatMap((item) => {
         const a = answers[item.id];
         if (!a) return [];
-        const rows: Array<{ itemId: string; axis: "CURRENT" | "IMPORTANCE"; numericValue?: number; textValue?: string }> = [];
+        const rows: Array<{
+          itemId: string;
+          axis: "CURRENT" | "IMPORTANCE";
+          numericValue?: number;
+          textValue?: string;
+        }> = [];
         if (item.scaleType === "OPEN_TEXT" && a.text) {
           rows.push({ itemId: item.id, axis: "CURRENT", textValue: a.text });
         } else if (a.current) {
@@ -122,20 +159,28 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
 
       const res = await fetch("/api/diagnosis/respond", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           waveSlug,
           ...(teamSlug ? { teamSlug } : {}),
           answers: answerPayload,
-          demographics: step === "demographics" || submit ? demographics : undefined,
+          demographics:
+            currentStep?.kind === "demographics" || submit ? demographics : undefined,
           consent: submit ? consent : undefined,
           submit,
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "저장 실패");
-      if (submit) setStep("done");
-      else if (step === "demographics") setStep("survey");
+
+      if (submit) {
+        setStepIndex(flowSteps.length);
+      } else if (advance && stepIndex < flowSteps.length - 1) {
+        setStepIndex((i) => i + 1);
+      } else if (currentStep?.kind === "demographics") {
+        setStepIndex((i) => i + 1);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "저장 중 오류");
     } finally {
@@ -145,9 +190,9 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
 
   if (loading) return <p className="text-sm text-muted">설문을 불러오는 중…</p>;
   if (error && !data) return <p className="text-sm text-rose-600">{error}</p>;
-  if (!data) return null;
+  if (!data || !currentStep) return null;
 
-  if (step === "done") {
+  if (currentStep.kind === "done" || data.response?.submittedAt) {
     return (
       <div className="card-luxe space-y-4 p-8 text-center">
         <h1 className="text-xl font-bold text-foreground">응답이 제출되었습니다</h1>
@@ -155,6 +200,11 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
       </div>
     );
   }
+
+  const progressLabel =
+    currentStep.kind === "demographics"
+      ? "기본 정보"
+      : `영역 ${surveySections.findIndex((s) => s.code === currentStep.section.code) + 1} / ${surveySections.length}: ${currentStep.section.nameKo}`;
 
   return (
     <div className="space-y-6">
@@ -170,11 +220,12 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
           {data.wave.label ? ` · ${data.wave.label}` : ""}
           {data.wave.estimatedMinutes ? ` · 약 ${data.wave.estimatedMinutes}분` : ""}
         </p>
+        <p className="text-xs font-medium text-gold">{progressLabel}</p>
       </header>
 
       {error && <p className="text-sm text-rose-600">{error}</p>}
 
-      {step === "demographics" && (
+      {currentStep.kind === "demographics" && (
         <div className="card-luxe space-y-6 p-6">
           <h2 className="font-semibold text-foreground">인구통계 (익명)</h2>
           {demographicItems.map((item) => (
@@ -185,72 +236,112 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
               onChange={(v) => setDemographics((d) => ({ ...d, [item.itemCode]: v }))}
             />
           ))}
-          <button type="button" className="btn-primary" disabled={saving} onClick={() => void saveProgress(false)}>
+          <button
+            type="button"
+            className="btn-primary"
+            disabled={saving}
+            onClick={() => void saveProgress({ advance: false })}
+          >
             {saving ? "저장 중…" : "다음 — 본 설문"}
           </button>
         </div>
       )}
 
-      {step === "survey" && (
-        <div className="space-y-8">
-          {data.sections
-            .filter((s) => s.code !== "DM")
-            .map((section) => (
-              <section key={section.code} className="card-luxe space-y-6 p-6">
-                <h2 className="text-lg font-semibold text-foreground">{section.nameKo}</h2>
-                {section.subscales.map((sub) => (
-                  <div key={sub.code} className="space-y-4">
-                    {section.subscales.length > 1 && (
-                      <h3 className="text-sm font-medium text-muted">{sub.nameKo}</h3>
-                    )}
-                    {sub.items.map((item) => (
-                      <ScaleQuestion
-                        key={item.id}
-                        item={item}
-                        value={answers[item.id]}
-                        onChange={setNumeric}
-                        onText={(text) =>
-                          setAnswers((prev) => ({ ...prev, [item.id]: { ...prev[item.id], text } }))
-                        }
-                      />
-                    ))}
-                  </div>
+      {currentStep.kind === "section" && (
+        <div className="space-y-6">
+          <section className="card-luxe space-y-6 p-6">
+            <h2 className="text-lg font-semibold text-foreground">{currentStep.section.nameKo}</h2>
+            {currentStep.section.subscales.map((sub) => (
+              <div key={sub.code} className="space-y-4">
+                {currentStep.section.subscales.length > 1 && (
+                  <h3 className="text-sm font-medium text-muted">{sub.nameKo}</h3>
+                )}
+                {sub.items.map((item) => (
+                  <ScaleQuestion
+                    key={item.id}
+                    item={item}
+                    value={answers[item.id]}
+                    onChange={setNumeric}
+                    onText={(text) =>
+                      setAnswers((prev) => ({ ...prev, [item.id]: { ...prev[item.id], text } }))
+                    }
+                  />
                 ))}
-                {section.directItems
-                  .filter((i) => !i.isDemographic)
-                  .map((item) => (
-                    <ScaleQuestion
-                      key={item.id}
-                      item={item}
-                      value={answers[item.id]}
-                      onChange={setNumeric}
-                      onText={(text) =>
-                        setAnswers((prev) => ({ ...prev, [item.id]: { ...prev[item.id], text } }))
-                      }
-                    />
-                  ))}
-              </section>
+              </div>
             ))}
+            {currentStep.section.directItems
+              .filter((i) => !i.isDemographic)
+              .map((item) => (
+                <ScaleQuestion
+                  key={item.id}
+                  item={item}
+                  value={answers[item.id]}
+                  onChange={setNumeric}
+                  onText={(text) =>
+                    setAnswers((prev) => ({ ...prev, [item.id]: { ...prev[item.id], text } }))
+                  }
+                />
+              ))}
+          </section>
 
-          <div className="card-luxe space-y-4 p-6">
-            <label className="flex cursor-pointer items-start gap-3 text-sm">
-              <input
-                type="checkbox"
-                className="mt-1"
-                checked={consent}
-                onChange={(e) => setConsent(e.target.checked)}
-              />
-              <span className="text-muted">{DIAGNOSTIC_CONSENT_TEXT}</span>
-            </label>
+          {isLastSection ? (
+            <div className="card-luxe space-y-4 p-6">
+              <label className="flex cursor-pointer items-start gap-3 text-sm">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                />
+                <span className="text-muted">{DIAGNOSTIC_CONSENT_TEXT}</span>
+              </label>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  disabled={saving}
+                  onClick={() => void saveProgress()}
+                >
+                  임시 저장
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  disabled={saving || !consent}
+                  onClick={() => void saveProgress({ submit: true })}
+                >
+                  {saving ? "제출 중…" : "제출하기"}
+                </button>
+              </div>
+            </div>
+          ) : (
             <div className="flex flex-wrap gap-3">
-              <button type="button" className="btn-secondary" disabled={saving} onClick={() => void saveProgress(false)}>
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={saving || stepIndex === 0}
+                onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
+              >
+                이전 영역
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={saving}
+                onClick={() => void saveProgress()}
+              >
                 임시 저장
               </button>
-              <button type="button" className="btn-primary" disabled={saving || !consent} onClick={() => void saveProgress(true)}>
-                {saving ? "제출 중…" : "제출하기"}
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={saving}
+                onClick={() => void saveProgress({ advance: true })}
+              >
+                {saving ? "저장 중…" : "다음 영역"}
               </button>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

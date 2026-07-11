@@ -36,6 +36,16 @@ export function teamCookieKey(waveSlug: string, teamSlug: string) {
   return `dx_rsp_${waveSlug}_${teamSlug}`;
 }
 
+/** API·페이지 공통으로 세션 쿠키가 전달되도록 path는 `/` */
+export function diagnosticSessionCookieOptions(maxAge = 60 * 60 * 24 * 30) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge,
+  };
+}
+
 export async function loadOrgWideSurvey(waveSlug: string, respondentToken?: string) {
   const wave = await prisma.diagnosticWave.findUnique({
     where: { slug: waveSlug },

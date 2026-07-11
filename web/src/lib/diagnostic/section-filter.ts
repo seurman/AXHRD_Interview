@@ -13,6 +13,7 @@ export function filterSectionsByEnabled<T extends { code: string }>(
 ): T[] {
   if (!enabled?.length) return sections;
   const set = new Set(enabled);
+  set.add("DM");
   return sections.filter((s) => set.has(s.code));
 }
 

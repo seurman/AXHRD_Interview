@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
-import { loadOrgWideSurvey, orgWideCookieKey } from "@/lib/diagnostic/survey-loader";
+import { loadOrgWideSurvey, orgWideCookieKey, diagnosticSessionCookieOptions } from "@/lib/diagnostic/survey-loader";
 
 type Ctx = { params: Promise<{ waveSlug: string }> };
 
@@ -52,11 +52,6 @@ export async function POST(_req: Request, ctx: Ctx) {
   }
 
   const res = NextResponse.json({ ok: true, respondentToken: token, responseId });
-  res.cookies.set(cookieName, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: `/diagnosis/w/${waveSlug}`,
-    maxAge: 60 * 60 * 24 * 30,
-  });
+  res.cookies.set(cookieName, token, diagnosticSessionCookieOptions());
   return res;
 }
