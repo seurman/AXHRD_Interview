@@ -264,9 +264,15 @@ function applyPersuasiveCopy(html) {
             보이는 준비<span class="dot">.</span>
           </h1>`,
       `<h1>
-            쌓이는 역량,<br/>
-            보이는 준비<span class="dot">.</span>
+            자소서에서 나온 질문에,<br/>
+            말로 답하세요<span class="dot">.</span>
           </h1>`,
+    ],
+    [
+      `<div class="pill"><span class="live-dot"></span>월 3회 무료 면접</div>
+        <div class="caption">역량 성장 플랫폼</div>`,
+      `<div class="pill"><span class="live-dot"></span>월 3회 무료 · 음성 AI 면접</div>
+        <div class="caption">자소서와 면접을 잇는 역량 플랫폼</div>`,
     ],
     [
       `<p class="sub">
@@ -275,9 +281,21 @@ function applyPersuasiveCopy(html) {
             질문은 자소서 문장을 <strong>근거로 인용</strong>합니다.
           </p>`,
       `<p class="sub">
+            공고와 자소서를 연결해 질문을 만들고, 음성으로 연습합니다.<br/>
+            <strong>같은 기준</strong>으로 채점하고, 연습할수록 <strong>역량 점수가 쌓입니다.</strong><br/>
+            자소서 기반의 질문으로 현장감을 살립니다. 표정·감정 AI는 쓰지 않습니다.
+          </p>`,
+    ],
+    [
+      `<p class="sub">
             면접만, 자소서만 따로 준비할 필요 없습니다.<br/>
             <strong>한 계정</strong>에서 연습하고, <strong>같은 기준</strong>으로 평가받고, 성장은 <strong>숫자로 남습니다.</strong><br/>
             질문은 자소서에서 나옵니다. 꾸민 말이 아니라, 내 이야기로 답하게 됩니다.
+          </p>`,
+      `<p class="sub">
+            공고와 자소서를 연결해 질문을 만들고, 음성으로 연습합니다.<br/>
+            <strong>같은 기준</strong>으로 채점하고, 연습할수록 <strong>역량 점수가 쌓입니다.</strong><br/>
+            자소서 기반의 질문으로 현장감을 살립니다. 표정·감정 AI는 쓰지 않습니다.
           </p>`,
     ],
   [
@@ -299,12 +317,12 @@ function applyPersuasiveCopy(html) {
           <span>감정 AI 없음</span>
           <span>개인·기관 동일 데이터</span>
         </div>`,
-      `<div class="proof-label">믿고 쓰는<br/>3가지 약속</div>
+      `<div class="proof-label">검증 가능한<br/>면접 준비</div>
         <div class="proof-pills">
-          <span>채점 기준은 공개합니다</span>
+          <span>왜 이 점수인지, 근거와 함께</span>
           <span>질문은 자소서에서 나옵니다</span>
-          <span>표정·감정 AI는 쓰지 않습니다</span>
-          <span>개인과 기관, 같은 데이터</span>
+          <span>답변 내용만 봅니다</span>
+          <span>연습 기록은 숫자로 남습니다</span>
         </div>`,
     ],
     // Products head
@@ -336,7 +354,7 @@ function applyPersuasiveCopy(html) {
     [`<div class="prod-name" style="color: var(--cream-100)">AI 면접</div>
         <p class="prod-desc" style="color: rgba(245,237,228,0.6)">자소서 인용 질문에 음성으로 답하고, 꼬리질문 1회로 깊이를 봅니다.</p>`,
       `<div class="prod-name" style="color: var(--cream-100)">AI 면접</div>
-        <p class="prod-desc" style="color: rgba(245,237,228,0.6)">자소서에서 나온 질문에 말로 답합니다. 꼬리질문으로 깊이까지 봅니다.</p>`],
+        <p class="prod-desc" style="color: rgba(245,237,228,0.6)">자소서 기반의 질문으로 현장감을 살립니다. 음성으로 답하고, 꼬리질문으로 깊이까지 봅니다.</p>`],
     [`<div class="prod-name">질문 덱</div>
         <p class="prod-desc">스와이프로 연습, 직무별로 저장. 짧게 자주, 답변의 근육을 만듭니다.</p>`,
       `<div class="prod-name">질문 덱</div>
@@ -397,14 +415,14 @@ function applyPersuasiveCopy(html) {
       `<div class="sec-eyebrow">Growth loop · 4 steps</div>
         <h2 class="sec-title">탐색에서 면접까지,<br/>끊기지 않는 여정.</h2>`,
       `<div class="sec-eyebrow">Growth loop · 4단계</div>
-        <h2 class="sec-title">탐색부터 면접까지,<br/>하나의 줄기로 이어집니다.</h2>`,
+        <h2 class="sec-title">탐색부터 면접까지,<br/>끊기지 않습니다.</h2>`,
     ],
     [
       `<div class="sec-sub">
         발견한 강점이 자소서와 면접 질문으로 이어지고,<br/>답변은 역량 점수와 코호트 지표로 쌓입니다.
       </div>`,
       `<div class="sec-sub">
-        찾은 강점이 자소서와 면접 질문으로 이어지고,<br/>답할 때마다 역량 점수와 기관 지표가 쌓입니다.
+        찾은 강점이 자소서와 면접 질문으로 이어지고,<br/>자소서 기반 질문으로 현장감 있게 연습합니다.
       </div>`,
     ],
     [`<h4>나를 발견하기</h4>
@@ -418,7 +436,7 @@ function applyPersuasiveCopy(html) {
     [`<h4>구조화 AI 면접</h4>
         <p>자소서 인용 질문에 음성으로 답하고, 꼬리질문 1회로 깊이를 봅니다.</p>`,
       `<h4>AI 면접</h4>
-        <p>자소서에서 나온 질문에 말로 답하고, 꼬리질문으로 깊이를 봅니다.</p>`],
+        <p>자소서 기반의 질문으로 현장감을 살립니다. 음성으로 답하고, 꼬리질문으로 깊이를 봅니다.</p>`],
     [`<h4>질문 덱 · 역량 트래킹</h4>
         <p>스와이프 연습과 역량 점수 · 스킬 트리로 성장을 숫자로 남깁니다.</p>`,
       `<h4>연습 · 역량 기록</h4>
@@ -441,7 +459,7 @@ function applyPersuasiveCopy(html) {
     [`<h4>투명한 채점</h4>
           <p>감정 AI 없이, 같은 루브릭으로 세션을 공정하게 비교합니다.</p>`,
       `<h4>투명한 채점</h4>
-          <p>표정이 아니라 답변 내용을 봅니다. 같은 기준으로 공정하게 비교합니다.</p>`],
+          <p>이력서가 아니라, 답변으로 평가합니다. 왜 이 점수인지 근거와 함께 확인합니다.</p>`],
     [`<h4>맞춤 난이도</h4>
           <p>실력에 맞는 문항을 고르고, 왜 이 질문인지도 함께 알려 줍니다.</p>`,
       `<h4>맞는 난이도</h4>
@@ -449,7 +467,7 @@ function applyPersuasiveCopy(html) {
     [`<h4>성장이 남습니다</h4>
           <p>개인 역량 점수와 기관 코호트 지표를 숫자로 남깁니다.</p>`,
       `<h4>성장이 남습니다</h4>
-          <p>연습과 평가가 숫자로 쌓입니다. 개인도, 기관도 변화를 볼 수 있습니다.</p>`],
+          <p>연습할수록 점수가 쌓입니다. 합격 전에 실력이 보이고, 기록은 숫자로 남습니다.</p>`],
     [`<h4>NCS 공식 역량</h4>
           <p>직업기초능력 정의를 루브릭에 반영한 한국형 기준입니다.</p>`,
       `<h4>NCS 기반 역량</h4>
@@ -555,7 +573,7 @@ function applyPersuasiveCopy(html) {
         <div class="cta-btns">
           <a href="#" class="btn on-dark btn-lg">지금 시작하기 →</a>
           <a href="#" class="btn on-dark-ghost btn-lg">세일즈에 문의</a>`,
-      `<h2>지금,<br/>시작하세요<span class="dot">.</span></h2>
+      `<h2>지금, 한 문항부터<br/>시작하세요<span class="dot">.</span></h2>
       <div class="cta-right">
         <p class="p">
           개인은 지금 바로, 기관은 상담 한 번으로.<br/>
@@ -701,3 +719,9 @@ fs.writeFileSync(
 );
 
 console.log("Wrote marketing styles and markup");
+
+import { execSync } from "node:child_process";
+execSync("node scripts/apply-hybrid-home-markup.mjs", {
+  cwd: path.join(root, "web"),
+  stdio: "inherit",
+});

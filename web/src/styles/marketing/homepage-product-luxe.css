@@ -126,21 +126,21 @@ body.ax-home-page .ax-home section.cta .cta-inner {
 }
 
 body.ax-home-page .ax-home section.cta:not(.luxe-in) {
-  background: var(--cream-100);
+  background: var(--coral-500);
 }
 
-body.ax-home-page .ax-home section.cta.luxe-in .cta-unbox-fill {
-  transform: scaleY(1);
-  transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+body.ax-home-page .ax-home section.cta:not(.luxe-in) .cta-inner {
+  opacity: 1;
+  transform: none;
 }
 
 body.ax-home-page .ax-home section.cta.luxe-in {
   background: var(--coral-500);
 }
 
-body.ax-home-page .ax-home section.cta:not(.luxe-in) .cta-inner {
-  opacity: 0;
-  transform: translateY(12px);
+body.ax-home-page .ax-home section.cta.luxe-in .cta-unbox-fill {
+  transform: scaleY(1);
+  transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body.ax-home-page .ax-home section.cta.luxe-in .cta-inner {
@@ -281,25 +281,38 @@ body.ax-home-page .ax-home a.prod-card[style*="ink-900"] {
   background: var(--ink-900) !important;
 }
 
+body.ax-home-page .ax-home section.cta:not(.luxe-in) {
+  background: var(--coral-500);
+}
+
+body.ax-home-page .ax-home section.cta:not(.luxe-in) .cta-inner {
+  opacity: 1;
+  transform: none;
+}
+
+body.ax-home-page .ax-home section.cta.luxe-in {
+  background: var(--coral-500);
+}
+
+body.ax-home-page .ax-home section.cta.luxe-in .cta-unbox-fill {
+  transform: scaleY(1);
+}
+
 /* ─── Orange-box CTA band (unbox on scroll) ─── */
 
 body.ax-home-page .ax-home section.cta {
   position: relative;
   overflow: hidden;
-  color: var(--ink-900);
 }
 
-body.ax-home-page .ax-home .cta-inner h2 {
-  color: var(--ink-900);
-}
-
+body.ax-home-page .ax-home .cta-inner h2,
 body.ax-home-page .ax-home .cta-inner h2 .serif,
 body.ax-home-page .ax-home .cta-inner h2 .dot {
-  color: var(--ink-900);
+  color: var(--cream-100);
 }
 
 body.ax-home-page .ax-home .cta-right .p {
-  color: rgb(20 17 14 / 0.72);
+  color: rgb(251 248 243 / 0.82);
 }
 
 body.ax-home-page .ax-home .btn.on-dark {
@@ -312,13 +325,13 @@ body.ax-home-page .ax-home .btn.on-dark:hover {
 }
 
 body.ax-home-page .ax-home .btn.on-dark-ghost {
-  color: var(--ink-900);
-  border-color: rgb(20 17 14 / 0.28);
+  color: var(--cream-100);
+  border-color: rgb(251 248 243 / 0.35);
 }
 
 body.ax-home-page .ax-home .btn.on-dark-ghost:hover {
-  background: rgb(20 17 14 / 0.06);
-  border-color: rgb(20 17 14 / 0.45);
+  background: rgb(251 248 243 / 0.1);
+  border-color: rgb(251 248 243 / 0.55);
 }
 
 /* ─── Problem band: ink foil (contrast object) ─── */

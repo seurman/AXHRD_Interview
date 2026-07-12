@@ -7,15 +7,13 @@ import { landingDemoHref, landingStartHref } from "@/lib/landing/hrefs";
 import "@/styles/marketing/homepage.css";
 
 const FOOTER_PRODUCT_HREFS = [
-  "/discover",
-  "/resume-review",
   "/auth/register?next=/interview/setup",
-  "/practice/swipe",
+  "/resume-review",
   "/dashboard",
-  "/diagnosis",
+  "/products",
 ];
 
-const FOOTER_FOR_HREFS = ["/auth/register", "/org/setup", "/org/setup", "/diagnosis"];
+const FOOTER_FOR_HREFS = ["/demo#trial", "/org/setup"];
 
 export function MarketingHome() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -61,6 +59,7 @@ export function MarketingHome() {
           revealObserver.observe(el);
         }
       });
+      root.querySelector<HTMLElement>("section.cta")?.classList.add("luxe-in");
       disconnectReveal = () => revealObserver.disconnect();
     } else {
       root.querySelectorAll<HTMLElement>(".luxe-reveal").forEach((el) => {
@@ -104,19 +103,6 @@ export function MarketingHome() {
       });
     }
 
-    const onTabClick = (event: Event) => {
-      const btn = (event.target as HTMLElement).closest<HTMLButtonElement>(".aud-tab");
-      if (!btn || !root.contains(btn)) return;
-      const key = btn.dataset.aud;
-      if (!key) return;
-      root.querySelectorAll(".aud-tab").forEach((b) => {
-        b.classList.toggle("active", b === btn);
-      });
-      root.querySelectorAll(".aud-panel").forEach((p) => {
-        p.classList.toggle("active", p.getAttribute("data-panel") === key);
-      });
-    };
-
     const onAnchorClick = (event: MouseEvent) => {
       const anchor = (event.target as HTMLElement).closest<HTMLAnchorElement>(
         'a[href^="#"]',
@@ -131,10 +117,8 @@ export function MarketingHome() {
       window.scrollTo({ top, behavior: "smooth" });
     };
 
-    root.addEventListener("click", onTabClick);
     root.addEventListener("click", onAnchorClick);
     return () => {
-      root.removeEventListener("click", onTabClick);
       root.removeEventListener("click", onAnchorClick);
       disconnectReveal();
     };

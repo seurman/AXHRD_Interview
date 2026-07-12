@@ -68,18 +68,188 @@ body.ax-home-page .ax-home .copy {
   padding: 24px 32px 40px;
 }
 
-/* Hero headline — responsive clamp (handoff 108px is desktop-only) */
+/* ─── Page rhythm & hero composition ─── */
+
+body.ax-home-page .ax-home {
+  --section-pad: 3rem;
+  --section-pad-tight: 2.25rem;
+  --content-gap: 1.25rem;
+  --content-gap-lg: 1.75rem;
+}
+
+/* Hero headline — balanced with body copy */
 body.ax-home-page .ax-home .hero h1 {
-  font-size: clamp(2.5rem, 7vw, 6.75rem);
-  line-height: 0.95;
+  font-size: clamp(1.75rem, 3.4vw, 2.875rem);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+  max-width: 11em;
 }
 
 body.ax-home-page .ax-home .sec-title {
-  font-size: clamp(1.75rem, 4vw, 3.75rem);
+  font-size: clamp(1.5rem, 2.6vw, 2.25rem);
+  line-height: 1.12;
+}
+
+body.ax-home-page .ax-home .cta-inner h2 {
+  font-size: clamp(1.625rem, 2.8vw, 2.375rem);
+  line-height: 1.08;
 }
 
 body.ax-home-page .ax-home .aud-left h3 {
-  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-size: clamp(1.375rem, 2.2vw, 1.875rem);
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+
+body.ax-home-page .ax-home .hero {
+  padding: 2.5rem 0 var(--section-pad-tight);
+}
+
+body.ax-home-page .ax-home .hero-top {
+  margin-bottom: var(--content-gap);
+}
+
+/* Stacked lede — no dead column space under H1 */
+body.ax-home-page .ax-home .hero-lede {
+  display: flex;
+  flex-direction: column;
+  gap: var(--content-gap-lg);
+}
+
+body.ax-home-page .ax-home .hero-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--content-gap-lg) 2.5rem;
+  align-items: start;
+}
+
+body.ax-home-page .ax-home .hero-body .sub {
+  font-size: 15px;
+  line-height: 1.65;
+  margin: 0;
+  max-width: 36em;
+}
+
+body.ax-home-page .ax-home .hero-action-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+body.ax-home-page .ax-home .hero-preview {
+  margin-top: var(--content-gap-lg);
+}
+
+body.ax-home-page .ax-home .preview-body {
+  min-height: 280px;
+  padding: 1.25rem;
+  gap: 1.25rem;
+}
+
+body.ax-home-page .ax-home .proof,
+body.ax-home-page .ax-home .proof-trust {
+  margin-top: var(--content-gap-lg);
+  padding: var(--content-gap-lg) 0 0;
+  gap: 1.25rem;
+  border-top: 1px solid var(--ink-200);
+}
+
+/* Section-to-section gaps (not inner micro-spacing) */
+body.ax-home-page .ax-home section.products,
+body.ax-home-page .ax-home section.products--hybrid {
+  padding: var(--section-pad) 0;
+}
+
+body.ax-home-page .ax-home .pricing-strip {
+  padding: var(--section-pad-tight) 0;
+}
+
+body.ax-home-page .ax-home section.process {
+  padding: var(--section-pad) 0;
+}
+
+body.ax-home-page .ax-home section.why,
+body.ax-home-page .ax-home section.why--hybrid {
+  padding: var(--section-pad) 0;
+}
+
+body.ax-home-page .ax-home section.audiences,
+body.ax-home-page .ax-home section.aud-single {
+  padding: var(--section-pad) 0;
+}
+
+body.ax-home-page .ax-home section.cta {
+  padding: var(--section-pad) calc(50vw - 50%);
+}
+
+body.ax-home-page .ax-home footer {
+  padding: var(--section-pad-tight) 0 1.75rem;
+  gap: 2rem;
+}
+
+body.ax-home-page .ax-home .sec-eyebrow {
+  margin-bottom: 0.625rem;
+}
+
+body.ax-home-page .ax-home .sec-head {
+  gap: 2rem;
+  margin-bottom: 1.75rem;
+  align-items: end;
+}
+
+body.ax-home-page .ax-home .sec-sub {
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 28em;
+}
+
+body.ax-home-page .ax-home .process-grid {
+  margin-top: 1.75rem;
+}
+
+body.ax-home-page .ax-home .why-grid,
+body.ax-home-page .ax-home .why-grid--duo {
+  margin-top: 1.75rem;
+}
+
+body.ax-home-page .ax-home .cta-inner {
+  gap: 2rem;
+  align-items: end;
+}
+
+body.ax-home-page .ax-home .copy {
+  padding: 1.25rem 2rem 2rem;
+  margin-top: 1rem;
+}
+
+/* Hermès orange CTA — always visible (unbox is enhancement only) */
+body.ax-home-page .ax-home section.cta {
+  background: var(--coral-500) !important;
+  color: var(--cream-100);
+}
+
+body.ax-home-page .ax-home section.cta .cta-inner {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+body.ax-home-page .ax-home section.cta .cta-inner h2,
+body.ax-home-page .ax-home section.cta .cta-inner h2 .dot {
+  color: var(--cream-100) !important;
+}
+
+body.ax-home-page .ax-home section.cta .cta-right .p {
+  color: rgb(251 248 243 / 0.82) !important;
+}
+
+body.ax-home-page .ax-home section.cta .btn.on-dark-ghost {
+  color: var(--cream-100) !important;
+  border-color: rgb(251 248 243 / 0.35) !important;
+}
+
+body.ax-home-page .ax-home section.cta .btn.on-dark-ghost:hover {
+  background: rgb(251 248 243 / 0.1) !important;
+  border-color: rgb(251 248 243 / 0.55) !important;
 }
 
 /* ─── Conversion polish ─── */
@@ -140,16 +310,16 @@ body.ax-home-page .ax-home .pricing-strip {
 body.ax-home-page .ax-home .pricing-strip-inner {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
-  gap: 40px;
+  gap: 28px;
   align-items: end;
 }
 
 body.ax-home-page .ax-home .pricing-strip-title {
-  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  font-size: clamp(1.35rem, 2.8vw, 2rem);
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1.08;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 body.ax-home-page .ax-home .pricing-strip-copy {
@@ -176,7 +346,7 @@ body.ax-home-page .ax-home .aud-cta-row {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 24px;
+  margin-top: 18px;
 }
 
 body.ax-home-page .ax-home .testimony-value .quote-author {
@@ -187,13 +357,134 @@ body.ax-home-page .ax-home .testimony-value .quote-author {
   color: var(--ink-500);
 }
 
+body.ax-home-page .ax-home .prod-name {
+  font-size: 22px;
+}
+
+body.ax-home-page .ax-home .aud-left p {
+  margin-bottom: 18px;
+  font-size: 14px;
+}
+
+/* ─── Hybrid home layout ─── */
+
+body.ax-home-page .ax-home .inline-link {
+  color: var(--coral-600);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+body.ax-home-page .ax-home .inline-link:hover {
+  color: var(--coral-500);
+}
+
+body.ax-home-page .ax-home .products-more {
+  margin-top: 20px;
+  text-align: center;
+}
+
+body.ax-home-page .ax-home .prod-card--hero {
+  background: var(--ink-900);
+  border-color: transparent;
+}
+
+body.ax-home-page .ax-home .prod-card--hero .prod-mono {
+  color: rgba(245, 237, 228, 0.5);
+}
+
+body.ax-home-page .ax-home .prod-card--hero .prod-arr {
+  color: var(--coral-300);
+}
+
+body.ax-home-page .ax-home .prod-card--hero .prod-name {
+  color: var(--cream-100);
+}
+
+body.ax-home-page .ax-home .prod-card--hero .prod-desc {
+  color: rgba(245, 237, 228, 0.6);
+}
+
+body.ax-home-page .ax-home .prod-card--hero .tag:not(.coral) {
+  background: rgba(245, 237, 228, 0.08);
+  border-color: transparent;
+  color: var(--cream-100);
+}
+
+body.ax-home-page .ax-home .why-grid--duo {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+body.ax-home-page .ax-home .aud-panel--solo {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: stretch;
+  padding: 22px;
+  border: 1px solid var(--ink-200);
+  border-radius: 16px;
+  background: var(--cream-50);
+}
+
+body.ax-home-page .ax-home .org-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 20px;
+  padding: 18px 22px;
+  border: 1px dashed var(--ink-300);
+  border-radius: 14px;
+  background: var(--cream-50);
+}
+
+body.ax-home-page .ax-home .org-strip-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-900);
+}
+
+body.ax-home-page .ax-home .org-strip-desc {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--ink-500);
+  line-height: 1.5;
+}
+
 @media (max-width: 960px) {
+  body.ax-home-page .ax-home {
+    --section-pad: 2.5rem;
+    --section-pad-tight: 2rem;
+  }
+
   body.ax-home-page .ax-home .hero {
-    padding-top: 48px;
+    padding-top: 2rem;
+  }
+
+  body.ax-home-page .ax-home .hero h1 {
+    font-size: clamp(1.625rem, 6.5vw, 2rem);
+    max-width: none;
+  }
+
+  body.ax-home-page .ax-home .hero-body {
+    grid-template-columns: 1fr;
+    gap: var(--content-gap);
+  }
+
+  body.ax-home-page .ax-home .sec-title,
+  body.ax-home-page .ax-home .cta-inner h2 {
+    font-size: clamp(1.375rem, 5vw, 1.75rem);
   }
 
   body.ax-home-page .ax-home .hero-preview {
-    margin-top: 40px;
+    margin-top: var(--content-gap);
+  }
+
+  body.ax-home-page .ax-home .sec-head {
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    align-items: start;
   }
 
   body.ax-home-page .ax-home .preview-body {
@@ -222,6 +513,19 @@ body.ax-home-page .ax-home .testimony-value .quote-author {
     flex-direction: column;
     align-items: flex-start;
     gap: 24px;
+  }
+
+  body.ax-home-page .ax-home .why-grid--duo {
+    grid-template-columns: 1fr;
+  }
+
+  body.ax-home-page .ax-home .aud-panel--solo {
+    grid-template-columns: 1fr;
+  }
+
+  body.ax-home-page .ax-home .org-strip {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
