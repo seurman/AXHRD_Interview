@@ -1,0 +1,398 @@
+/* Product Line Luxe — homepage prototype
+   Hermès orange-box logic (not website layout):
+   warm neutral canvas + surgical signature color + ink typography. */
+
+body.ax-home-page {
+  /* Warm parchment — box interior / tissue paper */
+  --cream-50: #fbf8f3;
+  --cream-100: #f6f1e8;
+  --cream-200: #efe8dc;
+  --cream-300: #e4d9c8;
+
+  /* Ink — confident, near-black (Hermès black on orange) */
+  --ink-900: #14110e;
+  --ink-800: #1c1814;
+  --ink-700: #2a241f;
+  --ink-500: #6b6258;
+  --ink-400: #8c8278;
+  --ink-300: #b5aa9e;
+  --ink-200: #ddd4c8;
+
+  /* Signature — AXHRD product-line accent (cousin to Hermès orange, not a copy) */
+  --coral-600: #b83a1f;
+  --coral-500: #d64a2c;
+  --coral-400: #e0643f;
+  --coral-300: #e88a6a;
+  --coral-100: #fce8df;
+
+  --moss-500: #4a6244;
+
+  --bg: var(--cream-100);
+  --bg-elev: var(--cream-50);
+  --accent: var(--coral-500);
+  --accent-hover: var(--coral-600);
+  --fg: var(--ink-900);
+  --border: var(--ink-200);
+
+  background: var(--cream-100) !important;
+  color: var(--ink-900);
+}
+
+html.dark body.ax-home-page {
+  background: var(--cream-100) !important;
+  color: var(--ink-900);
+}
+
+/* Linen / canvas texture */
+body.ax-home-page .marketing-home {
+  position: relative;
+  isolation: isolate;
+}
+
+body.ax-home-page .marketing-home::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+body.ax-home-page .marketing-home > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Header: frosted parchment ─── */
+
+body.ax-home-page .header-premium {
+  background: rgb(251 248 243 / 0.93);
+  border-bottom-color: var(--ink-200);
+}
+
+body.ax-home-page .header-premium .nav-pill:hover,
+body.ax-home-page .header-premium .nav-pill-active {
+  border-color: var(--ink-900);
+  background: rgb(20 17 14 / 0.05);
+  color: var(--ink-900) !important;
+}
+
+body.ax-home-page .header-premium .nav-pill-gold {
+  background: var(--ink-900);
+  border-color: var(--ink-900);
+}
+
+body.ax-home-page .header-premium .nav-pill-gold:hover {
+  background: var(--ink-700);
+}
+
+/* ─── Flatten SaaS glows → product-line restraint ─── */
+
+body.ax-home-page .ax-home .hero::before,
+body.ax-home-page .ax-home section.problem::before,
+body.ax-home-page .ax-home .testimony::before {
+  display: none;
+}
+
+/* Grosgrain ribbon — orange box lid (Hermès packaging cue) */
+body.ax-home-page .ax-home section.cta::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: #5c4030;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
+  z-index: 4;
+  pointer-events: none;
+}
+
+body.ax-home-page .ax-home section.cta .cta-unbox-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--coral-500);
+  transform: scaleY(0);
+  transform-origin: top center;
+  z-index: 0;
+  pointer-events: none;
+}
+
+body.ax-home-page .ax-home section.cta .cta-inner {
+  position: relative;
+  z-index: 2;
+}
+
+body.ax-home-page .ax-home section.cta:not(.luxe-in) {
+  background: var(--cream-100);
+}
+
+body.ax-home-page .ax-home section.cta.luxe-in .cta-unbox-fill {
+  transform: scaleY(1);
+  transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.ax-home-page .ax-home section.cta.luxe-in {
+  background: var(--coral-500);
+}
+
+body.ax-home-page .ax-home section.cta:not(.luxe-in) .cta-inner {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+body.ax-home-page .ax-home section.cta.luxe-in .cta-inner {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s,
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s;
+}
+
+/* ─── Magic-reveal motion (Shorts ref: ordinary → signature object) ─── */
+
+body.ax-home-page .ax-home .luxe-reveal:not(.luxe-in) {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+body.ax-home-page .ax-home .luxe-reveal-hero:not(.luxe-in) {
+  transform: translateY(22px) scale(0.985);
+}
+
+body.ax-home-page .ax-home .luxe-reveal.luxe-in {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.ax-home-page .ax-home .hero h1 .dot {
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.ax-home-page.luxe-ready .ax-home .hero h1 .dot {
+  animation: luxeMarkPulse 2.4s ease-in-out 0.6s 1;
+}
+
+@keyframes luxeMarkPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.ax-home-page .ax-home .luxe-reveal,
+  body.ax-home-page .ax-home section.cta .cta-inner,
+  body.ax-home-page .ax-home section.cta .cta-unbox-fill {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  body.ax-home-page .ax-home section.cta {
+    background: var(--coral-500) !important;
+  }
+}
+
+/* ─── Signature moments (surgical, like orange on a box) ─── */
+
+body.ax-home-page .ax-home .hero h1 .dot,
+body.ax-home-page .ax-home .brand .dot,
+body.ax-home-page .ax-home .pill .live-dot {
+  background: var(--coral-500);
+  box-shadow: none;
+}
+
+body.ax-home-page .ax-home .sec-eyebrow::before {
+  background: var(--coral-500);
+}
+
+body.ax-home-page .ax-home .sec-eyebrow {
+  color: var(--ink-500);
+}
+
+body.ax-home-page .ax-home .hero-micro .price-link {
+  color: var(--ink-900);
+  font-weight: 600;
+  text-decoration-color: var(--coral-500);
+}
+
+/* Primary CTA = ink on cream (Hermès black discipline) */
+body.ax-home-page .ax-home .btn-primary {
+  background: var(--ink-900);
+  color: var(--cream-50);
+}
+
+body.ax-home-page .ax-home .btn-primary:hover {
+  background: var(--ink-700);
+}
+
+/* Secondary = outline only */
+body.ax-home-page .ax-home .btn-ghost {
+  border-color: var(--ink-300);
+  color: var(--ink-900);
+}
+
+body.ax-home-page .ax-home .btn-ghost:hover {
+  background: var(--cream-200);
+  border-color: var(--ink-500);
+}
+
+/* Accent = signature color, rare use */
+body.ax-home-page .ax-home .btn-accent {
+  background: var(--coral-500);
+  color: #fff;
+}
+
+body.ax-home-page .ax-home .btn-accent:hover {
+  background: var(--coral-600);
+}
+
+/* ─── Cards: quiet luxury hover ─── */
+
+body.ax-home-page .ax-home .prod-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--ink-300);
+}
+
+body.ax-home-page .ax-home .prod-card:hover .prod-arr {
+  transform: translate(2px, -2px);
+  color: var(--coral-500);
+}
+
+body.ax-home-page .ax-home .tag.coral {
+  background: var(--coral-500);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Interview card = ink object on shelf */
+body.ax-home-page .ax-home a.prod-card[style*="ink-900"] {
+  background: var(--ink-900) !important;
+}
+
+/* ─── Orange-box CTA band (unbox on scroll) ─── */
+
+body.ax-home-page .ax-home section.cta {
+  position: relative;
+  overflow: hidden;
+  color: var(--ink-900);
+}
+
+body.ax-home-page .ax-home .cta-inner h2 {
+  color: var(--ink-900);
+}
+
+body.ax-home-page .ax-home .cta-inner h2 .serif,
+body.ax-home-page .ax-home .cta-inner h2 .dot {
+  color: var(--ink-900);
+}
+
+body.ax-home-page .ax-home .cta-right .p {
+  color: rgb(20 17 14 / 0.72);
+}
+
+body.ax-home-page .ax-home .btn.on-dark {
+  background: var(--ink-900);
+  color: var(--cream-50);
+}
+
+body.ax-home-page .ax-home .btn.on-dark:hover {
+  background: var(--ink-700);
+}
+
+body.ax-home-page .ax-home .btn.on-dark-ghost {
+  color: var(--ink-900);
+  border-color: rgb(20 17 14 / 0.28);
+}
+
+body.ax-home-page .ax-home .btn.on-dark-ghost:hover {
+  background: rgb(20 17 14 / 0.06);
+  border-color: rgb(20 17 14 / 0.45);
+}
+
+/* ─── Problem band: ink foil (contrast object) ─── */
+
+body.ax-home-page .ax-home section.problem {
+  background: var(--ink-900);
+}
+
+body.ax-home-page .ax-home .problem .sec-eyebrow {
+  color: var(--coral-300);
+}
+
+body.ax-home-page .ax-home .problem-outro .say .accent {
+  color: var(--coral-300);
+}
+
+body.ax-home-page .ax-home .btn.on-dark.btn-lg[href="#process"] {
+  background: var(--cream-50);
+  color: var(--ink-900);
+}
+
+body.ax-home-page .ax-home .btn.on-dark.btn-lg[href="#process"]:hover {
+  background: var(--cream-200);
+}
+
+/* ─── Quote & trust ─── */
+
+body.ax-home-page .ax-home .quote-mark,
+body.ax-home-page .ax-home .quote-text .accent {
+  color: var(--coral-500);
+}
+
+body.ax-home-page .ax-home .proof-trust .proof-pills span {
+  background: var(--cream-50);
+  border-color: var(--ink-200);
+}
+
+body.ax-home-page .ax-home .pricing-strip {
+  background: var(--cream-50);
+  border-color: var(--ink-200);
+}
+
+/* Hero preview: product UI as object on desk */
+body.ax-home-page .ax-home .hero-preview {
+  box-shadow: var(--shadow-md);
+  border-color: var(--ink-200);
+}
+
+body.ax-home-page .ax-home .prev-quote {
+  border-left-color: var(--coral-500);
+}
+
+body.ax-home-page .ax-home .prev-mic-icon {
+  background: var(--coral-500);
+  box-shadow: none;
+}
+
+body.ax-home-page .ax-home .prev-bar-fill.coral {
+  background: var(--coral-500);
+}
+
+body.ax-home-page .ax-home .mock-chart .bar.coral {
+  background: var(--coral-500);
+}
+
+body.ax-home-page .ax-home .aud-tab.active {
+  background: var(--ink-900);
+  color: var(--cream-50);
+}
+
+body.ax-home-page .ax-home .aud-checks li::before {
+  background: var(--coral-500);
+}
+
+body.ax-home-page .ax-home .principle.hero-p .icon {
+  background: var(--coral-500);
+}

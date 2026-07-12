@@ -1,0 +1,326 @@
+/* ─────────────────────────────────────────────────────────────
+   AXHRD Design System · v2.0 (Refined)
+   Human Pixel direction · sophisticated warm palette
+   ───────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Pretendard:wght@400;500;600;700;800&display=swap');
+/* Pretendard for KR body, Inter for EN, Instrument Serif for editorial display italic, JetBrains Mono for data / labels */
+
+:root {
+  /* ─── COLOR · CORE PALETTE ───────────────────────────────
+     Ink is warm charcoal (not pure black). Coral is deepened
+     from v1's #E85A38 to #D64A2C for editorial restraint.
+     Cream layered in 3 tones for depth. */
+
+  /* Ink — warm neutrals (text + dark surfaces) */
+  --ink-900: #17120F;   /* ink primary   · headers on cream */
+  --ink-800: #1F1A17;   /* ink strong    · v1 legacy */
+  --ink-700: #2A221D;   /* ink surface   · dark card / hero */
+  --ink-500: #6B5D54;   /* ink muted     · secondary text */
+  --ink-400: #8B7D73;   /* ink subtle    · captions */
+  --ink-300: #B3A69B;   /* ink faint     · borders on cream */
+  --ink-200: #D9CFC3;   /* ink hairline  · dividers */
+
+  /* Cream — warm backgrounds */
+  --cream-50:  #FBF7F1;  /* cream lightest · elevated card */
+  --cream-100: #F5EDE4;  /* cream base    · page background (signature) */
+  --cream-200: #EFE4D5;  /* cream tonal   · inset panels */
+  --cream-300: #E5D6C2;  /* cream deeper  · pressed states */
+
+  /* Coral — signature accent (refined) */
+  --coral-600: #B83A1F;  /* coral deep    · text on cream */
+  --coral-500: #D64A2C;  /* coral primary · CTA, mark */
+  --coral-400: #E85A38;  /* coral bright  · legacy / hover */
+  --coral-300: #FF6B47;  /* coral on-dark · accent on ink hero */
+  --coral-100: #FCE4DA;  /* coral wash    · tag / highlight bg */
+
+  /* Editorial secondary accents (muted, data-viz safe) */
+  --plum-500:  #6B3F5C;  /* muted plum    · charts, secondary tag */
+  --moss-500:  #4A6244;  /* muted moss    · positive/growth */
+  --ochre-500: #B8842A;  /* muted ochre   · warning / highlight */
+  --navy-500:  #2A3F5C;  /* muted navy    · tech / info */
+
+  /* Semantic */
+  --success:   var(--moss-500);
+  --warning:   var(--ochre-500);
+  --danger:    var(--coral-600);
+  --info:      var(--navy-500);
+
+  /* ─── COLOR · SEMANTIC ROLES ────────────────────────────── */
+  --bg:        var(--cream-100);
+  --bg-elev:   var(--cream-50);
+  --bg-inset:  var(--cream-200);
+  --bg-dark:   var(--ink-700);
+  --bg-darker: var(--ink-900);
+
+  --fg:        var(--ink-900);
+  --fg-2:      var(--ink-500);
+  --fg-3:      var(--ink-400);
+  --fg-on-dark: var(--cream-100);
+  --fg-on-dark-2: rgba(245, 237, 228, 0.7);
+
+  --accent:    var(--coral-500);
+  --accent-hover: var(--coral-600);
+  --accent-on-dark: var(--coral-300);
+
+  --border:    var(--ink-200);
+  --border-strong: var(--ink-300);
+  --border-on-dark: rgba(245, 237, 228, 0.12);
+
+  /* ─── TYPOGRAPHY ───────────────────────────────────────── */
+  --font-sans: 'Inter', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-kr: 'Pretendard', 'Inter', -apple-system, sans-serif;
+  --font-serif: 'Instrument Serif', 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Type scale — modular, editorial */
+  --text-xs:   11px;  /* mono labels, meta */
+  --text-sm:   13px;  /* small body */
+  --text-base: 15px;  /* body */
+  --text-md:   17px;  /* lead body */
+  --text-lg:   20px;  /* sub-heading */
+  --text-xl:   26px;  /* h3 */
+  --text-2xl:  36px;  /* h2 */
+  --text-3xl:  52px;  /* h1 */
+  --text-4xl:  72px;  /* display */
+  --text-5xl:  96px;  /* hero */
+
+  /* Line heights */
+  --lh-tight: 1.05;
+  --lh-snug:  1.2;
+  --lh-body:  1.55;
+  --lh-loose: 1.7;
+
+  /* Tracking */
+  --track-tightest: -0.055em;
+  --track-tighter:  -0.04em;
+  --track-tight:    -0.02em;
+  --track-normal:   0;
+  --track-wide:     0.05em;
+  --track-wider:    0.15em;
+  --track-widest:   0.28em;
+
+  /* Weight */
+  --w-regular: 400;
+  --w-medium:  500;
+  --w-semi:    600;
+  --w-bold:    700;
+  --w-black:   800;
+
+  /* ─── SPACING ──────────────────────────────────────────── */
+  --sp-0: 0;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+  --sp-24: 96px;
+
+  /* ─── RADIUS ───────────────────────────────────────────── */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;   /* signature card radius */
+  --r-xl: 24px;
+  --r-2xl: 28px;  /* app icon */
+  --r-full: 999px;
+
+  /* ─── SHADOW ───────────────────────────────────────────── */
+  /* Warm-tinted shadows — never pure black */
+  --shadow-xs: 0 1px 2px rgba(31, 26, 23, 0.06);
+  --shadow-sm: 0 1px 3px rgba(31, 26, 23, 0.05), 0 4px 12px rgba(31, 26, 23, 0.03);
+  --shadow-md: 0 1px 3px rgba(31, 26, 23, 0.05), 0 12px 32px rgba(31, 26, 23, 0.04);
+  --shadow-lg: 0 4px 8px rgba(31, 26, 23, 0.06), 0 20px 60px rgba(31, 26, 23, 0.10);
+  --shadow-xl: 0 8px 16px rgba(31, 26, 23, 0.08), 0 32px 80px rgba(31, 26, 23, 0.15);
+
+  /* Inner shadows for inset panels */
+  --shadow-inset: inset 0 0 0 1px rgba(31, 26, 23, 0.06);
+  --shadow-inset-dark: inset 0 0 0 1px rgba(245, 237, 228, 0.08);
+
+  /* ─── MOTION ───────────────────────────────────────────── */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);         /* Linear-style ease-out */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);      /* strong ease-out */
+  --dur-fast: 120ms;
+  --dur:      200ms;
+  --dur-slow: 400ms;
+}
+
+/* ─────────────────────────────────────────────
+   SEMANTIC TYPE CLASSES
+   ───────────────────────────────────────────── */
+
+.h-hero {
+  font-family: var(--font-sans);
+  font-size: var(--text-5xl);
+  font-weight: var(--w-bold);
+  letter-spacing: var(--track-tightest);
+  line-height: var(--lh-tight);
+  color: var(--fg);
+}
+
+.h-display {
+  font-family: var(--font-sans);
+  font-size: var(--text-4xl);
+  font-weight: var(--w-bold);
+  letter-spacing: var(--track-tighter);
+  line-height: var(--lh-tight);
+  color: var(--fg);
+}
+
+.h-display-serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-4xl);
+  font-weight: var(--w-regular);
+  letter-spacing: var(--track-tight);
+  line-height: 1.0;
+  color: var(--fg);
+}
+
+.h1 {
+  font-family: var(--font-sans);
+  font-size: var(--text-3xl);
+  font-weight: var(--w-bold);
+  letter-spacing: var(--track-tighter);
+  line-height: var(--lh-tight);
+  color: var(--fg);
+}
+
+.h2 {
+  font-family: var(--font-sans);
+  font-size: var(--text-2xl);
+  font-weight: var(--w-bold);
+  letter-spacing: var(--track-tight);
+  line-height: var(--lh-snug);
+  color: var(--fg);
+}
+
+.h3 {
+  font-family: var(--font-sans);
+  font-size: var(--text-xl);
+  font-weight: var(--w-semi);
+  letter-spacing: var(--track-tight);
+  line-height: var(--lh-snug);
+  color: var(--fg);
+}
+
+.h4 {
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: var(--w-semi);
+  letter-spacing: var(--track-tight);
+  line-height: var(--lh-snug);
+  color: var(--fg);
+}
+
+.lead {
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  font-weight: var(--w-regular);
+  line-height: var(--lh-body);
+  color: var(--fg-2);
+}
+
+.p {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--w-regular);
+  line-height: var(--lh-body);
+  color: var(--fg);
+}
+
+.p-sm {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--w-regular);
+  line-height: var(--lh-body);
+  color: var(--fg-2);
+}
+
+.caption {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--w-medium);
+  color: var(--fg-3);
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: var(--w-medium);
+  letter-spacing: var(--track-wider);
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.code, .mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--w-medium);
+  letter-spacing: 0.01em;
+  color: var(--fg-2);
+}
+
+.wordmark {
+  font-family: var(--font-sans);
+  font-weight: var(--w-bold);
+  letter-spacing: var(--track-tighter);
+  color: var(--fg);
+}
+.wordmark .dot { color: var(--accent); }
+
+/* ─────────────────────────────────────────────
+   BUTTON PRIMITIVES
+   ───────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 10px 16px;
+  border-radius: var(--r-sm);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--w-semi);
+  letter-spacing: -0.005em;
+  border: none;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
+  text-decoration: none;
+  line-height: 1;
+}
+.btn:active { transform: scale(0.98); }
+
+.btn-primary {
+  background: var(--ink-900);
+  color: var(--cream-100);
+}
+.btn-primary:hover { background: var(--ink-700); }
+
+.btn-accent {
+  background: var(--coral-500);
+  color: #fff;
+}
+.btn-accent:hover { background: var(--coral-600); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--cream-200); border-color: var(--border-strong); }
+
+.btn-link {
+  background: transparent;
+  color: var(--fg);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--ink-300);
+  border-radius: 0;
+}
+.btn-link:hover { border-bottom-color: var(--ink-900); }

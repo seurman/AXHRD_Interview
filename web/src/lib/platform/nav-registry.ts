@@ -124,15 +124,13 @@ const PRACTICE_HREFS: { href: string; labelKey: PrepareLabelKey; capability: Cap
   { href: "/practice/swipe", labelKey: "cards", capability: "product.practice" },
 ];
 
+/** 게스트 제품 메뉴 — 실제 앱 진입점만 (소개 /products 페이지는 숨김) */
 export const GUEST_PRODUCT_HREFS: { href: string; labelKey: GuestProductLabelKey }[] = [
-  { href: "/products", labelKey: "allProducts" },
-  { href: "/products/discover", labelKey: "discover" },
-  { href: "/products/resume", labelKey: "resume" },
-  { href: "/products/interview", labelKey: "interview" },
-  { href: "/products/practice", labelKey: "practice" },
-  { href: "/products/growth", labelKey: "growth" },
-  { href: "/products/diagnostic", labelKey: "orgDiagnosis" },
-  { href: "/products/organizations", labelKey: "forOrganizations" },
+  { href: "/demo", labelKey: "trialInterview" },
+  { href: "/discover", labelKey: "discover" },
+  { href: "/auth/register?next=/interview/setup", labelKey: "interview" },
+  { href: "/diagnosis", labelKey: "orgDiagnosis" },
+  { href: "/org/setup", labelKey: "forOrganizations" },
 ];
 
 function filterNavLinks<T extends { capability: CapabilityId; href: string; labelKey: PrepareLabelKey }>(

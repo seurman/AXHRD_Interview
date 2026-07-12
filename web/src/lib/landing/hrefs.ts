@@ -22,7 +22,12 @@ export function landingProductHref(key: LandingProductKey, _trialOnly?: boolean)
 }
 
 export function landingStartHref(loggedIn: boolean, trialOnly: boolean): string {
-  if (!loggedIn) return "/auth/register";
-  if (trialOnly) return "/demo";
+  if (!loggedIn) return "/auth/register?next=/interview/setup";
+  if (trialOnly) return "/demo#trial";
   return "/dashboard";
+}
+
+/** 랜딩 — 1문항 맛보기 (가입 벽 없이 /demo로 직행) */
+export function landingDemoHref(_loggedIn: boolean): string {
+  return "/demo#trial";
 }

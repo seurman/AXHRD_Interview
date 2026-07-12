@@ -1761,10 +1761,10 @@
       "externalId": "GR-L2-004",
       "competency": "GROWTH",
       "level": 2,
-      "template": "피드백을 받고 행동을 바꿨던 구체적인 경험을 말씀해 주세요.",
+      "template": "실수나 부족한 점을 지적받았을 때 방어적으로 반응하지 않고 그대로 받아들였던 경험이 있나요?",
       "followUpHints": [
-        "피드백",
-        "변화"
+        "수용",
+        "태도"
       ],
       "difficulty": -1,
       "discrimination": 1.05
@@ -1852,6 +1852,150 @@
       ],
       "difficulty": 1.95,
       "discrimination": 1.1
+    },
+    {
+      "externalId": "CORE-COMMUNICATION-EXT-01",
+      "competency": "COMMUNICATION",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "상대방이 이해하기 어려운 전문적인 내용을 쉽게 풀어서 설명해야 했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "전문 용어",
+        "쉬운 설명"
+      ]
+    },
+    {
+      "externalId": "CORE-COMMUNICATION-EXT-02",
+      "competency": "COMMUNICATION",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "의견 차이가 있는 상황에서 상대방의 말을 끝까지 경청한 후 오해를 해소했던 경험이 있나요?",
+      "followUpHints": [
+        "경청",
+        "오해 해소"
+      ]
+    },
+    {
+      "externalId": "CORE-PROBLEM_SOLVING-EXT-01",
+      "competency": "PROBLEM_SOLVING",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "문제의 원인을 정확히 파악하지 못한 채 성급하게 대응했다가 접근 방식을 바꾼 경험이 있나요?",
+      "followUpHints": [
+        "재진단",
+        "방향 전환"
+      ]
+    },
+    {
+      "externalId": "CORE-PROBLEM_SOLVING-EXT-02",
+      "competency": "PROBLEM_SOLVING",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.1,
+      "template": "제한된 시간과 자원 안에서 창의적인 방법으로 문제를 해결했던 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "제약",
+        "창의적 해법"
+      ]
+    },
+    {
+      "externalId": "CORE-JOB_FIT-EXT-01",
+      "competency": "JOB_FIT",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "지원 직무와 관련된 지식이나 기술을 독학이나 실무 경험을 통해 습득한 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "자기주도 학습",
+        "적용"
+      ]
+    },
+    {
+      "externalId": "CORE-JOB_FIT-EXT-02",
+      "competency": "JOB_FIT",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "본인의 전문성이 실제 업무 성과로 이어졌던 구체적인 경험이 있나요?",
+      "followUpHints": [
+        "전문성",
+        "성과 연결"
+      ]
+    },
+    {
+      "externalId": "CORE-ORG_FIT-EXT-01",
+      "competency": "ORG_FIT",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "본인의 가치관과 조직(팀)의 방향이 다를 때 어떻게 조율했는지 말씀해 주세요.",
+      "followUpHints": [
+        "가치관 차이",
+        "조율"
+      ]
+    },
+    {
+      "externalId": "CORE-ORG_FIT-EXT-02",
+      "competency": "ORG_FIT",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "새로운 환경이나 조직 문화에 빠르게 적응했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "적응",
+        "속도"
+      ]
+    },
+    {
+      "externalId": "CORE-LEADERSHIP-EXT-01",
+      "competency": "LEADERSHIP",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "의견이 갈리는 팀원들을 하나의 방향으로 이끌었던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "의견 조율",
+        "방향 제시"
+      ]
+    },
+    {
+      "externalId": "CORE-LEADERSHIP-EXT-02",
+      "competency": "LEADERSHIP",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.1,
+      "template": "공식적인 권한이 없는 상황에서도 주도적으로 팀을 이끌었던 사례가 있나요?",
+      "followUpHints": [
+        "비공식 리더십",
+        "주도성"
+      ]
+    },
+    {
+      "externalId": "CORE-GROWTH-EXT-01",
+      "competency": "GROWTH",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "실패나 실수를 통해 배운 점을 이후 업무에 어떻게 적용했는지 말씀해 주세요.",
+      "followUpHints": [
+        "실패",
+        "적용"
+      ]
+    },
+    {
+      "externalId": "CORE-GROWTH-EXT-02",
+      "competency": "GROWTH",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "스스로 부족한 부분을 인지하고 개선하기 위해 노력한 구체적인 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "자기 인식",
+        "개선 노력"
+      ]
     }
   ]
 }

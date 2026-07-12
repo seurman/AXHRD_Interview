@@ -154,17 +154,17 @@ export default async function DashboardPage() {
 
       {full.sessions.length === 0 && !strengthDeck ? (
         <div className="card-luxe border-dashed p-12 text-center text-muted">
-          <p className="text-4xl">🚀</p>
-          <p className="mt-4 font-medium text-foreground">커리어 성장 여정을 시작해 보세요</p>
+          <p className="text-4xl">🎤</p>
+          <p className="mt-4 font-medium text-foreground">첫 모의 면접으로 역량 기록을 시작하세요</p>
           <p className="mt-2 text-sm">
-            자기발견으로 강점 카드를 모으고, IRT 면접으로 역량을 증명하세요.
+            맛보기에서 피드백을 받으셨다면, 음성 면접으로 이어가 보세요.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/discover" className="rounded-xl bg-gold px-5 py-2.5 text-sm font-medium text-white">
-              나를 발견하기
+            <Link href="/interview/setup" className="rounded-xl bg-gold px-5 py-2.5 text-sm font-medium text-white">
+              음성 면접 시작
             </Link>
-            <Link href="/interview/setup" className="rounded-xl border border-card-border px-5 py-2.5 text-sm font-medium">
-              모의 면접 시작
+            <Link href="/demo#trial" className="rounded-xl border border-card-border px-5 py-2.5 text-sm font-medium">
+              1문항 맛보기
             </Link>
           </div>
         </div>

@@ -23,68 +23,821 @@
     }
   ],
   "questions": [
-    {"externalId":"NUM-L1-001","competency":"NCS_NUMERACY","level":1,"difficulty":-2,"discrimination":1,"template":"업무나 학교에서 숫자·자료를 확인해야 했던 경험을 말씀해 주세요.","followUpHints":["상황","확인 방법"]},
-    {"externalId":"NUM-L1-002","competency":"NCS_NUMERACY","level":1,"difficulty":-1.9,"discrimination":1.05,"template":"간단한 비율이나 증감을 설명해야 했던 경험이 있나요?","followUpHints":["비율","설명"]},
-    {"externalId":"NUM-L1-003","competency":"NCS_NUMERACY","level":1,"difficulty":-1.85,"discrimination":1,"template":"표나 목록에서 필요한 수치를 찾아본 경험을 말씀해 주세요.","followUpHints":["자료","활용"]},
-    {"externalId":"NUM-L2-001","competency":"NCS_NUMERACY","level":2,"difficulty":-1,"discrimination":1.1,"template":"데이터나 수치를 보고 이상 징후를 발견했던 경험이 있나요?","followUpHints":["데이터","이상 징후"]},
-    {"externalId":"NUM-L2-002","competency":"NCS_NUMERACY","level":2,"difficulty":-0.95,"discrimination":1.05,"template":"예산·일정·수량 등을 대략 추정해 계획에 반영했던 사례를 말씀해 주세요.","followUpHints":["추정","계획"]},
-    {"externalId":"NUM-L2-003","competency":"NCS_NUMERACY","level":2,"difficulty":-0.9,"discrimination":1.1,"template":"그래프·통계 자료를 읽고 팀에 설명했던 경험이 있나요?","followUpHints":["자료","전달"]},
-    {"externalId":"NUM-L3-001","competency":"NCS_NUMERACY","level":3,"difficulty":0,"discrimination":1.15,"template":"여러 수치를 비교·분석해 의사결정에 활용했던 경험을 구체적으로 말씀해 주세요.","followUpHints":["비교","결정"]},
-    {"externalId":"NUM-L3-002","competency":"NCS_NUMERACY","level":3,"difficulty":0.05,"discrimination":1.1,"template":"성과 지표(KPI)를 설정하거나 추적했던 경험이 있나요?","followUpHints":["지표","추적"]},
-    {"externalId":"NUM-L3-003","competency":"NCS_NUMERACY","level":3,"difficulty":0.1,"discrimination":1.15,"template":"수치 오류나 계산 실수를 발견하고 바로잡았던 사례를 말씀해 주세요.","followUpHints":["오류","조치"]},
-    {"externalId":"NUM-L4-001","competency":"NCS_NUMERACY","level":4,"difficulty":1,"discrimination":1.1,"template":"복잡한 데이터를 모델링하거나 시나리오별 수치를 비교해 제안했던 경험이 있나요?","followUpHints":["시나리오","제안"]},
-    {"externalId":"NUM-L4-002","competency":"NCS_NUMERACY","level":4,"difficulty":1.05,"discrimination":1.15,"template":"불확실한 수치 환경에서 합리적 가정을 세우고 의사결정을 한 사례를 말씀해 주세요.","followUpHints":["가정","결정"]},
-    {"externalId":"NUM-L4-003","competency":"NCS_NUMERACY","level":4,"difficulty":1.1,"discrimination":1.1,"template":"데이터 분석 결과를 경영진·고객에게 설득력 있게 전달했던 경험이 있나요?","followUpHints":["분석","설득"]},
-    {"externalId":"NUM-L5-001","competency":"NCS_NUMERACY","level":5,"difficulty":2,"discrimination":1.15,"template":"조직 차원의 지표 체계를 설계하거나 개선했던 경험이 있다면 말씀해 주세요.","followUpHints":["지표 체계","개선"]},
-    {"externalId":"NUM-L5-002","competency":"NCS_NUMERACY","level":5,"difficulty":1.95,"discrimination":1.1,"template":"정량 분석이 전략·투자 결정에 실질적 영향을 준 사례를 말씀해 주세요.","followUpHints":["전략","영향"]},
-    {"externalId":"NUM-L5-003","competency":"NCS_NUMERACY","level":5,"difficulty":2.05,"discrimination":1.15,"template":"데이터 리터러시를 팀에 확산시키기 위해 교육·프로세스를 만든 경험이 있나요?","followUpHints":["교육","프로세스"]},
-
-    {"externalId":"INF-L1-001","competency":"NCS_INFORMATION","level":1,"difficulty":-2,"discrimination":1,"template":"업무에 필요한 정보를 찾아본 경험을 말씀해 주세요.","followUpHints":["정보","출처"]},
-    {"externalId":"INF-L1-002","competency":"NCS_INFORMATION","level":1,"difficulty":-1.9,"discrimination":1.05,"template":"받은 정보가 맞는지 간단히 확인했던 사례가 있나요?","followUpHints":["확인","방법"]},
-    {"externalId":"INF-L1-003","competency":"NCS_INFORMATION","level":1,"difficulty":-1.85,"discrimination":1,"template":"문서나 자료를 정리해 두었다가 다시 활용했던 경험을 말씀해 주세요.","followUpHints":["정리","재활용"]},
-    {"externalId":"INF-L2-001","competency":"NCS_INFORMATION","level":2,"difficulty":-1,"discrimination":1.1,"template":"여러 출처의 정보를 비교해 신뢰할 수 있는 내용을 골랐던 경험이 있나요?","followUpHints":["출처","비교"]},
-    {"externalId":"INF-L2-002","competency":"NCS_INFORMATION","level":2,"difficulty":-0.95,"discrimination":1.05,"template":"검색·조사를 통해 업무 문제 해결에 필요한 정보를 모았던 사례를 말씀해 주세요.","followUpHints":["조사","활용"]},
-    {"externalId":"INF-L2-003","competency":"NCS_INFORMATION","level":2,"difficulty":-0.9,"discrimination":1.1,"template":"정보를 요약해 동료나 상사에게 공유했던 경험이 있나요?","followUpHints":["요약","공유"]},
-    {"externalId":"INF-L3-001","competency":"NCS_INFORMATION","level":3,"difficulty":0,"discrimination":1.15,"template":"정보의 정확성·최신성을 검증한 뒤 의사결정에 반영했던 경험을 구체적으로 말씀해 주세요.","followUpHints":["검증","결정"]},
-    {"externalId":"INF-L3-002","competency":"NCS_INFORMATION","level":3,"difficulty":0.05,"discrimination":1.1,"template":"대량의 자료에서 핵심 인사이트를 도출했던 사례가 있나요?","followUpHints":["자료","인사이트"]},
-    {"externalId":"INF-L3-003","competency":"NCS_INFORMATION","level":3,"difficulty":0.1,"discrimination":1.15,"template":"잘못된 정보나 루머가 퍼지지 않도록 조치했던 경험을 말씀해 주세요.","followUpHints":["오정보","조치"]},
-    {"externalId":"INF-L4-001","competency":"NCS_INFORMATION","level":4,"difficulty":1,"discrimination":1.1,"template":"정보 체계(위키·DB·리포지토리 등)를 만들거나 개선했던 경험이 있나요?","followUpHints":["체계","개선"]},
-    {"externalId":"INF-L4-002","competency":"NCS_INFORMATION","level":4,"difficulty":1.05,"discrimination":1.15,"template":"민감 정보와 공개 가능 정보를 구분해 관리했던 사례를 말씀해 주세요.","followUpHints":["민감정보","관리"]},
-    {"externalId":"INF-L4-003","competency":"NCS_INFORMATION","level":4,"difficulty":1.1,"discrimination":1.1,"template":"외부·시장 정보를 분석해 사업·전략 제안에 연결했던 경험이 있나요?","followUpHints":["시장","제안"]},
-    {"externalId":"INF-L5-001","competency":"NCS_INFORMATION","level":5,"difficulty":2,"discrimination":1.15,"template":"조직의 정보 거버넌스·지식관리 방침을 수립하거나 운영했던 경험이 있다면 말씀해 주세요.","followUpHints":["거버넌스","운영"]},
-    {"externalId":"INF-L5-002","competency":"NCS_INFORMATION","level":5,"difficulty":1.95,"discrimination":1.1,"template":"데이터 기반 의사결정 문화를 정착시키기 위해 리드했던 사례를 말씀해 주세요.","followUpHints":["데이터","문화"]},
-    {"externalId":"INF-L5-003","competency":"NCS_INFORMATION","level":5,"difficulty":2.05,"discrimination":1.15,"template":"정보 환각·편향을 줄이기 위한 검증 프로세스를 도입했던 경험이 있나요?","followUpHints":["검증","프로세스"]},
-
-    {"externalId":"TEC-L1-001","competency":"NCS_TECHNOLOGY","level":1,"difficulty":-2,"discrimination":1,"template":"업무나 학습에 디지털 도구·프로그램을 사용했던 경험을 말씀해 주세요.","followUpHints":["도구","용도"]},
-    {"externalId":"TEC-L1-002","competency":"NCS_TECHNOLOGY","level":1,"difficulty":-1.9,"discrimination":1.05,"template":"새로운 툴이나 기능을 배워 업무에 적용해 본 적이 있나요?","followUpHints":["학습","적용"]},
-    {"externalId":"TEC-L1-003","competency":"NCS_TECHNOLOGY","level":1,"difficulty":-1.85,"discrimination":1,"template":"기술·도구 사용 중 막혔을 때 어떻게 해결했는지 말씀해 주세요.","followUpHints":["문제","해결"]},
-    {"externalId":"TEC-L2-001","competency":"NCS_TECHNOLOGY","level":2,"difficulty":-1,"discrimination":1.1,"template":"과제에 맞는 도구나 기술을 선택한 근거를 설명할 수 있는 사례가 있나요?","followUpHints":["선택","근거"]},
-    {"externalId":"TEC-L2-002","competency":"NCS_TECHNOLOGY","level":2,"difficulty":-0.95,"discrimination":1.05,"template":"자동화·템플릿·매크로 등으로 반복 업무를 줄였던 경험을 말씀해 주세요.","followUpHints":["자동화","효과"]},
-    {"externalId":"TEC-L2-003","competency":"NCS_TECHNOLOGY","level":2,"difficulty":-0.9,"discrimination":1.1,"template":"동료에게 도구 사용법을 알려준 경험이 있나요?","followUpHints":["교육","도구"]},
-    {"externalId":"TEC-L3-001","competency":"NCS_TECHNOLOGY","level":3,"difficulty":0,"discrimination":1.15,"template":"기술·도구를 도입해 업무 품질이나 속도를 개선했던 사례를 구체적으로 말씀해 주세요.","followUpHints":["도입","성과"]},
-    {"externalId":"TEC-L3-002","competency":"NCS_TECHNOLOGY","level":3,"difficulty":0.05,"discrimination":1.1,"template":"시스템 오류나 장애 발생 시 원인을 파악하고 대응했던 경험이 있나요?","followUpHints":["장애","대응"]},
-    {"externalId":"TEC-L3-003","competency":"NCS_TECHNOLOGY","level":3,"difficulty":0.1,"discrimination":1.15,"template":"보안·개인정보를 고려해 기술을 사용했던 사례를 말씀해 주세요.","followUpHints":["보안","준수"]},
-    {"externalId":"TEC-L4-001","competency":"NCS_TECHNOLOGY","level":4,"difficulty":1,"discrimination":1.1,"template":"여러 기술 옵션을 비교·평가해 팀·조직 차원의 선택을 이끈 경험이 있나요?","followUpHints":["비교","선택"]},
-    {"externalId":"TEC-L4-002","competency":"NCS_TECHNOLOGY","level":4,"difficulty":1.05,"discrimination":1.15,"template":"레거시 방식에서 새 기술 스택으로 전환을 지원했던 사례를 말씀해 주세요.","followUpHints":["전환","지원"]},
-    {"externalId":"TEC-L4-003","competency":"NCS_TECHNOLOGY","level":4,"difficulty":1.1,"discrimination":1.1,"template":"AI·데이터 도구를 업무에 안전하고 효과적으로 붙였던 경험이 있나요?","followUpHints":["AI","효과"]},
-    {"externalId":"TEC-L5-001","competency":"NCS_TECHNOLOGY","level":5,"difficulty":2,"discrimination":1.15,"template":"기술 로드맵이나 디지털 전환 이니셔티브에 기여했던 경험이 있다면 말씀해 주세요.","followUpHints":["로드맵","기여"]},
-    {"externalId":"TEC-L5-002","competency":"NCS_TECHNOLOGY","level":5,"difficulty":1.95,"discrimination":1.1,"template":"기술 도입이 조직 성과·고객 가치로 연결된 사례를 말씀해 주세요.","followUpHints":["성과","가치"]},
-    {"externalId":"TEC-L5-003","competency":"NCS_TECHNOLOGY","level":5,"difficulty":2.05,"discrimination":1.15,"template":"기술 윤리·접근성·지속가능성을 고려한 의사결정을 한 경험이 있나요?","followUpHints":["윤리","결정"]},
-
-    {"externalId":"RES-L1-001","competency":"NCS_RESOURCE","level":1,"difficulty":-2,"discrimination":1,"template":"할 일의 우선순위를 정해 본 경험을 말씀해 주세요.","followUpHints":["우선순위","방법"]},
-    {"externalId":"RES-L1-002","competency":"NCS_RESOURCE","level":1,"difficulty":-1.9,"discrimination":1.05,"template":"제한된 시간 안에 과제를 마쳐야 했던 경험이 있나요?","followUpHints":["시간","완료"]},
-    {"externalId":"RES-L1-003","competency":"NCS_RESOURCE","level":1,"difficulty":-1.85,"discrimination":1,"template":"예산이나 물품을 아껴 쓰려고 노력했던 사례를 말씀해 주세요.","followUpHints":["절약","노력"]},
-    {"externalId":"RES-L2-001","competency":"NCS_RESOURCE","level":2,"difficulty":-1,"discrimination":1.1,"template":"주간·월간 일정을 계획해 실행했던 경험이 있나요?","followUpHints":["계획","실행"]},
-    {"externalId":"RES-L2-002","competency":"NCS_RESOURCE","level":2,"difficulty":-0.95,"discrimination":1.05,"template":"팀 일정이 겹칠 때 조율했던 사례를 말씀해 주세요.","followUpHints":["일정","조율"]},
-    {"externalId":"RES-L2-003","competency":"NCS_RESOURCE","level":2,"difficulty":-0.9,"discrimination":1.1,"template":"인력·도구가 부족할 때 대안을 찾았던 경험이 있나요?","followUpHints":["부족","대안"]},
-    {"externalId":"RES-L3-001","competency":"NCS_RESOURCE","level":3,"difficulty":0,"discrimination":1.15,"template":"프로젝트 예산·인력·일정을 계획하고 추적했던 경험을 구체적으로 말씀해 주세요.","followUpHints":["예산","추적"]},
-    {"externalId":"RES-L3-002","competency":"NCS_RESOURCE","level":3,"difficulty":0.05,"discrimination":1.1,"template":"자원 제약 속에서 트레이드오프를 설명하며 의사결정한 사례가 있나요?","followUpHints":["제약","트레이드오프"]},
-    {"externalId":"RES-L3-003","competency":"NCS_RESOURCE","level":3,"difficulty":0.1,"discrimination":1.15,"template":"낭비·중복 업무를 줄이기 위해 프로세스를 개선했던 경험을 말씀해 주세요.","followUpHints":["낭비","개선"]},
-    {"externalId":"RES-L4-001","competency":"NCS_RESOURCE","level":4,"difficulty":1,"discrimination":1.1,"template":"여러 프로젝트의 자원을 배분·재배치해 전체 성과를 높였던 사례가 있나요?","followUpHints":["배분","성과"]},
-    {"externalId":"RES-L4-002","competency":"NCS_RESOURCE","level":4,"difficulty":1.05,"discrimination":1.15,"template":"외주·협력사·내부 인력을 조합해 최적의 팀을 구성했던 경험을 말씀해 주세요.","followUpHints":["팀 구성","최적화"]},
-    {"externalId":"RES-L4-003","competency":"NCS_RESOURCE","level":4,"difficulty":1.1,"discrimination":1.1,"template":"위기 상황에서 자원을 재편해 목표를 지켰던 사례를 말씀해 주세요.","followUpHints":["위기","재편"]},
-    {"externalId":"RES-L5-001","competency":"NCS_RESOURCE","level":5,"difficulty":2,"discrimination":1.15,"template":"조직 차원의 자원 배분 원칙·프레임워크를 수립하거나 개선했던 경험이 있다면 말씀해 주세요.","followUpHints":["원칙","개선"]},
-    {"externalId":"RES-L5-002","competency":"NCS_RESOURCE","level":5,"difficulty":1.95,"discrimination":1.1,"template":"장기 투자 대비 단기 성과의 균형을 맞춘 의사결정 사례를 말씀해 주세요.","followUpHints":["균형","투자"]},
-    {"externalId":"RES-L5-003","competency":"NCS_RESOURCE","level":5,"difficulty":2.05,"discrimination":1.15,"template":"지속 가능한 자원 운용(인력 번아웃·예산 효율)을 조직에 정착시킨 경험이 있나요?","followUpHints":["지속가능","정착"]}
+    {
+      "externalId": "NUM-L1-001",
+      "competency": "NCS_NUMERACY",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "업무나 학교에서 숫자·자료를 확인해야 했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "상황",
+        "확인 방법"
+      ]
+    },
+    {
+      "externalId": "NUM-L1-002",
+      "competency": "NCS_NUMERACY",
+      "level": 1,
+      "difficulty": -1.9,
+      "discrimination": 1.05,
+      "template": "간단한 비율이나 증감을 설명해야 했던 경험이 있나요?",
+      "followUpHints": [
+        "비율",
+        "설명"
+      ]
+    },
+    {
+      "externalId": "NUM-L1-003",
+      "competency": "NCS_NUMERACY",
+      "level": 1,
+      "difficulty": -1.85,
+      "discrimination": 1,
+      "template": "표나 목록에서 필요한 수치를 찾아본 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "자료",
+        "활용"
+      ]
+    },
+    {
+      "externalId": "NUM-L2-001",
+      "competency": "NCS_NUMERACY",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "데이터나 수치를 보고 이상 징후를 발견했던 경험이 있나요?",
+      "followUpHints": [
+        "데이터",
+        "이상 징후"
+      ]
+    },
+    {
+      "externalId": "NUM-L2-002",
+      "competency": "NCS_NUMERACY",
+      "level": 2,
+      "difficulty": -0.95,
+      "discrimination": 1.05,
+      "template": "예산·일정·수량 등을 대략 추정해 계획에 반영했던 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "추정",
+        "계획"
+      ]
+    },
+    {
+      "externalId": "NUM-L2-003",
+      "competency": "NCS_NUMERACY",
+      "level": 2,
+      "difficulty": -0.9,
+      "discrimination": 1.1,
+      "template": "그래프·통계 자료를 읽고 팀에 설명했던 경험이 있나요?",
+      "followUpHints": [
+        "자료",
+        "전달"
+      ]
+    },
+    {
+      "externalId": "NUM-L3-001",
+      "competency": "NCS_NUMERACY",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.15,
+      "template": "여러 수치를 비교·분석해 의사결정에 활용했던 경험을 구체적으로 말씀해 주세요.",
+      "followUpHints": [
+        "비교",
+        "결정"
+      ]
+    },
+    {
+      "externalId": "NUM-L3-002",
+      "competency": "NCS_NUMERACY",
+      "level": 3,
+      "difficulty": 0.05,
+      "discrimination": 1.1,
+      "template": "성과 지표(KPI)를 설정하거나 추적했던 경험이 있나요?",
+      "followUpHints": [
+        "지표",
+        "추적"
+      ]
+    },
+    {
+      "externalId": "NUM-L3-003",
+      "competency": "NCS_NUMERACY",
+      "level": 3,
+      "difficulty": 0.1,
+      "discrimination": 1.15,
+      "template": "수치 오류나 계산 실수를 발견하고 바로잡았던 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "오류",
+        "조치"
+      ]
+    },
+    {
+      "externalId": "NUM-L4-001",
+      "competency": "NCS_NUMERACY",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.1,
+      "template": "복잡한 데이터를 모델링하거나 시나리오별 수치를 비교해 제안했던 경험이 있나요?",
+      "followUpHints": [
+        "시나리오",
+        "제안"
+      ]
+    },
+    {
+      "externalId": "NUM-L4-002",
+      "competency": "NCS_NUMERACY",
+      "level": 4,
+      "difficulty": 1.05,
+      "discrimination": 1.15,
+      "template": "불확실한 수치 환경에서 합리적 가정을 세우고 의사결정을 한 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "가정",
+        "결정"
+      ]
+    },
+    {
+      "externalId": "NUM-L4-003",
+      "competency": "NCS_NUMERACY",
+      "level": 4,
+      "difficulty": 1.1,
+      "discrimination": 1.1,
+      "template": "데이터 분석 결과를 경영진·고객에게 설득력 있게 전달했던 경험이 있나요?",
+      "followUpHints": [
+        "분석",
+        "설득"
+      ]
+    },
+    {
+      "externalId": "NUM-L5-001",
+      "competency": "NCS_NUMERACY",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "조직 차원의 지표 체계를 설계하거나 개선했던 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "지표 체계",
+        "개선"
+      ]
+    },
+    {
+      "externalId": "NUM-L5-002",
+      "competency": "NCS_NUMERACY",
+      "level": 5,
+      "difficulty": 1.95,
+      "discrimination": 1.1,
+      "template": "정량 분석이 전략·투자 결정에 실질적 영향을 준 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "전략",
+        "영향"
+      ]
+    },
+    {
+      "externalId": "NUM-L5-003",
+      "competency": "NCS_NUMERACY",
+      "level": 5,
+      "difficulty": 2.05,
+      "discrimination": 1.15,
+      "template": "데이터 리터러시를 팀에 확산시키기 위해 교육·프로세스를 만든 경험이 있나요?",
+      "followUpHints": [
+        "교육",
+        "프로세스"
+      ]
+    },
+    {
+      "externalId": "INF-L1-001",
+      "competency": "NCS_INFORMATION",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "업무에 필요한 정보를 찾아본 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "정보",
+        "출처"
+      ]
+    },
+    {
+      "externalId": "INF-L1-002",
+      "competency": "NCS_INFORMATION",
+      "level": 1,
+      "difficulty": -1.9,
+      "discrimination": 1.05,
+      "template": "받은 정보가 맞는지 간단히 확인했던 사례가 있나요?",
+      "followUpHints": [
+        "확인",
+        "방법"
+      ]
+    },
+    {
+      "externalId": "INF-L1-003",
+      "competency": "NCS_INFORMATION",
+      "level": 1,
+      "difficulty": -1.85,
+      "discrimination": 1,
+      "template": "문서나 자료를 정리해 두었다가 다시 활용했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "정리",
+        "재활용"
+      ]
+    },
+    {
+      "externalId": "INF-L2-001",
+      "competency": "NCS_INFORMATION",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "여러 출처의 정보를 비교해 신뢰할 수 있는 내용을 골랐던 경험이 있나요?",
+      "followUpHints": [
+        "출처",
+        "비교"
+      ]
+    },
+    {
+      "externalId": "INF-L2-002",
+      "competency": "NCS_INFORMATION",
+      "level": 2,
+      "difficulty": -0.95,
+      "discrimination": 1.05,
+      "template": "검색·조사를 통해 업무 문제 해결에 필요한 정보를 모았던 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "조사",
+        "활용"
+      ]
+    },
+    {
+      "externalId": "INF-L2-003",
+      "competency": "NCS_INFORMATION",
+      "level": 2,
+      "difficulty": -0.9,
+      "discrimination": 1.1,
+      "template": "정보를 요약해 동료나 상사에게 공유했던 경험이 있나요?",
+      "followUpHints": [
+        "요약",
+        "공유"
+      ]
+    },
+    {
+      "externalId": "INF-L3-001",
+      "competency": "NCS_INFORMATION",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.15,
+      "template": "정보의 정확성·최신성을 검증한 뒤 의사결정에 반영했던 경험을 구체적으로 말씀해 주세요.",
+      "followUpHints": [
+        "검증",
+        "결정"
+      ]
+    },
+    {
+      "externalId": "INF-L3-002",
+      "competency": "NCS_INFORMATION",
+      "level": 3,
+      "difficulty": 0.05,
+      "discrimination": 1.1,
+      "template": "대량의 자료에서 핵심 인사이트를 도출했던 사례가 있나요?",
+      "followUpHints": [
+        "자료",
+        "인사이트"
+      ]
+    },
+    {
+      "externalId": "INF-L3-003",
+      "competency": "NCS_INFORMATION",
+      "level": 3,
+      "difficulty": 0.1,
+      "discrimination": 1.15,
+      "template": "잘못된 정보나 루머가 퍼지지 않도록 조치했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "오정보",
+        "조치"
+      ]
+    },
+    {
+      "externalId": "INF-L4-001",
+      "competency": "NCS_INFORMATION",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.1,
+      "template": "정보 체계(위키·DB·리포지토리 등)를 만들거나 개선했던 경험이 있나요?",
+      "followUpHints": [
+        "체계",
+        "개선"
+      ]
+    },
+    {
+      "externalId": "INF-L4-002",
+      "competency": "NCS_INFORMATION",
+      "level": 4,
+      "difficulty": 1.05,
+      "discrimination": 1.15,
+      "template": "민감 정보와 공개 가능 정보를 구분해 관리했던 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "민감정보",
+        "관리"
+      ]
+    },
+    {
+      "externalId": "INF-L4-003",
+      "competency": "NCS_INFORMATION",
+      "level": 4,
+      "difficulty": 1.1,
+      "discrimination": 1.1,
+      "template": "외부·시장 정보를 분석해 사업·전략 제안에 연결했던 경험이 있나요?",
+      "followUpHints": [
+        "시장",
+        "제안"
+      ]
+    },
+    {
+      "externalId": "INF-L5-001",
+      "competency": "NCS_INFORMATION",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "조직의 정보 거버넌스·지식관리 방침을 수립하거나 운영했던 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "거버넌스",
+        "운영"
+      ]
+    },
+    {
+      "externalId": "INF-L5-002",
+      "competency": "NCS_INFORMATION",
+      "level": 5,
+      "difficulty": 1.95,
+      "discrimination": 1.1,
+      "template": "데이터 기반 의사결정 문화를 정착시키기 위해 리드했던 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "데이터",
+        "문화"
+      ]
+    },
+    {
+      "externalId": "INF-L5-003",
+      "competency": "NCS_INFORMATION",
+      "level": 5,
+      "difficulty": 2.05,
+      "discrimination": 1.15,
+      "template": "정보 환각·편향을 줄이기 위한 검증 프로세스를 도입했던 경험이 있나요?",
+      "followUpHints": [
+        "검증",
+        "프로세스"
+      ]
+    },
+    {
+      "externalId": "TEC-L1-001",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "업무나 학습에 디지털 도구·프로그램을 사용했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "도구",
+        "용도"
+      ]
+    },
+    {
+      "externalId": "TEC-L1-002",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 1,
+      "difficulty": -1.9,
+      "discrimination": 1.05,
+      "template": "새로운 툴이나 기능을 배워 업무에 적용해 본 적이 있나요?",
+      "followUpHints": [
+        "학습",
+        "적용"
+      ]
+    },
+    {
+      "externalId": "TEC-L1-003",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 1,
+      "difficulty": -1.85,
+      "discrimination": 1,
+      "template": "기술·도구 사용 중 막혔을 때 어떻게 해결했는지 말씀해 주세요.",
+      "followUpHints": [
+        "문제",
+        "해결"
+      ]
+    },
+    {
+      "externalId": "TEC-L2-001",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "과제에 맞는 도구나 기술을 선택한 근거를 설명할 수 있는 사례가 있나요?",
+      "followUpHints": [
+        "선택",
+        "근거"
+      ]
+    },
+    {
+      "externalId": "TEC-L2-002",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 2,
+      "difficulty": -0.95,
+      "discrimination": 1.05,
+      "template": "자동화·템플릿·매크로 등으로 반복 업무를 줄였던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "자동화",
+        "효과"
+      ]
+    },
+    {
+      "externalId": "TEC-L2-003",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 2,
+      "difficulty": -0.9,
+      "discrimination": 1.1,
+      "template": "동료에게 도구 사용법을 알려준 경험이 있나요?",
+      "followUpHints": [
+        "교육",
+        "도구"
+      ]
+    },
+    {
+      "externalId": "TEC-L3-001",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.15,
+      "template": "기술·도구를 도입해 업무 품질이나 속도를 개선했던 사례를 구체적으로 말씀해 주세요.",
+      "followUpHints": [
+        "도입",
+        "성과"
+      ]
+    },
+    {
+      "externalId": "TEC-L3-002",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 3,
+      "difficulty": 0.05,
+      "discrimination": 1.1,
+      "template": "시스템 오류나 장애 발생 시 원인을 파악하고 대응했던 경험이 있나요?",
+      "followUpHints": [
+        "장애",
+        "대응"
+      ]
+    },
+    {
+      "externalId": "TEC-L3-003",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 3,
+      "difficulty": 0.1,
+      "discrimination": 1.15,
+      "template": "보안·개인정보를 고려해 기술을 사용했던 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "보안",
+        "준수"
+      ]
+    },
+    {
+      "externalId": "TEC-L4-001",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.1,
+      "template": "여러 기술 옵션을 비교·평가해 팀·조직 차원의 선택을 이끈 경험이 있나요?",
+      "followUpHints": [
+        "비교",
+        "선택"
+      ]
+    },
+    {
+      "externalId": "TEC-L4-002",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 4,
+      "difficulty": 1.05,
+      "discrimination": 1.15,
+      "template": "레거시 방식에서 새 기술 스택으로 전환을 지원했던 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "전환",
+        "지원"
+      ]
+    },
+    {
+      "externalId": "TEC-L4-003",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 4,
+      "difficulty": 1.1,
+      "discrimination": 1.1,
+      "template": "AI·데이터 도구를 업무에 안전하고 효과적으로 붙였던 경험이 있나요?",
+      "followUpHints": [
+        "AI",
+        "효과"
+      ]
+    },
+    {
+      "externalId": "TEC-L5-001",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "기술 로드맵이나 디지털 전환 이니셔티브에 기여했던 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "로드맵",
+        "기여"
+      ]
+    },
+    {
+      "externalId": "TEC-L5-002",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 5,
+      "difficulty": 1.95,
+      "discrimination": 1.1,
+      "template": "기술 도입이 조직 성과·고객 가치로 연결된 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "성과",
+        "가치"
+      ]
+    },
+    {
+      "externalId": "TEC-L5-003",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 5,
+      "difficulty": 2.05,
+      "discrimination": 1.15,
+      "template": "기술 윤리·접근성·지속가능성을 고려한 의사결정을 한 경험이 있나요?",
+      "followUpHints": [
+        "윤리",
+        "결정"
+      ]
+    },
+    {
+      "externalId": "RES-L1-001",
+      "competency": "NCS_RESOURCE",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "할 일의 우선순위를 정해 본 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "우선순위",
+        "방법"
+      ]
+    },
+    {
+      "externalId": "RES-L1-002",
+      "competency": "NCS_RESOURCE",
+      "level": 1,
+      "difficulty": -1.9,
+      "discrimination": 1.05,
+      "template": "제한된 시간 안에 과제를 마쳐야 했던 경험이 있나요?",
+      "followUpHints": [
+        "시간",
+        "완료"
+      ]
+    },
+    {
+      "externalId": "RES-L1-003",
+      "competency": "NCS_RESOURCE",
+      "level": 1,
+      "difficulty": -1.85,
+      "discrimination": 1,
+      "template": "예산이나 물품을 아껴 쓰려고 노력했던 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "절약",
+        "노력"
+      ]
+    },
+    {
+      "externalId": "RES-L2-001",
+      "competency": "NCS_RESOURCE",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "주간·월간 일정을 계획해 실행했던 경험이 있나요?",
+      "followUpHints": [
+        "계획",
+        "실행"
+      ]
+    },
+    {
+      "externalId": "RES-L2-002",
+      "competency": "NCS_RESOURCE",
+      "level": 2,
+      "difficulty": -0.95,
+      "discrimination": 1.05,
+      "template": "팀 일정이 겹칠 때 조율했던 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "일정",
+        "조율"
+      ]
+    },
+    {
+      "externalId": "RES-L2-003",
+      "competency": "NCS_RESOURCE",
+      "level": 2,
+      "difficulty": -0.9,
+      "discrimination": 1.1,
+      "template": "인력·도구가 부족할 때 대안을 찾았던 경험이 있나요?",
+      "followUpHints": [
+        "부족",
+        "대안"
+      ]
+    },
+    {
+      "externalId": "RES-L3-001",
+      "competency": "NCS_RESOURCE",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.15,
+      "template": "프로젝트 예산·인력·일정을 계획하고 추적했던 경험을 구체적으로 말씀해 주세요.",
+      "followUpHints": [
+        "예산",
+        "추적"
+      ]
+    },
+    {
+      "externalId": "RES-L3-002",
+      "competency": "NCS_RESOURCE",
+      "level": 3,
+      "difficulty": 0.05,
+      "discrimination": 1.1,
+      "template": "자원 제약 속에서 트레이드오프를 설명하며 의사결정한 사례가 있나요?",
+      "followUpHints": [
+        "제약",
+        "트레이드오프"
+      ]
+    },
+    {
+      "externalId": "RES-L3-003",
+      "competency": "NCS_RESOURCE",
+      "level": 3,
+      "difficulty": 0.1,
+      "discrimination": 1.15,
+      "template": "낭비·중복 업무를 줄이기 위해 프로세스를 개선했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "낭비",
+        "개선"
+      ]
+    },
+    {
+      "externalId": "RES-L4-001",
+      "competency": "NCS_RESOURCE",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.1,
+      "template": "여러 프로젝트의 자원을 배분·재배치해 전체 성과를 높였던 사례가 있나요?",
+      "followUpHints": [
+        "배분",
+        "성과"
+      ]
+    },
+    {
+      "externalId": "RES-L4-002",
+      "competency": "NCS_RESOURCE",
+      "level": 4,
+      "difficulty": 1.05,
+      "discrimination": 1.15,
+      "template": "외주·협력사·내부 인력을 조합해 최적의 팀을 구성했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "팀 구성",
+        "최적화"
+      ]
+    },
+    {
+      "externalId": "RES-L4-003",
+      "competency": "NCS_RESOURCE",
+      "level": 4,
+      "difficulty": 1.1,
+      "discrimination": 1.1,
+      "template": "위기 상황에서 자원을 재편해 목표를 지켰던 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "위기",
+        "재편"
+      ]
+    },
+    {
+      "externalId": "RES-L5-001",
+      "competency": "NCS_RESOURCE",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "조직 차원의 자원 배분 원칙·프레임워크를 수립하거나 개선했던 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "원칙",
+        "개선"
+      ]
+    },
+    {
+      "externalId": "RES-L5-002",
+      "competency": "NCS_RESOURCE",
+      "level": 5,
+      "difficulty": 1.95,
+      "discrimination": 1.1,
+      "template": "장기 투자 대비 단기 성과의 균형을 맞춘 의사결정 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "균형",
+        "투자"
+      ]
+    },
+    {
+      "externalId": "RES-L5-003",
+      "competency": "NCS_RESOURCE",
+      "level": 5,
+      "difficulty": 2.05,
+      "discrimination": 1.15,
+      "template": "지속 가능한 자원 운용(인력 번아웃·예산 효율)을 조직에 정착시킨 경험이 있나요?",
+      "followUpHints": [
+        "지속가능",
+        "정착"
+      ]
+    },
+    {
+      "externalId": "EXT2-NCS_NUMERACY-EXT-01",
+      "competency": "NCS_NUMERACY",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "정량적 데이터에 근거해 기존의 판단이나 결정을 뒤집었던 경험이 있나요?",
+      "followUpHints": [
+        "데이터 근거",
+        "판단 변경"
+      ]
+    },
+    {
+      "externalId": "EXT2-NCS_NUMERACY-EXT-02",
+      "competency": "NCS_NUMERACY",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "통계나 계산 오류를 발견하고 바로잡았던 경험이 있나요?",
+      "followUpHints": [
+        "오류 발견",
+        "수정"
+      ]
+    },
+    {
+      "externalId": "EXT2-NCS_INFORMATION-EXT-01",
+      "competency": "NCS_INFORMATION",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "필요한 정보를 찾기 위해 여러 자료나 시스템을 비교·활용했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "다중 출처",
+        "비교"
+      ]
+    },
+    {
+      "externalId": "EXT2-NCS_INFORMATION-EXT-02",
+      "competency": "NCS_INFORMATION",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "정보의 신뢰성을 판단하기 위해 사실 확인을 했던 구체적인 사례가 있나요?",
+      "followUpHints": [
+        "신뢰성 검증",
+        "사실 확인"
+      ]
+    },
+    {
+      "externalId": "EXT2-NCS_TECHNOLOGY-EXT-01",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "새로운 도구나 기술을 빠르게 익혀 업무에 적용했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "신기술 습득",
+        "적용"
+      ]
+    },
+    {
+      "externalId": "EXT2-NCS_TECHNOLOGY-EXT-02",
+      "competency": "NCS_TECHNOLOGY",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "기술적 문제가 발생했을 때 스스로 해결했던 경험이 있나요?",
+      "followUpHints": [
+        "문제 발생",
+        "자체 해결"
+      ]
+    },
+    {
+      "externalId": "EXT2-NCS_RESOURCE-EXT-01",
+      "competency": "NCS_RESOURCE",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "한정된 예산이나 인력으로 목표를 달성해야 했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "제약",
+        "목표 달성"
+      ]
+    },
+    {
+      "externalId": "EXT2-NCS_RESOURCE-EXT-02",
+      "competency": "NCS_RESOURCE",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "일정 관리에 실패할 뻔했던 상황을 어떻게 극복했는지 말씀해 주세요.",
+      "followUpHints": [
+        "일정 리스크",
+        "극복"
+      ]
+    }
   ]
 }

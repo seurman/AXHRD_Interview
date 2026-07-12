@@ -1,0 +1,238 @@
+/* AppHeader + body integration for marketing homepage */
+
+body.ax-home-page {
+  background: var(--cream-100) !important;
+  color: var(--ink-900);
+  word-break: keep-all;
+}
+
+html.dark body.ax-home-page {
+  background: var(--cream-100) !important;
+  color: var(--ink-900);
+}
+
+body.ax-home-page .header-premium {
+  background: rgb(251 247 241 / 0.94);
+  border-bottom: 1px solid var(--ink-200);
+  backdrop-filter: blur(14px);
+}
+
+body.ax-home-page .header-premium .axhrd-logo {
+  color: var(--ink-900);
+}
+
+body.ax-home-page .header-premium .nav-pill,
+body.ax-home-page .header-premium .user-greeting,
+body.ax-home-page .header-premium .lang-switch button {
+  color: var(--ink-700) !important;
+}
+
+body.ax-home-page .header-premium .nav-pill {
+  border-color: var(--ink-200);
+}
+
+body.ax-home-page .header-premium .nav-pill:hover,
+body.ax-home-page .header-premium .nav-pill-active {
+  border-color: var(--coral-500);
+  background: rgb(214 74 44 / 0.08);
+  color: var(--coral-600) !important;
+}
+
+body.ax-home-page .header-premium .nav-pill-gold {
+  background: var(--coral-500);
+  border-color: var(--coral-500);
+  color: #fff !important;
+}
+
+body.ax-home-page .header-premium .nav-pill-gold:hover {
+  background: var(--coral-600);
+}
+
+body.ax-home-page .header-premium .lang-switch {
+  border-color: var(--ink-200);
+  background: rgb(255 255 255 / 0.55);
+}
+
+/* 푸터 — 미구현 Company/Support 링크 숨김 */
+body.ax-home-page .ax-home footer .foot-cols .foot-col:nth-child(n + 3) {
+  display: none;
+}
+
+body.ax-home-page .ax-home footer .foot-cols {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+body.ax-home-page .ax-home .copy {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 24px 32px 40px;
+}
+
+/* Hero headline — responsive clamp (handoff 108px is desktop-only) */
+body.ax-home-page .ax-home .hero h1 {
+  font-size: clamp(2.5rem, 7vw, 6.75rem);
+  line-height: 0.95;
+}
+
+body.ax-home-page .ax-home .sec-title {
+  font-size: clamp(1.75rem, 4vw, 3.75rem);
+}
+
+body.ax-home-page .ax-home .aud-left h3 {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+/* ─── Conversion polish ─── */
+
+body.ax-home-page .ax-home .hero-micro {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--ink-500);
+  line-height: 1.5;
+}
+
+body.ax-home-page .ax-home .hero-micro .price-link {
+  color: var(--coral-600);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+body.ax-home-page .ax-home .hero-secondary-link {
+  margin-top: 10px;
+}
+
+body.ax-home-page .ax-home .hero-ctas {
+  flex-wrap: wrap;
+}
+
+body.ax-home-page .ax-home .term-muted {
+  font-size: 0.85em;
+  color: var(--ink-400);
+  font-weight: 500;
+}
+
+body.ax-home-page .ax-home .proof-trust .proof-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  opacity: 1;
+}
+
+body.ax-home-page .ax-home .proof-trust .proof-pills span {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--ink-200);
+  background: var(--cream-50);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-700);
+}
+
+body.ax-home-page .ax-home .pricing-strip {
+  padding: 56px 0;
+  border-top: 1px solid var(--ink-200);
+  border-bottom: 1px solid var(--ink-200);
+  background: var(--cream-50);
+}
+
+body.ax-home-page .ax-home .pricing-strip-inner {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 40px;
+  align-items: end;
+}
+
+body.ax-home-page .ax-home .pricing-strip-title {
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  margin-top: 12px;
+}
+
+body.ax-home-page .ax-home .pricing-strip-copy {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ink-500);
+  margin-bottom: 16px;
+}
+
+body.ax-home-page .ax-home .pricing-strip-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+body.ax-home-page .ax-home .problem-outro-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+body.ax-home-page .ax-home .aud-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+body.ax-home-page .ax-home .testimony-value .quote-author {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-500);
+}
+
+@media (max-width: 960px) {
+  body.ax-home-page .ax-home .hero {
+    padding-top: 48px;
+  }
+
+  body.ax-home-page .ax-home .hero-preview {
+    margin-top: 40px;
+  }
+
+  body.ax-home-page .ax-home .preview-body {
+    min-height: 0;
+    grid-template-columns: 1fr;
+    padding: 20px;
+    gap: 20px;
+  }
+
+  body.ax-home-page .ax-home .prev-score .n {
+    font-size: 42px;
+  }
+
+  body.ax-home-page .ax-home .proof-trust {
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  body.ax-home-page .ax-home .pricing-strip-inner {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  body.ax-home-page .ax-home .problem-outro {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  body.ax-home-page .ax-home .hero-ctas .btn-lg {
+    width: 100%;
+    justify-content: center;
+  }
+
+  body.ax-home-page .ax-home .aud-cta-row .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

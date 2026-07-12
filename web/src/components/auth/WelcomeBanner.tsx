@@ -3,7 +3,12 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, X } from "lucide-react";
 
-export function WelcomeBanner() {
+type WelcomeBannerProps = {
+  /** 닫기 시 이동할 경로 (쿼리 제거용) */
+  dismissHref?: string;
+};
+
+export function WelcomeBanner({ dismissHref = "/dashboard" }: WelcomeBannerProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const welcome = searchParams.get("welcome") === "1";
@@ -12,7 +17,7 @@ export function WelcomeBanner() {
   if (!welcome) return null;
 
   const dismiss = () => {
-    router.replace("/dashboard");
+    router.replace(dismissHref);
   };
 
   return (
@@ -26,7 +31,7 @@ export function WelcomeBanner() {
           {name ? `${name}님, ` : ""}회원가입을 환영합니다!
         </p>
         <p className="mt-0.5 text-muted">
-          첫 모의 면접을 시작하면 역량 기록이 자동으로 저장됩니다.
+          아래에서 산업·직무를 고르고 첫 모의 면접을 시작해 보세요. 역량 기록이 자동으로 저장됩니다.
         </p>
       </div>
       <button

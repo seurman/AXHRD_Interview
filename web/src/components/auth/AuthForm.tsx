@@ -14,7 +14,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const { dict } = useI18n();
   const a = dict.auth;
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/demo";
+  const next = searchParams.get("next") ?? "/interview/setup";
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
