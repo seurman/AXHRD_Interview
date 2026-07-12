@@ -36,6 +36,12 @@ import {
 } from "@/lib/interview/session-limits";
 import { generateJdBonusQuestion } from "@/lib/interview/jd-bonus-question";
 import { parseJdRequirements } from "@/lib/company/jd-mapper";
+import {
+  averageDimensions,
+  normalizeAnswerDimensions,
+  normalizeCompetencyDimensions,
+  type AnswerDimensions,
+} from "@/lib/interview/answer-dimensions";
 import type { CompetencyState, ItemParams, InterviewQuestion } from "@/types";
 
 type SessionWithRelations = Prisma.InterviewSessionGetPayload<{
@@ -428,6 +434,7 @@ async function handleRespond(req: Request, userId: string) {
           level: question.level,
           transcript: finalTranscript,
           correctedTranscript: finalCorrectedTranscript,
+          dimensions: rubric.dimensions as unknown as Prisma.InputJsonValue,
           rubricScore: rubric.score,
           durationSec: finalDurationSec,
           initialRubricScore: isFollowUpAnswer && pending ? pending.originalScore : null,
@@ -691,6 +698,7 @@ async function handleBonusRespond(params: {
       level: 0,
       transcript,
       correctedTranscript: correctedAnswer !== transcript ? correctedAnswer : null,
+      dimensions: rubric.dimensions as unknown as Prisma.InputJsonValue,
       rubricScore: rubric.score,
       durationSec: finalDurationSec,
     },
@@ -857,6 +865,15 @@ async function finalizeCompetencySession(params: {
     persona: params.persona ?? undefined,
   });
 
+  const perTurnDimensions = regularResponses
+    .map((r) => normalizeAnswerDimensions(r.dimensions))
+    .filter((d): d is AnswerDimensions => d !== null);
+
+  const measuredDimensions =
+    perTurnDimensions.length > 0
+      ? normalizeCompetencyDimensions(averageDimensions(perTurnDimensions)!)
+      : null;
+
   await prisma.competencyFeedback.create({
     data: {
       progressId: progress.id,
@@ -864,7 +881,7 @@ async function finalizeCompetencySession(params: {
       summary: feedbackData.summary,
       strengths: feedbackData.strengths,
       improvements: feedbackData.improvements,
-      dimensions: feedbackData.dimensions,
+      dimensions: (measuredDimensions ?? feedbackData.dimensions) as unknown as Prisma.InputJsonValue,
       suggestions: feedbackData.suggestions,
       highlights: feedbackData.highlights,
       rewriteExample: feedbackData.rewriteExample,

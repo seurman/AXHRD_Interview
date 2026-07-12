@@ -764,6 +764,8 @@ model ResponseRecord {
   level       Int
   transcript  String           @db.Text
   correctedTranscript String?  @db.Text
+  /** AnswerDimensions 스냅샷(0.0~1.0) — correctAndEvaluateAnswer 결과 */
+  dimensions  Json?
   audioUrl    String?
   rubricScore Float            // 0.0 - 1.0 (꼬리질문이 있었다면 최종 결합 평가 점수)
   durationSec Int?

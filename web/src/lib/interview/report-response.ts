@@ -1,5 +1,10 @@
 /** 리포트·역량 피드백 LLM 입력용 — DB ResponseRecord → 프롬프트 payload */
 
+import {
+  normalizeAnswerDimensions,
+  type AnswerDimensions,
+} from "@/lib/interview/answer-dimensions";
+
 export type ReportResponseRow = {
   question: { template: string } | null;
   isBonusQuestion?: boolean;
@@ -7,6 +12,7 @@ export type ReportResponseRow = {
   competency: string;
   transcript: string;
   correctedTranscript: string | null;
+  dimensions?: unknown;
   rubricScore: number;
   followUpQuestion: string | null;
   followUpTranscript: string | null;
@@ -17,6 +23,7 @@ export type FeedbackResponsePayload = {
   question: string;
   answer: string;
   score: number;
+  dimensions?: AnswerDimensions | null;
   followUpQuestion?: string;
   followUpAnswer?: string;
   hadFollowUp?: boolean;
@@ -35,6 +42,7 @@ export function mapResponseForReport(r: ReportResponseRow): SessionReportRespons
     question: questionText,
     answer: r.correctedTranscript ?? r.transcript,
     score: r.rubricScore,
+    dimensions: normalizeAnswerDimensions(r.dimensions),
     competency: r.competency,
     ...(hadFollowUp
       ? {
