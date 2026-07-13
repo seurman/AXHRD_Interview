@@ -56,6 +56,7 @@ export const dictionary: Dictionary = {
       users: "사용자",
       audit: "감사 로그",
       sessions: "면접 세션",
+      dataStorage: "데이터 저장 검증",
       orgApprove: "기관",
       saasAdmin: "기관 관리",
       orgBenchmark: "기관 비교",

@@ -8,6 +8,10 @@ import {
   type QuestionCoverageKind,
 } from "@/lib/repository/coverage";
 import {
+  emptyQuestionPerformance,
+  loadQuestionPerformanceByIds,
+} from "@/lib/admin/question-performance";
+import {
   lifecycleToIsActive,
   platformCompetencyWhere,
   type RepositoryCompetencyRow,
@@ -202,6 +206,10 @@ export async function getCompetencyWorkspace(competencyId: string) {
   const defaultSet = rubricSets.find((s) => s.isDefault && !s.organization);
   const defaultDetails = defaultSet?.details ?? null;
 
+  const performanceByQuestionId = await loadQuestionPerformanceByIds(
+    questions.map((q) => q.id),
+  );
+
   return {
     competency: {
       id: competency.id,
@@ -240,6 +248,8 @@ export async function getCompetencyWorkspace(competencyId: string) {
         rubricCriteria,
         coverage,
         mappedRubric: mapped,
+        performance:
+          performanceByQuestionId.get(q.id) ?? emptyQuestionPerformance(),
       };
     }),
     validation,

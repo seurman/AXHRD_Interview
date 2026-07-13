@@ -94,6 +94,7 @@ export default async function AdminSessionsPage({
         title="면접 세션 · 실행 로그"
         subtitle="실제 사용자가 실행한 면접 세션, 응답 수, 무결성 신호(붙여넣기·탭 이탈), 데모 여부를 조회합니다. 행을 클릭하면 DB 원문(답변·꼬리질문·칩 이벤트)을 볼 수 있습니다."
         links={[
+          { href: "/admin/data-storage", label: "데이터 저장 검증 →" },
           { href: "/admin/audit", label: "감사 로그 →" },
           { href: "/admin/users", label: "사용자 권한 →" },
         ]}

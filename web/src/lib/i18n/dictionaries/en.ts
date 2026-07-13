@@ -56,6 +56,7 @@ export const dictionary: Dictionary = {
       users: "Users",
       audit: "Audit log",
       sessions: "Interview sessions",
+      dataStorage: "Data storage check",
       orgApprove: "Organizations",
       saasAdmin: "Organizations",
       orgBenchmark: "Benchmark",

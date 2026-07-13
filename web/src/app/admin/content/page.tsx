@@ -76,6 +76,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
           </>
         }
         links={[
+          { href: "/admin/irt-recalibration", label: "IRT 재보정 →" },
           { href: "/admin/organizations", label: "기관 관리 · 테넌트 허브 →" },
           ...(hasSuperadminAccess(user)
             ? [

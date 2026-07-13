@@ -22,6 +22,7 @@ import {
 import type { RepositoryCompetencyRow } from "@/lib/repository/types";
 import { defaultScoreLevels, LIFECYCLE_LABEL } from "@/lib/repository/types";
 import { COVERAGE_LABEL, type QuestionCoverageKind } from "@/lib/repository/coverage";
+import type { QuestionPerformanceFlag } from "@/lib/admin/question-performance";
 
 type WorkspaceTab = "overview" | "rubrics" | "questions";
 
@@ -50,6 +51,13 @@ type WorkspaceQuestion = {
   rubricCriteria: string[];
   coverage: { kind: QuestionCoverageKind; criteriaCount: number };
   mappedRubric: { id: string; rubricName: string } | null;
+  performance: {
+    sampleSize: number;
+    avgRubricScore: number;
+    scoreDistribution: { low: number; mid: number; high: number };
+    followUpRate: number;
+    flag: QuestionPerformanceFlag;
+  };
 };
 
 type WorkspaceData = {
@@ -110,6 +118,7 @@ export function CompetencyWorkspace({
   const [orgs, setOrgs] = useState<OrgOption[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [questionFilter, setQuestionFilter] = useState<"all" | "missing" | "unmapped">("all");
+  const [perfSort, setPerfSort] = useState<"sample" | "flag">("sample");
   const [form, setForm] = useState({
     rubricName: "",
     scoringSystem: "FIVE_SCALE" as RubricSet["scoringSystem"],
@@ -159,6 +168,30 @@ export function CompetencyWorkspace({
     }
     return data.questions;
   }, [data, questionFilter]);
+
+  const performanceRows = useMemo(() => {
+    if (!data) return [];
+    const rows = [...data.questions];
+    if (perfSort === "flag") {
+      const rank: Record<QuestionPerformanceFlag, number> = {
+        "너무어려움_모호함": 0,
+        "너무쉬움": 1,
+        표본부족: 2,
+        정상: 3,
+      };
+      rows.sort((a, b) => rank[a.performance.flag] - rank[b.performance.flag]);
+    } else {
+      rows.sort((a, b) => b.performance.sampleSize - a.performance.sampleSize);
+    }
+    return rows;
+  }, [data, perfSort]);
+
+  const flaggedCount = useMemo(() => {
+    if (!data) return 0;
+    return data.questions.filter(
+      (q) => q.performance.flag !== "정상" && q.performance.flag !== "표본부족",
+    ).length;
+  }, [data]);
 
   async function importLegacy() {
     setBusy("import");
@@ -304,6 +337,7 @@ export function CompetencyWorkspace({
         </div>
       </header>
 
+      {!embedded && (
       <div className="flex flex-wrap gap-1 rounded-xl border border-border bg-card p-1">
         {(
           [
@@ -324,13 +358,14 @@ export function CompetencyWorkspace({
           </button>
         ))}
       </div>
+      )}
 
-      {tab === "overview" && (
+      {(embedded || tab === "overview") && (
         <section className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-border bg-card p-5">
-            <h3 className="font-semibold text-foreground">채점 커버리지</h3>
+            <h3 className="font-semibold text-foreground">저작 완성도</h3>
             <p className="mt-1 text-sm text-muted">
-              정규 루브릭 세트 · 문항별 기준 · 역량 L-루브릭 순으로 채점 가능 여부를 판단합니다.
+              루브릭 연결·문항별 기준·역량 L-루브릭 등 채점 준비 상태입니다.
             </p>
             <ul className="mt-4 space-y-2">
               {(Object.keys(COVERAGE_LABEL) as QuestionCoverageKind[]).map((kind) => (
@@ -378,7 +413,97 @@ export function CompetencyWorkspace({
         </section>
       )}
 
-      {tab === "rubrics" && (
+      {(embedded || tab === "overview") && (
+        <section className="rounded-2xl border border-border bg-card shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-4 sm:px-6">
+            <div>
+              <h3 className="font-semibold text-foreground">실측 응답 성과</h3>
+              <p className="text-sm text-muted">
+                ResponseRecord 기반 — 표본·평균 점수·팔로우업 비율·이상 징후 플래그
+                {flaggedCount > 0 ? ` · 주의 ${flaggedCount}문항` : ""}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setPerfSort("sample")}
+                className={`rounded-lg border px-3 py-1.5 text-xs ${
+                  perfSort === "sample"
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "border-border text-muted"
+                }`}
+              >
+                표본 많은 순
+              </button>
+              <button
+                type="button"
+                onClick={() => setPerfSort("flag")}
+                className={`rounded-lg border px-3 py-1.5 text-xs ${
+                  perfSort === "flag"
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "border-border text-muted"
+                }`}
+              >
+                플래그 우선
+              </button>
+              <Link
+                href="/admin/irt-recalibration"
+                className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs text-muted hover:bg-muted/30 hover:text-foreground"
+              >
+                IRT 재보정
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[48rem] text-left text-sm">
+              <thead>
+                <tr className="border-b border-border text-xs text-muted">
+                  <th className="px-4 py-2 font-medium sm:px-6">문항</th>
+                  <th className="px-3 py-2 font-medium">L</th>
+                  <th className="px-3 py-2 font-medium">표본</th>
+                  <th className="px-3 py-2 font-medium">평균</th>
+                  <th className="px-3 py-2 font-medium">분포 L/M/H</th>
+                  <th className="px-3 py-2 font-medium">팔로우업</th>
+                  <th className="px-3 py-2 font-medium sm:pr-6">플래그</th>
+                </tr>
+              </thead>
+              <tbody>
+                {performanceRows.map((q) => (
+                  <tr key={q.id} className="border-b border-border/60 last:border-0">
+                    <td className="max-w-[14rem] truncate px-4 py-2 sm:px-6" title={q.template}>
+                      <span className="font-mono text-[10px] text-muted">{q.externalId}</span>
+                      <span className="mt-0.5 block truncate text-foreground">{q.template}</span>
+                    </td>
+                    <td className="px-3 py-2 text-muted">{q.level}</td>
+                    <td className="px-3 py-2 font-mono text-xs">{q.performance.sampleSize}</td>
+                    <td className="px-3 py-2 font-mono text-xs">
+                      {q.performance.sampleSize > 0
+                        ? `${Math.round(q.performance.avgRubricScore * 100)}%`
+                        : "—"}
+                    </td>
+                    <td className="px-3 py-2 font-mono text-xs text-muted">
+                      {q.performance.scoreDistribution.low}/
+                      {q.performance.scoreDistribution.mid}/
+                      {q.performance.scoreDistribution.high}
+                    </td>
+                    <td className="px-3 py-2 font-mono text-xs">
+                      {q.performance.sampleSize > 0
+                        ? `${Math.round(q.performance.followUpRate * 100)}%`
+                        : "—"}
+                    </td>
+                    <td className="px-3 py-2 sm:pr-6">
+                      <PerformanceFlagBadge flag={q.performance.flag} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {!embedded && tab === "rubrics" && (
         <section className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -467,7 +592,7 @@ export function CompetencyWorkspace({
         </section>
       )}
 
-      {tab === "questions" && (
+      {!embedded && tab === "questions" && (
         <section className="rounded-2xl border border-border bg-card shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-4 sm:px-6">
             <div>
@@ -842,5 +967,34 @@ function EmptyPanel({ title, description }: { title: string; description: string
       <p className="font-medium text-foreground">{title}</p>
       <p className="mt-1 text-sm text-muted">{description}</p>
     </div>
+  );
+}
+
+const PERF_FLAG_LABEL: Record<QuestionPerformanceFlag, string> = {
+  표본부족: "표본부족",
+  너무쉬움: "너무 쉬움",
+  너무어려움_모호함: "너무 어려움/모호함",
+  정상: "정상",
+};
+
+function PerformanceFlagBadge({ flag }: { flag: QuestionPerformanceFlag }) {
+  const tone =
+    flag === "너무쉬움"
+      ? "border-amber-200 bg-amber-50 text-amber-800"
+      : flag === "너무어려움_모호함"
+        ? "border-red-200 bg-red-50 text-red-700"
+        : flag === "표본부족"
+          ? "border-border bg-muted/20 text-muted"
+          : "border-border/60 bg-muted/10 text-muted";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${tone}`}
+    >
+      {(flag === "너무쉬움" || flag === "너무어려움_모호함") && (
+        <AlertTriangle className="h-3 w-3 shrink-0" />
+      )}
+      {PERF_FLAG_LABEL[flag]}
+    </span>
   );
 }

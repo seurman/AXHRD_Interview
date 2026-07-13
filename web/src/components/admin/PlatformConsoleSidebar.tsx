@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   Building2,
   ClipboardList,
+  Database,
   FileSearch,
   Home,
   Layers,
@@ -31,6 +32,7 @@ import { Loader2 } from "lucide-react";
 
 const ICON_BY_HREF: Partial<Record<string, LucideIcon>> = {
   "/admin/repository": Layers,
+  "/admin/data-storage": Database,
 };
 
 const ICON_BY_CAPABILITY: Partial<Record<CapabilityId, LucideIcon>> = {

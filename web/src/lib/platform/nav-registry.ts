@@ -10,6 +10,7 @@ export type NavLabelKey =
   | "users"
   | "audit"
   | "sessions"
+  | "dataStorage"
   | "orgApprove"
   | "orgBenchmark"
   | "subscriptions"
@@ -59,6 +60,12 @@ export const PLATFORM_NAV_ORDER: AdminNavItem[] = [
   {
     href: "/admin/sessions",
     labelKey: "sessions",
+    capability: "platform.sessions",
+    section: "operations",
+  },
+  {
+    href: "/admin/data-storage",
+    labelKey: "dataStorage",
     capability: "platform.sessions",
     section: "operations",
   },

@@ -54,6 +54,7 @@ export type Dictionary = {
       users: string;
       audit: string;
       sessions: string;
+      dataStorage: string;
       orgApprove: string;
       saasAdmin: string;
       orgBenchmark: string;
