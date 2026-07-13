@@ -262,3 +262,153 @@ export function heatmapTone(value: number | null, benchmark = 3.5): string {
   if (value >= 2.5) return "bg-amber-400/50 text-foreground";
   return "bg-red-400/70 text-white";
 }
+
+export type OrgBenchmarks = ReturnType<typeof computeOrgBenchmarks>;
+export type BenchmarkMode = "org" | "parent" | "peers";
+
+export type OrgBiMetricCell = {
+  value: number | null;
+  gap: number | null;
+  status: ReturnType<typeof scoreStatus>;
+};
+
+export type OrgBiMatrixRow = {
+  id: string;
+  name: string;
+  level: string;
+  levelCode?: OrgNode["level"];
+  sampleSize: number | null;
+  hasChildren: boolean;
+  hidden: boolean;
+  isCurrent: boolean;
+  isSiblingView: boolean;
+  rank: number;
+  composite: number | null;
+  compositeGap: number | null;
+  OHI: OrgBiMetricCell;
+  ORI: OrgBiMetricCell;
+  OVI: OrgBiMetricCell;
+  OAI: OrgBiMetricCell;
+};
+
+const AXIS_KEYS = ["OHI", "ORI", "OVI", "OAI"] as const;
+export type OrgAxisKey = (typeof AXIS_KEYS)[number];
+
+function metricCell(
+  value: number | null | undefined,
+  bench: number | null | undefined,
+): OrgBiMetricCell {
+  const v = value ?? null;
+  const b = bench ?? null;
+  const gap = v != null && b != null ? v - b : null;
+  return { value: v, gap, status: scoreStatus(v) };
+}
+
+export function resolveBenchmark(
+  mode: BenchmarkMode,
+  contextNode: OrgNode | null,
+  tree: OrgTreeIndex,
+  orgBenchmarks: OrgBenchmarks,
+  matrixNodes: OrgNode[],
+  isSiblingView: boolean,
+): { benchmarks: OrgBenchmarks; label: string } {
+  if (mode === "org") {
+    return { benchmarks: orgBenchmarks, label: "전사 평균" };
+  }
+  if (mode === "parent") {
+    if (isSiblingView && contextNode?.parentId) {
+      const parent = tree.byId.get(contextNode.parentId);
+      const fromParent = nodeToBenchmarks(parent);
+      if (fromParent && parent) {
+        return { benchmarks: fromParent, label: `${parent.teamName} (상위)` };
+      }
+    }
+    if (contextNode && !contextNode.hidden && !isSiblingView) {
+      const fromNode = nodeToBenchmarks(contextNode);
+      if (fromNode) {
+        return { benchmarks: fromNode, label: `${contextNode.teamName} (현재)` };
+      }
+    }
+    return { benchmarks: orgBenchmarks, label: "전사 평균" };
+  }
+  const peers = matrixNodes.filter((n) => !n.hidden);
+  return {
+    benchmarks: computeOrgBenchmarks(peers.length ? peers : matrixNodes),
+    label: "동급 평균",
+  };
+}
+
+/** BI 매트릭스에 표시할 행 — 하위 조직 없으면 동급(형제) 조직으로 폴백 */
+export function getMatrixScopeNodes(
+  drillId: string | null,
+  tree: OrgTreeIndex,
+): { nodes: OrgNode[]; isSiblingView: boolean } {
+  const children = getDirectChildren(drillId, tree, false);
+  if (children.length > 0) return { nodes: children, isSiblingView: false };
+  if (!drillId) return { nodes: [], isSiblingView: false };
+  const current = tree.byId.get(drillId);
+  if (!current) return { nodes: [], isSiblingView: false };
+  const siblings = getDirectChildren(current.parentId ?? null, tree, false);
+  return { nodes: siblings, isSiblingView: siblings.length > 0 };
+}
+
+export function buildOrgBiMatrixRows(
+  nodes: OrgNode[],
+  benchmarks: OrgBenchmarks,
+  tree: OrgTreeIndex,
+  options: {
+    drillId: string | null;
+    isSiblingView: boolean;
+  },
+): OrgBiMatrixRow[] {
+  const sorted = [...nodes].sort((a, b) => (b.OHI ?? 0) - (a.OHI ?? 0));
+  return sorted.map((n, idx) => {
+    const composite = avgNullable([n.OHI, n.ORI, n.OVI, n.OAI]);
+    const benchComposite = avgNullable([benchmarks.OHI, benchmarks.ORI, benchmarks.OVI, benchmarks.OAI]);
+    return {
+      id: n.teamId,
+      name: n.teamName,
+      level: orgLevelLabel(n.level),
+      levelCode: n.level,
+      sampleSize: n.sampleSize ?? null,
+      hasChildren: hasOrgChildren(n.teamId, tree),
+      hidden: n.hidden,
+      isCurrent: n.teamId === options.drillId,
+      isSiblingView: options.isSiblingView,
+      rank: idx + 1,
+      composite,
+      compositeGap: composite != null && benchComposite != null ? composite - benchComposite : null,
+      OHI: metricCell(n.OHI, benchmarks.OHI),
+      ORI: metricCell(n.ORI, benchmarks.ORI),
+      OVI: metricCell(n.OVI, benchmarks.OVI),
+      OAI: metricCell(n.OAI, benchmarks.OAI),
+    };
+  });
+}
+
+export function buildContextKpiRows(
+  node: OrgNode | null,
+  orgScores: OrgBenchmarks | undefined,
+  orgBenchmarks: OrgBenchmarks,
+  benchmark: OrgBenchmarks,
+  benchmarkLabel: string,
+): AnalysisRow[] {
+  const scores = node && !node.hidden
+    ? { OHI: node.OHI ?? null, ORI: node.ORI ?? null, OVI: node.OVI ?? null, OAI: node.OAI ?? null }
+    : orgScores ?? orgBenchmarks;
+
+  return (["OHI", "ORI", "OVI", "OAI"] as const).map((axis) => {
+    const score = scores[axis];
+    const bench = benchmark[axis];
+    const g = score != null && bench != null ? score - bench : null;
+    return {
+      id: axis,
+      label: axis,
+      score,
+      benchmark: bench,
+      gap: g,
+      status: scoreStatus(score),
+      note: g != null ? (g >= 0 ? `${benchmarkLabel} 이상` : `${benchmarkLabel} 미만`) : "—",
+    };
+  });
+}
