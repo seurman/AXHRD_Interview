@@ -99,7 +99,7 @@ export function AdminDiagnosticCmsPanel({
     const message =
       kind === "arc"
         ? "운영 DB에 ARC 데모 캠페인(테크노바 + 쇼케이스)을 생성합니다. 기존 해당 기관 웨이브는 교체됩니다. 계속할까요?"
-        : "운영 DB에 통합 시연 데이터(개인·기관·쇼케이스·ARC)를 모두 넣습니다. 수 분 걸릴 수 있습니다. 계속할까요?";
+        : "운영 DB에 시연 데이터(개인·쇼케이스·지원자·쇼케이스 ARC)를 넣습니다. 약 1~2분. 테크노바 ARC는 「운영 ARC 데모」로 별도 실행하세요. 계속할까요?";
     if (!confirm(message)) return;
 
     setDemoSeeding(kind);

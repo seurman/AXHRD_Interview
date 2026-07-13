@@ -54,6 +54,7 @@ export async function POST(req: Request) {
       results.showcase = await seedDemoArcIndex(prismaDirect, {
         organizationId: showcase.id,
         waveLabelPrefix: "쇼케이스",
+        skipInstrumentSync: scope === "both",
       });
     }
 

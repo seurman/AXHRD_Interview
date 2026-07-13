@@ -21,7 +21,12 @@ import access from "../../src/data/demo/demo-access.json";
 
 const prisma = new PrismaClient();
 
-export async function runDemoSuite(client: PrismaClient = prisma) {
+export type DemoSuiteOptions = {
+  /** 운영 통합 시드: 테크노바 ARC는 「운영 ARC 데모」로 별도 시드 (시간 절약) */
+  skipTechnovaArc?: boolean;
+};
+
+export async function runDemoSuite(client: PrismaClient = prisma, options?: DemoSuiteOptions) {
   console.log("[demo-suite] ARC Index · NCS 동기화…");
   await seedArcIndex(client);
   await syncNcsCompetencyBank(client);
@@ -35,14 +40,21 @@ export async function runDemoSuite(client: PrismaClient = prisma) {
   console.log("[demo-suite] 지원자 스크리닝(쇼케이스)…");
   const candidates = await seedCandidateScreeningDemo(client);
 
-  console.log("[demo-suite] ARC 조직진단 풀 리포트 (테크노바)…");
-  const arc = await seedDemoArcIndex(client);
+  const arcSeedOpts = { skipInstrumentSync: true as const };
+  let arc = null;
+  if (!options?.skipTechnovaArc) {
+    console.log("[demo-suite] ARC 조직진단 풀 리포트 (테크노바)…");
+    arc = await seedDemoArcIndex(client, arcSeedOpts);
+  } else {
+    console.log("[demo-suite] 테크노바 ARC 생략 (운영 통합 시드 — /admin 에서 「운영 ARC 데모」 사용)");
+  }
 
   console.log("[demo-suite] 쇼케이스 기관 ARC 풀 데모 (기관 로그인용)…");
   const showcaseArc = showcase.showcaseOrgId
     ? await seedDemoArcIndex(client, {
         organizationId: showcase.showcaseOrgId,
         waveLabelPrefix: "쇼케이스",
+        ...arcSeedOpts,
       })
     : null;
 

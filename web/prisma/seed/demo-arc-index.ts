@@ -281,37 +281,44 @@ function toStoredValue(target: number, isReversed: boolean): number {
   return isReversed ? clampLikert(6 - good) : good;
 }
 
-async function createRespondent(
+async function resolveInstrumentId(
   db: import("@prisma/client").PrismaClient,
-  opts: {
-  waveId: string;
-  teamId: string;
-  teamDef: TeamDef;
-  persona: Persona;
-  waveIdx: number;
-  scoredItems: ScoredItem[];
-  oeItems: ScoredItem[];
-  rand: () => number;
-  submittedAt: Date;
-}) {
-  const { waveId, teamId, teamDef, persona, waveIdx, scoredItems, oeItems, rand, submittedAt } = opts;
+  skipInstrumentSync?: boolean,
+): Promise<string> {
+  if (skipInstrumentSync) {
+    const existing = await db.diagnosticInstrument.findUnique({
+      where: { code: "ARC_INDEX" },
+      select: { id: true },
+    });
+    if (existing) return existing.id;
+  }
+  return seedArcIndex(db);
+}
 
-  const response = await db.diagnosticResponse.create({
-    data: {
-      waveId,
-      teamId,
-      respondentToken: randomUUID(),
-      consentAt: submittedAt,
-      submittedAt,
-    },
-  });
+type NumericAnswerRow = {
+  responseId: string;
+  itemId: string;
+  axis: "CURRENT" | "IMPORTANCE";
+  numericValue: number;
+};
 
-  const answers: Array<{
-    responseId: string;
-    itemId: string;
-    axis: "CURRENT" | "IMPORTANCE";
-    numericValue: number;
-  }> = [];
+type TextAnswerRow = {
+  responseId: string;
+  itemId: string;
+  axis: "CURRENT";
+  textValue: string;
+};
+
+function buildRespondentAnswers(
+  responseId: string,
+  teamDef: TeamDef,
+  persona: Persona,
+  waveIdx: number,
+  scoredItems: ScoredItem[],
+  oeItems: ScoredItem[],
+  rand: () => number,
+): { numeric: NumericAnswerRow[]; text: TextAnswerRow[] } {
+  const numeric: NumericAnswerRow[] = [];
 
   for (const item of scoredItems) {
     const code = item.subscaleCode;
@@ -319,8 +326,8 @@ async function createRespondent(
     const isCv01 = item.itemCode === "CV01";
     const targetCode = isCv01 ? "CV01_SPECIAL" : code;
     const target = targetForCurrent(targetCode, teamDef, persona, waveIdx, rand);
-    answers.push({
-      responseId: response.id,
+    numeric.push({
+      responseId,
       itemId: item.id,
       axis: "CURRENT",
       numericValue: toStoredValue(target, item.isReversed),
@@ -329,8 +336,8 @@ async function createRespondent(
     if (item.hasImportanceAxis) {
       const impBase = IMPORTANCE_TARGET[code] ?? 3.5;
       const imp = clamp15(impBase + teamDef.baseline * 0.15 + normalish(rand, 0, 0.4));
-      answers.push({
-        responseId: response.id,
+      numeric.push({
+        responseId,
         itemId: item.id,
         axis: "IMPORTANCE",
         numericValue: clampLikert(imp),
@@ -338,23 +345,105 @@ async function createRespondent(
     }
   }
 
-  if (answers.length > 0) {
-    await db.diagnosticAnswer.createMany({ data: answers, skipDuplicates: true });
-  }
-
-  // 주관식(OPEN_TEXT) — 일부 응답자만, 페르소나 성향에 맞는 문구 샘플링 (numericValue 대신 textValue)
-  const oeRows: Array<{ responseId: string; itemId: string; axis: "CURRENT"; textValue: string }> = [];
+  const text: TextAnswerRow[] = [];
   for (const oe of oeItems) {
     const code = oe.subscaleCode ?? "";
     const bank = OE_QUOTES[code];
     if (!bank || bank.length === 0) continue;
-    if (rand() > 0.35) continue; // 응답률 35%
-    const text = bank[Math.floor(rand() * bank.length)];
-    oeRows.push({ responseId: response.id, itemId: oe.id, axis: "CURRENT", textValue: text });
+    if (rand() > 0.35) continue;
+    text.push({
+      responseId,
+      itemId: oe.id,
+      axis: "CURRENT",
+      textValue: bank[Math.floor(rand() * bank.length)]!,
+    });
   }
-  if (oeRows.length > 0) {
-    await db.diagnosticAnswer.createMany({ data: oeRows, skipDuplicates: true });
+
+  return { numeric, text };
+}
+
+const ANSWER_CHUNK = 2500;
+
+async function createManyAnswersChunked(
+  db: import("@prisma/client").PrismaClient,
+  rows: Array<NumericAnswerRow | TextAnswerRow>,
+) {
+  for (let i = 0; i < rows.length; i += ANSWER_CHUNK) {
+    await db.diagnosticAnswer.createMany({
+      data: rows.slice(i, i + ANSWER_CHUNK),
+      skipDuplicates: true,
+    });
   }
+}
+
+/** 웨이브 단위 배치 삽입 — 응답자 1명당 round-trip 제거 */
+async function seedWaveResponsesBatch(
+  db: import("@prisma/client").PrismaClient,
+  wave: { id: string; teams: Array<{ id: string; name: string }> },
+  waveIdx: number,
+  scoredItems: ScoredItem[],
+  oeItems: ScoredItem[],
+): Promise<number> {
+  const submittedAt = daysAgo(waveIdx === 0 ? 62 : 5);
+  const rand = mulberry32(1000 + waveIdx * 7919);
+
+  const specs: Array<{
+    teamId: string;
+    teamDef: TeamDef;
+    persona: Persona;
+    token: string;
+  }> = [];
+
+  for (const team of wave.teams) {
+    const teamDef = TEAMS.find((t) => t.name === team.name);
+    if (!teamDef) continue;
+    for (let p = 0; p < teamDef.size; p++) {
+      specs.push({
+        teamId: team.id,
+        teamDef,
+        persona: pickPersona(rand),
+        token: randomUUID(),
+      });
+    }
+  }
+
+  if (specs.length === 0) return 0;
+
+  const created = await db.diagnosticResponse.createManyAndReturn({
+    data: specs.map((s) => ({
+      waveId: wave.id,
+      teamId: s.teamId,
+      respondentToken: s.token,
+      consentAt: submittedAt,
+      submittedAt,
+    })),
+    select: { id: true, respondentToken: true },
+  });
+
+  const idByToken = new Map(created.map((r) => [r.respondentToken, r.id]));
+  const numeric: NumericAnswerRow[] = [];
+  const text: TextAnswerRow[] = [];
+
+  for (const spec of specs) {
+    const responseId = idByToken.get(spec.token);
+    if (!responseId) continue;
+    const built = buildRespondentAnswers(
+      responseId,
+      spec.teamDef,
+      spec.persona,
+      waveIdx,
+      scoredItems,
+      oeItems,
+      rand,
+    );
+    numeric.push(...built.numeric);
+    text.push(...built.text);
+  }
+
+  if (numeric.length > 0) await createManyAnswersChunked(db, numeric);
+  if (text.length > 0) await createManyAnswersChunked(db, text);
+
+  return specs.length;
 }
 
 async function upsertDemoOrg(db: import("@prisma/client").PrismaClient) {
@@ -378,13 +467,17 @@ async function upsertDemoOrg(db: import("@prisma/client").PrismaClient) {
 
 export async function seedDemoArcIndex(
   client?: import("@prisma/client").PrismaClient,
-  options?: { organizationId?: string; waveLabelPrefix?: string },
+  options?: {
+    organizationId?: string;
+    waveLabelPrefix?: string;
+    skipInstrumentSync?: boolean;
+  },
 ) {
   const db = client ?? prisma;
   const labelPrefix = options?.waveLabelPrefix ?? "데모";
 
-  console.log("[demo-arc-index] ARC Index 문항 동기화 중…");
-  const instrumentId = await seedArcIndex(db);
+  console.log("[demo-arc-index] ARC Index 문항 확인…");
+  const instrumentId = await resolveInstrumentId(db, options?.skipInstrumentSync);
 
   console.log("[demo-arc-index] 데모 기관 준비 중…");
   let org: { id: string; name: string; joinCode: string };
@@ -455,29 +548,13 @@ export async function seedDemoArcIndex(
       })),
     }, db);
 
-    const submittedAt = daysAgo(waveIdx === 0 ? 62 : 5);
-    const rand = mulberry32(1000 + waveIdx * 7919);
-
-    let respondentCount = 0;
-    for (const team of wave.teams) {
-      const teamDef = TEAMS.find((t) => t.name === team.name);
-      if (!teamDef) continue;
-      for (let p = 0; p < teamDef.size; p++) {
-        const persona = pickPersona(rand);
-        await createRespondent(db, {
-          waveId: wave.id,
-          teamId: team.id,
-          teamDef,
-          persona,
-          waveIdx,
-          scoredItems,
-          oeItems,
-          rand,
-          submittedAt,
-        });
-        respondentCount++;
-      }
-    }
+    const respondentCount = await seedWaveResponsesBatch(
+      db,
+      wave,
+      waveIdx,
+      scoredItems,
+      oeItems,
+    );
     console.log(`[demo-arc-index] Wave ${waveNumber} (${wave.slug}) — 응답자 ${respondentCount}명 생성 완료`);
   }
 

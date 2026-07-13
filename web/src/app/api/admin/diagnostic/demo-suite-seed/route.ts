@@ -25,11 +25,12 @@ export async function POST() {
   }
 
   try {
-    const summary = await runDemoSuite(prismaDirect);
+    const summary = await runDemoSuite(prismaDirect, { skipTechnovaArc: true });
     return NextResponse.json({
       ok: true,
       ...summary,
-      message: "통합 시연 시드 완료. docs/DEMO_SCRIPT.md 계정으로 확인하세요.",
+      message:
+        "통합 시연 시드 완료 (쇼케이스 ARC 포함). 테크노바 풀 리포트는 「운영 ARC 데모」로 별도 시드하세요.",
     });
   } catch (e) {
     console.error("[admin/diagnostic/demo-suite-seed]", e);

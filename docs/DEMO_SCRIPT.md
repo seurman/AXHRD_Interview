@@ -5,8 +5,9 @@
 시드 적용:
 
 - **로컬:** `cd web && npm run db:seed:demo`
-- **운영(Vercel):** 슈퍼어드민 → `/admin/diagnostic` → **Campaign** 탭 → 「운영 통합 시연 시드」  
-  (캠페인만 필요하면 「운영 ARC 데모」 — 로컬 `seed-demo-to-prod.ps1` 은 운영 DB에 연결되지 않음)
+- **운영(Vercel):** 슈퍼어드민 → `/admin/diagnostic` → **Campaign** 탭  
+  · 「운영 통합 시연 시드」 — 개인·쇼케이스·지원자·쇼케이스 ARC (약 1~2분)  
+  · 「운영 ARC 데모」 — 테크노바 + 쇼케이스 조직진단 풀 리포트 (통합 시드에 테크노바 미포함)
 
 ---
 
