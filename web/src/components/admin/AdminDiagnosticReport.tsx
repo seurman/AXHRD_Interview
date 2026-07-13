@@ -13,9 +13,13 @@ import {
   QuadrantLegend,
   QUADRANT_FILL,
   ReportSection,
-  SubscoreBar,
   WaveGoalCard,
 } from "@/components/admin/diagnostic/ArcReportUi";
+import {
+  OaiReportSection,
+  OriReportSection,
+  OviReportSection,
+} from "@/components/admin/diagnostic/ArcAxisSections";
 import { PrintButton } from "@/components/ui/PrintButton";
 import type { ResolvedReportConfig, ReportTab } from "@/lib/diagnostic/report-profile";
 import {
@@ -98,8 +102,14 @@ type Scores = {
   };
   perRespondent?: Array<{
     ori: { ORI: number | null };
-    ovi: { OVI: number | null; AV: number | null; HV: number | null };
+    ovi: { OVI: number | null; AV: number | null; HV: number | null; CV: number | null };
   }>;
+  itemAverages?: {
+    CD02: number | null;
+    CD04: number | null;
+    CV01: number | null;
+    AV05: number | null;
+  };
   scores?: {
     ohi: {
       overall: number | null;
@@ -112,8 +122,16 @@ type Scores = {
       ORI: number | null;
       CD: number | null;
       LA: number | null;
+      AXS: number | null;
+      AXC: number | null;
       band: string | null;
-      opportunity: { band: string; prescription: string } | null;
+      opportunity: {
+        band: string;
+        prescription: string;
+        AXA: number | null;
+        AXG: number | null;
+        oppScore: number | null;
+      } | null;
       axMaturity: { stage: number; label: string } | null;
     };
     ovi: {
@@ -254,7 +272,9 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
   }, [waveId, openTextThemes, openTextLoading]);
 
   useEffect(() => {
-    if (tab === "ohi" || tab === "summary") void loadOpenTextThemes();
+    if (tab === "ohi" || tab === "summary" || tab === "ori" || tab === "ovi" || tab === "oai") {
+      void loadOpenTextThemes();
+    }
   }, [tab, loadOpenTextThemes]);
 
   const reportConfig = wave?.reportConfig ?? null;
@@ -340,16 +360,6 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
     return aggregate.perRespondent
       .filter((r) => r.ori.ORI != null && r.ovi.OVI != null)
       .map((r, i) => ({ id: i, ORI: r.ori.ORI as number, OVI: r.ovi.OVI as number }));
-  }, [aggregate]);
-
-  const oviCandleData = useMemo(() => {
-    const ovi = aggregate?.scores?.ovi;
-    if (!ovi) return [];
-    return [
-      { dim: "HV 역량", value: ovi.HV, benchmark: 3.5 },
-      { dim: "CV 변화수용", value: ovi.CV, benchmark: 3.5 },
-      { dim: "AV 실제속도", value: ovi.AV, benchmark: 3.5 },
-    ].filter((d) => d.value != null);
   }, [aggregate]);
 
   const hierarchyRows = aggregate?.teams ?? [];
@@ -500,6 +510,27 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
 
               <CausalFlowCard summary={aggregate?.driverImportance} />
 
+              {velocityScatter.length >= 5 && isEnabled("ORI") && isEnabled("OVI") && (
+                <div className="card-luxe p-4">
+                  <h3 className="mb-1 text-sm font-semibold">4축 교차 — ORI × OVI 포지셔닝</h3>
+                  <p className="mb-3 text-xs text-muted">응답자 단위 (N={velocityScatter.length})</p>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ScatterChart margin={{ top: 12, right: 12, bottom: 12, left: 12 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" dataKey="ORI" domain={[1, 5]} tick={{ fontSize: 10 }} />
+                        <YAxis type="number" dataKey="OVI" domain={[1, 5]} tick={{ fontSize: 10 }} />
+                        <ZAxis range={[20, 20]} />
+                        <ReferenceLine x={3.5} stroke="#e2e8f0" />
+                        <ReferenceLine y={3.5} stroke="#e2e8f0" />
+                        <Tooltip cursor={{ strokeDasharray: "3 3" }} />
+                        <Scatter data={velocityScatter} fill="#64748b" fillOpacity={0.5} />
+                      </ScatterChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
               {prescriptions.length > 0 && (
                 <div>
                   <h3 className="mb-2 text-sm font-semibold">우선 개입 (Top 3)</h3>
@@ -570,99 +601,40 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
             </ReportSection>
           )}
 
-          {visibleTabs.includes("ori") && isEnabled("ORI") && (
-            <ReportSection id="ori" title="ORI — 조직 준비도" subtitle="변화 역량 · AX 기회" active={tab === "ori"}>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <MetricTile label="ORI 종합" value={aggregate?.scores?.ori.ORI} band={aggregate?.scores?.ori.band} />
-                <MetricTile
-                  label="AX 성숙도"
-                  value={aggregate?.scores?.ori.axMaturity?.stage ?? null}
-                  hint={aggregate?.scores?.ori.axMaturity?.label}
-                />
-              </div>
-              <div className="card-luxe grid gap-4 p-4 sm:grid-cols-2">
-                <SubscoreBar label="CD 변화역량" value={aggregate?.scores?.ori.CD ?? null} />
-                <SubscoreBar label="LA 학습민첩성" value={aggregate?.scores?.ori.LA ?? null} />
-              </div>
-              {aggregate?.scores?.ori.opportunity && (
-                <NarrativeBlock
-                  label="Opportunity Score"
-                  text={`${aggregate.scores.ori.opportunity.band} — ${aggregate.scores.ori.opportunity.prescription}`}
-                />
-              )}
-              {aggregate?.scores?.ori.axMaturity && (
-                <AxMaturityLadder stage={aggregate.scores.ori.axMaturity.stage} label={aggregate.scores.ori.axMaturity.label} />
-              )}
+          {visibleTabs.includes("ori") && isEnabled("ORI") && aggregate?.scores?.ori && (
+            <ReportSection id="ori" title="ORI — 조직 준비도" subtitle="변화 역량 · AX 기회 · Opportunity Score" active={tab === "ori"}>
+              <OriReportSection
+                ori={aggregate.scores.ori}
+                itemAverages={aggregate.itemAverages}
+                openTextThemes={openTextThemes}
+                openTextLoading={openTextLoading}
+              />
             </ReportSection>
           )}
 
-          {visibleTabs.includes("ovi") && isEnabled("OVI") && (
-            <ReportSection id="ovi" title="OVI — 조직 속도" subtitle="역량·변화수용·실제 속도" active={tab === "ovi"}>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <MetricTile label="OVI 종합" value={aggregate?.scores?.ovi.OVI} band={aggregate?.scores?.ovi.band} />
-                <MetricTile
-                  label="동적 정합성 격차"
-                  value={aggregate?.scores?.ovi.dynamicCongruenceGap}
-                  hint="AV − HV (양수=속도 과잉)"
-                />
-              </div>
-
-              {oviCandleData.length > 0 && (
-                <div className="card-luxe p-4">
-                  <h3 className="mb-1 text-sm font-semibold">OVI 3요소 프로필</h3>
-                  <p className="mb-3 text-xs text-muted">세로 점선 = 기준 3.5</p>
-                  <div className="h-56">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={oviCandleData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="dim" tick={{ fontSize: 11 }} />
-                        <YAxis domain={[1, 5]} />
-                        <Tooltip />
-                        <ReferenceLine y={3.5} stroke="#94a3b8" strokeDasharray="4 4" />
-                        <Bar dataKey="value" name="점수" fill="#c9a227" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
-
-              {velocityScatter.length >= 5 && (
-                <div className="card-luxe p-4">
-                  <h3 className="mb-1 text-sm font-semibold">개인 포지셔닝 — ORI × OVI</h3>
-                  <p className="mb-3 text-xs text-muted">응답자 단위 분포 (N={velocityScatter.length})</p>
-                  <div className="h-72">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <ScatterChart margin={{ top: 12, right: 12, bottom: 12, left: 12 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="ORI" name="ORI" domain={[1, 5]} label={{ value: "ORI", position: "bottom", fontSize: 11 }} />
-                        <YAxis type="number" dataKey="OVI" name="OVI" domain={[1, 5]} label={{ value: "OVI", angle: -90, position: "left", fontSize: 11 }} />
-                        <ZAxis range={[24, 24]} />
-                        <ReferenceLine x={3.5} stroke="#e2e8f0" />
-                        <ReferenceLine y={3.5} stroke="#e2e8f0" />
-                        <Tooltip cursor={{ strokeDasharray: "3 3" }} />
-                        <Scatter data={velocityScatter} fill="#c9a227" fillOpacity={0.55} />
-                      </ScatterChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
+          {visibleTabs.includes("ovi") && isEnabled("OVI") && aggregate?.scores?.ovi && (
+            <ReportSection id="ovi" title="OVI — 조직 속도" subtitle="건강·실행·AX 속도 · 동적 정합성" active={tab === "ovi"}>
+              <OviReportSection
+                ovi={aggregate.scores.ovi}
+                itemAverages={aggregate.itemAverages}
+                perRespondent={aggregate.perRespondent}
+                openTextThemes={openTextThemes}
+                openTextLoading={openTextLoading}
+              />
             </ReportSection>
           )}
 
-          {visibleTabs.includes("oai") && isEnabled("OAI") && (
-            <ReportSection id="oai" title="OAI — 조직 정렬" subtitle="전략·실행·운영 정렬" active={tab === "oai"}>
-              <MetricTile label="OAI 종합" value={aggregate?.scores?.oai.OAI} band={aggregate?.scores?.oai.band} />
-              <div className="card-luxe grid gap-4 p-4 sm:grid-cols-3">
-                <SubscoreBar label="SA 전략정렬" value={aggregate?.scores?.oai.SA ?? null} />
-                <SubscoreBar label="EA 실행정렬" value={aggregate?.scores?.oai.EA ?? null} />
-                <SubscoreBar label="OA 운영정렬" value={aggregate?.scores?.oai.OA ?? null} />
-              </div>
-              {aggregate?.scores?.oaiPattern && (
-                <NarrativeBlock
-                  label={`조직 패턴 — ${aggregate.scores.oaiPattern.pattern}`}
-                  text={aggregate.scores.oaiPattern.message}
-                />
-              )}
+          {visibleTabs.includes("oai") && isEnabled("OAI") && aggregate?.scores?.oai && (
+            <ReportSection id="oai" title="OAI — 조직 정렬" subtitle="전략·에너지·결과 정렬 · 4축 통합" active={tab === "oai"}>
+              <OaiReportSection
+                oai={aggregate.scores.oai}
+                ohi={aggregate.scores.ohi.overall}
+                ori={aggregate.scores.ori.ORI}
+                ovi={aggregate.scores.ovi.OVI}
+                oaiPattern={aggregate.scores.oaiPattern}
+                openTextThemes={openTextThemes}
+                openTextLoading={openTextLoading}
+              />
             </ReportSection>
           )}
 
@@ -886,40 +858,6 @@ function CausalFlowCard({ summary }: { summary?: DriverImportanceSummary }) {
     </div>
   );
 }
-
-function AxMaturityLadder({ stage, label }: { stage: number; label: string }) {
-  const stages = ["1 인지", "2 실험", "3 확산", "4 내재화", "5 선도"];
-  return (
-    <div className="card-luxe p-4">
-      <h3 className="text-sm font-semibold">AX 성숙도 5단계</h3>
-      <p className="mt-1 text-xs text-muted">{label}</p>
-      <div className="mt-4 flex gap-1">
-        {stages.map((s, i) => {
-          const n = i + 1;
-          const active = n === stage;
-          const past = n < stage;
-          return (
-            <div
-              key={s}
-              className={`flex-1 rounded-lg px-1 py-2 text-center text-[10px] font-medium ${
-                active ? "bg-gold text-white" : past ? "bg-gold/25 text-foreground" : "bg-black/5 text-muted dark:bg-white/10"
-              }`}
-            >
-              {s}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-const LPA_COLOR: Record<string, string> = {
-  고몰입형: "bg-emerald-500",
-  "헌신·몰두형": "bg-sky-500",
-  번아웃위험형: "bg-amber-500",
-  이탈예고형: "bg-red-500",
-};
 
 function LpaCard({ lpa }: { lpa?: Scores["lpa"] }) {
   if (!lpa) return null;

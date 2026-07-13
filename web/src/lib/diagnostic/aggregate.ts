@@ -1,12 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import {
   buildReversedSet,
+  bandOai,
+  bandOvi,
+  bandOpportunityScore,
   computeArcScoresFromAnswers,
   computeDriverImportance,
   computeIcc1,
   computeLpaProfiles,
+  computeOaiPattern,
   computeTeamGapMatrix,
   computeTeamLevelDriverImportance,
+  healthBand,
+  rawValue,
   type DriverImportanceSummary,
   type IccResult,
   type LpaResult,
@@ -41,41 +47,62 @@ function summarizeRespondents(
 ) {
   const first = perRespondent[0];
   if (!first) return null;
+  const oriOri = avgNums(perRespondent.map((r) => r.ori.ORI));
+  const oviOvi = avgNums(perRespondent.map((r) => r.ovi.OVI));
+  const oaiOai = avgNums(perRespondent.map((r) => r.oai.OAI));
+  const oppScoreAvg = avgNums(
+    perRespondent.map((r) => r.ori.opportunity?.oppScore ?? null),
+  );
+  const axaAvg = avgNums(perRespondent.map((r) => r.ori.opportunity?.AXA ?? null));
+  const axgAvg = avgNums(perRespondent.map((r) => r.ori.opportunity?.AXG ?? null));
+  const oppBand = bandOpportunityScore(oppScoreAvg);
+
   return {
     ohi: {
       overall: avgNums(perRespondent.map((r) => r.ohi.overall)),
       SE: avgNums(perRespondent.map((r) => r.ohi.SE)),
       riskIndex: avgNums(perRespondent.map((r) => r.ohi.riskIndex)),
-      band: first.ohi.band,
-      // 버그 수정(2026-07-13): 이전엔 first.ohi.drivers(응답자 1명 값)를 그대로 썼음 —
-      // 리포트의 "10개 드라이버 현재 vs 중요도" 차트·강점/개선 인사이트가 전부 이 값을 쓰므로
-      // 스코프 평균으로 바로잡는다.
+      band: healthBand(avgNums(perRespondent.map((r) => r.ohi.overall))),
       drivers: avgDrivers(perRespondent),
     },
     ori: {
-      ORI: avgNums(perRespondent.map((r) => r.ori.ORI)),
+      ORI: oriOri,
       CD: avgNums(perRespondent.map((r) => r.ori.CD)),
       LA: avgNums(perRespondent.map((r) => r.ori.LA)),
-      band: first.ori.band,
-      opportunity: first.ori.opportunity,
+      AXS: avgNums(perRespondent.map((r) => r.ori.AXS)),
+      AXC: avgNums(perRespondent.map((r) => r.ori.AXC)),
+      band: healthBand(oriOri),
+      opportunity: oppBand
+        ? {
+            ...oppBand,
+            AXA: axaAvg,
+            AXG: axgAvg,
+            oppScore: oppScoreAvg,
+          }
+        : null,
       axMaturity: first.ori.axMaturity,
     },
     ovi: {
-      OVI: avgNums(perRespondent.map((r) => r.ovi.OVI)),
+      OVI: oviOvi,
       HV: avgNums(perRespondent.map((r) => r.ovi.HV)),
       CV: avgNums(perRespondent.map((r) => r.ovi.CV)),
       AV: avgNums(perRespondent.map((r) => r.ovi.AV)),
-      band: first.ovi.band,
+      band: bandOvi(oviOvi),
       dynamicCongruenceGap: avgNums(perRespondent.map((r) => r.ovi.dynamicCongruenceGap)),
     },
     oai: {
-      OAI: avgNums(perRespondent.map((r) => r.oai.OAI)),
+      OAI: oaiOai,
       SA: avgNums(perRespondent.map((r) => r.oai.SA)),
       EA: avgNums(perRespondent.map((r) => r.oai.EA)),
       OA: avgNums(perRespondent.map((r) => r.oai.OA)),
-      band: first.oai.band,
+      band: bandOai(oaiOai),
     },
-    oaiPattern: first.oaiPattern,
+    oaiPattern: computeOaiPattern(
+      avgNums(perRespondent.map((r) => r.ohi.overall)),
+      oriOri,
+      oviOvi,
+      oaiOai,
+    ),
   };
 }
 
@@ -86,6 +113,31 @@ export type HierarchyNode = {
   parentId: string | null;
   department: string | null;
 };
+
+const KEY_ITEM_CODES = ["CD02", "CD04", "CV01", "AV05"] as const;
+
+function computeKeyItemAverages(
+  responses: Array<{
+    answers: Array<{ itemId: string; axis: string; numericValue: number | null }>;
+  }>,
+  codeById: Map<string, string>,
+  reversed: Set<string>,
+): Record<(typeof KEY_ITEM_CODES)[number], number | null> {
+  const buckets: Record<string, number[]> = {};
+  for (const code of KEY_ITEM_CODES) buckets[code] = [];
+  for (const r of responses) {
+    for (const a of r.answers) {
+      const code = codeById.get(a.itemId);
+      if (!code || !buckets[code] || a.axis !== "CURRENT" || a.numericValue == null) continue;
+      buckets[code].push(rawValue(reversed.has(code), a.numericValue));
+    }
+  }
+  const out = {} as Record<(typeof KEY_ITEM_CODES)[number], number | null>;
+  for (const code of KEY_ITEM_CODES) {
+    out[code] = avgNums(buckets[code]);
+  }
+  return out;
+}
 
 export function buildHierarchyIndex(nodes: HierarchyNode[]) {
   const byId = new Map(nodes.map((n) => [n.id, n]));
@@ -141,7 +193,12 @@ async function scoreResponsesForTeamIds(
   leafTeamIds: string[] | null,
 ) {
   if (leafTeamIds != null && leafTeamIds.length === 0) {
-    return { sampleSize: 0, perRespondent: [] as ReturnType<typeof computeArcScoresFromAnswers>[], summary: null };
+    return {
+      sampleSize: 0,
+      perRespondent: [] as ReturnType<typeof computeArcScoresFromAnswers>[],
+      summary: null,
+      responses: [],
+    };
   }
 
   const responses = await prisma.diagnosticResponse.findMany({
@@ -171,6 +228,7 @@ async function scoreResponsesForTeamIds(
     sampleSize: responses.length,
     perRespondent,
     summary: summarizeRespondents(perRespondent),
+    responses,
   };
 }
 
@@ -280,6 +338,7 @@ export async function computeAggregateScores(scope: {
       minGroupSize: minN,
       scores: scored.summary,
       perRespondent: scored.perRespondent,
+      itemAverages: computeKeyItemAverages(scored.responses, ctx.codeById, ctx.reversed),
       driverImportance,
       teamLevelDriverImportance,
       teamReliability,
@@ -295,6 +354,7 @@ export async function computeAggregateScores(scope: {
     minGroupSize: minN,
     scores: scored.summary,
     perRespondent: scored.perRespondent,
+    itemAverages: computeKeyItemAverages(scored.responses, ctx.codeById, ctx.reversed),
     driverImportance,
     lpa,
   };
