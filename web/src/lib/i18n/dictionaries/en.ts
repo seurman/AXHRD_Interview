@@ -129,9 +129,9 @@ export const dictionary: Dictionary = {
     hero: {
       eyebrow: "Competency growth",
       brand: "AXHRD",
-      titleLine1: "Competency that",
-      titleHighlight: "compounds",
-      subtitle: "Resume · interview · diagnostics — one place.",
+      titleLine1: "Practice sharpens your answers —",
+      titleHighlight: "competency scores compound",
+      subtitle: "Questions from your résumé and job post. Rehearse out loud like the real interview.",
       ctaStart: "Get started",
       ctaStartLoggedIn: "Home",
       ctaPersonal: "Get started",

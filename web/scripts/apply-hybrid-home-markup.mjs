@@ -28,14 +28,13 @@ html = html.replace(
   /<div class="hero-grid">[\s\S]*?<\/div>\s*\n\n      <!-- Product Preview -->/,
   `<div class="hero-lede">
         <h1>
-            자소서에서 나온 질문에,<br/>
-            말로 답하세요<span class="dot">.</span>
+            연습할수록 답이 단단해지고,<br/>
+            역량 점수가 쌓입니다<span class="dot">.</span>
           </h1>
         <div class="hero-body">
           <p class="sub">
-            공고와 자소서를 연결해 질문을 만들고, 음성으로 연습합니다.<br/>
-            <strong>같은 기준</strong>으로 채점하고, 연습할수록 <strong>역량 점수가 쌓입니다.</strong><br/>
-            자소서 기반의 질문으로 현장감을 살립니다. 표정·감정 AI는 쓰지 않습니다.
+            공고와 자소서에서 질문을 만들고, <strong>실전처럼 말로 연습합니다.</strong><br/>
+            같은 기준으로 채점하고, 자소서 기반 질문으로 현장감을 살립니다. 표정·감정 AI는 쓰지 않습니다.
           </p>
           <div class="hero-action-col">
             <div class="hero-ctas">
@@ -63,8 +62,8 @@ html = html.replace(
             보이는 준비<span class="dot">.</span>
           </h1>`,
   `<h1>
-            자소서에서 나온 질문에,<br/>
-            말로 답하세요<span class="dot">.</span>
+            연습할수록 답이 단단해지고,<br/>
+            역량 점수가 쌓입니다<span class="dot">.</span>
           </h1>`,
 );
 html = html.replace(
@@ -74,9 +73,8 @@ html = html.replace(
             질문은 자소서에서 나옵니다. 꾸민 말이 아니라, 내 이야기로 답하게 됩니다.
           </p>`,
   `<p class="sub">
-            공고와 자소서를 연결해 질문을 만들고, 음성으로 연습합니다.<br/>
-            <strong>같은 기준</strong>으로 채점하고, 연습할수록 <strong>역량 점수가 쌓입니다.</strong><br/>
-            자소서 기반의 질문으로 현장감을 살립니다. 표정·감정 AI는 쓰지 않습니다.
+            공고와 자소서에서 질문을 만들고, <strong>실전처럼 말로 연습합니다.</strong><br/>
+            같은 기준으로 채점하고, 자소서 기반 질문으로 현장감을 살립니다. 표정·감정 AI는 쓰지 않습니다.
           </p>`,
 );
 html = html.replace(

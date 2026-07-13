@@ -2,7 +2,7 @@ import type { Dictionary } from "../types";
 
 export const dictionary: Dictionary = {
   meta: {
-    title: "AXHRD — 자소서에서 나온 질문에, 말로 답하세요",
+    title: "AXHRD — 연습할수록 답이 단단해지고, 역량 점수가 쌓입니다",
     description: "자소서 기반 AI 면접 연습. 음성 답변, 루브릭 채점, 역량 점수 누적. 월 3회 무료.",
   },
   common: {
@@ -129,9 +129,9 @@ export const dictionary: Dictionary = {
     hero: {
       eyebrow: "역량 성장 플랫폼",
       brand: "AXHRD",
-      titleLine1: "자소서에서 나온 질문에,",
-      titleHighlight: "말로 답하세요",
-      subtitle: "자소서 기반 질문으로 현장감 있게 연습하고, 역량 점수가 쌓입니다.",
+      titleLine1: "연습할수록 답이 단단해지고,",
+      titleHighlight: "역량 점수가 쌓입니다",
+      subtitle: "공고와 자소서에서 질문을 만들고, 실전처럼 말로 연습합니다.",
       ctaStart: "시작하기",
       ctaStartLoggedIn: "홈으로",
       ctaPersonal: "시작하기",
