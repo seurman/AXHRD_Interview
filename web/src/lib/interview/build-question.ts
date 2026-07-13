@@ -43,9 +43,10 @@ function rubricForQuestion(
 
 type SessionContext = {
   id: string;
+  userId?: string;
   irtState: unknown;
   jobRole: string;
-  resume?: { rawText: string; parsedTags?: unknown } | null;
+  resume?: { id?: string; rawText: string; parsedTags?: unknown } | null;
   targetCompany?: { name: string; interviewStyle?: unknown; jdRequirements?: unknown } | null;
 };
 
@@ -153,17 +154,49 @@ export async function buildPersonalizedQuestion(
     );
   }
 
+  const resumeSummary = parseResumeSummary(session.resume?.parsedTags);
+  let ontologyHints:
+    | {
+        preferredChunks?: Array<{ title: string; markdown: string; tags?: string[] }>;
+        preferredExperiences?: string[];
+        performanceBand?: string;
+      }
+    | undefined;
+
+  if (session.userId && resumeSummary) {
+    try {
+      const { resolveEvidenceForCompetency } = await import("@/lib/interview/resume-ontology");
+      const resolved = await resolveEvidenceForCompetency({
+        userId: session.userId,
+        resumeId: session.resume?.id,
+        summary: resumeSummary,
+        competency: question.competency.code,
+      });
+      if (resolved.claims.length > 0) {
+        const { performanceBand } = await import("@/lib/interview/resume-evidence");
+        ontologyHints = {
+          preferredChunks: resolved.chunkTexts,
+          preferredExperiences: resolved.experiences,
+          performanceBand: performanceBand(resolved.performance),
+        };
+      }
+    } catch (e) {
+      console.warn("[build-question] ontology resolve failed:", e);
+    }
+  }
+
   const result = await personalizeQuestion({
     template: question.template,
     competency: question.competency.code,
     companyName: session.targetCompany?.name,
     jobRole: session.jobRole,
-    resumeSummary: parseResumeSummary(session.resume?.parsedTags),
+    resumeSummary,
     legacyResumeText: session.resume?.rawText,
     excludeHighlights: stored.usedHighlights ?? [],
     excludeJdTerms: stored.usedJdTerms ?? [],
     jdRequirements: parseJdRequirements(session.targetCompany?.jdRequirements),
     interviewStyle: parseInterviewStyle(session.targetCompany?.interviewStyle),
+    ontologyHints,
   });
 
   const resolvedRubric = rubricForQuestion(questionWithRubric, options?.orgKitRubric);

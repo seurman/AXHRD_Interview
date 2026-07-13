@@ -714,10 +714,29 @@ async function tryOfferClaimQuestion(params: {
   const resumeSummary = parseResumeSummary(params.session.resume?.parsedTags);
   if (!resumeSummary || resumeSummary.experiences.length === 0) return null;
 
+  let preferredExperiences: string[] | undefined;
+  let performanceBand: string | undefined;
+  try {
+    const { resolveEvidenceForCompetency } = await import("@/lib/interview/resume-ontology");
+    const { performanceBand: bandOf } = await import("@/lib/interview/resume-evidence");
+    const resolved = await resolveEvidenceForCompetency({
+      userId: params.session.userId,
+      resumeId: params.session.resumeId,
+      summary: resumeSummary,
+      competency: params.focusCompetency,
+    });
+    if (resolved.experiences.length) preferredExperiences = resolved.experiences;
+    performanceBand = bandOf(resolved.performance);
+  } catch {
+    /* Postgres evidence만 사용 */
+  }
+
   const claim =
     params.stored.pendingClaimQuestion ??
     (await generateResumeClaimQuestion({
       experiences: resumeSummary.experiences,
+      preferredExperiences,
+      performanceBand,
       competency: params.focusCompetency,
     }));
 
@@ -1130,6 +1149,50 @@ async function finalizeCompetencySession(params: {
     levelEst: compSummary?.level_estimate,
     percentile: compSummary?.percentile,
   });
+
+  try {
+    const { ensureResumeEvidence } = await import("@/lib/interview/resume-evidence");
+    const { pickClaimIdsUsedInSession } = await import("@/lib/interview/resume-ontology");
+    const { syncClaimDemonstration } = await import("@/lib/neo4j/resume-evidence-graph");
+    const { parseIrtState } = await import("@/lib/irt-state");
+    const sessionWithResume = await prisma.interviewSession.findUnique({
+      where: { id: params.sessionId },
+      include: { resume: true },
+    });
+    const storedIrt = parseIrtState(sessionWithResume?.irtState);
+    const summary = sessionWithResume?.resume?.parsedTags
+      ? ensureResumeEvidence(
+          (await import("@/lib/interview/build-question")).parseResumeSummary(
+            sessionWithResume.resume.parsedTags,
+          ) ?? { summary: "", skills: [], experiences: [], keywords: [], chunks: [] },
+        )
+      : null;
+    const claimIds = pickClaimIdsUsedInSession({
+      highlights: storedIrt.usedHighlights ?? [],
+      evidence: summary?.evidence,
+      claimVerificationClaim: storedIrt.pendingClaimQuestion?.groundedClaim ?? null,
+    });
+    const rubricScores = regularResponses
+      .map((r) => r.rubricScore)
+      .filter((n): n is number => typeof n === "number");
+    const rubricAvg =
+      rubricScores.length > 0
+        ? rubricScores.reduce((a, b) => a + b, 0) / rubricScores.length
+        : null;
+    await syncClaimDemonstration({
+      userId: params.userId,
+      resumeId: sessionWithResume?.resumeId,
+      competency: params.focusCompetency,
+      claimIds,
+      sessionId: params.sessionId,
+      theta: compSummary?.theta,
+      levelEst: compSummary?.level_estimate,
+      percentile: compSummary?.percentile,
+      rubricAvg,
+    });
+  } catch (e) {
+    console.warn("[finalize] claim demonstration sync failed:", e);
+  }
 
   await markPlanCompleteIfNeeded(params.planId);
 

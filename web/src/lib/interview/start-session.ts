@@ -251,7 +251,9 @@ export async function startInterviewSession(
   const trimmedResumeText: string | undefined = resumeText?.trim() || undefined;
   let resume: { id: string; parsedTags?: unknown } | null = null;
   if (trimmedResumeText) {
-    const summary = JSON.parse(JSON.stringify(await summarizeResume(trimmedResumeText)));
+    const { persistResumeOntology } = await import("@/lib/interview/resume-ontology");
+    const summaryObj = await summarizeResume(trimmedResumeText);
+    const summary = JSON.parse(JSON.stringify(summaryObj));
     if (existingPlan?.resumeId) {
       resume = await prisma.resume.update({
         where: { id: existingPlan.resumeId },
@@ -271,8 +273,22 @@ export async function startInterviewSession(
         },
       });
     }
+    await persistResumeOntology({
+      userId: user.id,
+      resumeId: resume.id,
+      summary: summaryObj,
+    });
   } else if (existingPlan?.resume) {
     resume = existingPlan.resume;
+    const parsed = parseResumeSummary(existingPlan.resume.parsedTags);
+    if (parsed && resume) {
+      const { persistResumeOntology } = await import("@/lib/interview/resume-ontology");
+      await persistResumeOntology({
+        userId: user.id,
+        resumeId: resume.id,
+        summary: parsed,
+      });
+    }
   }
 
   const plan = await getOrCreateActivePlan({

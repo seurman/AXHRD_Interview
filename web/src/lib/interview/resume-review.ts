@@ -106,7 +106,8 @@ const REVIEW_SYSTEM = `당신은 한국 채용 시장의 자기소개서 첨삭 
 - paragraphFeedback의 quote는 반드시 자소서 요약(experiences·summary)에 실제로 등장하는 문장/구절만 인용하세요.
 - 경험이 부족하면 "이런 경험이 있다면 추가하세요" 또는 "면접에서 다른 사례로 보완하는 전략"을 제안하세요.
 - 이메일·전화번호 등 개인정보는 언급하지 마세요.
-- suggestedCompetencies는 NCS 6역량 코드만 사용: COMMUNICATION, PROBLEM_SOLVING, JOB_FIT, ORG_FIT, GROWTH, GLOBAL (최대 3개).
+- suggestedCompetencies는 NCS 6역량 코드만 사용: COMMUNICATION, PROBLEM_SOLVING, JOB_FIT, ORG_FIT, LEADERSHIP, GROWTH (최대 3개).
+- 온톨로지 claim·면접 답변 수준이 주어지면, 자소서에 약한 역량과 면접에서 약한 역량을 우선 suggestedCompetencies·improvementPlan에 반영하세요.
 
 JSON 형식:
 {
@@ -131,6 +132,12 @@ export async function generateResumeReviewNarrative(params: {
   requiredKeywords: string[];
   industryLabel?: string;
   jobRoleLabel?: string;
+  /** claim↔역량 매핑 요약 (온톨로지) */
+  evidenceContext?: string;
+  /** 면접 답변 수준 요약 */
+  performanceContext?: string;
+  /** fallback/기본 추천 역량 (증거 갭 기반) */
+  suggestedFromEvidence?: CompetencyCode[];
 }): Promise<ResumeReviewNarrative> {
   const {
     resumeSummary,
@@ -140,6 +147,8 @@ export async function generateResumeReviewNarrative(params: {
     requiredKeywords,
     industryLabel,
     jobRoleLabel,
+    evidenceContext,
+    performanceContext,
   } = params;
 
   const matchContext =
@@ -158,12 +167,18 @@ ${matchContext}
 - skills: ${resumeSummary.skills.join(", ")}
 - experiences: ${resumeSummary.experiences.join(" | ")}
 - keywords: ${resumeSummary.keywords.join(", ")}
+${evidenceContext ? `\n온톨로지 claim↔역량:\n${evidenceContext}` : ""}
+${performanceContext ? `\n면접 답변 수준(역량별):\n${performanceContext}` : ""}
 
 자소서 원문(인용 검증용, 일부):
 ${sanitizeResumeForLlm(resumeRawText).slice(0, 2500)}
 `.trim();
 
-  const fallback = buildFallbackNarrative(resumeSummary, jdMatch);
+  const fallback = buildFallbackNarrative(
+    resumeSummary,
+    jdMatch,
+    params.suggestedFromEvidence,
+  );
 
   if (!process.env.GEMINI_API_KEY) {
     return fallback;
@@ -238,7 +253,8 @@ ${sanitizeResumeForLlm(resumeRawText).slice(0, 2500)}
 
 function buildFallbackNarrative(
   summary: ResumeSummary,
-  jdMatch: JdMatchResult
+  jdMatch: JdMatchResult,
+  suggestedFromEvidence?: CompetencyCode[],
 ): ResumeReviewNarrative {
   const paragraphFeedback: ParagraphFeedbackItem[] = summary.experiences.slice(0, 3).map((exp) => ({
     quote: exp.slice(0, 120),
@@ -271,7 +287,10 @@ function buildFallbackNarrative(
       improvementPlan.length > 0
         ? improvementPlan
         : [{ gapLabel: "구체성", suggestion: "STAR 형식으로 사례를 정리해 보세요." }],
-    suggestedCompetencies: ["COMMUNICATION"],
+    suggestedCompetencies:
+      suggestedFromEvidence?.length
+        ? suggestedFromEvidence.slice(0, 3)
+        : ["COMMUNICATION"],
   };
 }
 

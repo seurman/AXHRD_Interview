@@ -68,13 +68,25 @@ export async function personalizeQuestion(params: {
   /** 자소서 인용이 없거나 소진됐을 때 JD 요구사항으로 그라운딩 */
   jdRequirements?: JdRequirements | null;
   interviewStyle?: InterviewStyleHint;
+  /** 온톨로지 claim 순위 + 답변 수준 밴드 — 있으면 역량 매칭 청크 우선 */
+  ontologyHints?: {
+    preferredChunks?: ResumeChunk[];
+    preferredExperiences?: string[];
+    performanceBand?: string;
+  };
 }): Promise<PersonalizeResult> {
   const genericRubric = buildGenericRubric(params.competency);
   const exclude = new Set(params.excludeHighlights ?? []);
   const excludeJd = new Set(params.excludeJdTerms ?? []);
 
-  const summaryExperiences = params.resumeSummary?.experiences ?? [];
-  const summaryChunks = params.resumeSummary?.chunks ?? [];
+  const summaryExperiences =
+    params.ontologyHints?.preferredExperiences?.length
+      ? params.ontologyHints.preferredExperiences
+      : (params.resumeSummary?.experiences ?? []);
+  const summaryChunks =
+    params.ontologyHints?.preferredChunks?.length
+      ? params.ontologyHints.preferredChunks
+      : (params.resumeSummary?.chunks ?? []);
   const hasSummary = summaryExperiences.length > 0 || summaryChunks.length > 0;
   const legacyText = !hasSummary ? params.legacyResumeText?.trim() ?? "" : "";
 
@@ -82,9 +94,16 @@ export async function personalizeQuestion(params: {
     (c) => !exclude.has(c.markdown) && !exclude.has(c.title),
   );
 
+  // 답변 수준이 약하면 수치 있는 claim을, 강하면 역량 점수 높은 claim을 앞에
+  const band = params.ontologyHints?.performanceBand;
+  const orderedChunks =
+    band === "weak"
+      ? [...chunkCandidates].sort((a, b) => Number(/\d/.test(b.markdown)) - Number(/\d/.test(a.markdown)))
+      : chunkCandidates;
+
   const highlights = hasSummary
-    ? chunkCandidates.length > 0
-      ? chunkCandidates.map((c) => excerptForCitation(c.markdown))
+    ? orderedChunks.length > 0
+      ? orderedChunks.map((c) => excerptForCitation(c.markdown))
       : rankExperiencesByCompetency(summaryExperiences, params.competency).filter(
           (h) => !exclude.has(h),
         )
@@ -103,7 +122,7 @@ export async function personalizeQuestion(params: {
 
   const useJdOnly = highlights.length === 0;
   const anchor = useJdOnly ? jdTerms[0] : highlights[0];
-  const anchorChunk = !useJdOnly && chunkCandidates.length > 0 ? chunkCandidates[0] : null;
+  const anchorChunk = !useJdOnly && orderedChunks.length > 0 ? orderedChunks[0] : null;
   const groundingTerms = useJdOnly ? jdTerms : highlights;
   // 인용하려는 자소서 경험이 이번 질문의 역량 주제와 실제로 겹치는지 — 겹치지 않으면(=이
   // 역량과 관련된 경험이 소진돼 무관한 경험을 어쩔 수 없이 앵커로 쓴 경우) heuristic 폴백에서
@@ -113,6 +132,13 @@ export async function personalizeQuestion(params: {
       ? true
       : (COMPETENCY_HINTS[params.competency] ?? /./).test(highlights[0]);
 
+  const performanceNote =
+    band === "weak"
+      ? "지원자의 해당 역량 면접 답변 수준이 아직 낮습니다. 자소서 수치·역할을 구체적으로 검증하되 존중하는 톤으로."
+      : band === "strong"
+        ? "해당 역량 면접 답변 수준이 높습니다. 자소서 claim의 의사결정·트레이드오프를 더 깊게 캐물으세요."
+        : "";
+
   if (process.env.GEMINI_API_KEY) {
     const llm = await personalizeWithGemini(
       {
@@ -120,14 +146,16 @@ export async function personalizeQuestion(params: {
         resumeContext: hasSummary
           ? [
               params.resumeSummary?.summary,
-              ...summaryChunks.map((c) => `${c.title}: ${c.markdown}`),
+              ...orderedChunks.map((c) => `${c.title}: ${c.markdown}`),
               ...summaryExperiences,
+              performanceNote,
             ]
               .filter(Boolean)
               .join(" ")
           : legacyText.slice(0, 1500),
         useJdOnly,
         jdTerms,
+        performanceNote,
       },
       groundingTerms
     );
@@ -262,6 +290,7 @@ async function personalizeWithGemini(
     interviewStyle?: InterviewStyleHint;
     useJdOnly?: boolean;
     jdTerms?: string[];
+    performanceNote?: string;
   },
   highlights: string[]
 ): Promise<{ question: string; rubric: string[]; citedPhrase?: string } | null> {
@@ -271,6 +300,7 @@ async function personalizeWithGemini(
 지원 회사: ${params.companyName ?? "미정"}
 지원 직무: ${params.jobRole ? jobRoleLabel(params.jobRole) : "미정"}
 ${params.interviewStyle ? `면접 스타일: ${params.interviewStyle.tone} (중점 평가 역량: ${params.interviewStyle.focus.join(", ")})` : ""}
+${params.performanceNote ? `답변 수준 힌트: ${params.performanceNote}` : ""}
 기본 질문(평가 의도 유지): ${params.template}
 
 ★ 반드시 아래에서만 인용하세요. 아래에 없는 사실은 질문·citedPhrase에 넣지 마세요.

@@ -32,14 +32,24 @@ export async function runCypher(
   query: string,
   params: Record<string, unknown> = {}
 ): Promise<void> {
+  await queryCypher(query, params);
+}
+
+/** Neo4j 비활성·실패 시 빈 배열 — 호출부는 Postgres 폴백을 쓰면 됨 */
+export async function queryCypher(
+  query: string,
+  params: Record<string, unknown> = {}
+): Promise<Array<Record<string, unknown>>> {
   const d = getNeo4jDriver();
-  if (!d) return;
+  if (!d) return [];
 
   const session = d.session();
   try {
-    await session.run(query, params);
+    const result = await session.run(query, params);
+    return result.records.map((r) => r.toObject() as Record<string, unknown>);
   } catch (e) {
     console.warn("[Neo4j] Query failed:", e);
+    return [];
   } finally {
     await session.close();
   }

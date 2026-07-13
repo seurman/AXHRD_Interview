@@ -11,6 +11,7 @@
  */
 
 import { generateGeminiText } from "@/lib/gemini/client";
+import { ensureResumeEvidence } from "@/lib/interview/resume-evidence";
 
 export type ResumeChunk = {
   /** 경험/프로젝트 제목 — 질문 UI에 표시 */
@@ -31,6 +32,11 @@ export interface ResumeSummary {
   keywords: string[];
   /** 의미 단위 마크다운 청크 — personalize-question이 인용의 1차 소스 */
   chunks: ResumeChunk[];
+  /**
+   * 온톨로지 claim ↔ 역량 링크 (SSOT는 Postgres; Neo4j에 미러).
+   * summarize 직후 `ensureResumeEvidence`로 채워짐.
+   */
+  evidence?: import("@/lib/interview/resume-evidence").ResumeEvidenceClaim[];
 }
 
 const SUMMARY_SYSTEM = `당신은 채용 담당자를 돕는 자기소개서 분석가입니다.
@@ -152,13 +158,17 @@ export function normalizeResumeSummary(raw: unknown): ResumeSummary | undefined 
   const chunks = Array.isArray(o.chunks) && o.chunks.length > 0
     ? normalizeChunks(o.chunks, experiences)
     : normalizeChunks(undefined, experiences);
-  return {
+  const base: ResumeSummary = {
     summary: o.summary.trim(),
     skills: o.skills.filter((s): s is string => typeof s === "string"),
     experiences,
     keywords: o.keywords.filter((s): s is string => typeof s === "string"),
     chunks,
   };
+  if (Array.isArray((o as ResumeSummary).evidence) && (o as ResumeSummary).evidence!.length > 0) {
+    base.evidence = (o as ResumeSummary).evidence;
+  }
+  return ensureResumeEvidence(base);
 }
 
 export async function summarizeResume(rawText: string): Promise<ResumeSummary> {
@@ -166,7 +176,7 @@ export async function summarizeResume(rawText: string): Promise<ResumeSummary> {
   if (!trimmed) return emptySummary();
 
   if (!process.env.GEMINI_API_KEY) {
-    return heuristicSummary(trimmed);
+    return ensureResumeEvidence(heuristicSummary(trimmed));
   }
 
   const content = await generateGeminiText({
@@ -184,13 +194,13 @@ export async function summarizeResume(rawText: string): Promise<ResumeSummary> {
         const parsed = JSON.parse(jsonMatch[0]);
         if (isValidSummary(parsed)) {
           const experiences = parsed.experiences.filter((s): s is string => typeof s === "string");
-          return {
+          return ensureResumeEvidence({
             summary: parsed.summary.trim(),
             skills: parsed.skills.filter((s): s is string => typeof s === "string"),
             experiences,
             keywords: parsed.keywords.filter((s): s is string => typeof s === "string"),
             chunks: normalizeChunks((parsed as ResumeSummary).chunks, experiences),
-          };
+          });
         }
       } catch (e) {
         console.error("[resume-summary] JSON parse 실패:", e);
@@ -198,5 +208,5 @@ export async function summarizeResume(rawText: string): Promise<ResumeSummary> {
     }
   }
 
-  return heuristicSummary(trimmed);
+  return ensureResumeEvidence(heuristicSummary(trimmed));
 }

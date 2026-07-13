@@ -1,8 +1,9 @@
 /**
  * HR_IN 온톨로지 — Neo4j 그래프 동기화
  *
- * 노드: Candidate, Competency, Question, InterviewPlan
- * 관계: HAS_PLAN, MEASURES, PROGRESS_ON, COMPLETED, REQUIRES (역량 선행)
+ * 노드: Candidate, Competency, Question, InterviewPlan, Resume, Claim
+ * 관계: HAS_PLAN, MEASURES, PROGRESS_ON, COMPLETED, REQUIRES,
+ *       HAS_RESUME, HAS_CLAIM, SUPPORTS, DEMONSTRATED
  */
 
 import { runCypher } from "./client";

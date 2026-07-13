@@ -23,13 +23,27 @@ const CLAIM_SYSTEM = `당신은 한국 기업 면접관입니다.
 export async function generateResumeClaimQuestion(params: {
   experiences: string[];
   competency: string;
+  /** 온톨로지 순위가 있으면 experiences보다 우선 */
+  preferredExperiences?: string[];
+  performanceBand?: string;
 }): Promise<{ question: string; groundedClaim: string } | null> {
-  const candidates = prioritizeExperiences(params.experiences);
+  const pool =
+    params.preferredExperiences?.length
+      ? params.preferredExperiences
+      : params.experiences;
+  const candidates = prioritizeExperiences(pool);
   if (candidates.length === 0) return null;
+
+  const bandHint =
+    params.performanceBand === "weak"
+      ? "해당 역량 면접 답변이 아직 약합니다. 수치·본인 역할을 차분히 확인하세요."
+      : params.performanceBand === "strong"
+        ? "해당 역량 답변 수준이 높습니다. 의사결정·대안 비교를 깊게 캐물으세요."
+        : "";
 
   const userPrompt = `
 역량: ${competencyLabel(params.competency)}
-자소서 경험 문장(아래에서 하나를 반드시 인용):
+${bandHint ? `답변 수준 힌트: ${bandHint}\n` : ""}자소서 경험 문장(아래에서 하나를 반드시 인용):
 ${candidates.map((t, i) => `${i + 1}. ${t}`).join("\n")}
 `.trim();
 
