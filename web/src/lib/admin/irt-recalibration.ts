@@ -156,7 +156,7 @@ export async function computeIrtRecalibration(): Promise<RecalibrationItemResult
         newDiscrimination: q.discrimination,
         avgRubricScore,
         skipped: true,
-        skipReason: `표본 부족 (n=${sampleSize})`,
+        skipReason: `표본 부족(n=${sampleSize})`,
       };
     }
 
