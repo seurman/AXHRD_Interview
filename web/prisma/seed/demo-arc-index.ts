@@ -374,13 +374,36 @@ async function upsertDemoOrg(db: import("@prisma/client").PrismaClient) {
   });
 }
 
-export async function seedDemoArcIndex(client?: import("@prisma/client").PrismaClient) {
+export async function seedDemoArcIndex(
+  client?: import("@prisma/client").PrismaClient,
+  options?: { organizationId?: string; waveLabelPrefix?: string },
+) {
   const db = client ?? prisma;
+  const labelPrefix = options?.waveLabelPrefix ?? "데모";
+
   console.log("[demo-arc-index] ARC Index 문항 동기화 중…");
   const instrumentId = await seedArcIndex(db);
 
   console.log("[demo-arc-index] 데모 기관 준비 중…");
-  const org = await upsertDemoOrg(db);
+  let org: { id: string; name: string; joinCode: string };
+  if (options?.organizationId) {
+    const existing = await db.organization.findUnique({
+      where: { id: options.organizationId },
+      select: { id: true, name: true, joinCode: true, diagnosticEnabled: true },
+    });
+    if (!existing) throw new Error(`organization not found: ${options.organizationId}`);
+    if (!existing.diagnosticEnabled) {
+      await db.organization.update({
+        where: { id: existing.id },
+        data: { diagnosticEnabled: true, status: "APPROVED", approvedAt: new Date() },
+      });
+    }
+    await db.diagnosticWave.deleteMany({ where: { organizationId: existing.id } });
+    org = existing;
+    console.log(`[demo-arc-index] 대상 기관: ${org.name}`);
+  } else {
+    org = await upsertDemoOrg(db);
+  }
 
   const items = await db.diagnosticItem.findMany({
     where: { section: { instrumentId } },
@@ -418,7 +441,7 @@ export async function seedDemoArcIndex(client?: import("@prisma/client").PrismaC
     const wave = await createDiagnosticWave({
       organizationId: org.id,
       instrumentId,
-      label: `데모 — Wave ${waveNumber}`,
+      label: `${labelPrefix} — Wave ${waveNumber}`,
       status: "CLOSED",
       opensAt: daysAgo(waveIdx === 0 ? 75 : 14),
       closesAt: daysAgo(waveIdx === 0 ? 60 : 3),
@@ -457,14 +480,15 @@ export async function seedDemoArcIndex(client?: import("@prisma/client").PrismaC
   }
 
   console.log(
-    `[demo-arc-index] 완료 — /admin/diagnostic 에서 "${DEMO_ORG_NAME}" 조직을 확인하세요 (조인코드 ${DEMO_ORG_JOIN_CODE}).`,
+    `[demo-arc-index] 완료 — /admin/diagnostic 에서 "${org.name}" 조직을 확인하세요.`,
   );
 
   return {
     organizationId: org.id,
-    organizationName: DEMO_ORG_NAME,
-    joinCode: DEMO_ORG_JOIN_CODE,
+    organizationName: org.name,
+    joinCode: org.joinCode,
     adminDiagnosticUrl: "/admin/diagnostic",
+    orgDiagnosisUrl: "/org/diagnosis",
   };
 }
 

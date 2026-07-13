@@ -21,34 +21,43 @@ import access from "../../src/data/demo/demo-access.json";
 
 const prisma = new PrismaClient();
 
-async function main() {
+export async function runDemoSuite(client: PrismaClient = prisma) {
   console.log("[demo-suite] ARC Index · NCS 동기화…");
-  await seedArcIndex(prisma);
-  await syncNcsCompetencyBank(prisma);
+  await seedArcIndex(client);
+  await syncNcsCompetencyBank(client);
 
   console.log("[demo-suite] 쇼케이스 코호트·경량 진단…");
-  const showcase = await seedShowcaseDemoData(prisma);
+  const showcase = await seedShowcaseDemoData(client);
 
   console.log("[demo-suite] 개인 대시보드 팩 적용…");
-  const dashboard = await seedPersonalDashboardFromPack(prisma);
+  const dashboard = await seedPersonalDashboardFromPack(client);
 
   console.log("[demo-suite] 지원자 스크리닝(쇼케이스)…");
-  const candidates = await seedCandidateScreeningDemo(prisma);
+  const candidates = await seedCandidateScreeningDemo(client);
 
-  console.log("[demo-suite] ARC 조직진단 풀 리포트…");
-  const arc = await seedDemoArcIndex(prisma);
+  console.log("[demo-suite] ARC 조직진단 풀 리포트 (테크노바)…");
+  const arc = await seedDemoArcIndex(client);
 
-  console.log("[demo-suite] 테크노바 기관 관리자…");
-  const arcAdmin = await seedArcDemoOrgAdmin(prisma);
+  console.log("[demo-suite] 쇼케이스 기관 ARC 풀 데모 (기관 로그인용)…");
+  const showcaseArc = showcase.showcaseOrgId
+    ? await seedDemoArcIndex(client, {
+        organizationId: showcase.showcaseOrgId,
+        waveLabelPrefix: "쇼케이스",
+      })
+    : null;
+
+  console.log("[demo-suite] 기관 데모 관리자…");
+  const arcAdmin = await seedArcDemoOrgAdmin(client);
 
   console.log("[demo-suite] 데모 계정 비밀번호…");
-  const passwords = await ensureDemoAccountPasswords(prisma);
+  const passwords = await ensureDemoAccountPasswords(client);
 
   const summary = {
     showcase,
     dashboard,
     candidates,
     arc,
+    showcaseArc,
     arcAdmin,
     passwords,
     credentialsFile: "src/data/demo/demo-access.json",
@@ -61,9 +70,18 @@ async function main() {
   console.log("계정 A: dashboard-demo@demo.axhrd.local / Demo2026! → /dashboard");
   console.log("계정 B: arc-demo-admin@demo.axhrd.local / Demo2026! → /org/diagnosis · /org/candidates");
   console.log("슈퍼어드민: /admin/diagnostic → 테크노바 ARC 풀 리포트\n");
+
+  return summary;
 }
 
-main()
+async function main() {
+  await runDemoSuite();
+}
+
+const invokedDirectly = process.argv[1]?.replace(/\\/g, "/").endsWith("demo-suite.ts");
+
+if (invokedDirectly) {
+  main()
   .catch((err) => {
     console.error("[demo-suite] 실패:", err);
     process.exitCode = 1;
@@ -71,3 +89,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+}

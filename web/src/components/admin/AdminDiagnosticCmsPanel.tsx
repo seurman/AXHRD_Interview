@@ -71,6 +71,7 @@ export function AdminDiagnosticCmsPanel({
   const router = useRouter();
   const [tab, setTab] = useState<"instrument" | "campaign" | "report">("campaign");
   const [seeding, setSeeding] = useState(false);
+  const [demoSeeding, setDemoSeeding] = useState<"arc" | "suite" | null>(null);
   const [seedError, setSeedError] = useState<string | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
 
@@ -91,6 +92,35 @@ export function AdminDiagnosticCmsPanel({
       router.refresh();
     } finally {
       setSeeding(false);
+    }
+  }
+
+  async function runDemoSeed(kind: "arc" | "suite") {
+    const message =
+      kind === "arc"
+        ? "운영 DB에 ARC 데모 캠페인(테크노바 + 쇼케이스)을 생성합니다. 기존 해당 기관 웨이브는 교체됩니다. 계속할까요?"
+        : "운영 DB에 통합 시연 데이터(개인·기관·쇼케이스·ARC)를 모두 넣습니다. 수 분 걸릴 수 있습니다. 계속할까요?";
+    if (!confirm(message)) return;
+
+    setDemoSeeding(kind);
+    setSeedError(null);
+    try {
+      const path =
+        kind === "arc" ? "/api/admin/diagnostic/demo-arc-seed" : "/api/admin/diagnostic/demo-suite-seed";
+      const res = await fetch(path, {
+        method: "POST",
+        headers: kind === "arc" ? { "Content-Type": "application/json" } : undefined,
+        body: kind === "arc" ? JSON.stringify({ scope: "both" }) : undefined,
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setSeedError(json.error ?? "데모 시드 실패");
+        return;
+      }
+      if (json.message) alert(json.message);
+      router.refresh();
+    } finally {
+      setDemoSeeding(null);
     }
   }
 
@@ -194,11 +224,40 @@ export function AdminDiagnosticCmsPanel({
       <AdminSection
         title="진단 캠페인"
         description="기관 선택 → 섹션 → 일정. 팀별 링크는 생성 후 상세 화면에서 추가합니다."
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={demoSeeding !== null}
+              onClick={() => void runDemoSeed("arc")}
+              className="btn-secondary px-4 py-2 text-sm disabled:opacity-50"
+            >
+              {demoSeeding === "arc" ? "ARC 데모 생성 중…" : "운영 ARC 데모"}
+            </button>
+            <button
+              type="button"
+              disabled={demoSeeding !== null}
+              onClick={() => void runDemoSeed("suite")}
+              className="btn-secondary px-4 py-2 text-sm disabled:opacity-50"
+            >
+              {demoSeeding === "suite" ? "통합 시드 중…" : "운영 통합 시연 시드"}
+            </button>
+          </div>
+        }
       >
+        {seedError && <p className="mb-4 text-sm text-rose-600">{seedError}</p>}
+
         {waves.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-card-border p-6 text-sm text-muted">
-            아직 캠페인이 없습니다. 문항뱅크 설치 후 「+ 새 진단 시작」으로 첫 캠페인을 만드세요.
-          </p>
+          <div className="rounded-xl border border-dashed border-amber-300/60 bg-amber-50/50 p-6 dark:bg-amber-950/20">
+            <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+              아직 캠페인이 없습니다.
+            </p>
+            <p className="mt-2 text-sm text-amber-800/80 dark:text-amber-200/80">
+              운영(Vercel) DB는 로컬 CLI 시드가 연결되지 않습니다. 슈퍼어드민으로 「운영 ARC 데모」 또는
+              「운영 통합 시연 시드」를 실행하세요. 로컬 개발은{" "}
+              <code className="text-xs">npm run db:seed:demo</code> 를 사용합니다.
+            </p>
+          </div>
         ) : (
           <ul className="-mx-6 -mb-6 border-t border-card-border">
             {waves.map((w) => (

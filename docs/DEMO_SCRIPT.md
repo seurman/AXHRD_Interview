@@ -2,7 +2,11 @@
 
 비밀번호 공통: **`Demo2026!`**
 
-시드 적용: `cd web && npm run db:seed:demo`
+시드 적용:
+
+- **로컬:** `cd web && npm run db:seed:demo`
+- **운영(Vercel):** 슈퍼어드민 → `/admin/diagnostic` → **Campaign** 탭 → 「운영 통합 시연 시드」  
+  (캠페인만 필요하면 「운영 ARC 데모」 — 로컬 `seed-demo-to-prod.ps1` 은 운영 DB에 연결되지 않음)
 
 ---
 
@@ -45,7 +49,7 @@
 
 ## 체크리스트 (시연 전)
 
-- [ ] `npm run db:seed:demo` 완료
+- [ ] 로컬 또는 운영에서 데모 시드 완료 (운영: `/admin/diagnostic` Campaign 탭)
 - [ ] 두 계정 로그인 확인
 - [ ] 개인: 대시보드 코칭 한 줄 + 차수 요약 한 줄 표시
 - [ ] 개인: 면접 질문에 자소서 근거 인용 표시
