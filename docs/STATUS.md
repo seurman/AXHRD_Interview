@@ -2,6 +2,58 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최신 배포 스냅샷 — `00d8283` (2026-07-13, master 푸시 완료)
+
+**커밋:** `00d8283` — `feat: org diagnostic hierarchy, interview rounds, flags, and coach dashboard`  
+**브랜치:** `master` → `origin/master` 동기화됨. Vercel 빌드 시 `prisma migrate deploy` + `prisma generate` 포함.
+
+**이번 배포에 포함된 마이그레이션 3건 (운영 DB 자동 적용 대상):**
+
+| 마이그레이션 | 내용 |
+|-------------|------|
+| `20260713190000_add_platform_feature_flags` | `PlatformFeatureFlag` — `resumeClaimEnabled` / `jdBonusEnabled` / `tripleFeedbackMode` 슈퍼어드민 킬스위치 |
+| `20260713200000_diagnostic_team_hierarchy` | `DiagnosticTeam.level` + `parentId` — 사업본부→사업부→팀 self-relation 트리 |
+| `20260714100000_interview_round_orchestration` | `InterviewPlan`/`InterviewSession` — 역량 큐·시간 예산·차수 요약(`roundBrief`) |
+
+**기능 묶음 (한 커밋에 합쳐 배포됨 — 되돌릴 때는 커밋 단위):**
+
+1. **조직진단 하이어라키 드릴다운** — 아래 「최근 작업 — 조직 하이어라키」절. 데모 시드 `npm run db:seed:demo-arc` (3단계 트리 반영).
+2. **ARC Index β회귀 IPA·ICC(JS)** — 아래 「ARC Index 리포트 β회귀」절. `DRIVER_CODES`에 `D` 영역 추가.
+3. **플랫폼 기능 킬스위치** — `/admin/settings/features`, `lib/platform/feature-flags.ts`, SetupForm·`start-session`에서 서버 강제 OFF.
+4. **역량 세트·차수 오케스트레이션** — SetupForm: 준비 모드(역량 연습/기업 지원)·시간 10/20/30분·JD 다중 역량 추천. `competency-round.ts`, `RoundBriefPanel`, 피드백/리포트에서 `NextCompetencyButton` + DB 큐.
+5. **개인 코칭 대시보드** — `/dashboard` `CoachInsightsPanel`: 역량 향상도·6축 최근 평균·차수 요약·접속 이력.
+6. **JD 파일 파싱** — `parse-jd-file.ts`, `POST /api/jd/parse` (PDF/Word/이미지 OCR). URL 크롤링 UI는 제거, API는 하위호환 유지.
+7. **NCS 서버리스 번들** — `src/data/ncs/*.json` + `ncs-bank-sync.ts` 정적 import (Vercel ENOENT 방지).
+8. **챕북 랜딩 스켈레톤** — `components/landing/chapbook/*`, `styles/chapbook/*`, `extract-chapbook-landing.mjs`.
+9. **기타** — `POST /api/demo-request`, 문항 성능 검증 스크립트, `web/CURSOR_TASK_*.md` 스펙 11종(이번 커밋에 5종 신규·나머지 기존).
+
+**커밋에서 제외한 로컬 파일:** `AXHRD_*.docx` (가이드·제안서) — 저장소 밖 유지.
+
+**배포 후 확인 체크리스트:**
+
+```powershell
+# Vercel 빌드 로그: migrate deploy 3건 성공 여부
+# 로컬 재현 시:
+cd D:\HR_IN_Solution\web
+npx prisma migrate deploy
+npx prisma generate   # dev 서버(next dev) 종료 후 — DLL EPERM 방지
+npm run db:seed:demo-arc   # ARC 데모 하이어라키 시드 (선택)
+npx tsc --noEmit
+npm test
+```
+
+- `/admin/settings/features` — 킬스위치 3종 토글
+- `/interview/setup` — 역량 3개 + 20분 → 차수 연속 진행 + 피드백 후 차수 요약
+- `/dashboard` — 코칭 인사이트 섹션
+- `/admin/diagnostic` — 팀 탭 브레드크럼 드릴다운
+- JD 이미지 업로드 → 역량 세트 추천
+
+**미구현·다음 후보 (이번 배포 범위 밖):**
+
+- 자소서 **500~1000자 마크다운 청크** 분할 저장 (`resume-summary.ts`는 여전히 JSON 요약 + experience 1문장 배열)
+- ARC LPA(GMM)·HLM 완전판·주관식 LDA·처방 탭
+- `org_home_by_entitlement` 전면 분리 (`/org/dashboard` entitlement별 홈)
+
 ## 최근 작업 — 조직 하이어라키(사업본부/사업부/팀) 드릴다운 (2026-07-13, Cowork 세션 · 이어서)
 
 - **배경**: "회사 전체 → 조직 하이어라키 드릴다운"을 보고 싶고, 하이어라키(사업본부→사업부→팀)는 **기관 담당자가 캠페인 생성 시 직접 세팅**할 수 있어야 한다는 요청. 새 모델을 만들지 않고 기존 `DiagnosticTeam`을 self-relation 트리로 확장하는 방식으로 구현 — 스키마 충격 최소화.
@@ -14,11 +66,12 @@
   - `components/diagnostic/DiagnosisOrgConsole.tsx`(기관 담당자 콘솔): 팀 입력 textarea가 콤마 열 개수로 깊이 인식 — `팀만` / `사업부, 팀` / `사업본부, 사업부, 팀`. 링크 목록·CSV export에 `nodePath()`(사업본부 › 사업부 › 팀) 표시.
   - `components/diagnostic/DiagnosisWaveDashboard.tsx`(기관용 리포트), `components/admin/AdminDiagnosticReport.tsx`(수퍼어드민 리포트): "teams" 탭을 브레드크럼(전사 종합 → 사업본부 → 사업부 → 팀) 드릴다운으로 전면 교체. 각 단계에서 선택 노드 요약 카드(OHI/ORI/OVI/OAI) + 하위 조직 비교 막대차트 + 클릭 가능한 하위 목록. Gap 매트릭스/ICC는 전사(root) 화면에만 노출.
 - **데모 시드에 하이어라키 반영 완료**: `prisma/seed/demo-arc-index.ts`의 5개 팀을 3개 사업본부(경영기획본부·연구개발본부·오퍼레이션본부) 산하 사업부로 묶음 — 전략기획팀/사업개발팀(경영기획본부), 연구1팀(연구개발본부), 지원행정팀/현장서비스A(오퍼레이션본부). `createDiagnosticWave` 호출에 `divisionName`/`unitName` 전달만 추가, 응답 생성 로직은 변경 없음(팀명으로 매칭하므로 DIVISION/UNIT 노드는 자동으로 건너뜀). **재시드 필요**: `cd web && npx tsx prisma/seed/demo-arc-index.ts`.
-- **로컬 필수 실행 (이 세션은 DB/Prisma 엔진 접근 불가)**:
-  1. `cd web && npx prisma migrate dev` — 위 손작성 마이그레이션 적용 + Prisma client에 `level`/`parentId`/`DiagnosticTeamLevel` 타입 반영 (client 재생성 전에는 새 필드 관련 타입에러가 날 수 있음)
-  2. `npx tsc --noEmit` — 전체 타입체크
-  3. `npx vitest run` — 기존 테스트 회귀 확인
-  4. (선택) 캠페인 생성 화면에서 `그로스본부, 마케팅사업부, 콘텐츠팀` 형식으로 팀을 넣어보고 리포트 "팀" 탭에서 드릴다운이 되는지 수동 확인
+- **로컬 필수 실행 (마이그레이션·시드)**:
+  1. `cd web && npx prisma migrate deploy` — 위 3건 포함(배포 시 Vercel에서도 실행됨)
+  2. `npx prisma generate` — **next dev / next start 종료 후** (Windows DLL EPERM)
+  3. `npm run db:seed:demo-arc` — ARC 데모 3단계 하이어라키 반영(선택, 멱등)
+  4. `npx tsc --noEmit` · `npm test`
+  5. 캠페인 생성: `그로스본부, 마케팅사업부, 콘텐츠팀` 형식 → 리포트 「팀」탭 드릴다운 수동 확인
 
 ## 최근 작업 — ARC Index 리포트 β회귀 IPA·ICC(JS) + 데모 데이터 (2026-07-13, Cowork 세션)
 
@@ -190,10 +243,12 @@
 ## 배포 현황
 
 - **운영 주소**: https://app.axhrd.com (Vercel Hobby)
+- **최신 프로덕션 커밋**: `00d8283` (2026-07-13) — 조직 하이어라키·차수 면접·킬스위치·코칭 대시보드 등
 - `www.axhrd.com`, `axhrd.com` → `app.axhrd.com`으로 리다이렉트
 - DB: Supabase PostgreSQL (Seoul 리전, Free tier)
 - IRT 엔진(FastAPI): Render (Singapore 리전, Free tier — 15분 미사용 시 슬립, 첫 요청 30~60초 지연될 수 있음)
-- GitHub: https://github.com/seurman/AXHRD_Interview (master 브랜치, push 완료)
+- GitHub: https://github.com/seurman/AXHRD_Interview (`master`, `00d8283` 푸시 완료)
+- **로컬 개발**: `next dev` 실행 중에는 `npx prisma generate`가 `query_engine-windows.dll.node` EPERM으로 실패할 수 있음 — 서버 종료 후 재실행
 - 소셜 로그인: 카카오 로그인 정상 작동 (단, 이메일 동의항목 미승인 상태라 `kakao_숫자@oauth.hr-in.local` 형태의 임시 이메일로 가입됨 — 실제 이메일 필요해지면 카카오 개발자 콘솔에서 이메일 동의항목 추가 신청 필요)
 
 ## 완료된 주요 기능
@@ -488,10 +543,12 @@
 
 ## 진행 시 참고
 
-- git 커밋/푸시, `prisma migrate`, `npm run build`는 전부 박사님 로컬 PC 터미널(PowerShell)에서 실행 — 이 샌드박스 환경에서는 안 되는 경우가 있었음
+- git 커밋/푸시, `prisma migrate`, `npm run build`는 로컬 PC 터미널(PowerShell)에서 실행
 - 로컬 명령어는 항상 `D:\HR_IN_Solution\web` 폴더에서 실행 (단, git 명령어만 루트 `D:\HR_IN_Solution`에서)
 - 배포 상세 절차는 `docs/DEPLOY.md` 참고
 - Windows PowerShell에서 `npx ...`가 실행 정책 오류(PSSecurityException)로 막히면 `npx.cmd ...`로 실행 (docs/DEPLOY.md에도 반영됨)
+- **`prisma generate` EPERM**: `next dev` / `next start`가 Prisma query engine DLL을 잠금 — 종료 후 `npx prisma generate`
+- 대용량 기능을 한 커밋에 묶었을 때(`00d8283`) 되돌리기 어려우면 이후 작업은 기능별 브랜치·PR 분리 권장
 
 ### 로컬 PC에서 확인해야 할 일 (산업군+역량 선택 / 실제 기출 질문 DB)
 
@@ -565,7 +622,28 @@ npx.cmd tsx scripts/flow-smoke.ts
 
 ---
 
-## 다음 세션 핸드오프 (2026-07-07)
+## 다음 세션 핸드오프 (2026-07-13)
+
+### 최근 푸시됨 (`00d8283`)
+
+| 영역 | 핵심 경로 |
+|------|-----------|
+| 조직 하이어라키 | `campaigns.ts`, `aggregate.ts`, `DiagnosisWaveDashboard.tsx`, `demo-arc-index.ts` |
+| 차수 면접 | `competency-round.ts`, `SetupForm.tsx`, `RoundBriefPanel.tsx`, `start-session.ts` |
+| 킬스위치 | `feature-flags.ts`, `/admin/settings/features` |
+| 코칭 대시보드 | `CoachInsightsPanel.tsx`, `get-competency-dashboard-data.ts` |
+| JD 파일 | `parse-jd-file.ts`, `/api/jd/parse` |
+
+스펙 문서: `web/CURSOR_TASK_*.md` (11종 — `platform_feature_flags`, `competency_set_orchestration`, `org_home_by_entitlement`, `resume_claim_verification`, `expand_answer_dimensions` 등).
+
+### 우선 후보
+
+1. 자소서 **마크다운 청크**(500~1000자) — `resume-summary.ts` 확장, `personalize-question.ts` 청크 단위 인용
+2. ARC LPA·HLM·LDA·처방 탭 (리포트 placeholder 해소)
+3. `org_home_by_entitlement` — 기관 entitlement별 홈 분리
+4. 대용량 커밋 분리 정책 — 이후 기능은 브랜치 단위 PR
+
+### 이전 핸드오프 (2026-07-07)
 
 ### 이번 대화에서 완료·푸시됨
 
