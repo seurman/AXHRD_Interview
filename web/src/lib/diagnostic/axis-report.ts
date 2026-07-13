@@ -1,4 +1,5 @@
 import { bandOai, bandOvi, bandOpportunityScore, healthBand } from "@/lib/diagnostic/arc-scoring";
+import type { OpenTextThemeReport, SubscaleThemeResult } from "@/lib/diagnostic/theme-mining";
 
 export type AxisInsight = {
   title: string;
@@ -231,9 +232,9 @@ export const OVI_OPEN_TEXT_CODES = ["HV", "CV", "AV"];
 export const OAI_OPEN_TEXT_CODES = ["SA", "EA", "OA"];
 
 export function filterThemesByCodes(
-  report: { sections: Array<{ subscaleCode: string }> } | null,
+  report: OpenTextThemeReport | null,
   codes: string[],
-) {
+): SubscaleThemeResult[] {
   if (!report) return [];
   return report.sections.filter((s) =>
     codes.some((c) => s.subscaleCode === c || s.subscaleCode.startsWith(c)),

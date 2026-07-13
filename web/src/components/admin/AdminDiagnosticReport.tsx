@@ -61,10 +61,11 @@ import {
   Radar,
 } from "recharts";
 
-const LEVEL_LABEL: Record<"DIVISION" | "UNIT" | "TEAM", string> = {
-  DIVISION: "사업본부",
-  UNIT: "사업부",
-  TEAM: "팀",
+const LPA_COLOR: Record<string, string> = {
+  "고몰입형": "bg-emerald-500",
+  "헌신·몰두형": "bg-gold",
+  "번아웃위험형": "bg-red-500",
+  "이탈예고형": "bg-amber-500",
 };
 
 type DriverImportanceSummary = {
@@ -354,7 +355,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
     return axes;
   }, [aggregate, enabled]);
 
-  const radarData = useMemo(() => {
+  const velocityScatter = useMemo(() => {
     if (!aggregate?.perRespondent) return [];
     return aggregate.perRespondent
       .filter((r) => r.ori.ORI != null && r.ovi.OVI != null)

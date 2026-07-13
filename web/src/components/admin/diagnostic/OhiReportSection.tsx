@@ -47,6 +47,7 @@ type OhiScores = {
 type DriverImportance = {
   entries: Array<{
     code: string;
+    current?: number | null;
     beta: number | null;
     priority: "FOCUS" | "MAINTAIN" | null;
   }>;
@@ -284,7 +285,7 @@ export function OhiReportSection({
             Object.fromEntries(
               teamLevelDriverImportance.entries.map((e) => [
                 e.code,
-                { current: e.current, importance: null },
+                { current: e.current ?? null, importance: null },
               ]),
             ),
             teamLevelDriverImportance,

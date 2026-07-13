@@ -427,7 +427,8 @@ export function OviReportSection({
                 <XAxis type="number" dataKey="HV" name="HV" domain={[1, 5]} label={{ value: "HV 건강속도", position: "bottom", fontSize: 10 }} />
                 <YAxis type="number" dataKey="AV" name="AV" domain={[1, 5]} label={{ value: "AV 실제속도", angle: -90, position: "left", fontSize: 10 }} />
                 <ZAxis range={[24, 24]} />
-                <ReferenceLine segment={{ x1: 1, y1: 1, x2: 5, y2: 5 }} stroke="#e2e8f0" strokeDasharray="4 4" />
+                <ReferenceLine x={3.5} stroke="#e2e8f0" strokeDasharray="4 4" />
+                <ReferenceLine y={3.5} stroke="#e2e8f0" strokeDasharray="4 4" />
                 <Tooltip cursor={{ strokeDasharray: "3 3" }} />
                 <Scatter data={hvAvScatter} fill="#c9a227" fillOpacity={0.55} />
               </ScatterChart>
