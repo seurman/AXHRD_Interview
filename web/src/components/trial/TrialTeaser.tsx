@@ -5,13 +5,8 @@ import Link from "next/link";
 import { ArrowRight, Loader2, Mic, Sparkles } from "lucide-react";
 import { COMPETENCY_CODES, type CompetencyCode } from "@/types";
 import { competencyLabel } from "@/lib/labels";
-
-type TrialFeedback = {
-  score: number;
-  quote: string;
-  coaching: string;
-  summary: string;
-};
+import type { GuestTryFeedback } from "@/lib/demo/guest-try-feedback";
+import { TrialFeedbackPanel } from "@/components/trial/TrialFeedbackPanel";
 
 const REGISTER_NEXT = "/auth/register?next=/interview/setup";
 
@@ -20,7 +15,7 @@ export function TrialTeaser({ loggedIn = false }: { loggedIn?: boolean }) {
   const [level, setLevel] = useState(3);
   const [question, setQuestion] = useState<string | null>(null);
   const [answer, setAnswer] = useState("");
-  const [feedback, setFeedback] = useState<TrialFeedback | null>(null);
+  const [feedback, setFeedback] = useState<GuestTryFeedback | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,7 +77,7 @@ export function TrialTeaser({ loggedIn = false }: { loggedIn?: boolean }) {
           <p className="text-xs font-semibold uppercase tracking-widest text-gold">1문항 체험</p>
           <h2 className="mt-1 text-xl font-bold text-foreground">계정 없이 바로 맛보기</h2>
           <p className="mt-1 text-sm text-muted">
-            질문에 답하고 피드백을 받아 보세요. 가입하면 음성 면접·역량 리포트·월 3회 무료가 열립니다.
+            실제 면접과 같은 6축 코칭을 미리 받아 보세요. 가입하면 음성·꼬리질문·역량 리포트까지 이어집니다.
           </p>
         </div>
       </div>
@@ -135,7 +130,7 @@ export function TrialTeaser({ loggedIn = false }: { loggedIn?: boolean }) {
               onChange={(e) => setAnswer(e.target.value)}
               rows={4}
               className="input-luxe mt-1 w-full"
-              placeholder="STAR 구조로 15자 이상 작성해 보세요."
+              placeholder="상황 → 내가 한 일 → 결과(수치) 순으로 15자 이상 써 보세요."
             />
           </label>
 
@@ -148,32 +143,28 @@ export function TrialTeaser({ loggedIn = false }: { loggedIn?: boolean }) {
             className="btn-primary inline-flex items-center gap-2 text-sm disabled:opacity-50"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            피드백 받기
+            6축 코칭 받기
           </button>
         </>
       )}
 
       {feedback && (
-        <div id="trial-feedback" className="space-y-4">
-          <div className="rounded-xl border border-gold/30 bg-gold/5 p-4 text-sm">
-            <p className="font-semibold text-foreground">
-              맛보기 피드백 · {competencyLabel(competency)} · {feedback.score}/5
-            </p>
-            <p className="mt-2 text-muted">{feedback.summary}</p>
-            <p className="mt-2 text-foreground">{feedback.coaching}</p>
-            {feedback.quote && (
-              <p className="mt-2 border-l-2 border-gold/40 pl-3 text-xs text-muted italic">
-                {feedback.quote}
-              </p>
-            )}
-          </div>
+        <div id="trial-feedback" className="space-y-5">
+          <TrialFeedbackPanel
+            feedback={feedback}
+            competencyLabel={competencyLabel(competency)}
+          />
 
-          <div className="rounded-xl border border-card-border bg-background/40 p-4">
-            <p className="text-sm font-medium text-foreground">다음 단계</p>
+          <div className="rounded-xl border-2 border-gold/40 bg-gold/5 p-5">
+            <p className="text-sm font-semibold text-foreground">
+              {loggedIn
+                ? "이 정도 코칭이 1문항뿐이라면 아쉽지 않으세요?"
+                : "이 정도만 맛봤는데, 음성 면접 전체는 어떨까요?"}
+            </p>
             <p className="mt-1 text-sm text-muted">
               {loggedIn
-                ? "음성으로 답하면 꼬리질문·역량 점수·성장 기록까지 이어집니다."
-                : "가입하면 음성 면접, 자소서 연동 질문, 월 3회 무료가 열립니다."}
+                ? "음성 답변·꼬리질문·자소서 맞춤 질문·역량 점수 추적이 한 세션에 이어집니다."
+                : "무료 가입 후 월 3회 — 자소서 연동 질문, 음성 면접, 역량 리포트까지 바로 시작할 수 있어요."}
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               {loggedIn ? (
@@ -184,7 +175,7 @@ export function TrialTeaser({ loggedIn = false }: { loggedIn?: boolean }) {
                 </Link>
               ) : (
                 <Link href={REGISTER_NEXT} className="btn-primary text-sm">
-                  가입하고 음성 면접 시작
+                  무료 가입하고 음성 면접 시작
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               )}

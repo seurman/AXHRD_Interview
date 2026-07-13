@@ -9,6 +9,8 @@ import { JOB_ROLES } from "@/types";
 import { jobRoleLabel } from "@/lib/labels";
 import { useNavSession } from "@/components/layout/NavSessionProvider";
 import { ClipDynamic } from "@/components/ui/ClipDynamic";
+import type { GuestTryFeedback } from "@/lib/demo/guest-try-feedback";
+import { TrialFeedbackPanel } from "@/components/trial/TrialFeedbackPanel";
 
 type Snap = {
   workspace: { name: string; description: string | null; slug?: string };
@@ -86,12 +88,7 @@ export function DemoShowcase({
   const [irtWarming, setIrtWarming] = useState(false);
   const [guestAnswer, setGuestAnswer] = useState("");
   const [guestTrying, setGuestTrying] = useState(false);
-  const [guestFeedback, setGuestFeedback] = useState<{
-    score: number;
-    coaching: string;
-    quote: string;
-    summary: string;
-  } | null>(null);
+  const [guestFeedback, setGuestFeedback] = useState<GuestTryFeedback | null>(null);
   const [guestError, setGuestError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -449,7 +446,7 @@ export function DemoShowcase({
         <section className="rounded-2xl border border-accent/25 bg-accent/5 p-5 sm:p-6">
           <h2 className="text-base font-semibold text-foreground">로그인 없이 1문항 체험</h2>
           <p className="mt-1 text-sm text-muted report-prose">
-            아래 질문에 답해 보시면 STAR 기반 즉석 피드백을 받을 수 있습니다. (저장되지 않음)
+            아래 질문에 답해 보시면 실제 면접과 같은 6축 코칭을 받을 수 있습니다. (저장되지 않음)
           </p>
           <p className="mt-3 rounded-xl border border-card-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground report-prose">
             {guestQuestion.template}
@@ -469,21 +466,20 @@ export function DemoShowcase({
               disabled={guestTrying || guestAnswer.trim().length < 15}
               className="btn-primary w-full text-sm disabled:opacity-50 sm:w-auto"
             >
-              {guestTrying ? "피드백 생성 중…" : "즉석 피드백 받기"}
+              {guestTrying ? "코칭 생성 중…" : "6축 코칭 받기"}
             </button>
             <span className="text-xs text-muted">
               L{guestQuestion.level} · {comp.nameKo}
             </span>
           </div>
           {guestError && <p className="mt-3 text-sm text-danger report-prose">{guestError}</p>}
-          {guestFeedback && (
-            <div className="mt-4 space-y-2 rounded-xl border border-card-border bg-card p-4 text-sm report-prose">
-              <p className="font-semibold text-foreground">체험 점수 {guestFeedback.score}/5</p>
-              <p className="text-muted">{guestFeedback.coaching}</p>
-              <p className="border-l-2 border-gold pl-3 italic text-foreground">
-                「{guestFeedback.quote}」
-              </p>
-              <p className="text-xs text-muted">{guestFeedback.summary}</p>
+          {guestFeedback && comp && (
+            <div className="mt-4 rounded-xl border border-gold/25 bg-background/40 p-4 report-prose">
+              <TrialFeedbackPanel
+                feedback={guestFeedback}
+                competencyLabel={comp.nameKo}
+                title="체험 코칭"
+              />
             </div>
           )}
         </section>

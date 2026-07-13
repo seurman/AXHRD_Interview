@@ -66,7 +66,11 @@ export async function POST(req: Request) {
     );
   }
 
-  const feedback = buildGuestTryFeedback(answer, picked.question.template);
+  const feedback = await buildGuestTryFeedback(
+    answer,
+    picked.question.template,
+    picked.competency.code,
+  );
 
   return NextResponse.json({
     ok: true,

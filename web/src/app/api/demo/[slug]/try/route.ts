@@ -61,7 +61,7 @@ export async function POST(
     return NextResponse.json({ error: "체험용 문항이 없습니다." }, { status: 404 });
   }
 
-  const feedback = buildGuestTryFeedback(answer, question.template);
+  const feedback = await buildGuestTryFeedback(answer, question.template, comp.code);
 
   return NextResponse.json({
     ok: true,
