@@ -31,7 +31,6 @@ export function buildDimensionTimeline(
     }));
 }
 
-/** 타임라인을 전반·후반으로 나눠 비교 레이더용 평균을 만든다. */
 export function compareDimensionHalves(timeline: DimensionSessionPoint[]): {
   recent: AnswerDimensions;
   previous: AnswerDimensions;

@@ -4,9 +4,12 @@ import {
   computeArcScoresFromAnswers,
   computeDriverImportance,
   computeIcc1,
+  computeLpaProfiles,
   computeTeamGapMatrix,
+  computeTeamLevelDriverImportance,
   type DriverImportanceSummary,
   type IccResult,
+  type LpaResult,
   type ScoredAnswers,
 } from "@/lib/diagnostic/arc-scoring";
 
@@ -14,6 +17,23 @@ function avgNums(values: Array<number | null | undefined>): number | null {
   const valid = values.filter((v): v is number => typeof v === "number" && Number.isFinite(v));
   if (!valid.length) return null;
   return valid.reduce((a, b) => a + b, 0) / valid.length;
+}
+
+/** 드라이버별 current/importance를 스코프(응답자 전체) 평균으로 — 응답자 1명 값을 대표로 쓰지 않는다. */
+function avgDrivers(
+  perRespondent: ReturnType<typeof computeArcScoresFromAnswers>[],
+): Record<string, { current: number | null; importance: number | null }> {
+  const first = perRespondent[0];
+  if (!first) return {};
+  const codes = Object.keys(first.ohi.drivers);
+  const out: Record<string, { current: number | null; importance: number | null }> = {};
+  for (const code of codes) {
+    out[code] = {
+      current: avgNums(perRespondent.map((r) => r.ohi.drivers[code]?.current)),
+      importance: avgNums(perRespondent.map((r) => r.ohi.drivers[code]?.importance)),
+    };
+  }
+  return out;
 }
 
 function summarizeRespondents(
@@ -27,7 +47,10 @@ function summarizeRespondents(
       SE: avgNums(perRespondent.map((r) => r.ohi.SE)),
       riskIndex: avgNums(perRespondent.map((r) => r.ohi.riskIndex)),
       band: first.ohi.band,
-      drivers: first.ohi.drivers,
+      // 버그 수정(2026-07-13): 이전엔 first.ohi.drivers(응답자 1명 값)를 그대로 썼음 —
+      // 리포트의 "10개 드라이버 현재 vs 중요도" 차트·강점/개선 인사이트가 전부 이 값을 쓰므로
+      // 스코프 평균으로 바로잡는다.
+      drivers: avgDrivers(perRespondent),
     },
     ori: {
       ORI: avgNums(perRespondent.map((r) => r.ori.ORI)),
@@ -56,7 +79,7 @@ function summarizeRespondents(
   };
 }
 
-type HierarchyNode = {
+export type HierarchyNode = {
   id: string;
   name: string;
   level: "DIVISION" | "UNIT" | "TEAM";
@@ -64,7 +87,7 @@ type HierarchyNode = {
   department: string | null;
 };
 
-function buildHierarchyIndex(nodes: HierarchyNode[]) {
+export function buildHierarchyIndex(nodes: HierarchyNode[]) {
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const childrenOf = new Map<string, HierarchyNode[]>();
   for (const n of nodes) {
@@ -77,7 +100,7 @@ function buildHierarchyIndex(nodes: HierarchyNode[]) {
 }
 
 /** 어떤 레벨(사업본부/사업부/팀)이 오든 실제 응답이 붙는 리프(TEAM) id 목록으로 롤업한다. */
-function resolveLeafTeamIds(
+export function resolveLeafTeamIds(
   nodeId: string,
   byId: Map<string, HierarchyNode>,
   childrenOf: Map<string, HierarchyNode[]>,
@@ -181,6 +204,8 @@ export async function computeAggregateScores(scope: {
 
   // β회귀 기반 IPA — 응답자 단위 완전사례 회귀(예측변수 10개 대비 표본 부족 시 insufficientData=true)
   const driverImportance: DriverImportanceSummary = computeDriverImportance(scored.perRespondent);
+  // LPA(잠재프로파일분석) — 이 스코프(전사 또는 선택한 조직 노드) 응답자를 유형별로 분류(N<30이면 insufficientData)
+  const lpa: LpaResult = computeLpaProfiles(scored.perRespondent);
 
   if (!scope.teamId) {
     // 전사 조회 — 하이어라키 전체 노드(사업본부·사업부·팀)마다 각자의 리프 응답으로 집계.
@@ -193,6 +218,12 @@ export async function computeAggregateScores(scope: {
         const seValues = hidden
           ? null
           : t.perRespondent.map((r) => r.ohi.SE).filter((v): v is number => v != null);
+        const driverAverages: Record<string, number | null> = {};
+        if (!hidden && t.summary) {
+          for (const [code, d] of Object.entries(t.summary.ohi.drivers)) {
+            driverAverages[code] = d.current;
+          }
+        }
         return {
           row: {
             teamId: node.id,
@@ -208,12 +239,15 @@ export async function computeAggregateScores(scope: {
             OAI: hidden ? null : t.summary?.oai.OAI ?? null,
           },
           seValues,
+          driverAverages,
+          sampleSize: t.sampleSize,
+          SE: hidden ? null : t.summary?.ohi.SE ?? null,
         };
       }),
     );
     const teamRows = nodeResults.map((r) => r.row);
 
-    // 갭 매트릭스·ICC는 리프(팀) 레벨 분산만 본다 — 사업본부/사업부 롤업 값을 섞으면 해석이 왜곡된다.
+    // 갭 매트릭스·ICC·팀수준 회귀는 리프(팀) 레벨만 본다 — 사업본부/사업부 롤업 값을 섞으면 해석이 왜곡된다.
     const leafRows = nodeResults.filter((r) => r.row.level === "TEAM");
     const visibleLeaf = leafRows.filter((r) => !r.row.hidden);
     const gapMatrix =
@@ -235,6 +269,11 @@ export async function computeAggregateScores(scope: {
       .map((r) => r.seValues as number[]);
     const teamReliability: IccResult = computeIcc1(iccGroups);
 
+    // HLM-lite — 팀수준(level-2) 가중회귀: 어떤 드라이버가 "팀간" SE 차이를 설명하는가(팀 표본크기로 가중)
+    const teamLevelDriverImportance: DriverImportanceSummary = computeTeamLevelDriverImportance(
+      visibleLeaf.map((r) => ({ sampleSize: r.sampleSize, SE: r.SE, driverAverages: r.driverAverages })),
+    );
+
     return {
       hidden: false,
       sampleSize: scored.sampleSize,
@@ -242,7 +281,9 @@ export async function computeAggregateScores(scope: {
       scores: scored.summary,
       perRespondent: scored.perRespondent,
       driverImportance,
+      teamLevelDriverImportance,
       teamReliability,
+      lpa,
       teams: teamRows,
       gapMatrix,
     };
@@ -255,5 +296,6 @@ export async function computeAggregateScores(scope: {
     scores: scored.summary,
     perRespondent: scored.perRespondent,
     driverImportance,
+    lpa,
   };
 }

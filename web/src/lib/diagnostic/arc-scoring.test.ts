@@ -50,7 +50,7 @@ describe("arc-scoring report", () => {
           "EA01",
           "EA02",
           "OA01",
-          "OA02",
+          "OA03",
         ],
         4,
       ),
@@ -108,7 +108,7 @@ describe("computeDriverImportance", () => {
       ohi: {
         SE: 3.5,
         drivers: Object.fromEntries(
-          ["D", "SL", "SV", "PS", "EM", "PM", "LG", "CI", "WE", "C"].map((c) => [c, { current: 3 }]),
+          ["SL", "SV", "PS", "EM", "PM", "LG", "CI", "WE", "C"].map((c) => [c, { current: 3 }]),
         ),
       },
     }));
@@ -130,7 +130,7 @@ describe("computeDriverImportance", () => {
       };
     }
     const rand = mulberry32(42);
-    const codes = ["D", "SL", "SV", "PS", "EM", "PM", "LG", "CI", "WE", "C"];
+    const codes = ["SL", "SV", "PS", "EM", "PM", "LG", "CI", "WE", "C"];
     const perRespondent = Array.from({ length: 60 }, () => {
       const driverValues = codes.map(() => 1 + rand() * 4);
       const drivers = Object.fromEntries(codes.map((c, j) => [c, { current: driverValues[j] }]));

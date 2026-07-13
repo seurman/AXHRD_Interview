@@ -153,7 +153,7 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
   const reportConfig = wave.reportConfig ?? null;
   const enabled = reportConfig?.activeSectionCodes ?? wave.enabledSectionCodes;
   const isEnabled = (code: string) => sectionEnabled(code, reportConfig, wave.enabledSectionCodes);
-  const showTeamsTab = !reportConfig || isTabEnabledInReport("teams", reportConfig);
+  const showTeamsTab = !reportConfig || isTabEnabledInReport("summary", reportConfig);
 
   const radarData =
     activeScores?.scores && !activeScores.hidden

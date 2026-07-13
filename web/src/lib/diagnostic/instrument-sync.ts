@@ -273,7 +273,7 @@ async function ensureDefaultReportProfile(prisma: PrismaClient, instrumentId: st
       name: "ARC Index 표준",
       isInstrumentDefault: true,
       presetCode: "arc_standard",
-      activeTabs: ["basic", "detail", "teams"],
+      activeTabs: ["summary", "ohi", "ori", "ovi", "oai", "prescription"],
       activeSectionCodes: ["OHI", "ORI", "OVI", "OAI"],
       showNarratives: true,
       showGapMatrix: true,

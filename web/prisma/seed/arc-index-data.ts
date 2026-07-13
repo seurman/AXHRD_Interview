@@ -1,6 +1,6 @@
 /**
  * ARC Index diagnostic instrument seed data.
- * Item text sourced verbatim from docs/arc-index/source/ (OHI/ORI/OVI/OAI 최종 확정본).
+ * Item text aligned with docs/arc-index/source/ARC_Index_통합설문지_260626.docx (경량 통합본).
  */
 
 export type SeedItem = {
@@ -36,7 +36,7 @@ export const ARC_INDEX_SEED = {
   instrument: {
     code: 'ARC_INDEX',
     nameKo: 'ARC Index — 통합 조직진단',
-    version: 'v1.0',
+    version: '260626',
     estimatedMinutes: 22,
   },
   sections: [
@@ -281,33 +281,6 @@ export const ARC_INDEX_SEED = {
           ],
         },
         {
-          code: 'D',
-          nameKo: '전략 방향',
-          order: 8,
-          items: [
-            {
-              itemCode: 'D01',
-              textKo: '우리 기관의 미션과 전략 방향이 나에게 명확하게 전달된다',
-              scaleType: 'AGREEMENT_5',
-              hasImportanceAxis: true,
-              order: 1,
-            },
-            {
-              itemCode: 'D02',
-              textKo: '우리 기관은 외부 환경 변화를 빠르게 감지하고 실제로 대응한다',
-              scaleType: 'AGREEMENT_5',
-              hasImportanceAxis: true,
-              order: 2,
-            },
-            {
-              itemCode: 'D_OE',
-              textKo: '전략 방향에서 가장 명확한 것과 가장 혼란스러운 것은 무엇입니까?',
-              scaleType: 'OPEN_TEXT',
-              order: 3,
-            },
-          ],
-        },
-        {
           code: 'SL',
           nameKo: '경영진 리더십',
           isDriver: true,
@@ -398,14 +371,6 @@ export const ARC_INDEX_SEED = {
               order: 2,
             },
             {
-              itemCode: 'PS03',
-              textKo: '이 조직에서 실수를 하면 불이익을 받을 것이라는 두려움이 있다',
-              scaleType: 'AGREEMENT_5',
-              hasImportanceAxis: true,
-              isReversed: true,
-              order: 3,
-            },
-            {
               itemCode: 'PS_OE',
               textKo: '의견을 말하거나 새로운 시도를 할 때 가장 방해가 되는 것은?',
               scaleType: 'OPEN_TEXT',
@@ -462,14 +427,6 @@ export const ARC_INDEX_SEED = {
               order: 2,
             },
             {
-              itemCode: 'EM03',
-              textKo: '회의·보고·결재 등 내부 행정 업무가 실제 가치 창출을 방해한다',
-              scaleType: 'AGREEMENT_5',
-              hasImportanceAxis: true,
-              isReversed: true,
-              order: 3,
-            },
-            {
               itemCode: 'EM_OE',
               textKo: '업무 자율성과 부서 간 협업에서 가장 개선이 필요한 것은?',
               scaleType: 'OPEN_TEXT',
@@ -498,13 +455,6 @@ export const ARC_INDEX_SEED = {
               order: 2,
             },
             {
-              itemCode: 'PM03',
-              textKo: 'AI 도구를 활용한 업무 혁신이 성과로 인정받는다',
-              scaleType: 'AGREEMENT_5',
-              hasImportanceAxis: true,
-              order: 3,
-            },
-            {
               itemCode: 'PM_OE',
               textKo: '성과 평가와 보상에서 가장 개선이 필요한 것은?',
               scaleType: 'OPEN_TEXT',
@@ -531,13 +481,6 @@ export const ARC_INDEX_SEED = {
               scaleType: 'AGREEMENT_5',
               hasImportanceAxis: true,
               order: 2,
-            },
-            {
-              itemCode: 'LG03',
-              textKo: '실수와 실패로부터 배울 수 있는 환경이 조성되어 있다',
-              scaleType: 'AGREEMENT_5',
-              hasImportanceAxis: true,
-              order: 3,
             },
             {
               itemCode: 'LG_OE',
@@ -596,13 +539,6 @@ export const ARC_INDEX_SEED = {
               order: 2,
             },
             {
-              itemCode: 'WE03',
-              textKo: '일과 삶의 균형을 유지하면서도 성장이 가능하다',
-              scaleType: 'AGREEMENT_5',
-              hasImportanceAxis: true,
-              order: 3,
-            },
-            {
               itemCode: 'WE_OE',
               textKo: '업무 환경에서 가장 시급하게 개선이 필요한 것은?',
               scaleType: 'OPEN_TEXT',
@@ -641,13 +577,6 @@ export const ARC_INDEX_SEED = {
               order: 3,
             },
             {
-              itemCode: 'CD04',
-              textKo: '우리 기관에서 오래된 관행을 바꾸는 것은 매우 어렵다',
-              scaleType: 'AGREEMENT_5',
-              isReversed: true,
-              order: 4,
-            },
-            {
               itemCode: 'CD05',
               textKo: '기관 지도부는 변화를 성공적으로 이끌어갈 능력이 있다고 신뢰한다',
               scaleType: 'AGREEMENT_5',
@@ -683,12 +612,6 @@ export const ARC_INDEX_SEED = {
               textKo: '구성원들이 새로운 업무 방식을 시도할 심리적·제도적 여건이 있다',
               scaleType: 'AGREEMENT_5',
               order: 3,
-            },
-            {
-              itemCode: 'LA04',
-              textKo: '어렵고 힘든 상황에서도 우리 팀은 빠르게 새로운 방식을 찾아낸다',
-              scaleType: 'AGREEMENT_5',
-              order: 4,
             },
             {
               itemCode: 'LA_OE',
@@ -763,12 +686,6 @@ export const ARC_INDEX_SEED = {
               textKo: '우리 팀에서 AI를 잘 모른다고 말해도 부끄럽거나 불이익이 없다',
               scaleType: 'AGREEMENT_5',
               order: 4,
-            },
-            {
-              itemCode: 'AXC05',
-              textKo: 'AI 활용을 통한 업무 혁신이 성과로 인정받을 수 있는 체계가 갖춰져 있다',
-              scaleType: 'AGREEMENT_5',
-              order: 5,
             },
             {
               itemCode: 'AXC_OE',
@@ -851,12 +768,6 @@ export const ARC_INDEX_SEED = {
               textKo: '지난 6개월과 비교해서 우리 팀의 협업과 소통이 더 원활해지고 있다고 느낀다',
               scaleType: 'RETRO_CHANGE_5',
               order: 3,
-            },
-            {
-              itemCode: 'HV04',
-              textKo: '지난 6개월과 비교해서 나의 성장과 발전 기회가 더 많아지고 있다고 느낀다',
-              scaleType: 'RETRO_CHANGE_5',
-              order: 4,
             },
             {
               itemCode: 'HV05',
@@ -990,13 +901,6 @@ export const ARC_INDEX_SEED = {
               order: 3,
             },
             {
-              itemCode: 'SA04',
-              textKo: '부서 간 협업이 기관 전체 방향보다 각 부서 이익 중심으로 이루어진다',
-              scaleType: 'AGREEMENT_5',
-              isReversed: true,
-              order: 4,
-            },
-            {
               itemCode: 'SA05',
               textKo: '우리 기관의 변화 노력이 1~2년 후 어떤 구체적인 모습을 만들어낼지 그림이 그려진다',
               scaleType: 'AGREEMENT_5',
@@ -1035,30 +939,10 @@ export const ARC_INDEX_SEED = {
               order: 2,
             },
             {
-              itemCode: 'EA03',
-              textKo: '중요하지 않은 일에 시간과 에너지를 낭비하고 있다고 느낀다',
-              scaleType: 'AGREEMENT_5',
-              isReversed: true,
-              order: 3,
-            },
-            {
-              itemCode: 'EA04',
-              textKo: '우리 팀의 집단 에너지가 기관의 핵심 과제에 집중되어 있다',
-              scaleType: 'AGREEMENT_5',
-              order: 4,
-            },
-            {
               itemCode: 'EA05',
               textKo: '지금 내가 하는 일이 기관의 공공 가치와 미래를 만드는 데 실제로 기여하고 있다',
               scaleType: 'AGREEMENT_5',
               order: 5,
-            },
-            {
-              itemCode: 'EA06',
-              textKo: '변화 과제와 일상 업무 사이에서 무엇을 더 중요시해야 할지 혼란스럽다',
-              scaleType: 'AGREEMENT_5',
-              isReversed: true,
-              order: 6,
             },
             {
               itemCode: 'EA_OE',
@@ -1081,13 +965,6 @@ export const ARC_INDEX_SEED = {
               order: 1,
             },
             {
-              itemCode: 'OA02',
-              textKo: '변화 시도의 결과가 예상치 못한 방향으로 나타나는 경우가 많다',
-              scaleType: 'AGREEMENT_5',
-              isReversed: true,
-              order: 2,
-            },
-            {
               itemCode: 'OA03',
               textKo: '개선하려고 한 것이 실제로 개선되고 있다는 것을 구성원이 체감한다',
               scaleType: 'AGREEMENT_5',
@@ -1098,12 +975,6 @@ export const ARC_INDEX_SEED = {
               textKo: '우리 기관의 학습과 개선이 같은 문제를 반복하지 않는 방향으로 이루어지고 있다',
               scaleType: 'AGREEMENT_5',
               order: 4,
-            },
-            {
-              itemCode: 'OA05',
-              textKo: 'AI·디지털 전환 노력이 실제 공공서비스 방식을 의도한 방향으로 바꾸고 있다',
-              scaleType: 'AGREEMENT_5',
-              order: 5,
             },
             {
               itemCode: 'OA06',

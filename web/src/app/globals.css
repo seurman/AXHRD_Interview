@@ -4756,7 +4756,9 @@ html.dark .lp-faq-question {
   nav,
   footer,
   .btn-primary,
-  .btn-secondary {
+  .btn-secondary,
+  .nav-pill,
+  .arc-report-tabs {
     display: none !important;
   }
 
@@ -4797,6 +4799,53 @@ html.dark .lp-faq-question {
 .report-prose {
   word-break: keep-all;
   overflow-wrap: break-word;
+}
+
+/* ARC Index diagnostic report — screen tabs + full PDF print */
+.arc-report-section {
+  display: none;
+}
+.arc-report-section--active {
+  display: block;
+}
+.arc-metric-tile {
+  border-radius: 1rem;
+  border: 1px solid rgb(199 154 90 / 0.18);
+  background: linear-gradient(145deg, rgb(199 154 90 / 0.06) 0%, transparent 55%);
+  padding: 1rem 1.15rem;
+}
+.arc-report-section-head {
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid rgb(199 154 90 / 0.15);
+  margin-bottom: 0.5rem;
+}
+
+@media print {
+  @page {
+    margin: 14mm 12mm;
+    size: A4;
+  }
+
+  .arc-report-tabs,
+  .arc-report .print-hide {
+    display: none !important;
+  }
+  .arc-report-section {
+    display: block !important;
+    page-break-after: always;
+    break-after: page;
+  }
+  .arc-report-section:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+  .arc-report .recharts-responsive-container {
+    min-height: 200px !important;
+  }
+  .arc-metric-tile {
+    border: 1px solid #ddd !important;
+    background: #fafafa !important;
+  }
 }
 
 /* ── 2026 nav: workspace switcher, avatar menu, mobile bottom tabs ── */

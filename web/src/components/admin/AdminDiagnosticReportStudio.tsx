@@ -38,17 +38,21 @@ type Props = {
 
 const SECTION_OPTIONS = ["OHI", "ORI", "OVI", "OAI"] as const;
 const TAB_OPTIONS = [
-  ["basic", "기본"],
-  ["detail", "상세"],
-  ["teams", "팀별"],
+  ["summary", "종합"],
+  ["ohi", "OHI"],
+  ["ori", "ORI"],
+  ["ovi", "OVI"],
+  ["oai", "OAI"],
+  ["prescription", "처방"],
 ] as const;
+const DEFAULT_TABS = ["summary", "ohi", "ori", "ovi", "oai", "prescription"];
 
 export function AdminDiagnosticReportStudio({ instruments, waves }: Props) {
   const [presets, setPresets] = useState<Preset[]>([]);
   const [defaultProfile, setDefaultProfile] = useState<Profile | null>(null);
   const [selectedInstrumentId, setSelectedInstrumentId] = useState(instruments[0]?.id ?? "");
   const [selectedWaveId, setSelectedWaveId] = useState("");
-  const [activeTabs, setActiveTabs] = useState<string[]>(["basic", "detail", "teams"]);
+  const [activeTabs, setActiveTabs] = useState<string[]>(DEFAULT_TABS);
   const [activeSections, setActiveSections] = useState<string[]>([...SECTION_OPTIONS]);
   const [minGroupSize, setMinGroupSize] = useState<number | "">("");
   const [showNarratives, setShowNarratives] = useState(true);
@@ -75,11 +79,11 @@ export function AdminDiagnosticReportStudio({ instruments, waves }: Props) {
   function applyProfile(p: Profile) {
     const tabs = Array.isArray(p.activeTabs)
       ? p.activeTabs.filter((t): t is string => typeof t === "string")
-      : ["basic", "detail", "teams"];
+      : DEFAULT_TABS;
     const sections = Array.isArray(p.activeSectionCodes)
       ? p.activeSectionCodes.filter((c): c is string => typeof c === "string")
       : [...SECTION_OPTIONS];
-    setActiveTabs(tabs.length ? tabs : ["basic", "detail", "teams"]);
+    setActiveTabs(tabs.length ? tabs : DEFAULT_TABS);
     setActiveSections(sections.length ? sections : [...SECTION_OPTIONS]);
     setMinGroupSize(p.minGroupSize ?? "");
     setShowNarratives(p.showNarratives);

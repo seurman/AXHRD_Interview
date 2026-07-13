@@ -135,7 +135,6 @@ const CENTER = 3.5;
 
 // 조직 전체 공통 오프셋 — 팀·페르소나와 무관하게 항상 적용(시스템 문제 vs 개인차를 구분하기 위함)
 const SYSTEMIC_OFFSET: Record<string, number> = {
-  D: -0.05,
   SL: 0.15,
   SV: 0.05,
   PS: -0.4, // 심리적 안전 — 구조적으로 낮음
@@ -183,7 +182,6 @@ const OVI_WEIGHT = 0.3;
 
 // 자기보고 중요도(현재 vs 중요도 차트용) — OHI 드라이버에만 존재
 const IMPORTANCE_TARGET: Record<string, number> = {
-  D: 3.6,
   SL: 3.6,
   SV: 3.5,
   PS: 4.4,

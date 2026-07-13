@@ -2,6 +2,34 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — ARC Index 통계 4종(LPA·HLM-lite·주관식 테마·처방) 실제 구현 + 리포트 UI 연결 (2026-07-13, Cowork 세션)
+
+"통계처리를 포함해서 조직 진단 리포트가 완성되었는지" 확인 요청 → 미구현으로 확인된 4개 통계를 "제대로 구현"(플레이스홀더 아님) 요청에 따라 파이썬 외부 서비스 없이 순수 TypeScript/Gemini 혼합 방식으로 완성.
+
+- **LPA(잠재프로파일분석)** — `lib/diagnostic/arc-scoring.ts`에 대각공분산 가우시안 혼합모형(GMM)을 EM 알고리즘으로 직접 구현(`fitDiagonalGmm`). 결정론적 초기화(랜덤 시드 없음 — 좌표합 정렬 후 균등분위 추출)로 재현성 확보. k=2~4 중 BIC 최소값 선택(`computeGmmBic`). SE·BO·TL 완전사례 응답자 대상, N<30이면 `insufficientData: true`. 결과는 건강도(`SE-BO+TL`) 내림차순 정렬 후 "고몰입형/헌신·몰두형/번아웃위험형/이탈예고형" 라벨 부여.
+- **HLM-lite(팀수준 회귀)** — 완전한 REML 다층모형 대신 "means-as-outcomes" 근사: 팀 평균 SE를 팀 평균 10개 드라이버로, 팀 표본크기로 가중한 WLS 회귀(`computeTeamLevelDriverImportance`). 기존 `olsRegression`에 선택적 `weights` 파라미터를 추가해 재사용(가중치 생략 시 이전 결과와 완전히 동일함을 수식 단위로 검증). 최소 20개 팀(예측변수 10개×2) 필요.
+- **주관식 응답 테마 분석** — 고전 LDA 대신 Gemini 2.5 Flash-Lite로 대체(`lib/diagnostic/theme-mining.ts`). 서브스케일별 주관식 답변을 모아 2~4개 테마로 클러스터링, 원문 그대로만 인용(할루시네이션 금지 프롬프트). `GEMINI_API_KEY` 미설정/호출 실패 시 조용히 "원문 인용만" 모드로 폴백(가짜 테마 생성 안 함). 응답 5건 미만이면 "표본 부족". Gemini 호출 비용 때문에 리포트 최초 로딩에 포함하지 않고 "상세" 탭을 열 때만 별도 API(`/api/admin/diagnostic/waves/[id]/open-text-themes`)로 지연 호출.
+- **처방(Prescription) 규칙 엔진** — `lib/diagnostic/prescription.ts`. IPA(β회귀)·HLM-lite·ICC·LPA·ORI 기회점수·OAI 패턴을 결합해 우선순위 처방 목록 생성. 감사 가능성을 위해 의도적으로 LLM 미사용(결정론적 규칙 기반).
+- **AdminDiagnosticReport.tsx UI 연결**:
+  - "기본" 탭에 인과흐름 카드(가장 급한 개입 지점 — 드라이버→SE→4축 흐름 시각화)와 우선순위 액션 카드(상위 4개, 전체는 "처방" 탭으로 링크).
+  - "상세" 탭: LPA 카드(유형별 비중·centroid), ICC 카드(문구를 HLM-lite 카드 참조로 갱신), HLM-lite 팀수준 회귀 카드(`DriverPriorityChart`를 `title`/`description` 오버라이드 가능하도록 확장해 재사용), 주관식 테마 카드.
+  - 신규 "처방" 탭 — 전체 처방 목록.
+  - 이제 쓰이지 않게 된 `StatsEnginePlaceholder` 삭제.
+- **연쇄 버그 발견·수정**: `aggregate.ts`의 `summarizeRespondents()`가 스코프 평균이어야 할 `ohi.drivers`를 응답자 1명(`first`) 값으로만 채우고 있던 실제 버그를 이번 작업 중 발견 — "10개 드라이버 현재 vs 중요도" 차트와 강점/개선 인사이트가 전사 조회 시 사실상 무작위 1명 값을 보여주고 있었음. `avgDrivers()` 헬퍼로 스코프 전체 평균을 내도록 수정.
+- **알려진 제약**: 이 세션 환경에서 `.git` 쓰기, `prisma migrate`, `tsc --noEmit`, `vitest` 실행이 불가능(권한 문제) — 아래 로컬 검증 명령을 직접 실행해 주셔야 함. 코드 정확성은 Read 도구로 타입/참조를 전부 손으로 대조해 검증함(자동 컴파일 검증 아님).
+
+**로컬 검증 필요:**
+
+```powershell
+cd D:\HR_IN_Solution\web
+npx tsc --noEmit
+npm test
+```
+
+수동 확인: `/admin/diagnostic/waves/[id]/report`에서 "기본"(인과흐름·우선순위 카드) → "상세"(LPA·ICC·HLM-lite·주관식 테마) → "처방"(전체 목록) 탭이 에러 없이 렌더되는지, N이 적은 팀/조직에서 "표본 부족" 메시지가 제대로 뜨는지 확인.
+
+**커밋 전 확인**: 이 세션은 git에 직접 쓰기가 불가능합니다 — 변경된 파일(`lib/diagnostic/arc-scoring.ts`, `lib/diagnostic/aggregate.ts`, `lib/diagnostic/theme-mining.ts`(신규), `lib/diagnostic/prescription.ts`(신규), `lib/diagnostic/report-profile.ts`, `app/api/admin/diagnostic/waves/[id]/open-text-themes/route.ts`(신규), `components/admin/AdminDiagnosticReport.tsx`, `docs/STATUS.md`)를 직접 `git add`/`commit`/`push` 해주셔야 하며, 푸시 시 Vercel 빌드에 `prisma migrate deploy`가 포함되어 있으니(이번 변경엔 스키마 마이그레이션 없음 — 순수 코드 변경) 참고하세요.
+
 ## 최근 작업 — 개인/기관 활동 로그 고도화 + 자소서 질문 연결 버그 수정 (2026-07-13, Cowork 세션)
 
 - **벤치마킹**: LMS·러닝 플랫폼 활동 로그 UX(타임라인 패턴 — 날짜별 그룹핑, 관리자용은 필터 가능한 테이블)를 웹 리서치로 확인 후 아래에 반영.

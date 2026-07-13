@@ -3,7 +3,8 @@ import type { DiagnosticItem } from "@prisma/client";
 /**
  * ARC Index 결정론적 스코어링 — docs/arc-index/source/ARC_Index_산식표_통합설문지.md 정본.
  * SE.C 헌신 문항은 DB에서 SEC01~03 (드라이버 C01~02 소통 문항과 코드 충돌 방지).
- * OLS·HLM·LDA는 2~3단계 — 이번 모듈 미포함.
+ * OLS(β회귀 IPA)·WLS(팀수준 HLM-lite)·ICC·LPA(GMM)는 이 파일에 순수 TS로 구현됨.
+ * 주관식 테마 분석은 별도(lib/diagnostic/theme-mining.ts, Gemini 기반).
  */
 
 export type AnswerValue = {
@@ -118,11 +119,10 @@ export function computeTL(answers: ScoredAnswers, reversed: Set<string>) {
 }
 
 const DRIVER_CODES: Record<string, string[]> = {
-  D: ["D01", "D02"],
   SL: ["SL01", "SL02", "SL03"],
   SV: ["SV01", "SV02", "SV03"],
-  PS: ["PS01", "PS02", "PS03"],
-  EM: ["EM01", "EM02", "EM03"],
+  PS: ["PS01", "PS02"],
+  EM: ["EM01", "EM02"],
   PM: ["PM01", "PM02"],
   LG: ["LG01", "LG02"],
   CI: ["CI01", "CI02"],
@@ -164,10 +164,10 @@ export function computeRiskIndex(
 }
 
 export function computeOri(answers: ScoredAnswers, reversed: Set<string>) {
-  const CD = average(pickRaw(answers, ["CD01", "CD02", "CD03", "CD04", "CD05"], reversed));
-  const LA = average(pickRaw(answers, ["LA01", "LA02", "LA03", "LA04"], reversed));
+  const CD = average(pickRaw(answers, ["CD01", "CD02", "CD03", "CD05"], reversed));
+  const LA = average(pickRaw(answers, ["LA01", "LA02", "LA03"], reversed));
   const AXS = average(pickRaw(answers, ["AXS01", "AXS02", "AXS03", "AXS04"], reversed));
-  const AXC = average(pickRaw(answers, ["AXC01", "AXC02", "AXC03", "AXC04", "AXC05"], reversed));
+  const AXC = average(pickRaw(answers, ["AXC01", "AXC02", "AXC03", "AXC04"], reversed));
   const ORI = average([CD, LA, AXS, AXC]);
   return { CD, LA, AXS, AXC, ORI };
 }
@@ -181,7 +181,7 @@ export function computeOpportunityScore(answers: ScoredAnswers, reversed: Set<st
 }
 
 export function computeOvi(answers: ScoredAnswers, reversed: Set<string>) {
-  const HV = average(pickRaw(answers, ["HV01", "HV02", "HV03", "HV04", "HV05"], reversed));
+  const HV = average(pickRaw(answers, ["HV01", "HV02", "HV03", "HV05"], reversed));
   const CV = average(pickRaw(answers, ["CV01", "CV02", "CV03", "CV04", "CV05"], reversed));
   const AV = average(pickRaw(answers, ["AV01", "AV02", "AV03", "AV04", "AV05"], reversed));
   const OVI = average([HV, CV, AV]);
@@ -194,9 +194,9 @@ export function computeDynamicCongruenceGap(AV: number | null, HV: number | null
 }
 
 export function computeOai(answers: ScoredAnswers, reversed: Set<string>) {
-  const SA = average(pickRaw(answers, ["SA01", "SA02", "SA03", "SA04", "SA05", "SA06"], reversed));
-  const EA = average(pickRaw(answers, ["EA01", "EA02", "EA03", "EA04", "EA05", "EA06"], reversed));
-  const OA = average(pickRaw(answers, ["OA01", "OA02", "OA03", "OA04", "OA05", "OA06"], reversed));
+  const SA = average(pickRaw(answers, ["SA01", "SA02", "SA03", "SA05", "SA06"], reversed));
+  const EA = average(pickRaw(answers, ["EA01", "EA02", "EA05"], reversed));
+  const OA = average(pickRaw(answers, ["OA01", "OA03", "OA04", "OA06"], reversed));
   const OAI = SA != null && EA != null && OA != null ? SA * 0.4 + EA * 0.35 + OA * 0.25 : null;
   return { SA, EA, OA, OAI, band: bandOai(OAI) };
 }
@@ -312,9 +312,10 @@ export function buildReversedSet(items: Pick<DiagnosticItem, "itemCode" | "isRev
 }
 
 /**
- * Phase 1 JS 통계 근사치 — 다중선형회귀(OLS)·ICC(1).
- * LPA(구성원 유형)·HLM(다층모형 전체)·LDA(주관식 테마)는 별도 파이썬 통계 서비스 대상 (docs/STATUS.md 참고).
- * 여기서는 β회귀 기반 IPA와 팀간 신뢰도(ICC)만 순수 함수로 구현한다.
+ * JS 통계 구현 — 다중선형회귀(OLS/WLS)·ICC(1)·LPA(GMM). 완전한 REML 다층모형(팀내·팀간
+ * 분산을 동시 추정하는 정식 HLM)은 아니지만, 개인수준 β회귀(IPA) + 팀수준 가중회귀(HLM-lite,
+ * computeTeamLevelDriverImportance) + ICC(분산분해)를 합쳐서 실질적으로 같은 질문에 답한다.
+ * 주관식 테마 분석(LDA 대신 채택)은 별도(lib/diagnostic/theme-mining.ts, Gemini 기반).
  */
 
 function stdDev(values: number[]): number {
@@ -366,26 +367,39 @@ export type RegressionResult = {
   n: number;
 };
 
+function weightedStdDev(values: number[], weights: number[]): number {
+  const wSum = weights.reduce((a, b) => a + b, 0);
+  if (wSum <= 0) return 0;
+  const mean = values.reduce((acc, v, i) => acc + weights[i] * v, 0) / wSum;
+  const variance = values.reduce((acc, v, i) => acc + weights[i] * (v - mean) ** 2, 0) / wSum;
+  return Math.sqrt(variance);
+}
+
 /**
- * 다중선형회귀(OLS). X는 관측치×예측변수 행렬(절편 제외), y는 종속변인.
+ * 다중선형회귀(OLS/WLS). X는 관측치×예측변수 행렬(절편 제외), y는 종속변인.
  * 표준화 β_j = raw β_j × SD(X_j) / SD(y) — 예측변수 단위가 달라도 상대적 영향력 비교 가능.
+ * weights를 주면 가중최소제곱(WLS) — 팀수준 회귀에서 팀 표본크기로 가중할 때 사용(HLM-lite).
+ * weights를 생략하면 기존 비가중 OLS와 정확히 동일한 결과(회귀식 전체에서 wi=1로 치환됨).
  */
-export function olsRegression(X: number[][], y: number[]): RegressionResult | null {
+export function olsRegression(X: number[][], y: number[], weights?: number[]): RegressionResult | null {
   const n = X.length;
   if (n === 0 || y.length !== n) return null;
   const p = X[0].length;
   if (p === 0) return null;
+  if (weights && weights.length !== n) return null;
 
+  const w = weights ?? null;
   const design = X.map((row) => [1, ...row]);
   const k = p + 1;
 
   const XtX: number[][] = Array.from({ length: k }, () => new Array(k).fill(0));
   const Xty: number[] = new Array(k).fill(0);
   for (let i = 0; i < n; i++) {
+    const wi = w ? w[i] : 1;
     for (let a = 0; a < k; a++) {
-      Xty[a] += design[i][a] * y[i];
+      Xty[a] += wi * design[i][a] * y[i];
       for (let b = 0; b < k; b++) {
-        XtX[a][b] += design[i][a] * design[i][b];
+        XtX[a][b] += wi * design[i][a] * design[i][b];
       }
     }
   }
@@ -393,28 +407,33 @@ export function olsRegression(X: number[][], y: number[]): RegressionResult | nu
   const coeffs = solveLinearSystem(XtX, Xty);
   if (!coeffs) return null;
 
-  const yMean = y.reduce((a, b) => a + b, 0) / n;
+  const wSum = w ? w.reduce((a, b) => a + b, 0) : n;
+  const yMean = w
+    ? y.reduce((acc, yi, i) => acc + w[i] * yi, 0) / wSum
+    : y.reduce((a, b) => a + b, 0) / n;
+
   let ssRes = 0;
   let ssTot = 0;
   for (let i = 0; i < n; i++) {
+    const wi = w ? w[i] : 1;
     const pred = design[i].reduce((sum, v, idx) => sum + v * coeffs[idx], 0);
-    ssRes += (y[i] - pred) ** 2;
-    ssTot += (y[i] - yMean) ** 2;
+    ssRes += wi * (y[i] - pred) ** 2;
+    ssTot += wi * (y[i] - yMean) ** 2;
   }
   const rSquared = ssTot > 0 ? 1 - ssRes / ssTot : 0;
 
-  const ySd = stdDev(y);
+  const ySd = w ? weightedStdDev(y, w) : stdDev(y);
   const standardizedCoefficients = coeffs.slice(1).map((b, j) => {
     const xj = X.map((row) => row[j]);
-    const xSd = stdDev(xj);
+    const xSd = w ? weightedStdDev(xj, w) : stdDev(xj);
     return ySd > 0 ? b * (xSd / ySd) : 0;
   });
 
   return { coefficients: coeffs, standardizedCoefficients, rSquared, n };
 }
 
-/** IPA(β회귀 기반 우선순위)에 사용하는 10개 영역 순서 — DRIVER_CODES 키와 동일해야 함(D=전략방향 포함). */
-export const DRIVER_ORDER = ["D", "SL", "SV", "PS", "EM", "PM", "LG", "CI", "WE", "C"] as const;
+/** IPA(β회귀 기반 우선순위)에 사용하는 9개 영역 — 통합설문지 260626 (전략방향 D 제외) */
+export const DRIVER_ORDER = ["SL", "SV", "PS", "EM", "PM", "LG", "CI", "WE", "C"] as const;
 
 export type DriverImportance = {
   code: string;
@@ -431,7 +450,7 @@ export type DriverImportanceSummary = {
 };
 
 /**
- * Y=SE(활력·헌신·몰두 종합) / X=10개 영역(전략방향+9개 드라이버) 현재점수 — 응답자 단위 완전사례만 사용.
+ * Y=SE(활력·헌신·몰두 종합) / X=9개 드라이버 영역 현재점수 — 응답자 단위 완전사례만 사용.
  * 예측변수(10개) 대비 표본이 너무 적으면(경험칙 n < p×3) 불안정하므로 계산하지 않는다.
  */
 export function computeDriverImportance(
@@ -459,6 +478,56 @@ export function computeDriverImportance(
   }
 
   const reg = olsRegression(rows, ys);
+  const currentAvg = DRIVER_ORDER.map((_, idx) => average(rows.map((row) => row[idx])));
+  const betas = reg?.standardizedCoefficients ?? DRIVER_ORDER.map(() => null);
+  const betaMedian = median(betas.filter((b): b is number => b != null));
+  const currentMedian = median(currentAvg.filter((v): v is number => v != null));
+
+  const entries = DRIVER_ORDER.map((code, idx) => {
+    const beta = reg ? betas[idx] : null;
+    const current = currentAvg[idx];
+    const priority: DriverImportance["priority"] =
+      beta != null && current != null ? (beta >= betaMedian && current < currentMedian ? "FOCUS" : "MAINTAIN") : null;
+    return { code, current, beta, priority };
+  });
+
+  return { entries, rSquared: reg?.rSquared ?? null, n: rows.length, insufficientData: false };
+}
+
+const TEAM_LEVEL_MIN_TEAMS = DRIVER_ORDER.length * 2; // 18 — 예측변수 9개 대비 최소 팀 수
+
+/**
+ * 팀수준(level-2) 회귀 — Y=팀 평균 SE, X=팀 평균 10개 영역, weight=팀 표본크기(WLS).
+ * 완전한 REML 다층모형(팀내·팀간 분산을 한 번에 추정)은 아니지만, "어떤 드라이버가 팀간
+ * SE 차이를 설명하는가"를 팀 크기 가중회귀로 근사한다 — HLM의 "means-as-outcomes" 방식과
+ * 같은 아이디어(HLM-lite). ICC(팀간 분산 비중)·개인수준 IPA(팀 내부 어떤 드라이버가 중요한가)와
+ * 합쳐서 봐야 완전한 그림이 된다. 팀 수가 적으면(전형적) insufficientData를 반환한다.
+ */
+export function computeTeamLevelDriverImportance(
+  teamRows: Array<{ sampleSize: number; SE: number | null; driverAverages: Record<string, number | null> }>,
+): DriverImportanceSummary {
+  const rows: number[][] = [];
+  const ys: number[] = [];
+  const weights: number[] = [];
+  for (const t of teamRows) {
+    if (t.SE == null || t.sampleSize <= 0) continue;
+    const vals = DRIVER_ORDER.map((code) => t.driverAverages[code] ?? null);
+    if (vals.some((v) => v == null)) continue;
+    rows.push(vals as number[]);
+    ys.push(t.SE);
+    weights.push(t.sampleSize);
+  }
+
+  if (rows.length < TEAM_LEVEL_MIN_TEAMS) {
+    return {
+      entries: DRIVER_ORDER.map((code) => ({ code, current: null, beta: null, priority: null })),
+      rSquared: null,
+      n: rows.length,
+      insufficientData: true,
+    };
+  }
+
+  const reg = olsRegression(rows, ys, weights);
   const currentAvg = DRIVER_ORDER.map((_, idx) => average(rows.map((row) => row[idx])));
   const betas = reg?.standardizedCoefficients ?? DRIVER_ORDER.map(() => null);
   const betaMedian = median(betas.filter((b): b is number => b != null));
@@ -530,6 +599,208 @@ export function computeIcc1(groups: number[][]): IccResult {
   }
 
   return { icc, n: N, k, interpretation: iccInterpretation(icc) };
+}
+
+/**
+ * LPA(잠재프로파일분석) — 대각공분산 가우시안 혼합모형(GMM), EM 알고리즘으로 순수 TS 구현.
+ * Python 통계 서비스 없이 응답자를 SE(활력·헌신·몰두)·BO(번아웃)·TL(신뢰·성장·안전) 3개 축으로
+ * k개의 잠재 유형으로 묶는다. 전공분산(full covariance)이 아니라 대각공분산만 추정하는 단순화지만,
+ * 표준적인 GMM 변형이며 구현 복잡도·수치 안정성 면에서 이 스케일(응답자 수십~수백 명)에 적합하다.
+ * k(유형 개수)는 2~4 중 BIC(베이즈 정보기준) 최솟값으로 데이터 기반 선택한다.
+ */
+
+type GmmFit = {
+  weights: number[];
+  means: number[][];
+  variances: number[][];
+  logLikelihood: number;
+  assignments: number[];
+};
+
+const EM_MAX_ITER = 100;
+const EM_TOL = 1e-4;
+const VARIANCE_FLOOR = 1e-3;
+
+function logGaussianDiag(x: number[], mean: number[], variance: number[]): number {
+  let logDensity = 0;
+  for (let j = 0; j < x.length; j++) {
+    const v = Math.max(variance[j], VARIANCE_FLOOR);
+    logDensity += -0.5 * Math.log(2 * Math.PI * v) - (x[j] - mean[j]) ** 2 / (2 * v);
+  }
+  return logDensity;
+}
+
+function logSumExp(values: number[]): number {
+  const max = Math.max(...values);
+  if (!Number.isFinite(max)) return -Infinity;
+  const sum = values.reduce((s, v) => s + Math.exp(v - max), 0);
+  return max + Math.log(sum);
+}
+
+/** 결정론적 초기화(랜덤 시드 불필요, 항상 재현 가능) — 좌표합 기준 정렬 후 k개 균등 분위 지점을 초기 평균으로 사용. */
+function initMeans(data: number[][], k: number): number[][] {
+  const n = data.length;
+  const order = [...data.keys()].sort(
+    (a, b) => data[a].reduce((s, v) => s + v, 0) - data[b].reduce((s, v) => s + v, 0),
+  );
+  const means: number[][] = [];
+  for (let c = 0; c < k; c++) {
+    const idx = order[Math.min(n - 1, Math.floor(((c + 0.5) * n) / k))];
+    means.push([...data[idx]]);
+  }
+  return means;
+}
+
+function fitDiagonalGmm(data: number[][], k: number): GmmFit | null {
+  const n = data.length;
+  const d = data[0]?.length ?? 0;
+  if (n < k * 5 || d === 0) return null;
+
+  let means = initMeans(data, k);
+  let variances: number[][] = Array.from({ length: k }, () => new Array(d).fill(1));
+  let weights = new Array(k).fill(1 / k);
+  let prevLL = -Infinity;
+  let resp: number[][] = [];
+
+  for (let iter = 0; iter < EM_MAX_ITER; iter++) {
+    // E-step — 각 관측치가 각 군집에 속할 사후확률(책임값)
+    let ll = 0;
+    resp = data.map((x) => {
+      const logProbs = means.map((mean, c) => Math.log(weights[c]) + logGaussianDiag(x, mean, variances[c]));
+      const denom = logSumExp(logProbs);
+      ll += denom;
+      return logProbs.map((lp) => Math.exp(lp - denom));
+    });
+
+    if (iter > 0 && Math.abs(ll - prevLL) < EM_TOL) {
+      prevLL = ll;
+      break;
+    }
+    prevLL = ll;
+
+    // M-step — 책임값 가중평균으로 평균·분산·비중 갱신
+    const nk = new Array(k).fill(0);
+    for (const r of resp) for (let c = 0; c < k; c++) nk[c] += r[c];
+
+    const newMeans = Array.from({ length: k }, () => new Array(d).fill(0));
+    for (let i = 0; i < n; i++) {
+      for (let c = 0; c < k; c++) {
+        for (let j = 0; j < d; j++) newMeans[c][j] += resp[i][c] * data[i][j];
+      }
+    }
+    for (let c = 0; c < k; c++) {
+      if (nk[c] < 1e-6) continue;
+      for (let j = 0; j < d; j++) newMeans[c][j] /= nk[c];
+    }
+
+    const newVariances = Array.from({ length: k }, () => new Array(d).fill(0));
+    for (let i = 0; i < n; i++) {
+      for (let c = 0; c < k; c++) {
+        for (let j = 0; j < d; j++) {
+          newVariances[c][j] += resp[i][c] * (data[i][j] - newMeans[c][j]) ** 2;
+        }
+      }
+    }
+    for (let c = 0; c < k; c++) {
+      if (nk[c] < 1e-6) {
+        newVariances[c] = variances[c];
+        continue;
+      }
+      for (let j = 0; j < d; j++) newVariances[c][j] = Math.max(newVariances[c][j] / nk[c], VARIANCE_FLOOR);
+    }
+
+    means = newMeans;
+    variances = newVariances;
+    weights = nk.map((v) => v / n);
+
+    // 군집 하나가 표본을 거의 못 가져가면(붕괴) 이 k는 실패로 처리 — 호출부에서 다른 k로 대체
+    if (weights.some((w) => w < 1e-6)) return null;
+  }
+
+  const assignments = resp.map((r) => r.indexOf(Math.max(...r)));
+  return { weights, means, variances, logLikelihood: prevLL, assignments };
+}
+
+function computeGmmBic(fit: GmmFit, n: number, d: number, k: number): number {
+  const numParams = k * d + k * d + (k - 1); // 평균 + 분산(대각) + 비중(k-1, 합이 1로 고정)
+  return -2 * fit.logLikelihood + numParams * Math.log(n);
+}
+
+export type LpaProfile = {
+  key: string;
+  label: string;
+  size: number;
+  proportion: number;
+  centroid: { SE: number; BO: number; TL: number };
+};
+
+export type LpaResult = {
+  k: number;
+  n: number;
+  profiles: LpaProfile[];
+  insufficientData: boolean;
+};
+
+const LPA_MIN_N = 30;
+const LPA_LABELS = ["고몰입형", "헌신·몰두형", "번아웃위험형", "이탈예고형"];
+
+export function computeLpaProfiles(
+  perRespondent: Array<{ ohi: { SE: number | null; BO: number | null; TL: { TL: number | null } } }>,
+): LpaResult {
+  const rows: number[][] = [];
+  for (const r of perRespondent) {
+    const se = r.ohi.SE;
+    const bo = r.ohi.BO;
+    const tl = r.ohi.TL?.TL;
+    if (se == null || bo == null || tl == null) continue;
+    rows.push([se, bo, tl]);
+  }
+
+  if (rows.length < LPA_MIN_N) {
+    return { k: 0, n: rows.length, profiles: [], insufficientData: true };
+  }
+
+  const d = 3;
+  const means0 = [0, 1, 2].map((j) => average(rows.map((row) => row[j])) ?? 0);
+  const sds0 = [0, 1, 2].map((j) => stdDev(rows.map((row) => row[j])) || 1);
+  const z = rows.map((row) => row.map((v, j) => (v - means0[j]) / sds0[j]));
+
+  let best: { fit: GmmFit; k: number; bic: number } | null = null;
+  for (const k of [2, 3, 4]) {
+    const fit = fitDiagonalGmm(z, k);
+    if (!fit) continue;
+    const bic = computeGmmBic(fit, z.length, d, k);
+    if (!best || bic < best.bic) best = { fit, k, bic };
+  }
+
+  if (!best) {
+    return { k: 0, n: rows.length, profiles: [], insufficientData: true };
+  }
+
+  const { fit, k } = best;
+  const centroidsOriginal = fit.means.map((mean) => mean.map((v, j) => v * sds0[j] + means0[j]));
+  const counts = new Array(k).fill(0);
+  for (const c of fit.assignments) counts[c]++;
+
+  // 건강도 점수(SE 높고·BO 낮고·TL 높을수록 건강) 기준 내림차순 정렬 후 라벨 부여
+  const healthScore = (c: number[]) => c[0] - c[1] + c[2];
+  const order = [...centroidsOriginal.keys()].sort(
+    (a, b) => healthScore(centroidsOriginal[b]) - healthScore(centroidsOriginal[a]),
+  );
+
+  const profiles: LpaProfile[] = order.map((clusterIdx, rank) => ({
+    key: `P${rank + 1}`,
+    label: LPA_LABELS[rank] ?? `유형 ${rank + 1}`,
+    size: counts[clusterIdx],
+    proportion: counts[clusterIdx] / rows.length,
+    centroid: {
+      SE: centroidsOriginal[clusterIdx][0],
+      BO: centroidsOriginal[clusterIdx][1],
+      TL: centroidsOriginal[clusterIdx][2],
+    },
+  }));
+
+  return { k, n: rows.length, profiles, insufficientData: false };
 }
 
 export function computeArcScoresFromAnswers(

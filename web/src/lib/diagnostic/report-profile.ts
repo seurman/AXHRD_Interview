@@ -3,7 +3,26 @@ import { Prisma } from "@prisma/client";
 import { parseEnabledSectionCodes } from "@/lib/diagnostic/section-filter";
 import { ARC_SECTION_CODES } from "@/lib/diagnostic/campaigns";
 
-export type ReportTab = "basic" | "detail" | "teams";
+export type ReportTab = "summary" | "ohi" | "ori" | "ovi" | "oai" | "prescription";
+
+/** DB에 저장된 구 탭 ID → 신규 탭 (하위 호환) */
+const LEGACY_TAB_MAP: Record<string, ReportTab> = {
+  basic: "summary",
+  detail: "ohi",
+  teams: "summary",
+  prescription: "prescription",
+};
+
+export const ALL_REPORT_TABS: ReportTab[] = ["summary", "ohi", "ori", "ovi", "oai", "prescription"];
+
+export const REPORT_TAB_LABELS: Record<ReportTab, string> = {
+  summary: "종합",
+  ohi: "OHI",
+  ori: "ORI",
+  ovi: "OVI",
+  oai: "OAI",
+  prescription: "처방",
+};
 
 export type ResolvedReportConfig = {
   profileId: string | null;
@@ -29,7 +48,7 @@ export const REPORT_PRESETS: Array<{
   {
     code: "arc_standard",
     name: "ARC Index 표준",
-    activeTabs: ["basic", "detail", "teams"],
+    activeTabs: ["summary", "ohi", "ori", "ovi", "oai", "prescription"],
     activeSectionCodes: [...ARC_SECTION_CODES],
     showNarratives: true,
     showGapMatrix: true,
@@ -37,7 +56,7 @@ export const REPORT_PRESETS: Array<{
   {
     code: "four_axis_summary",
     name: "4축 요약만",
-    activeTabs: ["basic"],
+    activeTabs: ["summary"],
     activeSectionCodes: [...ARC_SECTION_CODES],
     showNarratives: false,
     showGapMatrix: false,
@@ -45,7 +64,7 @@ export const REPORT_PRESETS: Array<{
   {
     code: "team_compare",
     name: "팀 비교 강조",
-    activeTabs: ["basic", "teams"],
+    activeTabs: ["summary"],
     activeSectionCodes: [...ARC_SECTION_CODES],
     showNarratives: true,
     showGapMatrix: true,
@@ -53,17 +72,33 @@ export const REPORT_PRESETS: Array<{
   {
     code: "ohi_only",
     name: "OHI 집중",
-    activeTabs: ["basic", "detail"],
+    activeTabs: ["summary", "ohi"],
     activeSectionCodes: ["OHI"],
     showNarratives: true,
     showGapMatrix: false,
   },
 ];
 
+const ALL_TABS: ReportTab[] = ALL_REPORT_TABS;
+
+function isReportTab(t: string): t is ReportTab {
+  return ALL_REPORT_TABS.includes(t as ReportTab);
+}
+
 function parseTabs(raw: unknown): ReportTab[] {
-  if (!Array.isArray(raw)) return ["basic", "detail", "teams"];
-  const valid = raw.filter((t): t is ReportTab => t === "basic" || t === "detail" || t === "teams");
-  return valid.length > 0 ? valid : ["basic", "detail", "teams"];
+  if (!Array.isArray(raw)) return ALL_TABS;
+  const hadLegacyDetail = raw.includes("detail");
+  const migrated = new Set<ReportTab>();
+  for (const t of raw) {
+    if (typeof t !== "string") continue;
+    if (isReportTab(t)) migrated.add(t);
+    else if (LEGACY_TAB_MAP[t]) migrated.add(LEGACY_TAB_MAP[t]);
+  }
+  if (hadLegacyDetail) {
+    for (const axis of ["ohi", "ori", "ovi", "oai"] as ReportTab[]) migrated.add(axis);
+  }
+  const list = [...migrated];
+  return list.length > 0 ? list : ALL_TABS;
 }
 
 type ProfileRow = {
@@ -140,7 +175,7 @@ export async function resolveReportConfigForWave(waveId: string): Promise<Resolv
     profileId: null,
     name: "기본",
     presetCode: null,
-    activeTabs: ["basic", "detail", "teams"],
+    activeTabs: ALL_TABS,
     activeSectionCodes: waveEnabled,
     minGroupSize: instrument.minGroupSize,
     showNarratives: true,
