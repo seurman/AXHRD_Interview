@@ -28,6 +28,13 @@ import {
   type OriScores,
   type OviScores,
 } from "@/lib/diagnostic/axis-report";
+import { AnalysisTable } from "@/components/admin/diagnostic/ArcAnalysisUi";
+import {
+  buildOaiSubscaleRows,
+  buildOriSubscaleRows,
+  buildOviSubscaleRows,
+} from "@/lib/diagnostic/analysis-tables";
+import { pickItemRows } from "@/components/admin/diagnostic/OhiReportSection";
 import {
   Bar,
   BarChart,
@@ -134,7 +141,7 @@ export function OriReportSection({
   openTextLoading,
 }: {
   ori: OriScores;
-  itemAverages?: { CD02: number | null; CD04: number | null; CV01: number | null; AV05: number | null };
+  itemAverages?: Record<string, number | null>;
   openTextThemes: OpenTextThemeReport | null;
   openTextLoading: boolean;
 }) {
@@ -165,6 +172,12 @@ export function OriReportSection({
   return (
     <>
       <NarrativeBlock label="ORI 해석" text={oriBandMessage(ori.ORI, ori.band)} />
+
+      <AnalysisTable
+        title="ORI 4요인 분석표"
+        subtitle="CD · LA · AX-S · AX-C"
+        rows={buildOriSubscaleRows(ori)}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricTile label="ORI 종합" value={ori.ORI} band={ori.band} />
@@ -235,6 +248,34 @@ export function OriReportSection({
         <MetricTile label="AX-C 역량" value={ori.AXC} hint="활용·검증·교육 역량" />
       </div>
 
+      <AnalysisTable
+        title="CD 변화준비 문항 분석"
+        subtitle="핵심: CD02 긴장감 · CD04 관행(역)"
+        rows={pickItemRows(
+          [
+            { code: "CD01", label: "변화 방향 명확" },
+            { code: "CD02", label: "변화 긴장감 공유" },
+            { code: "CD03", label: "필요성 설명" },
+            { code: "CD05", label: "지도부 신뢰" },
+          ],
+          itemAverages,
+        )}
+      />
+
+      <AnalysisTable
+        title="AX Opportunity 문항 분석"
+        subtitle="AXA 수용의지 · AXG 거버넌스 공포"
+        rows={pickItemRows(
+          [
+            { code: "AXA01", label: "AI 더 활용 의지" },
+            { code: "AXA02", label: "커리어 도움 기대" },
+            { code: "AXG01", label: "책임 부담(높을수록 공포)" },
+            { code: "AXG02", label: "가이드라인 부재" },
+          ],
+          itemAverages,
+        )}
+      />
+
       <AxisOpenText report={openTextThemes} loading={openTextLoading} codes={ORI_OPEN_TEXT_CODES} />
     </>
   );
@@ -248,7 +289,7 @@ export function OviReportSection({
   openTextLoading,
 }: {
   ovi: OviScores;
-  itemAverages?: { CD02: number | null; CD04: number | null; CV01: number | null; AV05: number | null };
+  itemAverages?: Record<string, number | null>;
   perRespondent?: Array<{ ovi: { HV: number | null; AV: number | null; CV: number | null; OVI: number | null } }>;
   openTextThemes: OpenTextThemeReport | null;
   openTextLoading: boolean;
@@ -279,6 +320,8 @@ export function OviReportSection({
     <>
       <NarrativeBlock label="OVI 해석" text={oviBandMessage(ovi.OVI, ovi.band)} />
 
+      <AnalysisTable title="OVI 3요소 분석표" subtitle="HV · CV · AV" rows={buildOviSubscaleRows(ovi)} />
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricTile label="OVI 종합" value={ovi.OVI} band={ovi.band} />
         <MetricTile label="HV 건강속도" value={ovi.HV} hint={ovi.HV != null && ovi.HV < 2.5 ? "악화 신호" : undefined} />
@@ -303,6 +346,48 @@ export function OviReportSection({
           hint="외부 변화 대비 상대 속도"
         />
       </div>
+
+      <AnalysisTable
+        title="CV 변화실행 문항 분석"
+        subtitle="CV01=결정→현장 적용 속도"
+        rows={pickItemRows(
+          [
+            { code: "CV01", label: "결정→현장 속도", note: "핵심 병목 지표" },
+            { code: "CV02", label: "외부변화 대응" },
+            { code: "CV03", label: "관행 축소" },
+            { code: "CV04", label: "학습 사이클" },
+            { code: "CV05", label: "의사결정 속도" },
+          ],
+          itemAverages,
+        )}
+      />
+
+      <AnalysisTable
+        title="HV 조직건강 속도 문항"
+        rows={pickItemRows(
+          [
+            { code: "HV01", label: "리더십 개선" },
+            { code: "HV02", label: "심리적 안전" },
+            { code: "HV03", label: "협업·소통" },
+            { code: "HV05", label: "성과 공정성" },
+          ],
+          itemAverages,
+        )}
+      />
+
+      <AnalysisTable
+        title="AV AX전환 속도 문항"
+        rows={pickItemRows(
+          [
+            { code: "AV01", label: "AI 확산" },
+            { code: "AV02", label: "업무방식 변화" },
+            { code: "AV03", label: "AI 불안 감소" },
+            { code: "AV04", label: "성과 인정" },
+            { code: "AV05", label: "환경 대비 속도", note: "상대 속도" },
+          ],
+          itemAverages,
+        )}
+      />
 
       <InsightList insights={insights} />
 
@@ -390,6 +475,7 @@ export function OaiReportSection({
   ori,
   ovi,
   oaiPattern,
+  itemAverages,
   openTextThemes,
   openTextLoading,
 }: {
@@ -398,6 +484,7 @@ export function OaiReportSection({
   ori: number | null;
   ovi: number | null;
   oaiPattern: { pattern: string; message: string } | null;
+  itemAverages?: Record<string, number | null>;
   openTextThemes: OpenTextThemeReport | null;
   openTextLoading: boolean;
 }) {
@@ -423,6 +510,13 @@ export function OaiReportSection({
   return (
     <>
       <NarrativeBlock label="OAI 해석" text={oaiBandMessage(oai.OAI, oai.band)} />
+
+      <AnalysisTable
+        title="OAI 3축 분석표"
+        subtitle="SA 40% · EA 35% · OA 25%"
+        rows={buildOaiSubscaleRows(oai)}
+        columns="weighted"
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricTile label="OAI 종합" value={oai.OAI} band={oai.band} />
@@ -479,6 +573,45 @@ export function OaiReportSection({
           </div>
         </div>
       )}
+
+      <AnalysisTable
+        title="SA 전략정렬 문항"
+        rows={pickItemRows(
+          [
+            { code: "SA01", label: "전략-업무 연결" },
+            { code: "SA02", label: "우선순위 일치" },
+            { code: "SA03", label: "회의·결재 방향성" },
+            { code: "SA05", label: "변화 그림" },
+            { code: "SA06", label: "성과평가 방향" },
+          ],
+          itemAverages,
+        )}
+      />
+
+      <AnalysisTable
+        title="EA 에너지정렬 문항"
+        rows={pickItemRows(
+          [
+            { code: "EA01", label: "에너지 투입 일치" },
+            { code: "EA02", label: "노력→결과 연결" },
+            { code: "EA05", label: "공공가치 기여" },
+          ],
+          itemAverages,
+        )}
+      />
+
+      <AnalysisTable
+        title="OA 결과정렬 문항"
+        rows={pickItemRows(
+          [
+            { code: "OA01", label: "의도한 결과" },
+            { code: "OA03", label: "개선 체감" },
+            { code: "OA04", label: "반복학습 방지" },
+            { code: "OA06", label: "KPI 방향성" },
+          ],
+          itemAverages,
+        )}
+      />
 
       {oaiPattern && (
         <NarrativeBlock label={`4축 패턴 — ${oaiPattern.pattern}`} text={oaiPattern.message} />

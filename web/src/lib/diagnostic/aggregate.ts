@@ -61,6 +61,14 @@ function summarizeRespondents(
     ohi: {
       overall: avgNums(perRespondent.map((r) => r.ohi.overall)),
       SE: avgNums(perRespondent.map((r) => r.ohi.SE)),
+      E: avgNums(perRespondent.map((r) => r.ohi.E)),
+      C: avgNums(perRespondent.map((r) => r.ohi.C)),
+      F: avgNums(perRespondent.map((r) => r.ohi.F)),
+      BO: avgNums(perRespondent.map((r) => r.ohi.BO)),
+      TL: avgNums(perRespondent.map((r) => r.ohi.TL?.TL ?? null)),
+      TL_trust: avgNums(perRespondent.map((r) => r.ohi.TL?.trust ?? null)),
+      TL_growth: avgNums(perRespondent.map((r) => r.ohi.TL?.growth ?? null)),
+      TL_safety: avgNums(perRespondent.map((r) => r.ohi.TL?.safety ?? null)),
       riskIndex: avgNums(perRespondent.map((r) => r.ohi.riskIndex)),
       band: healthBand(avgNums(perRespondent.map((r) => r.ohi.overall))),
       drivers: avgDrivers(perRespondent),
@@ -114,7 +122,20 @@ export type HierarchyNode = {
   department: string | null;
 };
 
-const KEY_ITEM_CODES = ["CD02", "CD04", "CV01", "AV05"] as const;
+const KEY_ITEM_CODES = [
+  "CD01", "CD02", "CD03", "CD04", "CD05",
+  "LA01", "LA02", "LA03",
+  "AXS01", "AXS02", "AXS03", "AXS04",
+  "AXC01", "AXC02", "AXC03", "AXC04",
+  "AXA01", "AXA02", "AXG01", "AXG02",
+  "HV01", "HV02", "HV03", "HV05",
+  "CV01", "CV02", "CV03", "CV04", "CV05",
+  "AV01", "AV02", "AV03", "AV04", "AV05",
+  "SA01", "SA02", "SA03", "SA05", "SA06",
+  "EA01", "EA02", "EA05",
+  "OA01", "OA03", "OA04", "OA06",
+  "E01", "SEC03", "BO01",
+] as const;
 
 function computeKeyItemAverages(
   responses: Array<{
@@ -122,7 +143,7 @@ function computeKeyItemAverages(
   }>,
   codeById: Map<string, string>,
   reversed: Set<string>,
-): Record<(typeof KEY_ITEM_CODES)[number], number | null> {
+): Record<string, number | null> {
   const buckets: Record<string, number[]> = {};
   for (const code of KEY_ITEM_CODES) buckets[code] = [];
   for (const r of responses) {
@@ -132,7 +153,7 @@ function computeKeyItemAverages(
       buckets[code].push(rawValue(reversed.has(code), a.numericValue));
     }
   }
-  const out = {} as Record<(typeof KEY_ITEM_CODES)[number], number | null>;
+  const out: Record<string, number | null> = {};
   for (const code of KEY_ITEM_CODES) {
     out[code] = avgNums(buckets[code]);
   }

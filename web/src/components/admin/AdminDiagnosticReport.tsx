@@ -20,6 +20,9 @@ import {
   OriReportSection,
   OviReportSection,
 } from "@/components/admin/diagnostic/ArcAxisSections";
+import { AnalysisTable, PrescriptionTable } from "@/components/admin/diagnostic/ArcAnalysisUi";
+import { OhiReportSection } from "@/components/admin/diagnostic/OhiReportSection";
+import { buildFourAxisRows, scoreStatus } from "@/lib/diagnostic/analysis-tables";
 import { PrintButton } from "@/components/ui/PrintButton";
 import type { ResolvedReportConfig, ReportTab } from "@/lib/diagnostic/report-profile";
 import {
@@ -104,16 +107,19 @@ type Scores = {
     ori: { ORI: number | null };
     ovi: { OVI: number | null; AV: number | null; HV: number | null; CV: number | null };
   }>;
-  itemAverages?: {
-    CD02: number | null;
-    CD04: number | null;
-    CV01: number | null;
-    AV05: number | null;
-  };
+  itemAverages?: Record<string, number | null>;
   scores?: {
     ohi: {
       overall: number | null;
       SE: number | null;
+      E: number | null;
+      C: number | null;
+      F: number | null;
+      BO: number | null;
+      TL: number | null;
+      TL_trust: number | null;
+      TL_growth: number | null;
+      TL_safety: number | null;
       band: string | null;
       riskIndex: number | null;
       drivers: Record<string, { current: number | null; importance: number | null }>;
@@ -344,23 +350,23 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
     return axes;
   }, [aggregate, enabled]);
 
-  const driverChartData = useMemo(() => {
-    if (!aggregate?.scores?.ohi.drivers) return [];
-    return Object.entries(aggregate.scores.ohi.drivers).map(([code, d]) => ({
-      code,
-      label: DRIVER_LABELS[code] ?? code,
-      current: d.current ?? 0,
-      importance: d.importance ?? 0,
-      gap: d.importance != null && d.current != null ? d.importance - d.current : 0,
-    }));
-  }, [aggregate]);
-
-  const velocityScatter = useMemo(() => {
+  const radarData = useMemo(() => {
     if (!aggregate?.perRespondent) return [];
     return aggregate.perRespondent
       .filter((r) => r.ori.ORI != null && r.ovi.OVI != null)
       .map((r, i) => ({ id: i, ORI: r.ori.ORI as number, OVI: r.ovi.OVI as number }));
   }, [aggregate]);
+
+  const fourAxisRows = useMemo(() => {
+    if (!aggregate?.scores) return [];
+    const s = aggregate.scores;
+    return buildFourAxisRows({
+      ohi: isEnabled("OHI") ? s.ohi.overall : null,
+      ori: isEnabled("ORI") ? s.ori.ORI : null,
+      ovi: isEnabled("OVI") ? s.ovi.OVI : null,
+      oai: isEnabled("OAI") ? s.oai.OAI : null,
+    }).filter((r) => r.score != null);
+  }, [aggregate, enabled]);
 
   const hierarchyRows = aggregate?.teams ?? [];
   const childrenOf = (parentId: string | null) =>
@@ -493,6 +499,14 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                 </div>
               )}
 
+              {fourAxisRows.length > 0 && (
+                <AnalysisTable
+                  title="4축 종합 분석표"
+                  subtitle="OHI · ORI · OVI · OAI — 기준 3.5"
+                  rows={fourAxisRows}
+                />
+              )}
+
               {radarData.length >= 2 && (
                 <div className="card-luxe p-4">
                   <h3 className="mb-3 text-sm font-semibold">4축 레이더</h3>
@@ -556,48 +570,18 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
             </ReportSection>
           )}
 
-          {visibleTabs.includes("ohi") && isEnabled("OHI") && (
-            <ReportSection id="ohi" title="OHI — 조직 건강" subtitle="9개 드라이버 · IPA · 구성원 유형" active={tab === "ohi"}>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <MetricTile label="OHI 종합" value={aggregate?.scores?.ohi.overall} band={aggregate?.scores?.ohi.band} />
-                <MetricTile label="SE 활력·헌신·몰두" value={aggregate?.scores?.ohi.SE} />
-                <MetricTile
-                  label="Risk Index"
-                  value={aggregate?.scores?.ohi.riskIndex != null ? aggregate.scores.ohi.riskIndex * 100 : null}
-                  hint="번아웃·이탈 복합 신호 (%)"
-                />
-              </div>
-
-              {driverChartData.length > 0 && (
-                <div className="card-luxe p-4">
-                  <h3 className="mb-3 text-sm font-semibold">9개 드라이버 — 현재 vs 중요도</h3>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={driverChartData} layout="vertical" margin={{ left: 8, right: 16 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" domain={[0, 5]} />
-                        <YAxis type="category" dataKey="label" width={88} tick={{ fontSize: 10 }} />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="current" name="현재" fill="#c9a227" radius={[0, 4, 4, 0]} />
-                        <Bar dataKey="importance" name="중요도" fill="#64748b" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
-
-              <DriverPriorityChart summary={aggregate?.driverImportance} />
-              <div className="grid gap-4 md:grid-cols-2">
-                <LpaCard lpa={aggregate?.lpa} />
-                <IccCard reliability={aggregate?.teamReliability} />
-              </div>
-              <DriverPriorityChart
-                summary={aggregate?.teamLevelDriverImportance}
-                title="HLM-lite — 팀 수준 회귀"
-                description="팀간 SE 차이를 설명하는 드라이버(팀 평균 가중 β)"
+          {visibleTabs.includes("ohi") && isEnabled("OHI") && aggregate?.scores?.ohi && (
+            <ReportSection id="ohi" title="OHI — 조직 건강" subtitle="SE · 드라이버 · IPA · Risk" active={tab === "ohi"}>
+              <OhiReportSection
+                ohi={aggregate.scores.ohi}
+                driverImportance={aggregate.driverImportance}
+                teamLevelDriverImportance={aggregate.teamLevelDriverImportance}
+                itemAverages={aggregate.itemAverages}
+                hvAvg={aggregate.scores.ovi.HV}
+                lpaSlot={<LpaCard lpa={aggregate.lpa} />}
+                iccSlot={<IccCard reliability={aggregate.teamReliability} />}
+                openTextSlot={<OpenTextThemesCard report={openTextThemes} loading={openTextLoading} />}
               />
-              <OpenTextThemesCard report={openTextThemes} loading={openTextLoading} />
             </ReportSection>
           )}
 
@@ -632,6 +616,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                 ori={aggregate.scores.ori.ORI}
                 ovi={aggregate.scores.ovi.OVI}
                 oaiPattern={aggregate.scores.oaiPattern}
+                itemAverages={aggregate.itemAverages}
                 openTextThemes={openTextThemes}
                 openTextLoading={openTextLoading}
               />
@@ -646,11 +631,14 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
               {prescriptions.length === 0 ? (
                 <div className="card-luxe p-6 text-center text-sm text-muted">특별히 우선 개입이 필요한 항목이 없습니다.</div>
               ) : (
-                <div className="grid gap-3 md:grid-cols-2">
-                  {prescriptions.map((p) => (
-                    <PrescriptionCard key={p.id} item={p} showWave />
-                  ))}
-                </div>
+                <>
+                  <PrescriptionTable items={prescriptions} />
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {prescriptions.map((p) => (
+                      <PrescriptionCard key={p.id} item={p} showWave />
+                    ))}
+                  </div>
+                </>
               )}
               {waveGoals.length > 0 && (
                 <div className="space-y-3">
@@ -696,6 +684,15 @@ function TeamsOverview({
   }));
 
   const gapTeams = aggregate?.gapMatrix?.teams?.filter((t) => t.ORI != null && t.OVI != null) ?? [];
+  const teamGapRows = gapTeams.map((t) => ({
+    id: t.teamId,
+    label: t.teamName,
+    score: t.ORI,
+    benchmark: t.OVI,
+    gap: t.ORI != null && t.OVI != null ? t.ORI - t.OVI : null,
+    status: scoreStatus(t.OVI),
+    note: quadrantLabel(t.quadrant),
+  }));
 
   return (
     <div className="space-y-4">
@@ -765,6 +762,14 @@ function TeamsOverview({
         </div>
       )}
 
+      {teamGapRows.length > 0 && (
+        <AnalysisTable
+          title="팀 Gap 분석표"
+          subtitle="ORI(준비) · OVI(속도) · 사분면"
+          rows={teamGapRows}
+        />
+      )}
+
       {childBarData.length >= 2 && (
         <div className="card-luxe p-4">
           <h4 className="mb-2 text-sm font-semibold">하위 조직 4축 비교</h4>
@@ -789,50 +794,6 @@ function TeamsOverview({
       <Link href={`/admin/diagnostic/waves/${waveId}#team-links`} className="print-hide text-xs text-accent hover:underline">
         팀별 링크 관리 →
       </Link>
-    </div>
-  );
-}
-
-function DriverPriorityChart({
-  summary,
-  title,
-  description,
-}: {
-  summary?: DriverImportanceSummary;
-  title?: string;
-  description?: string;
-}) {
-  if (!summary) return null;
-  const cardTitle = title ?? "IPA — β회귀 기반 투자 우선순위";
-  if (summary.insufficientData) {
-    return (
-      <div className="card-luxe border-dashed p-4 text-xs text-muted">
-        <h3 className="text-sm font-semibold text-foreground">{cardTitle}</h3>
-        <p className="mt-2">표본 부족(N={summary.n}) — 완전응답 최소 {summary.entries.length * 3}명 필요</p>
-      </div>
-    );
-  }
-  const sorted = [...summary.entries].filter((e) => e.beta != null).sort((a, b) => (b.beta ?? 0) - (a.beta ?? 0));
-  return (
-    <div className="card-luxe p-4">
-      <h3 className="text-sm font-semibold">{cardTitle}</h3>
-      <p className="mt-1 text-xs text-muted">
-        {description ?? `R²=${summary.rSquared?.toFixed(2) ?? "—"} · N=${summary.n}`}
-      </p>
-      <div className="mt-3 space-y-1.5">
-        {sorted.map((e) => (
-          <div key={e.code} className="flex items-center gap-2 text-xs">
-            <span className="w-24 shrink-0 text-muted">{DRIVER_LABELS[e.code] ?? e.code}</span>
-            <div className="h-2 flex-1 rounded-full bg-black/5 dark:bg-white/10">
-              <div
-                className={`h-2 rounded-full ${e.priority === "FOCUS" ? "bg-red-500" : "bg-slate-400"}`}
-                style={{ width: `${Math.min(100, Math.max(2, ((e.beta ?? 0) / (sorted[0]?.beta || 1)) * 100))}%` }}
-              />
-            </div>
-            <span className="w-10 text-right font-medium">{e.beta?.toFixed(2)}</span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
