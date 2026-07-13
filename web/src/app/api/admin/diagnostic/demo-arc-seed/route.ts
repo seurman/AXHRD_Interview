@@ -6,7 +6,7 @@ import { SHOWCASE_ORG_NAME } from "@/lib/platform/showcase-org";
 import { seedDemoArcIndex } from "@/lib/demo/seed-demo-arc-index";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 type Body = {
   /** technova | showcase | both (default) */

@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { parseEnabledSectionCodes, sectionBadgeLabel } from "@/lib/diagnostic/section-filter";
 import { deriveInitialWaveStatus, waveStatusLabel } from "@/lib/diagnostic/wave-status";
 import { uniqueSlug, waveSlug } from "@/lib/diagnostic/slug";
 import type { DiagnosticWaveStatus } from "@prisma/client";
 
 type Tx = Prisma.TransactionClient;
+/** Supabase transaction pooler는 interactive $transaction 이 끊길 수 있어 평면 쿼리에도 사용 */
+type Db = Tx | PrismaClient;
 
 export const ARC_SECTION_CODES = ["OHI", "ORI", "OVI", "OAI"] as const;
 
@@ -148,45 +150,44 @@ export async function createDiagnosticWave(input: CreateWaveInput) {
   const waveNumber = (last?.waveNumber ?? 0) + 1;
   const slug = waveSlug(input.organizationId, waveNumber);
 
-  return prisma.$transaction(async (tx) => {
-    if (input.enableDiagnosticSku) {
-      await tx.organization.update({
-        where: { id: input.organizationId },
-        data: { diagnosticEnabled: true },
-      });
-    }
-
-    const created = await tx.diagnosticWave.create({
-      data: {
-        instrumentId: input.instrumentId,
-        organizationId: input.organizationId,
-        waveNumber,
-        slug,
-        label: input.label?.trim() || null,
-        status,
-        opensAt,
-        closesAt,
-        enabledSectionCodes: enabledSectionCodes ?? undefined,
-        instrumentVersionSnapshot: instrument.version,
-      },
+  // PgBouncer/Supabase pooler: interactive $transaction 대신 순차 쿼리 (materialize.ts 와 동일)
+  if (input.enableDiagnosticSku) {
+    await prisma.organization.update({
+      where: { id: input.organizationId },
+      data: { diagnosticEnabled: true },
     });
+  }
 
-    await createHierarchyTeams(tx, created.id, input.teams ?? [], new Set());
+  const created = await prisma.diagnosticWave.create({
+    data: {
+      instrumentId: input.instrumentId,
+      organizationId: input.organizationId,
+      waveNumber,
+      slug,
+      label: input.label?.trim() || null,
+      status,
+      opensAt,
+      closesAt,
+      enabledSectionCodes: enabledSectionCodes ?? undefined,
+      instrumentVersionSnapshot: instrument.version,
+    },
+  });
 
-    return tx.diagnosticWave.findUniqueOrThrow({
-      where: { id: created.id },
-      include: {
-        organization: { select: { id: true, name: true } },
-        instrument: { select: { nameKo: true } },
-        teams: { orderBy: { name: "asc" } },
-        _count: {
-          select: {
-            teams: { where: { level: "TEAM" } },
-            responses: { where: { submittedAt: { not: null } } },
-          },
+  await createHierarchyTeams(prisma, created.id, input.teams ?? [], new Set());
+
+  return prisma.diagnosticWave.findUniqueOrThrow({
+    where: { id: created.id },
+    include: {
+      organization: { select: { id: true, name: true } },
+      instrument: { select: { nameKo: true } },
+      teams: { orderBy: { name: "asc" } },
+      _count: {
+        select: {
+          teams: { where: { level: "TEAM" } },
+          responses: { where: { submittedAt: { not: null } } },
         },
       },
-    });
+    },
   });
 }
 
@@ -196,7 +197,7 @@ export async function createDiagnosticWave(input: CreateWaveInput) {
  * divisionName/unitName을 안 주면 기존과 동일하게 평면 팀(level=TEAM, parentId=null)만 생성된다.
  */
 async function createHierarchyTeams(
-  tx: Tx,
+  db: Db,
   waveId: string,
   teams: TeamInput[],
   existingSlugs: Set<string>,
@@ -216,14 +217,14 @@ async function createHierarchyTeams(
     if (divisionName) {
       let divisionId = divisionByName.get(divisionName);
       if (!divisionId) {
-        const existing = await tx.diagnosticTeam.findFirst({
+        const existing = await db.diagnosticTeam.findFirst({
           where: { waveId, level: "DIVISION", name: divisionName },
           select: { id: true },
         });
         if (existing) {
           divisionId = existing.id;
         } else {
-          const row = await tx.diagnosticTeam.create({
+          const row = await db.diagnosticTeam.create({
             data: {
               waveId,
               name: divisionName,
@@ -243,14 +244,14 @@ async function createHierarchyTeams(
       const unitKey = `${divisionName ?? ""}::${unitName}`;
       let unitId = unitByKey.get(unitKey);
       if (!unitId) {
-        const existing = await tx.diagnosticTeam.findFirst({
+        const existing = await db.diagnosticTeam.findFirst({
           where: { waveId, level: "UNIT", name: unitName, parentId },
           select: { id: true },
         });
         if (existing) {
           unitId = existing.id;
         } else {
-          const row = await tx.diagnosticTeam.create({
+          const row = await db.diagnosticTeam.create({
             data: {
               waveId,
               name: unitName,
@@ -267,7 +268,7 @@ async function createHierarchyTeams(
       parentId = unitId;
     }
 
-    const leaf = await tx.diagnosticTeam.create({
+    const leaf = await db.diagnosticTeam.create({
       data: {
         waveId,
         name,
@@ -304,7 +305,7 @@ export async function addTeamsToWave(
   }
 
   const slugSet = new Set(wave.teams.map((t) => t.slug));
-  const createdIds = await prisma.$transaction((tx) => createHierarchyTeams(tx, wave.id, cleaned, slugSet));
+  const createdIds = await createHierarchyTeams(prisma, wave.id, cleaned, slugSet);
 
   const created = await prisma.diagnosticTeam.findMany({
     where: { id: { in: createdIds.map((c) => c.id) } },
