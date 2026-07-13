@@ -22,6 +22,7 @@ import {
 } from "@/components/admin/diagnostic/ArcAxisSections";
 import { AnalysisTable, PrescriptionTable } from "@/components/admin/diagnostic/ArcAnalysisUi";
 import { OhiReportSection } from "@/components/admin/diagnostic/OhiReportSection";
+import { OrgReportSection } from "@/components/admin/diagnostic/OrgReportSection";
 import { buildFourAxisRows, scoreStatus } from "@/lib/diagnostic/analysis-tables";
 import { PrintButton } from "@/components/ui/PrintButton";
 import type { ResolvedReportConfig, ReportTab } from "@/lib/diagnostic/report-profile";
@@ -164,10 +165,13 @@ type Scores = {
     parentId?: string | null;
     sampleSize?: number;
     hidden: boolean;
+    OHI?: number | null;
     ORI?: number | null;
     OVI?: number | null;
     OHI_SE?: number | null;
+    riskIndex?: number | null;
     OAI?: number | null;
+    drivers?: Record<string, number | null> | null;
   }>;
   gapMatrix?: {
     mode: string;
@@ -254,7 +258,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
         organizationName: w.organization?.name ?? null,
       });
       const config = w.reportConfig as ResolvedReportConfig | null;
-      const tabs = config?.activeTabs ?? ["summary", "ohi", "ori", "ovi", "oai", "prescription"];
+      const tabs = config?.activeTabs ?? ["summary", "ohi", "ori", "ovi", "oai", "orgs", "prescription"];
       if (tabs.length && !tabs.includes(tab)) setTab(tabs[0] as ReportTab);
     }
     setAggregate(scoreJson);
@@ -619,6 +623,32 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                 itemAverages={aggregate.itemAverages}
                 openTextThemes={openTextThemes}
                 openTextLoading={openTextLoading}
+              />
+            </ReportSection>
+          )}
+
+          {visibleTabs.includes("orgs") && (
+            <ReportSection
+              id="orgs"
+              title="조직별 분석"
+              subtitle="본부 · 부 · 팀 수준 4축 비교 · Gap · 드라이버 편차"
+              active={tab === "orgs"}
+            >
+              <OrgReportSection
+                waveId={waveId}
+                teams={hierarchyRows}
+                gapMatrix={showGapMatrix ? aggregate?.gapMatrix : null}
+                isEnabled={isEnabled}
+                orgScores={
+                  aggregate?.scores
+                    ? {
+                        ohi: aggregate.scores.ohi.overall,
+                        ori: aggregate.scores.ori.ORI,
+                        ovi: aggregate.scores.ovi.OVI,
+                        oai: aggregate.scores.oai.OAI,
+                      }
+                    : undefined
+                }
               />
             </ReportSection>
           )}

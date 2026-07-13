@@ -3,17 +3,25 @@ import { Prisma } from "@prisma/client";
 import { parseEnabledSectionCodes } from "@/lib/diagnostic/section-filter";
 import { ARC_SECTION_CODES } from "@/lib/diagnostic/campaigns";
 
-export type ReportTab = "summary" | "ohi" | "ori" | "ovi" | "oai" | "prescription";
+export type ReportTab = "summary" | "ohi" | "ori" | "ovi" | "oai" | "orgs" | "prescription";
 
 /** DB에 저장된 구 탭 ID → 신규 탭 (하위 호환) */
 const LEGACY_TAB_MAP: Record<string, ReportTab> = {
   basic: "summary",
   detail: "ohi",
-  teams: "summary",
+  teams: "orgs",
   prescription: "prescription",
 };
 
-export const ALL_REPORT_TABS: ReportTab[] = ["summary", "ohi", "ori", "ovi", "oai", "prescription"];
+export const ALL_REPORT_TABS: ReportTab[] = [
+  "summary",
+  "ohi",
+  "ori",
+  "ovi",
+  "oai",
+  "orgs",
+  "prescription",
+];
 
 export const REPORT_TAB_LABELS: Record<ReportTab, string> = {
   summary: "종합",
@@ -21,6 +29,7 @@ export const REPORT_TAB_LABELS: Record<ReportTab, string> = {
   ori: "ORI",
   ovi: "OVI",
   oai: "OAI",
+  orgs: "조직별",
   prescription: "처방",
 };
 
@@ -48,7 +57,7 @@ export const REPORT_PRESETS: Array<{
   {
     code: "arc_standard",
     name: "ARC Index 표준",
-    activeTabs: ["summary", "ohi", "ori", "ovi", "oai", "prescription"],
+    activeTabs: ["summary", "ohi", "ori", "ovi", "oai", "orgs", "prescription"],
     activeSectionCodes: [...ARC_SECTION_CODES],
     showNarratives: true,
     showGapMatrix: true,
@@ -64,7 +73,7 @@ export const REPORT_PRESETS: Array<{
   {
     code: "team_compare",
     name: "팀 비교 강조",
-    activeTabs: ["summary"],
+    activeTabs: ["summary", "orgs"],
     activeSectionCodes: [...ARC_SECTION_CODES],
     showNarratives: true,
     showGapMatrix: true,
@@ -97,6 +106,7 @@ function parseTabs(raw: unknown): ReportTab[] {
   if (hadLegacyDetail) {
     for (const axis of ["ohi", "ori", "ovi", "oai"] as ReportTab[]) migrated.add(axis);
   }
+  if (raw.includes("teams")) migrated.add("orgs");
   const list = [...migrated];
   return list.length > 0 ? list : ALL_TABS;
 }

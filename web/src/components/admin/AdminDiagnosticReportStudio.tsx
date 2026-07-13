@@ -43,9 +43,10 @@ const TAB_OPTIONS = [
   ["ori", "ORI"],
   ["ovi", "OVI"],
   ["oai", "OAI"],
+  ["orgs", "조직별"],
   ["prescription", "처방"],
 ] as const;
-const DEFAULT_TABS = ["summary", "ohi", "ori", "ovi", "oai", "prescription"];
+const DEFAULT_TABS = ["summary", "ohi", "ori", "ovi", "oai", "orgs", "prescription"];
 
 export function AdminDiagnosticReportStudio({ instruments, waves }: Props) {
   const [presets, setPresets] = useState<Preset[]>([]);
