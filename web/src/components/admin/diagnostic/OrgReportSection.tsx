@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import {
   MetricTile,
   QuadrantLegend,
@@ -12,9 +13,15 @@ import {
   buildDriverVarianceRows,
   buildOrgAxisDetailRows,
   buildOrgComparisonRows,
+  buildOrgTreeIndex,
+  collectSubtreeLeafIds,
   computeOrgBenchmarks,
   gapMatrixRows,
+  getDirectChildren,
+  hasOrgChildren,
   heatmapTone,
+  nodeToBenchmarks,
+  orgBreadcrumbPath,
   orgLevelLabel,
   type OrgNode,
 } from "@/lib/diagnostic/org-analysis";
@@ -39,8 +46,6 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
-
-type LevelFilter = "ALL" | "DIVISION" | "UNIT" | "TEAM";
 
 export function OrgReportSection({
   waveId,
@@ -71,25 +76,49 @@ export function OrgReportSection({
     oai: number | null;
   };
 }) {
-  const [levelFilter, setLevelFilter] = useState<LevelFilter>("ALL");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [drillId, setDrillId] = useState<string | null>(null);
 
-  const benchmarks = useMemo(() => computeOrgBenchmarks(teams), [teams]);
-  const visibleTeams = teams.filter((t) => !t.hidden);
-  const leafTeams = visibleTeams.filter((t) => t.level === "TEAM");
-
-  const filteredLevel = levelFilter === "ALL" ? null : levelFilter;
-  const comparisonRows = useMemo(
-    () => buildOrgComparisonRows(teams, benchmarks, filteredLevel),
-    [teams, benchmarks, filteredLevel],
+  const orgBenchmarks = useMemo(() => computeOrgBenchmarks(teams), [teams]);
+  const tree = useMemo(() => buildOrgTreeIndex(teams), [teams]);
+  const breadcrumb = useMemo(() => orgBreadcrumbPath(drillId, tree.byId), [drillId, tree.byId]);
+  const current = drillId ? tree.byId.get(drillId) : null;
+  const drillChildren = useMemo(
+    () => getDirectChildren(drillId, tree, false),
+    [drillId, tree],
+  );
+  const visibleDrillChildren = useMemo(
+    () => drillChildren.filter((n) => !n.hidden),
+    [drillChildren],
   );
 
-  const selected = selectedId ? teams.find((t) => t.teamId === selectedId) : null;
-  const childrenOf = (parentId: string | null) =>
-    teams.filter((t) => (t.parentId ?? null) === parentId);
-  const drillChildren = selectedId ? childrenOf(selectedId).filter((t) => !t.hidden) : visibleTeams.filter((t) => !t.parentId);
+  const contextBenchmarks = useMemo(() => {
+    if (current && !current.hidden) {
+      const fromNode = nodeToBenchmarks(current);
+      if (fromNode) return fromNode;
+    }
+    return orgBenchmarks;
+  }, [current, orgBenchmarks]);
 
-  const barData = drillChildren.map((t) => ({
+  const comparisonRows = useMemo(
+    () =>
+      buildOrgComparisonRows(teams, orgBenchmarks, {
+        parentId: drillId,
+        contextBenchmarks,
+      }),
+    [teams, orgBenchmarks, drillId, contextBenchmarks],
+  );
+
+  const subtreeLeafIds = useMemo(
+    () => collectSubtreeLeafIds(drillId, tree, teams),
+    [drillId, tree, teams],
+  );
+  const subtreeLeaves = useMemo(
+    () => teams.filter((n) => subtreeLeafIds.has(n.teamId) && !n.hidden),
+    [teams, subtreeLeafIds],
+  );
+
+  const barData = visibleDrillChildren.map((t) => ({
+    id: t.teamId,
     name: t.teamName.length > 8 ? `${t.teamName.slice(0, 7)}…` : t.teamName,
     fullName: t.teamName,
     OHI: t.OHI ?? 0,
@@ -98,11 +127,15 @@ export function OrgReportSection({
     OAI: t.OAI ?? 0,
   }));
 
-  const gapTeams = gapMatrix?.teams?.filter((t) => t.ORI != null && t.OVI != null) ?? [];
+  const gapTeams = useMemo(() => {
+    const all = gapMatrix?.teams?.filter((t) => t.ORI != null && t.OVI != null) ?? [];
+    if (drillId == null) return all;
+    return all.filter((t) => subtreeLeafIds.has(t.teamId));
+  }, [gapMatrix, drillId, subtreeLeafIds]);
 
   const driverVarianceRows = useMemo(
-    () => buildDriverVarianceRows(leafTeams, DRIVER_LABELS),
-    [leafTeams],
+    () => buildDriverVarianceRows(subtreeLeaves, DRIVER_LABELS),
+    [subtreeLeaves],
   );
 
   const heatmapAxes = useMemo(() => {
@@ -115,16 +148,13 @@ export function OrgReportSection({
     return axes.filter((a) => a.enabled);
   }, [isEnabled]);
 
-  const heatmapRows = useMemo(() => {
-    const rows = levelFilter === "TEAM" || levelFilter === "ALL" ? leafTeams : visibleTeams.filter((t) => t.level === levelFilter);
-    return rows.filter((t) => !t.hidden).slice(0, 20);
-  }, [leafTeams, visibleTeams, levelFilter]);
+  const heatmapRows = visibleDrillChildren;
 
   const radarCompare = useMemo(() => {
-    const pool = [...visibleTeams].sort((a, b) => (b.OHI ?? 0) - (a.OHI ?? 0));
+    const pool = [...visibleDrillChildren].sort((a, b) => (b.OHI ?? 0) - (a.OHI ?? 0));
+    if (pool.length < 2) return null;
     const top = pool[0];
     const bottom = pool[pool.length - 1];
-    if (!top || pool.length < 2) return null;
     const mk = (n: OrgNode, tag: string) => ({
       org: `${tag} ${n.teamName}`,
       OHI: n.OHI ?? 0,
@@ -133,7 +163,25 @@ export function OrgReportSection({
       OAI: n.OAI ?? 0,
     });
     return [mk(top, "최고"), mk(bottom, "최저")];
-  }, [visibleTeams]);
+  }, [visibleDrillChildren]);
+
+  const rollUp = () => {
+    if (!current?.parentId) setDrillId(null);
+    else setDrillId(current.parentId);
+  };
+
+  const headerScores = current && !current.hidden
+    ? { ohi: current.OHI, ori: current.ORI, ovi: current.OVI, oai: current.OAI }
+    : orgScores ?? {
+        ohi: orgBenchmarks.OHI,
+        ori: orgBenchmarks.ORI,
+        ovi: orgBenchmarks.OVI,
+        oai: orgBenchmarks.OAI,
+      };
+
+  const contextTitle = current
+    ? `${orgLevelLabel(current.level)} · ${current.teamName}`
+    : "전사 종합";
 
   if (teams.length === 0) {
     return (
@@ -148,54 +196,137 @@ export function OrgReportSection({
 
   return (
     <div className="space-y-5">
+      <div className="card-luxe print-hide space-y-3 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-semibold text-foreground">조직 탐색 — 드릴다운 · 롤업</p>
+          {drillId && (
+            <button type="button" className="nav-pill text-xs" onClick={rollUp}>
+              ↑ 상위로
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-1 text-sm">
+          <button
+            type="button"
+            className={`nav-pill text-xs ${drillId === null ? "nav-pill-active" : ""}`}
+            onClick={() => setDrillId(null)}
+          >
+            전사 종합
+          </button>
+          {breadcrumb.map((node) => (
+            <span key={node.teamId} className="flex items-center gap-1">
+              <ChevronRight className="h-3.5 w-3.5 text-muted" aria-hidden />
+              <button
+                type="button"
+                className={`nav-pill text-xs ${drillId === node.teamId ? "nav-pill-active" : ""}`}
+                onClick={() => setDrillId(node.teamId)}
+              >
+                {orgLevelLabel(node.level)} · {node.teamName}
+              </button>
+            </span>
+          ))}
+        </div>
+        <p className="text-[11px] text-muted">
+          현재 보기: <span className="font-medium text-foreground">{contextTitle}</span>
+          {visibleDrillChildren.length > 0
+            ? ` · 하위 ${visibleDrillChildren.length}개 조직`
+            : drillId
+              ? " · 최하위(팀) 수준"
+              : ""}
+        </p>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {isEnabled("OHI") && (
-          <MetricTile label="전사 OHI" value={orgScores?.ohi ?? benchmarks.OHI} hint="조직 평균" />
+          <MetricTile
+            label={current ? "OHI" : "전사 OHI"}
+            value={headerScores.ohi}
+            hint={current ? `N=${current.sampleSize ?? "—"}` : "조직 평균"}
+          />
         )}
         {isEnabled("ORI") && (
-          <MetricTile label="전사 ORI" value={orgScores?.ori ?? benchmarks.ORI} hint="조직 평균" />
+          <MetricTile label={current ? "ORI" : "전사 ORI"} value={headerScores.ori} hint={current ? contextTitle : "조직 평균"} />
         )}
         {isEnabled("OVI") && (
-          <MetricTile label="전사 OVI" value={orgScores?.ovi ?? benchmarks.OVI} hint="조직 평균" />
+          <MetricTile label={current ? "OVI" : "전사 OVI"} value={headerScores.ovi} hint={current ? contextTitle : "조직 평균"} />
         )}
         {isEnabled("OAI") && (
-          <MetricTile label="전사 OAI" value={orgScores?.oai ?? benchmarks.OAI} hint="조직 평균" />
+          <MetricTile label={current ? "OAI" : "전사 OAI"} value={headerScores.oai} hint={current ? contextTitle : "조직 평균"} />
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2 print-hide">
-        {(
-          [
-            ["ALL", "전체"],
-            ["DIVISION", "사업본부"],
-            ["UNIT", "사업부"],
-            ["TEAM", "팀"],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            className={`nav-pill text-xs ${levelFilter === key ? "nav-pill-active" : ""}`}
-            onClick={() => {
-              setLevelFilter(key);
-              setSelectedId(null);
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {current && !current.hidden && (
+        <AnalysisTable
+          title={`${contextTitle} — 전사 대비`}
+          subtitle="현재 선택 조직의 4축 위치"
+          rows={buildOrgAxisDetailRows(current, orgBenchmarks)}
+        />
+      )}
 
-      <AnalysisTable
-        title="조직별 4축 비교표"
-        subtitle={`표시 ${comparisonRows.length}개 조직 · 전사 대비 종합 격차`}
-        rows={comparisonRows}
-      />
+      {current?.hidden && (
+        <div className="card-luxe p-4 text-sm text-muted">
+          표본 부족 — 최소 5명 필요 (현재 N={current.sampleSize ?? 0})
+        </div>
+      )}
+
+      {comparisonRows.length > 0 && (
+        <AnalysisTable
+          title={drillId ? `${contextTitle} 하위 조직 비교` : "최상위 조직 4축 비교"}
+          subtitle={
+            drillId
+              ? `하위 ${comparisonRows.length}개 · ${current ? "상위 조직" : "전사"} 대비 종합 격차`
+              : `표시 ${comparisonRows.length}개 · 전사 대비`
+          }
+          rows={comparisonRows}
+        />
+      )}
+
+      {visibleDrillChildren.length > 0 && (
+        <ul className="print-hide space-y-2">
+          <li className="px-1 text-xs font-semibold text-muted">하위 조직 — 클릭하여 드릴다운</li>
+          {drillChildren.map((t) => {
+            const childCount = (tree.childrenOf.get(t.teamId) ?? []).length;
+            const canDrill = childCount > 0 || t.level !== "TEAM";
+            return (
+              <li key={t.teamId} className={`card-luxe p-4 text-sm ${t.hidden ? "opacity-50" : ""}`}>
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-2 text-left"
+                  onClick={() => setDrillId(t.teamId)}
+                >
+                  <span className="font-medium text-foreground">
+                    <span className="mr-2 rounded-full bg-black/5 px-2 py-0.5 text-[10px] text-muted dark:bg-white/10">
+                      {orgLevelLabel(t.level)}
+                    </span>
+                    {t.teamName}
+                    {canDrill && hasOrgChildren(t.teamId, tree) && (
+                      <ChevronRight className="ml-1 inline h-3.5 w-3.5 text-muted" aria-hidden />
+                    )}
+                  </span>
+                  {t.hidden ? (
+                    <span className="text-muted">표본 부족</span>
+                  ) : (
+                    <span className="shrink-0 text-muted">
+                      OHI {t.OHI?.toFixed(2) ?? "—"} · N={t.sampleSize ?? "—"}
+                    </span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {drillId && visibleDrillChildren.length === 0 && !current?.hidden && (
+        <p className="text-sm text-muted">하위 조직이 없습니다. (팀 단위)</p>
+      )}
 
       {heatmapAxes.length > 0 && heatmapRows.length > 0 && (
         <div className="card-luxe overflow-x-auto p-4">
-          <h3 className="text-sm font-semibold text-foreground">조직 × 축 히트맵</h3>
-          <p className="mt-0.5 text-xs text-muted">색이 진할수록 점수 높음 · 빨강=주의 구간</p>
+          <h3 className="text-sm font-semibold text-foreground">
+            {drillId ? `${contextTitle} 하위` : "최상위"} 조직 × 축 히트맵
+          </h3>
+          <p className="mt-0.5 text-xs text-muted">행 클릭 → 하위 드릴다운 · 색이 진할수록 점수 높음</p>
           <table className="mt-3 min-w-[480px] w-full text-xs">
             <thead>
               <tr className="border-b border-black/10 text-muted dark:border-white/10">
@@ -210,15 +341,21 @@ export function OrgReportSection({
             </thead>
             <tbody>
               {heatmapRows.map((row) => (
-                <tr key={row.teamId} className="border-b border-black/5 dark:border-white/5">
+                <tr
+                  key={row.teamId}
+                  className="border-b border-black/5 dark:border-white/5 hover:bg-black/[0.02] dark:hover:bg-white/[0.03]"
+                >
                   <td className="py-2 pr-3">
                     <button
                       type="button"
                       className="text-left font-medium text-foreground hover:text-accent print:pointer-events-none"
-                      onClick={() => setSelectedId(row.teamId)}
+                      onClick={() => setDrillId(row.teamId)}
                     >
                       <span className="text-muted">{orgLevelLabel(row.level)} · </span>
                       {row.teamName}
+                      {hasOrgChildren(row.teamId, tree) && (
+                        <ChevronRight className="ml-0.5 inline h-3 w-3 text-muted" aria-hidden />
+                      )}
                     </button>
                   </td>
                   {heatmapAxes.map((a) => {
@@ -251,7 +388,7 @@ export function OrgReportSection({
       {barData.length >= 2 && (
         <div className="card-luxe p-4">
           <h3 className="mb-1 text-sm font-semibold">
-            {selected ? `${orgLevelLabel(selected.level)} · ${selected.teamName} 하위` : "최상위 조직"} 4축 비교
+            {drillId ? `${contextTitle} 하위` : "최상위 조직"} 4축 막대 비교
           </h3>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -274,7 +411,10 @@ export function OrgReportSection({
 
       {gapMatrix?.mode === "GAP_MATRIX" && gapTeams.length >= 2 && (
         <div className="card-luxe p-4">
-          <h3 className="mb-2 text-sm font-semibold">팀 Gap 매트릭스 (ORI × OVI)</h3>
+          <h3 className="mb-2 text-sm font-semibold">
+            Gap 매트릭스 (ORI × OVI)
+            {drillId ? ` — ${contextTitle} 하위 팀` : " — 전체 팀"}
+          </h3>
           <QuadrantLegend />
           <div className="mt-3 h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -315,56 +455,44 @@ export function OrgReportSection({
       {driverVarianceRows.length > 0 && (
         <AnalysisTable
           title="드라이버 팀간 편차"
-          subtitle="리프(팀) 수준 — σ가 클수록 팀마다 체감이 다름"
+          subtitle={
+            drillId
+              ? `${contextTitle} 하위 팀 — σ가 클수록 팀마다 체감이 다름`
+              : "전체 팀 — σ가 클수록 팀마다 체감이 다름"
+          }
           rows={driverVarianceRows}
         />
       )}
 
-      {selected && !selected.hidden && (
-        <div className="card-luxe space-y-4 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-sm font-semibold">
-              선택 조직 — {orgLevelLabel(selected.level)} · {selected.teamName}
-            </h3>
-            <span className="text-xs text-muted">N={selected.sampleSize ?? "—"}</span>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-4">
-            {isEnabled("OHI") && <MetricTile label="OHI" value={selected.OHI} />}
-            {isEnabled("ORI") && <MetricTile label="ORI" value={selected.ORI} />}
-            {isEnabled("OVI") && <MetricTile label="OVI" value={selected.OVI} />}
-            {isEnabled("OAI") && <MetricTile label="OAI" value={selected.OAI} />}
-          </div>
-          <AnalysisTable
-            title="선택 조직 4축 — 전사 대비"
-            rows={buildOrgAxisDetailRows(selected, benchmarks)}
-          />
-          {selected.drivers && (
-            <AnalysisTable
-              title="선택 조직 드라이버 현재점수"
-              rows={Object.entries(selected.drivers).map(([code, score]) => ({
-                id: code,
-                label: DRIVER_LABELS[code] ?? code,
-                score,
-                benchmark: benchmarks.OHI,
-                gap: score != null && benchmarks.OHI != null ? score - benchmarks.OHI : null,
-                status: score != null ? (score >= 3.5 ? "양호" : score >= 2.5 ? "보통" : "주의") : null,
-                note: "",
-              }))}
-            />
-          )}
-        </div>
+      {current && !current.hidden && current.drivers && (
+        <AnalysisTable
+          title={`${contextTitle} 드라이버 현재점수`}
+          rows={Object.entries(current.drivers).map(([code, score]) => ({
+            id: code,
+            label: DRIVER_LABELS[code] ?? code,
+            score,
+            benchmark: orgBenchmarks.OHI,
+            gap: score != null && orgBenchmarks.OHI != null ? score - orgBenchmarks.OHI : null,
+            status: score != null ? (score >= 3.5 ? "양호" : score >= 2.5 ? "보통" : "주의") : null,
+            note: "",
+          }))}
+        />
       )}
 
       {radarCompare && radarCompare.length >= 2 && (
         <div className="card-luxe p-4">
-          <h3 className="mb-3 text-sm font-semibold">OHI 최고 vs 최저 조직</h3>
+          <h3 className="mb-3 text-sm font-semibold">
+            {drillId ? `${contextTitle} 하위` : "전사"} OHI 최고 vs 최저
+          </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={heatmapAxes.map((a) => ({
-                axis: a.label,
-                top: radarCompare[0][a.key as keyof typeof radarCompare[0]] as number,
-                bottom: radarCompare[1][a.key as keyof typeof radarCompare[1]] as number,
-              }))}>
+              <RadarChart
+                data={heatmapAxes.map((a) => ({
+                  axis: a.label,
+                  top: radarCompare[0][a.key as keyof (typeof radarCompare)[0]] as number,
+                  bottom: radarCompare[1][a.key as keyof (typeof radarCompare)[1]] as number,
+                }))}
+              >
                 <PolarGrid />
                 <PolarAngleAxis dataKey="axis" tick={{ fontSize: 11 }} />
                 <Radar name={radarCompare[0].org} dataKey="top" stroke="#c9a227" fill="#c9a227" fillOpacity={0.3} />

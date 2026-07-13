@@ -28,6 +28,88 @@ export function orgLevelLabel(level?: string) {
   return LEVEL_LABEL[level ?? "TEAM"] ?? level ?? "팀";
 }
 
+export type OrgTreeIndex = {
+  byId: Map<string, OrgNode>;
+  childrenOf: Map<string | null, OrgNode[]>;
+};
+
+export function buildOrgTreeIndex(nodes: OrgNode[]): OrgTreeIndex {
+  const byId = new Map(nodes.map((n) => [n.teamId, n]));
+  const childrenOf = new Map<string | null, OrgNode[]>();
+  for (const n of nodes) {
+    const parentId = n.parentId ?? null;
+    const list = childrenOf.get(parentId) ?? [];
+    list.push(n);
+    childrenOf.set(parentId, list);
+  }
+  for (const list of childrenOf.values()) {
+    list.sort((a, b) => (b.OHI ?? 0) - (a.OHI ?? 0));
+  }
+  return { byId, childrenOf };
+}
+
+export function orgBreadcrumbPath(drillId: string | null, byId: Map<string, OrgNode>): OrgNode[] {
+  const path: OrgNode[] = [];
+  let cur = drillId ? byId.get(drillId) : undefined;
+  while (cur) {
+    path.unshift(cur);
+    cur = cur.parentId ? byId.get(cur.parentId) : undefined;
+  }
+  return path;
+}
+
+export function getDirectChildren(
+  parentId: string | null,
+  { childrenOf }: OrgTreeIndex,
+  visibleOnly = true,
+): OrgNode[] {
+  const kids = childrenOf.get(parentId) ?? [];
+  return visibleOnly ? kids.filter((n) => !n.hidden) : kids;
+}
+
+export function hasOrgChildren(teamId: string, { childrenOf }: OrgTreeIndex): boolean {
+  return (childrenOf.get(teamId) ?? []).length > 0;
+}
+
+/** 선택 노드 하위 리프(팀) id — Gap·드라이버 편차 스코프용 */
+export function collectSubtreeLeafIds(
+  rootId: string | null,
+  tree: OrgTreeIndex,
+  nodes: OrgNode[],
+): Set<string> {
+  const leaves = new Set<string>();
+  const walk = (id: string) => {
+    const node = tree.byId.get(id);
+    if (!node || node.hidden) return;
+    if (node.level === "TEAM" || !hasOrgChildren(id, tree)) {
+      leaves.add(id);
+      return;
+    }
+    for (const child of tree.childrenOf.get(id) ?? []) walk(child.teamId);
+  };
+
+  if (rootId == null) {
+    for (const n of nodes) {
+      if (n.hidden) continue;
+      if (n.level === "TEAM") leaves.add(n.teamId);
+    }
+    return leaves;
+  }
+
+  walk(rootId);
+  return leaves;
+}
+
+export function nodeToBenchmarks(node: OrgNode | null | undefined) {
+  if (!node) return null;
+  return {
+    OHI: node.OHI ?? null,
+    ORI: node.ORI ?? null,
+    OVI: node.OVI ?? null,
+    OAI: node.OAI ?? null,
+  };
+}
+
 function avgNullable(values: Array<number | null | undefined>): number | null {
   const valid = values.filter((v): v is number => typeof v === "number" && Number.isFinite(v));
   if (!valid.length) return null;
@@ -47,29 +129,42 @@ export function computeOrgBenchmarks(nodes: OrgNode[]) {
 export function buildOrgComparisonRows(
   nodes: OrgNode[],
   benchmarks: ReturnType<typeof computeOrgBenchmarks>,
-  levelFilter?: "DIVISION" | "UNIT" | "TEAM" | null,
+  options?: {
+    parentId?: string | null;
+    levelFilter?: "DIVISION" | "UNIT" | "TEAM" | null;
+    contextBenchmarks?: ReturnType<typeof computeOrgBenchmarks>;
+  },
 ): AnalysisRow[] {
+  const bench = options?.contextBenchmarks ?? benchmarks;
+  const parentId = options?.parentId;
+  const levelFilter = options?.levelFilter;
+
   const filtered = nodes
     .filter((n) => !n.hidden)
+    .filter((n) => parentId === undefined || (n.parentId ?? null) === parentId)
     .filter((n) => !levelFilter || n.level === levelFilter)
     .sort((a, b) => (b.OHI ?? 0) - (a.OHI ?? 0));
 
+  const benchLabel =
+    parentId != null ? "상위 조직 대비" : "전사 대비";
+
   return filtered.map((n) => {
     const composite = avgNullable([n.OHI, n.ORI, n.OVI, n.OAI]);
-    const bench = avgNullable([benchmarks.OHI, benchmarks.ORI, benchmarks.OVI, benchmarks.OAI]);
-    const vsOrg = composite != null && bench != null ? composite - bench : null;
+    const benchComposite = avgNullable([bench.OHI, bench.ORI, bench.OVI, bench.OAI]);
+    const vsOrg = composite != null && benchComposite != null ? composite - benchComposite : null;
     const parts = [
       n.OHI != null ? `OHI ${n.OHI.toFixed(2)}` : null,
       n.ORI != null ? `ORI ${n.ORI.toFixed(2)}` : null,
       n.OVI != null ? `OVI ${n.OVI.toFixed(2)}` : null,
       n.OAI != null ? `OAI ${n.OAI.toFixed(2)}` : null,
       n.sampleSize != null ? `N=${n.sampleSize}` : null,
+      benchLabel,
     ].filter(Boolean);
     return {
       id: n.teamId,
       label: `${orgLevelLabel(n.level)} · ${n.teamName}`,
       score: composite,
-      benchmark: bench,
+      benchmark: benchComposite,
       gap: vsOrg,
       status: scoreStatus(composite),
       note: parts.join(" · "),
