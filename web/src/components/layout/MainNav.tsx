@@ -154,7 +154,10 @@ export function MainNav({
       )}
 
       {activityHref && (
-        <NavTransitionLink href={activityHref} className="nav-pill">
+        <NavTransitionLink
+          href={activityHref}
+          className={`nav-pill ${linkActive(activityHref) ? "nav-pill-active" : ""}`}
+        >
           {c.nav.activity}
         </NavTransitionLink>
       )}

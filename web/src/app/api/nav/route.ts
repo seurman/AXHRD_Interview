@@ -53,7 +53,7 @@ export async function GET() {
       prepareLinks: [] as import("@/lib/platform/nav-registry").NavLinkItem[],
       growthLinks: [] as import("@/lib/platform/nav-registry").NavLinkItem[],
       practiceLinks: [] as import("@/lib/platform/nav-registry").NavLinkItem[],
-      activityHref: "/dashboard#activity" as string | null,
+      activityHref: "/dashboard/activity" as string | null,
       orgWorkspaceAvailable: false,
       profileHref: "/profile" as string | null,
       saasLinks: null,

@@ -213,7 +213,7 @@ export async function buildNavigationForUser(
   const practiceLinks = filterNavLinks(PRACTICE_HREFS, caps);
   const prepareLinks = [...growthLinks, ...practiceLinks];
   const profileHref = caps.has("product.profile") ? "/profile" : null;
-  const activityHref = dashboardHref ? `${dashboardHref}#activity` : null;
+  const activityHref = dashboardHref ? "/dashboard/activity" : null;
 
   const mainHrefs = [
     ...(dashboardHref ? [dashboardHref] : []),

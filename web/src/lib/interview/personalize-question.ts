@@ -97,6 +97,13 @@ export async function personalizeQuestion(params: {
   const useJdOnly = highlights.length === 0;
   const anchor = useJdOnly ? jdTerms[0] : highlights[0];
   const groundingTerms = useJdOnly ? jdTerms : highlights;
+  // 인용하려는 자소서 경험이 이번 질문의 역량 주제와 실제로 겹치는지 — 겹치지 않으면(=이
+  // 역량과 관련된 경험이 소진돼 무관한 경험을 어쩔 수 없이 앵커로 쓴 경우) heuristic 폴백에서
+  // 원래 질문 템플릿을 억지로 이어붙이지 않고, 방금 인용한 그 경험 자체를 캐묻는 질문으로 잇는다.
+  const anchorRelevantToCompetency =
+    useJdOnly || highlights.length === 0
+      ? true
+      : (COMPETENCY_HINTS[params.competency] ?? /./).test(highlights[0]);
 
   if (process.env.GEMINI_API_KEY) {
     const llm = await personalizeWithGemini(
@@ -124,7 +131,13 @@ export async function personalizeQuestion(params: {
 
   const heuristicText = useJdOnly
     ? heuristicJdPersonalize(params.template, jdTerms, params.companyName, params.jobRole)
-    : heuristicPersonalize(params.template, highlights, params.companyName, params.jobRole);
+    : heuristicPersonalize(
+        params.template,
+        highlights,
+        params.companyName,
+        params.jobRole,
+        anchorRelevantToCompetency,
+      );
   return {
     text: heuristicText,
     rubric: heuristicRubric(params.competency, groundingTerms, useJdOnly),
@@ -335,12 +348,23 @@ function heuristicPersonalize(
   template: string,
   highlights: string[],
   companyName?: string,
-  jobRole?: string
+  jobRole?: string,
+  anchorRelevant = true,
 ): string {
   const anchor = highlights[0];
   const metric = highlights.find((h) => METRIC_PATTERN.test(h) && h !== anchor);
   const companyBit = companyName ? `${companyName} ` : "";
   const roleBit = jobRole ? `${jobRoleLabel(jobRole)} 직무 관점에서 ` : "";
+
+  // 인용한 자소서 경험이 이번 질문의 역량 주제와 안 겹치면(=이 역량에 맞는 경험이 소진돼
+  // 어쩔 수 없이 무관한 경험을 앵커로 쓴 경우), 원래 질문 템플릿을 억지로 이어붙이지 않는다.
+  // "60% 병목을 확인했다"고 인용해놓고 "피드백 받고 행동 바꾼 경험은?" 같은 안 어울리는
+  // 질문이 뒤따르는 걸 막고, 대신 방금 인용한 그 경험 자체를 더 캐묻는 질문으로 자연스럽게 잇는다.
+  if (!anchorRelevant) {
+    return metric
+      ? `${companyBit}${roleBit}자소서에 적어 주신 「${anchor}」 경험과 「${metric}」 성과를 바탕으로 여쭤봅니다. 그 결과를 어떤 방법과 과정으로 확인하고 만들어내셨는지 구체적으로 말씀해 주세요.`
+      : `${companyBit}${roleBit}자소서에 적어 주신 「${anchor}」 경험을 바탕으로 여쭤봅니다. 그 과정에서 본인이 구체적으로 어떤 역할을 맡아 어떻게 진행하셨는지 말씀해 주세요.`;
+  }
 
   // 원본 질문 템플릿은 문장 수·문장부호가 제각각이라 뒤에 문구를 이어붙이면
   // "~말씀해 주세요.에 대해" 같은 비문이 생긴다. 대신 맥락 문장을 앞에 붙이고

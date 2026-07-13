@@ -1,12 +1,18 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { requireOrgStaff } from "@/lib/auth/guards";
 import { getCohortData } from "@/lib/org/cohort";
 import { getOrgBenchmark, MIN_PEER_MEMBERS } from "@/lib/org/benchmark";
+import { getOrgActivityLog } from "@/lib/org/activity-log";
 import { competencyLabel, formatPercentile } from "@/lib/labels";
 import { CopyCodeButton } from "@/components/org/CopyCodeButton";
 import { RegenerateCodeButton } from "@/components/org/RegenerateCodeButton";
+import { OrgActivityLogPanel } from "@/components/org/OrgActivityLogPanel";
 
 export const dynamic = "force-dynamic";
+
+/** 코호트 홈에서는 최근 활동 미리보기만 — 전체 로그는 /org/dashboard/activity에서 본다. */
+const ORG_ACTIVITY_PREVIEW_LIMIT = 6;
 
 export default async function OrgDashboardPage() {
   const user = await requireOrgStaff("/org/dashboard");
@@ -16,7 +22,12 @@ export default async function OrgDashboardPage() {
     return <p className="text-muted">기관 정보를 찾을 수 없습니다.</p>;
   }
 
-  const benchmark = data.status === "APPROVED" ? await getOrgBenchmark(user.organizationId) : null;
+  const [benchmark, activityPreview] = await Promise.all([
+    data.status === "APPROVED" ? getOrgBenchmark(user.organizationId) : Promise.resolve(null),
+    data.status === "APPROVED"
+      ? getOrgActivityLog(user.organizationId, ORG_ACTIVITY_PREVIEW_LIMIT)
+      : Promise.resolve([]),
+  ]);
 
   if (data.status !== "APPROVED") {
     const pending = data.status === "PENDING";
@@ -225,6 +236,25 @@ export default async function OrgDashboardPage() {
           </>
         )}
       </div>
+
+      {data.status === "APPROVED" && (
+        <div>
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-foreground">최근 활동</h2>
+              <p className="mt-1 text-xs text-muted">누가 언제 어떤 역량으로 활동했는지 보여줍니다.</p>
+            </div>
+            <Link
+              href="/org/dashboard/activity"
+              className="flex items-center gap-1 text-sm font-medium text-gold hover:underline"
+            >
+              전체 보기
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <OrgActivityLogPanel rows={activityPreview} />
+        </div>
+      )}
 
       <div className="card-luxe p-6">
         <h2 className="mb-4 font-semibold text-foreground">학생 현황</h2>
