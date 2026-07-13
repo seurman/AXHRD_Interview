@@ -1,11 +1,20 @@
 import Link from "next/link";
-import { requireOrgCandidateScreening } from "@/lib/org/candidate-screening";
+import {
+  resolveOrgCandidateScreening,
+} from "@/lib/org/candidate-screening";
+import { OrgCandidateScreeningGate } from "@/components/org/OrgCandidateScreeningGate";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrgCandidatesPage() {
-  const orgUser = await requireOrgCandidateScreening("/org/candidates");
+  const ctx = await resolveOrgCandidateScreening("/org/candidates");
+
+  if (!ctx.competencyEnabled) {
+    return <OrgCandidateScreeningGate organizationName={ctx.organizationName} />;
+  }
+
+  const orgUser = ctx.user;
 
   const shares = await prisma.orgInterviewKitShare.findMany({
     where: { organizationId: orgUser.organizationId },

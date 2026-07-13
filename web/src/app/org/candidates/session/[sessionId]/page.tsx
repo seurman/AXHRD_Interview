@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireOrgCandidateScreening } from "@/lib/org/candidate-screening";
+import { resolveOrgCandidateScreening } from "@/lib/org/candidate-screening";
+import { OrgCandidateScreeningGate } from "@/components/org/OrgCandidateScreeningGate";
 import { SessionReportView } from "@/components/report/SessionReportView";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,11 @@ export default async function OrgCandidateReportPage({
 }: {
   params: Promise<{ sessionId: string }>;
 }) {
-  const orgUser = await requireOrgCandidateScreening("/org/candidates");
+  const ctx = await resolveOrgCandidateScreening("/org/candidates");
+  if (!ctx.competencyEnabled) {
+    return <OrgCandidateScreeningGate organizationName={ctx.organizationName} />;
+  }
+  const orgUser = ctx.user;
   const { sessionId } = await params;
 
   const session = await prisma.interviewSession.findUnique({
@@ -26,7 +31,15 @@ export default async function OrgCandidateReportPage({
     include: sessionReportInclude,
   });
 
-  if (!session || session.kitOrganizationId !== orgUser.organizationId) notFound();
+  if (!session) notFound();
+  const belongsToOrg =
+    session.kitOrganizationId === orgUser.organizationId ||
+    (session.orgKitShareId &&
+      (await prisma.orgInterviewKitShare.findFirst({
+        where: { id: session.orgKitShareId, organizationId: orgUser.organizationId },
+        select: { id: true },
+      })));
+  if (!belongsToOrg) notFound();
   if (session.status !== "COMPLETED") notFound();
 
   const backHref = session.orgKitShareId

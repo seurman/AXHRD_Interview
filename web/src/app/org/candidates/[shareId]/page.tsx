@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireOrgCandidateScreening } from "@/lib/org/candidate-screening";
+import { resolveOrgCandidateScreening } from "@/lib/org/candidate-screening";
+import { OrgCandidateScreeningGate } from "@/components/org/OrgCandidateScreeningGate";
 import { competencyLabel, jobRoleLabel } from "@/lib/labels";
 import type { SessionReportData } from "@/types";
 
@@ -12,7 +13,11 @@ export default async function OrgCandidateListPage({
 }: {
   params: Promise<{ shareId: string }>;
 }) {
-  const orgUser = await requireOrgCandidateScreening("/org/candidates");
+  const ctx = await resolveOrgCandidateScreening("/org/candidates");
+  if (!ctx.competencyEnabled) {
+    return <OrgCandidateScreeningGate organizationName={ctx.organizationName} />;
+  }
+  const orgUser = ctx.user;
   const { shareId } = await params;
 
   const share = await prisma.orgInterviewKitShare.findUnique({

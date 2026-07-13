@@ -2,6 +2,8 @@ import type { CapabilityId } from "@/lib/platform/capabilities";
 import { dictionary as koDictionary } from "@/lib/i18n/dictionaries/ko";
 import { hasCapability, resolveUserCapabilities, type AccessContext } from "@/lib/platform/access";
 import { type RoleUser, isSuperAdminUser } from "@/lib/auth/roles";
+import { readOrgEntitlements } from "@/lib/org/entitlements";
+import { buildSaasNavConfig } from "@/lib/org/saas-nav";
 
 export type NavLabelKey =
   | "content"
@@ -224,60 +226,29 @@ export async function buildNavigationForUser(
   let saasLinks: SaasNavConfig | null = null;
   const hasOrgMembership = !!user.organizationId;
 
-  if (superAdmin && hasOrgMembership) {
-    saasLinks = {
-      titleKey: "saas",
-      links: [
-        { href: "/org/dashboard", labelKey: "cohortDashboard" },
-        { href: "/org/candidates", labelKey: "candidateResults" },
-        { href: "/org/diagnosis", labelKey: "diagnosticDashboard" },
-      ],
-      settingsTitleKey: "settings",
-      settingsLinks: [{ href: "/org/settings", labelKey: "settingsHub" }],
-    };
-  } else {
+  if (hasOrgMembership && user.organizationId) {
+    const { prisma } = await import("@/lib/prisma");
+    const orgRecord = await prisma.organization.findUnique({
+      where: { id: user.organizationId },
+      select: {
+        interviewEnabled: true,
+        saasPersonalizationEnabled: true,
+        diagnosticEnabled: true,
+      },
+    });
+    const entitlements = orgRecord
+      ? readOrgEntitlements(orgRecord)
+      : { interview: false, competency: false, diagnostic: false };
+
     const hasTenantNav =
-      hasOrgMembership &&
-      (caps.has("tenant.cohort") ||
-        caps.has("tenant.settings") ||
-        caps.has("tenant.interview_kit") ||
-        caps.has("tenant.diagnostic"));
+      superAdmin ||
+      caps.has("tenant.cohort") ||
+      caps.has("tenant.settings") ||
+      caps.has("tenant.interview_kit") ||
+      caps.has("tenant.diagnostic");
 
     if (hasTenantNav) {
-      const links: SaasNavConfig["links"] = [];
-      const settingsLinks: SaasNavConfig["settingsLinks"] = [];
-
-      if (caps.has("tenant.cohort")) {
-        links.push({
-          href: "/org/dashboard",
-          labelKey: "cohortDashboard",
-        });
-      }
-      if (caps.has("tenant.interview_kit")) {
-        links.push({
-          href: "/org/candidates",
-          labelKey: "candidateResults",
-        });
-      }
-      if (caps.has("tenant.diagnostic")) {
-        links.push({
-          href: "/org/diagnosis",
-          labelKey: "diagnosticDashboard",
-        });
-      }
-
-      if (caps.has("tenant.settings") || caps.has("tenant.interview_kit")) {
-        settingsLinks.push({ href: "/org/settings", labelKey: "settingsHub" });
-      }
-
-      if (links.length > 0 || settingsLinks.length > 0) {
-        saasLinks = {
-          titleKey: "saas",
-          links,
-          settingsTitleKey: "settings",
-          settingsLinks,
-        };
-      }
+      saasLinks = buildSaasNavConfig(caps, entitlements);
     }
   }
 

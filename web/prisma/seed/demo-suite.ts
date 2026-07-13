@@ -12,6 +12,7 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { syncNcsCompetencyBank } from "../../src/lib/competency/ncs-bank-sync";
 import { seedPersonalDashboardFromPack } from "../../src/lib/demo/seed-personal-dashboard";
+import { seedCandidateScreeningDemo } from "../../src/lib/demo/seed-candidate-screening";
 import { seedArcDemoOrgAdmin } from "../../src/lib/demo/seed-arc-org-admin";
 import { ensureDemoAccountPasswords } from "../../src/lib/demo/seed-demo-passwords";
 import { seedShowcaseDemoData } from "../../src/lib/platform/showcase-seed";
@@ -32,6 +33,9 @@ async function main() {
   console.log("[demo-suite] 개인 대시보드 팩 적용…");
   const dashboard = await seedPersonalDashboardFromPack(prisma);
 
+  console.log("[demo-suite] 지원자 스크리닝(쇼케이스)…");
+  const candidates = await seedCandidateScreeningDemo(prisma);
+
   console.log("[demo-suite] ARC 조직진단 풀 리포트…");
   const arc = await seedDemoArcIndex(prisma);
 
@@ -44,6 +48,7 @@ async function main() {
   const summary = {
     showcase,
     dashboard,
+    candidates,
     arc,
     arcAdmin,
     passwords,
@@ -55,6 +60,7 @@ async function main() {
   console.log(JSON.stringify(summary, null, 2));
   console.log("\n로그인: dashboard-demo@demo.axhrd.local / Demo2026! → /dashboard");
   console.log("기관: arc-demo-admin@demo.axhrd.local / Demo2026! → /org/diagnosis");
+  console.log("지원자 결과: showcase-axhrd-showcase-m0@demo.axhrd.local → /org/candidates");
   console.log("슈퍼어드민: /admin/diagnostic → 테크노바 (ARC 데모) 리포트\n");
 }
 
