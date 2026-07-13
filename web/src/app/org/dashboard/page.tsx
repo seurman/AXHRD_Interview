@@ -241,6 +241,7 @@ export default async function OrgDashboardPage() {
                   <th className="py-2 pr-4 font-medium">완료 면접</th>
                   <th className="py-2 pr-4 font-medium">평균 백분위</th>
                   <th className="py-2 pr-4 font-medium">최근 활동</th>
+                  <th className="py-2 font-medium">상세 리포트</th>
                 </tr>
               </thead>
               <tbody>
@@ -255,6 +256,20 @@ export default async function OrgDashboardPage() {
                       {m.lastActiveAt
                         ? new Date(m.lastActiveAt).toLocaleDateString("ko-KR")
                         : "—"}
+                    </td>
+                    <td className="py-2">
+                      {m.coachingConsent ? (
+                        <Link
+                          href={`/org/dashboard/members/${m.id}`}
+                          className="text-sm font-medium text-accent hover:underline"
+                        >
+                          상세 보기
+                        </Link>
+                      ) : (
+                        <span className="rounded-full bg-background px-2 py-0.5 text-xs text-muted">
+                          비공개
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}

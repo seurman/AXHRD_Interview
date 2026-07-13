@@ -63,6 +63,10 @@ export function KitStartClient({ slug, initialShare }: Props) {
           AXHRD 인터뷰 계정으로 로그인하면 바로 시작할 수 있습니다. 기관에 별도로
           가입할 필요는 없습니다.
         </p>
+        <p className="mt-3 rounded-lg border border-accent/25 bg-accent/5 px-4 py-3 text-sm text-foreground">
+          이 모의면접 결과는 <strong>{initialShare.organizationName}</strong> 채용 담당자에게
+          전달됩니다.
+        </p>
       </div>
 
       <section className="card-luxe space-y-4 p-6">

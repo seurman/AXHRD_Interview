@@ -6,6 +6,7 @@ import { jobRoleLabel } from "@/lib/utils";
 import { competencyLabel } from "@/lib/labels";
 import { getUserStrengthDeck } from "@/lib/discover/user-strengths";
 import { StrengthCardDeck } from "@/components/profile/StrengthCardDeck";
+import { OrgCoachingConsentToggle } from "@/components/profile/OrgCoachingConsentToggle";
 import { BillingManageCard } from "@/components/billing/BillingManageCard";
 import { COMPETENCY_CODES } from "@/types";
 
@@ -17,7 +18,13 @@ export default async function ProfilePage() {
 
   const user = await prisma.user.findUnique({
     where: { id: sessionUser.id },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      organizationId: true,
+      orgRole: true,
+      orgCoachingConsent: true,
       profile: true,
       targetCompanies: { take: 5, orderBy: { createdAt: "desc" } },
       resumes: { take: 3, orderBy: { createdAt: "desc" } },
@@ -72,6 +79,13 @@ export default async function ProfilePage() {
       </header>
 
       <BillingManageCard />
+
+      {user.organizationId && user.organization && (
+        <OrgCoachingConsentToggle
+          organizationName={user.organization.name}
+          enabled={user.orgCoachingConsent}
+        />
+      )}
 
       <StrengthCardDeck
         strengths={strengthDeck?.strengths ?? []}

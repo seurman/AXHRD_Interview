@@ -2,7 +2,7 @@ import type { AdminNavSection, NavLinkItem } from "@/lib/platform/nav-registry";
 
 export type SaasNavPayload = {
   titleKey: "saas";
-  links: { href: string; labelKey: "cohortDashboard" | "diagnosticDashboard" }[];
+  links: { href: string; labelKey: "cohortDashboard" | "diagnosticDashboard" | "candidateResults" }[];
   settingsTitleKey: "settings";
   settingsLinks: { href: string; labelKey: "settingsHub" | "interviewKit" }[];
 };

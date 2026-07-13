@@ -199,6 +199,10 @@ model User {
   platformRole    PlatformRole @default(NONE)
   /** 데이터 활용 동의 시각 (회원가입 시 필수 동의) */
   dataUseConsentAt DateTime?
+  /** 소속 기관 담당자가 내 상세 역량 리포트(대시보드)를 볼 수 있도록 허용 — 기본 false,
+   *  학생이 프로필에서 직접 켜야 함. 코호트 집계 통계에는 영향 없음. */
+  orgCoachingConsent   Boolean   @default(false)
+  orgCoachingConsentAt DateTime?
   /** 대량 가입·체험 패턴 의심 시 관리자 검토 플래그 */
   signupFlag      SignupFlag @default(NONE)
   createdAt       DateTime @default(now())

@@ -6,10 +6,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { CompetencyDashboard } from "@/components/dashboard/CompetencyDashboard";
 import { RecentActivityPanel, type ActivityItem } from "@/components/dashboard/RecentActivityPanel";
 import { WelcomeBanner } from "@/components/auth/WelcomeBanner";
-import { competencyLabel } from "@/lib/labels";
-import { COMPETENCY_CODES } from "@/types";
-import { getUserStrengthDeck } from "@/lib/discover/user-strengths";
-import { buildCareerQuests } from "@/lib/dashboard/quests";
+import { getCompetencyDashboardData } from "@/lib/dashboard/get-competency-dashboard-data";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getDictionary } from "@/lib/i18n";
 
@@ -19,85 +16,47 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login?next=/dashboard");
 
-  const full = await prisma.user.findUnique({
-    where: { id: user.id },
-    include: {
-      sessions: { where: { status: "COMPLETED" }, orderBy: { completedAt: "desc" }, take: 6 },
-      competencyLogs: { orderBy: { recordedAt: "asc" } },
-      selfDiscoverySessions: {
-        where: { status: "COMPLETED" },
-        orderBy: { completedAt: "desc" },
-        take: 4,
+  const [dashboard, activitySource] = await Promise.all([
+    getCompetencyDashboardData(user.id),
+    prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        name: true,
+        sessions: {
+          where: { status: "COMPLETED" },
+          orderBy: { completedAt: "desc" },
+          take: 6,
+          select: {
+            id: true,
+            sessionNumber: true,
+            completedAt: true,
+            startedAt: true,
+            createdAt: true,
+          },
+        },
+        selfDiscoverySessions: {
+          where: { status: "COMPLETED" },
+          orderBy: { completedAt: "desc" },
+          take: 4,
+          select: { id: true, completedAt: true, startedAt: true },
+        },
+        resumeReviews: {
+          orderBy: { createdAt: "desc" },
+          take: 4,
+          select: { id: true, createdAt: true },
+        },
       },
-      resumeReviews: { orderBy: { createdAt: "desc" }, take: 4 },
-    },
-  });
+    }),
+  ]);
 
-  if (!full) redirect("/auth/login");
+  if (!dashboard || !activitySource) redirect("/auth/login");
 
   const locale = await getLocale();
   const d = getDictionary(locale).dashboard;
   const userSuffix = getDictionary(locale).common.userSuffix;
 
-  const strengthDeck = await getUserStrengthDeck(user.id);
-
-  const sessionIds = [...new Set(full.competencyLogs.map((log) => log.sessionId))];
-  const sessions =
-    sessionIds.length > 0
-      ? await prisma.interviewSession.findMany({
-          where: { id: { in: sessionIds } },
-          select: { id: true, sessionNumber: true },
-        })
-      : [];
-  const sessionNumberById = new Map(sessions.map((s) => [s.id, s.sessionNumber]));
-
-  const snapshots = full.competencyLogs.map((log) => ({
-    competency: log.competency,
-    theta: log.theta,
-    percentile: log.percentile,
-    recordedAt: log.recordedAt.toISOString(),
-    sessionNumber: sessionNumberById.get(log.sessionId) ?? 0,
-  }));
-
-  const latestByCompetency: Record<
-    string,
-    { theta: number; percentile: number; levelEst: number; assessed: boolean }
-  > = {};
-
-  for (const log of [...full.competencyLogs].reverse()) {
-    if (!latestByCompetency[log.competency]) {
-      latestByCompetency[log.competency] = {
-        theta: log.theta,
-        percentile: log.percentile,
-        levelEst: log.levelEst,
-        assessed: true,
-      };
-    }
-  }
-
-  // 미시도는 IRT prior(θ=0 → 50%)가 아니라 UI상 0% · L0 · 미시작
-  for (const code of COMPETENCY_CODES) {
-    if (!latestByCompetency[code]) {
-      latestByCompetency[code] = {
-        theta: 0,
-        percentile: 0,
-        levelEst: 0,
-        assessed: false,
-      };
-    }
-  }
-
-  const assessedEntries = Object.entries(latestByCompetency).filter(([, v]) => v.assessed);
-  const weakest = assessedEntries.sort((a, b) => a[1].percentile - b[1].percentile)[0];
-
-  const { quests, totalXp, level } = buildCareerQuests({
-    sessionCount: full.sessions.length,
-    hasDiscover: full.selfDiscoverySessions.length > 0,
-    weakestCompetency: weakest ? competencyLabel(weakest[0]) : undefined,
-  });
-
   const activityItems: ActivityItem[] = [
-    ...full.sessions.map((s) => ({
+    ...activitySource.sessions.map((s) => ({
       id: s.id,
       kind: "interview" as const,
       title: `모의면접 #${s.sessionNumber}`,
@@ -105,7 +64,7 @@ export default async function DashboardPage() {
       href: `/interview/${s.id}/report`,
       completedAt: (s.completedAt ?? s.startedAt ?? s.createdAt).toISOString(),
     })),
-    ...full.selfDiscoverySessions.map((s) => ({
+    ...activitySource.selfDiscoverySessions.map((s) => ({
       id: s.id,
       kind: "discover" as const,
       title: "자기발견 인터뷰",
@@ -113,7 +72,7 @@ export default async function DashboardPage() {
       href: `/discover/${s.id}/report`,
       completedAt: (s.completedAt ?? s.startedAt).toISOString(),
     })),
-    ...full.resumeReviews.map((r) => ({
+    ...activitySource.resumeReviews.map((r) => ({
       id: r.id,
       kind: "resume" as const,
       title: "자소서 첨삭",
@@ -136,12 +95,12 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-bold text-foreground">{d.pageTitle}</h1>
           <p className="mt-1 text-muted">
             {locale === "ko"
-              ? `${full.name}${userSuffix} · Lv.${level} · ${d.pageSubtitle}`
-              : `${full.name} · Lv.${level} · ${d.pageSubtitle}`}
+              ? `${activitySource.name}${userSuffix} · Lv.${dashboard.level} · ${d.pageSubtitle}`
+              : `${activitySource.name} · Lv.${dashboard.level} · ${d.pageSubtitle}`}
           </p>
         </div>
         <div className="flex gap-2">
-          {full.sessions.length > 0 && (
+          {dashboard.sessionCount > 0 && (
             <Link href="/profile/certificate" className="btn-secondary text-sm">
               역량 인증서
             </Link>
@@ -152,7 +111,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {full.sessions.length === 0 && !strengthDeck ? (
+      {!dashboard.hasDashboardContent ? (
         <div className="card-luxe border-dashed p-12 text-center text-muted">
           <p className="text-4xl">🎤</p>
           <p className="mt-4 font-medium text-foreground">첫 모의 면접으로 역량 기록을 시작하세요</p>
@@ -172,23 +131,15 @@ export default async function DashboardPage() {
         <>
           <h2 className="text-lg font-semibold text-foreground">{d.competencySection}</h2>
           <CompetencyDashboard
-          snapshots={snapshots}
-          latestByCompetency={latestByCompetency}
-          sessionCount={full.sessions.length}
-          quests={quests}
-          totalXp={totalXp}
-          level={level}
-          strengthDeck={
-            strengthDeck
-              ? {
-                  strengths: strengthDeck.strengths,
-                  interviewAdvice: strengthDeck.interviewAdvice,
-                  totalDiscovered: strengthDeck.totalDiscovered,
-                  reportHref: `/discover/${strengthDeck.sessionId}/report`,
-                }
-              : null
-          }
-        />
+            snapshots={dashboard.snapshots}
+            latestByCompetency={dashboard.latestByCompetency}
+            sessionCount={dashboard.sessionCount}
+            dimensionTimeline={dashboard.dimensionTimeline}
+            quests={dashboard.quests}
+            totalXp={dashboard.totalXp}
+            level={dashboard.level}
+            strengthDeck={dashboard.strengthDeck}
+          />
         </>
       )}
 

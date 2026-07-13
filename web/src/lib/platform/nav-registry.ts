@@ -149,7 +149,7 @@ function filterNavLinks<T extends { capability: CapabilityId; href: string; labe
 
 export type SaasNavConfig = {
   titleKey: "saas";
-  links: { href: string; labelKey: "cohortDashboard" | "diagnosticDashboard" }[];
+  links: { href: string; labelKey: "cohortDashboard" | "diagnosticDashboard" | "candidateResults" }[];
   settingsTitleKey: "settings";
   settingsLinks: { href: string; labelKey: "settingsHub" | "interviewKit" }[];
 };
@@ -229,6 +229,7 @@ export async function buildNavigationForUser(
       titleKey: "saas",
       links: [
         { href: "/org/dashboard", labelKey: "cohortDashboard" },
+        { href: "/org/candidates", labelKey: "candidateResults" },
         { href: "/org/diagnosis", labelKey: "diagnosticDashboard" },
       ],
       settingsTitleKey: "settings",
@@ -250,6 +251,12 @@ export async function buildNavigationForUser(
         links.push({
           href: "/org/dashboard",
           labelKey: "cohortDashboard",
+        });
+      }
+      if (caps.has("tenant.interview_kit")) {
+        links.push({
+          href: "/org/candidates",
+          labelKey: "candidateResults",
         });
       }
       if (caps.has("tenant.diagnostic")) {

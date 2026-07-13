@@ -17,8 +17,10 @@ import {
 import type { DotProps } from "recharts";
 import { competencyLabel } from "@/lib/labels";
 import { useI18n } from "@/lib/i18n/I18nProvider";
+import { compareDimensionHalves, type DimensionSessionPoint } from "@/lib/dashboard/dimension-timeline";
 import { QuestPanel } from "./QuestPanel";
 import { StrengthCardDeck } from "@/components/profile/StrengthCardDeck";
+import { DimensionComparisonRadar } from "./DimensionComparisonRadar";
 import type { QuestItem } from "./QuestPanel";
 import type { DiscoverInterviewAdvice, DiscoverStrengthItem } from "@/types/discover";
 
@@ -41,6 +43,7 @@ interface DashboardProps {
   snapshots: Snapshot[];
   latestByCompetency: Record<string, CompetencyLatest>;
   sessionCount: number;
+  dimensionTimeline: DimensionSessionPoint[];
   quests: QuestItem[];
   totalXp: number;
   level: number;
@@ -50,6 +53,7 @@ interface DashboardProps {
     totalDiscovered: number;
     reportHref: string;
   } | null;
+  readOnly?: boolean;
 }
 
 const LEVEL_COLORS = [
@@ -65,10 +69,12 @@ export function CompetencyDashboard({
   snapshots,
   latestByCompetency,
   sessionCount,
+  dimensionTimeline,
   quests,
   totalXp,
   level,
   strengthDeck,
+  readOnly = false,
 }: DashboardProps) {
   const { dict } = useI18n();
   const diff = dict.dashboard.differentiation;
@@ -83,8 +89,11 @@ export function CompetencyDashboard({
     code,
     assessed: v.assessed,
   }));
+  const assessedCount = radarData.filter((d) => d.assessed).length;
 
   const timelineData = buildTimeline(snapshots);
+  const showGrowthTrendLine = timelineData.length >= 3;
+  const dimensionComparison = compareDimensionHalves(dimensionTimeline);
   const avgPercentile =
     assessed.length === 0
       ? 0
@@ -108,6 +117,7 @@ export function CompetencyDashboard({
           label={st.avgPercentile}
           value={`${Math.round(avgPercentile)}%`}
           sub={growthDelta >= 0 ? `θ +${growthDelta.toFixed(2)}` : `θ ${growthDelta.toFixed(2)}`}
+          hint={st.avgPercentileBasis}
         />
         <StatCard
           label={st.strongest}
@@ -116,37 +126,75 @@ export function CompetencyDashboard({
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
+      <div className={`grid gap-6 ${readOnly ? "" : "lg:grid-cols-3"}`}>
+        <div className={`space-y-6 ${readOnly ? "" : "lg:col-span-2"}`}>
           <div className="grid gap-6 lg:grid-cols-2">
             <ChartCard title={st.radar}>
-              <ResponsiveContainer width="100%" height={260}>
-                <RadarChart data={radarData}>
-                  <PolarGrid stroke="var(--color-card-border)" />
-                  <PolarAngleAxis dataKey="competency" tick={{ fill: "var(--color-muted)", fontSize: 10 }} />
-                  <Radar
-                    dataKey="score"
-                    stroke="var(--color-primary)"
-                    fill="var(--color-primary)"
-                    fillOpacity={0.3}
-                    dot={<AssessedRadarDot />}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
+              {assessedCount >= 3 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <RadarChart data={radarData}>
+                    <PolarGrid stroke="var(--color-card-border)" />
+                    <PolarAngleAxis dataKey="competency" tick={{ fill: "var(--color-muted)", fontSize: 10 }} />
+                    <Radar
+                      dataKey="score"
+                      stroke="var(--color-primary)"
+                      fill="var(--color-primary)"
+                      fillOpacity={0.3}
+                      dot={<AssessedRadarDot />}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-[260px] flex-col items-center justify-center text-center text-sm text-muted">
+                  <p>{st.radarNeedMore}</p>
+                  <p className="mt-1 text-xs">{st.radarMeasuredCount.replace("{count}", String(assessedCount))}</p>
+                </div>
+              )}
             </ChartCard>
 
             <ChartCard title={st.growth}>
+              {!showGrowthTrendLine && timelineData.length > 0 && (
+                <p className="mb-2 text-xs text-muted">{st.growthTrendHint}</p>
+              )}
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={timelineData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-card-border)" />
                   <XAxis dataKey="session" tick={{ fill: "var(--color-muted)", fontSize: 11 }} />
                   <YAxis domain={[-2, 2]} tick={{ fill: "var(--color-muted)", fontSize: 11 }} />
                   <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-card-border)", borderRadius: 8 }} />
-                  <Line type="monotone" dataKey="theta" stroke="var(--color-gold)" strokeWidth={2} dot />
+                  <Line
+                    type="monotone"
+                    dataKey="theta"
+                    stroke="var(--color-gold)"
+                    strokeWidth={showGrowthTrendLine ? 2 : 0}
+                    dot={{ r: 5, fill: "var(--color-gold)" }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
           </div>
+
+          <ChartCard title={st.dimensionTrend.title}>
+            {dimensionComparison ? (
+              <>
+                <p className="mb-3 text-xs text-muted">
+                  {st.dimensionTrend.comparison
+                    .replace("{recent}", String(dimensionComparison.recentSessionCount))
+                    .replace("{previous}", String(dimensionComparison.previousSessionCount))}
+                </p>
+                <DimensionComparisonRadar
+                  recent={dimensionComparison.recent}
+                  previous={dimensionComparison.previous}
+                  recentLegend={st.dimensionTrend.recentLegend}
+                  previousLegend={st.dimensionTrend.previousLegend}
+                />
+              </>
+            ) : (
+              <div className="flex h-[200px] flex-col items-center justify-center text-center text-sm text-muted">
+                <p>{st.dimensionTrend.empty}</p>
+              </div>
+            )}
+          </ChartCard>
 
           <div className="card-luxe p-6">
             <h3 className="mb-4 font-semibold text-foreground">{st.skillTree}</h3>
@@ -158,16 +206,20 @@ export function CompetencyDashboard({
           </div>
 
           {strengthDeck && (
-            <StrengthCardDeck
-              strengths={strengthDeck.strengths.slice(0, 3)}
-              interviewAdvice={strengthDeck.interviewAdvice}
-              totalDiscovered={strengthDeck.totalDiscovered}
-              reportHref={strengthDeck.reportHref}
-              compact
-            />
+            <div className="space-y-2">
+              <p className="text-sm text-muted">{st.strengthDeckNote}</p>
+              <StrengthCardDeck
+                strengths={strengthDeck.strengths.slice(0, 3)}
+                interviewAdvice={strengthDeck.interviewAdvice}
+                totalDiscovered={strengthDeck.totalDiscovered}
+                reportHref={strengthDeck.reportHref}
+                compact
+              />
+            </div>
           )}
         </div>
 
+        {!readOnly && (
         <div className="space-y-6">
           <QuestPanel quests={quests} totalXp={totalXp} level={level} />
 
@@ -183,6 +235,7 @@ export function CompetencyDashboard({
             </Link>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
@@ -249,11 +302,13 @@ function StatCard({
   label,
   value,
   sub,
+  hint,
   accent,
 }: {
   label: string;
   value: string;
   sub?: string;
+  hint?: string;
   accent?: boolean;
 }) {
   return (
@@ -261,6 +316,7 @@ function StatCard({
       <p className="text-xs text-muted">{label}</p>
       <p className="mt-1 text-2xl font-bold text-foreground">{value}</p>
       {sub && <p className="mt-0.5 text-xs text-muted">{sub}</p>}
+      {hint && <p className="mt-1 text-[10px] text-muted">{hint}</p>}
     </div>
   );
 }

@@ -79,6 +79,7 @@ export type Dictionary = {
       settings: string;
       cohortDashboard: string;
       diagnosticDashboard: string;
+      candidateResults: string;
       settingsHub: string;
       interviewKit: string;
     };
@@ -425,11 +426,23 @@ export type Dictionary = {
       careerLevel: string;
       sessions: string;
       avgPercentile: string;
+      avgPercentileBasis: string;
       strongest: string;
       improve: string;
       skillTree: string;
       radar: string;
+      radarNeedMore: string;
+      radarMeasuredCount: string;
       growth: string;
+      growthTrendHint: string;
+      strengthDeckNote: string;
+      dimensionTrend: {
+        title: string;
+        comparison: string;
+        recentLegend: string;
+        previousLegend: string;
+        empty: string;
+      };
     };
   };
   setup: {

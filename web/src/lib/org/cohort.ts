@@ -10,6 +10,7 @@ export interface CohortMemberRow {
   completedSessions: number;
   avgPercentile: number | null;
   lastActiveAt: string | null;
+  coachingConsent: boolean;
 }
 
 export interface CohortCompetencyRow {
@@ -38,7 +39,7 @@ export async function getCohortData(organizationId: string): Promise<CohortData 
 
   const students = await prisma.user.findMany({
     where: { organizationId, orgRole: { in: [...COHORT_MEMBER_ROLES] } },
-    select: { id: true, name: true, email: true, createdAt: true },
+    select: { id: true, name: true, email: true, createdAt: true, orgCoachingConsent: true },
   });
   const studentIds = students.map((s) => s.id);
 
@@ -126,6 +127,7 @@ export async function getCohortData(organizationId: string): Promise<CohortData 
           ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length)
           : null,
         lastActiveAt: completed?.lastActiveAt?.toISOString() ?? null,
+        coachingConsent: s.orgCoachingConsent,
       };
     })
     .sort((a, b) => b.completedSessions - a.completedSessions);
