@@ -851,6 +851,10 @@ export const dictionary: Dictionary = {
       title: "Add job-posting bonus question (optional)",
       hint: "After the competency interview, answer one extra question grounded in the job posting. Reference only — not included in IRT score or level. Requires a job description.",
     },
+    resumeClaim: {
+      title: "Add a deeper experience follow-up (optional)",
+      hint: "After the competency interview, answer one extra question based on an experience from your resume. Reference only — not included in your score. Requires a resume.",
+    },
   },
   discover: {
     eyebrow: "Self-Discovery Interview",

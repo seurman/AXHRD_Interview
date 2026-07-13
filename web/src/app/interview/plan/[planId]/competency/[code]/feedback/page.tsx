@@ -6,6 +6,7 @@ import { competencyLabel, dimensionLabel, formatPercentile } from "@/lib/labels"
 import { COMPETENCY_CODES } from "@/types";
 import { ScoreGauge } from "@/components/report/ScoreGauge";
 import { BonusQuestionSection } from "@/components/report/BonusQuestionSection";
+import { ClaimVerificationSection } from "@/components/report/ClaimVerificationSection";
 import { computeDeliveryStats } from "@/lib/interview/feedback-helpers";
 
 export const dynamic = "force-dynamic";
@@ -55,9 +56,10 @@ export default async function CompetencyFeedbackPage({
     include: { responses: true },
   });
   const bonusResponse = session?.responses.find((r) => r.isBonusQuestion) ?? null;
+  const claimResponse = session?.responses.find((r) => r.isClaimVerification) ?? null;
   const delivery = computeDeliveryStats(
     (session?.responses ?? [])
-      .filter((r) => !r.isBonusQuestion)
+      .filter((r) => !r.isBonusQuestion && !r.isClaimVerification)
       .map((r) => ({
       answer: r.correctedTranscript ?? r.transcript,
       durationSec: r.durationSec,
@@ -194,6 +196,8 @@ export default async function CompetencyFeedbackPage({
       </div>
 
       <BonusQuestionSection response={bonusResponse} />
+
+      <ClaimVerificationSection response={claimResponse} />
 
       <section className="card-luxe p-5">
         <h3 className="mb-2 font-medium text-foreground">다음 연습</h3>

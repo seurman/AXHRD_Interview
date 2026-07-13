@@ -96,6 +96,12 @@ export interface AnswerFeedback {
     delivery: number;
   };
   weakestDimension?: string;
+  /** 자소서 경험 확인 질문 피드백 — 점수 없이 라벨·근거만 */
+  claimVerification?: {
+    label: "검증됨" | "부분검증" | "설명부족";
+    displayLabel: string;
+    reasoning: string;
+  };
 }
 
 export interface NextItem {
@@ -151,6 +157,8 @@ export interface InterviewQuestion {
   resumePersonalized?: boolean;
   /** JD 전용 보너스 질문 — theta/점수 미반영 */
   isBonusQuestion?: boolean;
+  /** 자소서 경험 확인 보너스 질문 — theta/점수 미반영 */
+  isClaimVerification?: boolean;
   /** 자소서에서 질문에 인용한 근거 구절 — UI에 "자소서 근거"로 표시 */
   resumeAnchors?: string[];
 }

@@ -29,12 +29,18 @@ import {
 import { poolQuestionsToItemParams, prepareRankedQuestionPool } from "@/lib/interview/question-pool";
 import {
   BONUS_QUESTION_ID,
+  CLAIM_QUESTION_ID,
   DEFAULT_QUESTION_COUNT,
   FULL_SESSION_MAX_ITEMS,
   FULL_SESSION_MIN_ITEMS,
   sessionItemLimits,
 } from "@/lib/interview/session-limits";
 import { generateJdBonusQuestion } from "@/lib/interview/jd-bonus-question";
+import { generateResumeClaimQuestion } from "@/lib/interview/resume-claim-question";
+import {
+  evaluateClaimVerification,
+  CLAIM_LABEL_DISPLAY,
+} from "@/lib/interview/claim-verification";
 import { parseJdRequirements } from "@/lib/company/jd-mapper";
 import {
   averageDimensions,
@@ -146,6 +152,16 @@ async function handleRespond(req: Request, userId: string) {
 
   if (questionId === BONUS_QUESTION_ID) {
     return handleBonusRespond({
+      session,
+      stored,
+      transcript,
+      durationSec,
+      userId,
+    });
+  }
+
+  if (questionId === CLAIM_QUESTION_ID) {
+    return handleClaimVerificationRespond({
       session,
       stored,
       transcript,
@@ -359,7 +375,7 @@ async function handleRespond(req: Request, userId: string) {
     ...new Set([
       ...stored.administeredIds,
       ...session.responses
-        .filter((r) => !r.isBonusQuestion)
+        .filter((r) => !r.isBonusQuestion && !r.isClaimVerification)
         .map((r) => questions.find((q) => q.id === r.questionId)?.externalId ?? "")
         .filter(Boolean),
     ]),
@@ -531,6 +547,17 @@ async function handleRespond(req: Request, userId: string) {
     if (bonusOffer) {
       shouldTerminate = false;
       bonusNextQuestion = bonusOffer;
+    } else {
+      const claimOffer = await tryOfferClaimQuestion({
+        session,
+        stored: updatedState,
+        focusCompetency,
+        competencyStates: irtResult.competency_states,
+      });
+      if (claimOffer) {
+        shouldTerminate = false;
+        bonusNextQuestion = claimOffer;
+      }
     }
   }
 
@@ -655,6 +682,175 @@ async function tryOfferBonusQuestion(params: {
   return buildBonusInterviewQuestion(bonus, params.focusCompetency);
 }
 
+function buildClaimInterviewQuestion(
+  claim: { question: string; groundedClaim: string },
+  competency: string,
+): InterviewQuestion {
+  return {
+    id: CLAIM_QUESTION_ID,
+    externalId: CLAIM_QUESTION_ID,
+    competency,
+    level: 0,
+    text: claim.question,
+    personalizedText: claim.question,
+    rationale:
+      "자소서에 적힌 내용을 조금 더 구체적으로 확인하는 참고용 질문입니다. 점수에는 반영되지 않습니다.",
+    isBonusQuestion: true,
+    isClaimVerification: true,
+    resumePersonalized: true,
+  };
+}
+
+async function tryOfferClaimQuestion(params: {
+  session: SessionWithRelations;
+  stored: StoredIrtState;
+  focusCompetency: string;
+  competencyStates: Record<string, CompetencyState>;
+}): Promise<InterviewQuestion | null> {
+  if (!params.session.resumeClaimEnabled || params.stored.claimQuestionOffered) return null;
+
+  const resumeSummary = parseResumeSummary(params.session.resume?.parsedTags);
+  if (!resumeSummary || resumeSummary.experiences.length === 0) return null;
+
+  const claim =
+    params.stored.pendingClaimQuestion ??
+    (await generateResumeClaimQuestion({
+      experiences: resumeSummary.experiences,
+      competency: params.focusCompetency,
+    }));
+
+  if (!claim) return null;
+
+  const nextState: StoredIrtState = {
+    ...params.stored,
+    competencies: params.competencyStates,
+    pendingClaimQuestion: claim,
+    nextItemId: CLAIM_QUESTION_ID,
+    claimQuestionOffered: true,
+  };
+
+  await prisma.interviewSession.update({
+    where: { id: params.session.id },
+    data: { irtState: serializeIrtState(nextState) },
+  });
+
+  return buildClaimInterviewQuestion(claim, params.focusCompetency);
+}
+
+async function handleClaimVerificationRespond(params: {
+  session: SessionWithRelations;
+  stored: StoredIrtState;
+  transcript: string;
+  durationSec?: number;
+  userId: string;
+}) {
+  const { session, stored, transcript, durationSec, userId } = params;
+  const pending = stored.pendingClaimQuestion;
+  if (!pending) {
+    return NextResponse.json({ error: "확인 질문이 없습니다." }, { status: 400 });
+  }
+
+  const focusCompetency = session.focusCompetency ?? "JOB_FIT";
+  const result = await evaluateClaimVerification({
+    claim: pending.groundedClaim,
+    question: pending.question,
+    answer: transcript,
+  });
+
+  const finalDurationSec = typeof durationSec === "number" ? Math.round(durationSec) : null;
+
+  await prisma.responseRecord.create({
+    data: {
+      sessionId: session.id,
+      questionId: null,
+      isClaimVerification: true,
+      claimVerificationClaim: pending.groundedClaim,
+      claimVerificationLabel: result.label,
+      claimVerificationReasoning: result.reasoning,
+      competency: focusCompetency,
+      level: 0,
+      transcript,
+      correctedTranscript: null,
+      rubricScore: 0.5,
+      durationSec: finalDurationSec,
+    },
+  });
+
+  void appendUserTextRecord({
+    userId,
+    kind: "INTERVIEW_ANSWER",
+    content: formatInterviewAnswerText({
+      competency: focusCompetency,
+      level: 0,
+      question: pending.question,
+      answer: transcript,
+    }),
+    sourceType: "interview_session",
+    sourceId: session.id,
+  });
+
+  const clearedState: StoredIrtState = {
+    ...stored,
+    pendingClaimQuestion: undefined,
+    nextItemId: undefined,
+  };
+  await prisma.interviewSession.update({
+    where: { id: session.id },
+    data: { irtState: serializeIrtState(clearedState) },
+  });
+
+  const planId = stored.planId ?? session.planId ?? undefined;
+  let redirectUrl: string | null = null;
+  let nextCompetency: string | null = null;
+
+  if (session.mode === "COMPETENCY" && planId && focusCompetency) {
+    redirectUrl = await finalizeCompetencySession({
+      sessionId: session.id,
+      planId,
+      focusCompetency,
+      states: stored.competencies,
+      userId: session.userId,
+      companyName: session.targetCompany?.name,
+      jobRole: session.jobRole,
+      persona: session.targetCompany?.persona as
+        | { name: string; description: string }
+        | null
+        | undefined,
+    });
+  } else {
+    await finalizeFullSession(session.id, stored.competencies);
+    redirectUrl = `/interview/${session.id}/report`;
+  }
+
+  if (planId && redirectUrl?.includes("/feedback")) {
+    const progress = await prisma.competencyProgress.findMany({ where: { planId } });
+    const pendingProgress = progress.find((p) => p.status !== "COMPLETED");
+    nextCompetency = pendingProgress?.competency ?? null;
+  }
+
+  return NextResponse.json({
+    competencyStates: stored.competencies,
+    chipEvent: null,
+    answerFeedback: {
+      claimVerification: {
+        label: result.label,
+        displayLabel: CLAIM_LABEL_DISPLAY[result.label],
+        reasoning: result.reasoning,
+      },
+      isInterim: false,
+    },
+    nextQuestion: null,
+    shouldTerminate: true,
+    totalItems: stored.administeredIds.length,
+    administeredIds: stored.administeredIds,
+    redirectUrl,
+    planId,
+    focusCompetency,
+    nextCompetency,
+    maxItemsPerCompetency: competencySessionLimits(stored).maxItems,
+  });
+}
+
 async function handleBonusRespond(params: {
   session: SessionWithRelations;
   stored: StoredIrtState;
@@ -726,6 +922,42 @@ async function handleBonusRespond(params: {
     where: { id: session.id },
     data: { irtState: serializeIrtState(clearedState) },
   });
+
+  const claimOffer = await tryOfferClaimQuestion({
+    session,
+    stored: clearedState,
+    focusCompetency,
+    competencyStates: stored.competencies,
+  });
+  if (claimOffer) {
+    return NextResponse.json({
+      competencyStates: stored.competencies,
+      chipEvent: null,
+      answerFeedback: {
+        ...buildAnswerKeyPointFeedback({
+          answer: correctedAnswer,
+          briefFeedback: rubric.briefFeedback,
+          dimensions: rubric.dimensions,
+          level: 0,
+          competency: focusCompetency,
+          score: rubric.score,
+        }),
+        score: rubric.score,
+        level: 0,
+        competency: focusCompetency,
+        isInterim: false,
+      },
+      nextQuestion: claimOffer,
+      shouldTerminate: false,
+      totalItems: stored.administeredIds.length,
+      administeredIds: stored.administeredIds,
+      redirectUrl: null,
+      planId: stored.planId ?? session.planId ?? undefined,
+      focusCompetency,
+      nextCompetency: null,
+      maxItemsPerCompetency: competencySessionLimits(stored).maxItems,
+    });
+  }
 
   const planId = stored.planId ?? session.planId ?? undefined;
   let redirectUrl: string | null = null;
@@ -855,7 +1087,9 @@ async function finalizeCompetencySession(params: {
     },
   });
 
-  const regularResponses = session.responses.filter((r) => !r.isBonusQuestion && r.question);
+  const regularResponses = session.responses.filter(
+    (r) => !r.isBonusQuestion && !r.isClaimVerification && r.question,
+  );
   const feedbackData = await generateCompetencyFeedback({
     competency: params.focusCompetency,
     summary: compSummary,
@@ -945,7 +1179,9 @@ async function finalizeFullSession(
   }
 
   const { generateSessionReport } = await import("@/lib/claude/report");
-  const regularResponses = session.responses.filter((r) => !r.isBonusQuestion && r.question);
+  const regularResponses = session.responses.filter(
+    (r) => !r.isBonusQuestion && !r.isClaimVerification && r.question,
+  );
   const reportData = await generateSessionReport({
     companyName: session.targetCompany?.name,
     jobRole: session.jobRole,

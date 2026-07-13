@@ -7,6 +7,7 @@ import { competencyLabel } from "@/lib/utils";
 import { ScoreGauge } from "@/components/report/ScoreGauge";
 import { ReportCompetencyAnalysis } from "@/components/report/ReportCompetencyAnalysis";
 import { BonusQuestionSection } from "@/components/report/BonusQuestionSection";
+import { ClaimVerificationSection } from "@/components/report/ClaimVerificationSection";
 import { Logo } from "@/components/brand/Logo";
 import { PrintButton } from "@/components/ui/PrintButton";
 import { SessionIntegrityNotice } from "@/components/interview/SessionIntegrityNotice";
@@ -54,9 +55,10 @@ export default async function ReportPage({ params, searchParams }: PageProps) {
       )
     : 0;
   const bonusResponse = session.responses.find((r) => r.isBonusQuestion) ?? null;
+  const claimResponse = session.responses.find((r) => r.isClaimVerification) ?? null;
   const delivery = computeDeliveryStats(
     session.responses
-      .filter((r) => !r.isBonusQuestion)
+      .filter((r) => !r.isBonusQuestion && !r.isClaimVerification)
       .map((r) => ({
       answer: r.correctedTranscript ?? r.transcript,
       durationSec: r.durationSec,
@@ -142,6 +144,8 @@ export default async function ReportPage({ params, searchParams }: PageProps) {
           <ReportCompetencyAnalysis sections={report.sections} />
 
           <BonusQuestionSection response={bonusResponse} />
+
+          <ClaimVerificationSection response={claimResponse} />
 
           <section className="rounded-2xl border border-gold-light/60 bg-gold-light/10 p-6">
             <h2 className="mb-3 font-semibold text-foreground">다음 단계</h2>

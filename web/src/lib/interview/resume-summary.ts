@@ -68,8 +68,9 @@ export function heuristicSummary(rawText: string): ResumeSummary {
 
   if (sentences.length === 0) return emptySummary();
 
-  const METRIC_PATTERN = /\d+(\.\d+)?\s*(%|퍼센트|명|건|억|만\s?원|천만\s?원|배|시간|일|개월|주년?|회)/;
-  const experiences = [...new Set(sentences.filter((s) => METRIC_PATTERN.test(s)))].slice(0, 5);
+  const experiences = [
+    ...new Set(sentences.filter((s) => EXPERIENCE_METRIC_PATTERN.test(s))),
+  ].slice(0, 5);
 
   return {
     summary: sentences.slice(0, 3).join(" "),
@@ -77,6 +78,17 @@ export function heuristicSummary(rawText: string): ResumeSummary {
     experiences: experiences.length > 0 ? experiences : sentences.slice(0, 3),
     keywords: [],
   };
+}
+
+export const EXPERIENCE_METRIC_PATTERN =
+  /\d+(\.\d+)?\s*(%|퍼센트|명|건|억|만\s?원|천만\s?원|배|시간|일|개월|주년?|회)/;
+
+export function prioritizeExperiences(experiences: string[]): string[] {
+  const candidates = experiences.filter((e) => typeof e === "string" && e.trim().length >= 8);
+  if (candidates.length === 0) return [];
+
+  const withMetric = candidates.filter((e) => EXPERIENCE_METRIC_PATTERN.test(e));
+  return withMetric.length > 0 ? withMetric : candidates;
 }
 
 function isValidSummary(v: unknown): v is ResumeSummary {

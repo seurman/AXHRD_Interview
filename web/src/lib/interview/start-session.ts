@@ -53,6 +53,8 @@ export type StartSessionBody = {
   tripleFeedbackMode?: boolean;
   /** 공고 맞춤 보너스 질문 — JD가 있을 때만, 기본 OFF */
   jdBonusEnabled?: boolean;
+  /** 자소서 경험 확인 보너스 질문 — experiences가 있을 때만, 기본 OFF */
+  resumeClaimEnabled?: boolean;
   /** 역량당 문항 수 (1~5, 기본 3) */
   questionCount?: number;
   /** SetupForm에서 미리 분석한 JD 결과 — 동일 원문이면 세션 시작 시 Gemini 재호출 생략 */
@@ -116,6 +118,7 @@ export async function startInterviewSession(
     companySize,
     tripleFeedbackMode,
     jdBonusEnabled,
+    resumeClaimEnabled,
     questionCount: questionCountBody,
     precomputedJdAnalysis,
   } = body;
@@ -363,6 +366,9 @@ export async function startInterviewSession(
       demoWorkspaceId: opts.demoWorkspaceId ?? null,
       tripleFeedbackMode: tripleFeedbackMode === true,
       jdBonusEnabled: jdBonusEnabled === true && !!jdRequirements,
+      resumeClaimEnabled:
+        resumeClaimEnabled === true &&
+        (parseResumeSummary(resume?.parsedTags)?.experiences?.length ?? 0) > 0,
     },
   });
 

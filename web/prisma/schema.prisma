@@ -732,6 +732,8 @@ model InterviewSession {
   tripleFeedbackMode Boolean    @default(false)
   /** 공고 맞춤 보너스 질문 — JD가 있을 때만, 기본 OFF */
   jdBonusEnabled  Boolean       @default(false)
+  /** 자소서 경험 확인 질문 — 자소서 experiences가 있을 때만, 기본 OFF */
+  resumeClaimEnabled Boolean    @default(false)
   createdAt       DateTime      @default(now())
 
   responses ResponseRecord[]
@@ -760,6 +762,14 @@ model ResponseRecord {
   bonusQuestionText String?    @db.Text
   bonusGroundedRequirement String?
   bonusBriefFeedback String?   @db.Text
+  /** 자소서 진위 검증 질문이었는지 — IRT 미반영 */
+  isClaimVerification      Boolean @default(false)
+  /** 검증 대상이 된 자소서 원문 문장 */
+  claimVerificationClaim   String? @db.Text
+  /** "검증됨" | "부분검증" | "설명부족" — 숫자/퍼센트 아님 */
+  claimVerificationLabel   String?
+  /** 판정 근거 1~2문장 */
+  claimVerificationReasoning String? @db.Text
   competency  String
   level       Int
   transcript  String           @db.Text

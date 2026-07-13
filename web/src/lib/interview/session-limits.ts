@@ -15,6 +15,9 @@ export const FULL_SESSION_MAX_ITEMS = 18;
 /** JD 보너스 질문 — 은행 문항 FK 없이 respond API에서 식별 */
 export const BONUS_QUESTION_ID = "__bonus_jd__";
 
+/** 자소서 경험 확인 보너스 질문 — 은행에 없는 즉석 질문(IRT 미포함) */
+export const CLAIM_QUESTION_ID = "__bonus_resume_claim__";
+
 export function clampQuestionCount(value: unknown): number {
   const n =
     typeof value === "number"

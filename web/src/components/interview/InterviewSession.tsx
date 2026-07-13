@@ -6,6 +6,7 @@ import { LevelChip } from "./LevelChip";
 import { CompetencyBar } from "./CompetencyBar";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { AnswerFeedbackPanel } from "./AnswerFeedbackPanel";
+import { ClaimVerificationFeedbackPanel } from "./ClaimVerificationFeedbackPanel";
 import { TripleFeedbackPanel } from "./TripleFeedbackPanel";
 import { QuestionRationaleTooltip } from "./QuestionRationaleTooltip";
 import { LoadingRitual } from "@/components/ux/LoadingRitual";
@@ -289,9 +290,14 @@ export function InterviewSession({
                 자소서 맞춤 질문
               </span>
             )}
-            {q?.isBonusQuestion && (
+            {q?.isBonusQuestion && !q?.isClaimVerification && (
               <span className="keep-one-line rounded-full bg-muted/20 px-2 py-0.5 text-muted">
                 공고 맞춤 보너스 · 점수 미반영
+              </span>
+            )}
+            {q?.isClaimVerification && (
+              <span className="keep-one-line rounded-full bg-gold/15 px-2 py-0.5 text-gold">
+                경험 확인 질문 · 점수 미반영
               </span>
             )}
             {q?.pressureTier === "TOUGH" && (
@@ -391,7 +397,9 @@ export function InterviewSession({
         </div>
 
         {lastFeedback && !processing ? (
-          tripleFeedbackMode && lastFeedback.tripleFeedback ? (
+          lastFeedback.claimVerification ? (
+            <ClaimVerificationFeedbackPanel feedback={lastFeedback} />
+          ) : tripleFeedbackMode && lastFeedback.tripleFeedback ? (
             <TripleFeedbackPanel
               feedback={lastFeedback}
               tripleFeedback={lastFeedback.tripleFeedback}
@@ -403,7 +411,9 @@ export function InterviewSession({
         ) : null}
 
         <p className="text-center text-xs text-muted">
-          {q?.isBonusQuestion
+          {q?.isClaimVerification
+            ? `경험 확인 질문 (참고용)${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`
+            : q?.isBonusQuestion
             ? `보너스 질문 (참고용)${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`
             : `문항 ${state.totalItems + 1}/${maxItems}${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`}
         </p>

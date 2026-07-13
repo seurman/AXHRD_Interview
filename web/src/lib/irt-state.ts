@@ -44,6 +44,13 @@ export interface StoredIrtState {
   };
   /** 보너스 질문을 이미 제시했는지 */
   bonusQuestionOffered?: boolean;
+  /** 자소서 경험 확인 보너스 질문 대기 중(정규 문항 종료 후) */
+  pendingClaimQuestion?: {
+    question: string;
+    groundedClaim: string;
+  };
+  /** 자소서 확인 질문을 이미 제시했는지 */
+  claimQuestionOffered?: boolean;
   /** 진행 중인 꼬리질문이 있으면 채워짐, 없으면 undefined */
   pendingFollowUp?: PendingFollowUp;
   /** 세션에서 이미 꼬리질문을 한 번 썼는지 — 세션당 최대 1회 */
@@ -89,6 +96,8 @@ export function parseIrtState(raw: unknown): StoredIrtState {
       usedJdTerms: (obj.usedJdTerms as string[]) ?? [],
       pendingBonusQuestion: obj.pendingBonusQuestion as StoredIrtState["pendingBonusQuestion"],
       bonusQuestionOffered: obj.bonusQuestionOffered === true,
+      pendingClaimQuestion: obj.pendingClaimQuestion as StoredIrtState["pendingClaimQuestion"],
+      claimQuestionOffered: obj.claimQuestionOffered === true,
       pendingFollowUp: obj.pendingFollowUp as PendingFollowUp | undefined,
       followUpUsed: obj.followUpUsed === true,
       questionCount:
@@ -115,6 +124,8 @@ export function serializeIrtState(state: StoredIrtState): object {
     usedJdTerms: state.usedJdTerms,
     pendingBonusQuestion: state.pendingBonusQuestion,
     bonusQuestionOffered: state.bonusQuestionOffered,
+    pendingClaimQuestion: state.pendingClaimQuestion,
+    claimQuestionOffered: state.claimQuestionOffered,
     pendingFollowUp: state.pendingFollowUp,
     followUpUsed: state.followUpUsed,
     questionCount: state.questionCount,

@@ -6,6 +6,7 @@ import { parseIrtState, defaultCompetencyStates } from "@/lib/irt-state";
 import { buildPersonalizedQuestion } from "@/lib/interview/build-question";
 import {
   BONUS_QUESTION_ID,
+  CLAIM_QUESTION_ID,
   DEFAULT_QUESTION_COUNT,
   FULL_SESSION_MAX_ITEMS,
   clampQuestionCount,
@@ -71,6 +72,22 @@ export default async function InterviewPage({ params, searchParams }: PageProps)
         personalizedText: bonus.question,
         rationale: `채용공고 요구사항 「${bonus.groundedRequirement}」 기반 참고용 보너스 질문입니다.`,
         isBonusQuestion: true,
+      };
+    } else if (nextExternalId === CLAIM_QUESTION_ID && stored.pendingClaimQuestion) {
+      const claim = stored.pendingClaimQuestion;
+      const comp = session.focusCompetency ?? "JOB_FIT";
+      currentQuestion = {
+        id: CLAIM_QUESTION_ID,
+        externalId: CLAIM_QUESTION_ID,
+        competency: comp,
+        level: 0,
+        text: claim.question,
+        personalizedText: claim.question,
+        rationale:
+          "자소서에 적힌 내용을 조금 더 구체적으로 확인하는 참고용 질문입니다. 점수에는 반영되지 않습니다.",
+        isBonusQuestion: true,
+        isClaimVerification: true,
+        resumePersonalized: true,
       };
     } else {
     const q = await prisma.question.findUnique({

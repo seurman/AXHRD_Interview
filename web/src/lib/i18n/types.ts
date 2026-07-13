@@ -478,6 +478,7 @@ export type Dictionary = {
     companySizes: Record<string, string>;
     tripleFeedback: { title: string; hint: string };
     jdBonus: { title: string; hint: string };
+    resumeClaim: { title: string; hint: string };
   };
   discover: {
     eyebrow: string;
