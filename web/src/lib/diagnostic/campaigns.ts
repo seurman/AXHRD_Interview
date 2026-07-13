@@ -121,11 +121,11 @@ export function waveListDto(wave: WaveListRow, baseUrl: string) {
   };
 }
 
-export async function createDiagnosticWave(input: CreateWaveInput) {
-  const org = await prisma.organization.findUnique({ where: { id: input.organizationId } });
+export async function createDiagnosticWave(input: CreateWaveInput, db: Db = prisma) {
+  const org = await db.organization.findUnique({ where: { id: input.organizationId } });
   if (!org) throw new CampaignError("ORG_NOT_FOUND", "기관을 찾을 수 없습니다.");
 
-  const instrument = await prisma.diagnosticInstrument.findUnique({
+  const instrument = await db.diagnosticInstrument.findUnique({
     where: { id: input.instrumentId },
     include: { sections: { select: { code: true } } },
   });
@@ -142,7 +142,7 @@ export async function createDiagnosticWave(input: CreateWaveInput) {
   const status =
     input.status ?? deriveInitialWaveStatus(opensAt, closesAt);
 
-  const last = await prisma.diagnosticWave.findFirst({
+  const last = await db.diagnosticWave.findFirst({
     where: { organizationId: input.organizationId, instrumentId: input.instrumentId },
     orderBy: { waveNumber: "desc" },
     select: { waveNumber: true },
@@ -152,13 +152,13 @@ export async function createDiagnosticWave(input: CreateWaveInput) {
 
   // PgBouncer/Supabase pooler: interactive $transaction 대신 순차 쿼리 (materialize.ts 와 동일)
   if (input.enableDiagnosticSku) {
-    await prisma.organization.update({
+    await db.organization.update({
       where: { id: input.organizationId },
       data: { diagnosticEnabled: true },
     });
   }
 
-  const created = await prisma.diagnosticWave.create({
+  const created = await db.diagnosticWave.create({
     data: {
       instrumentId: input.instrumentId,
       organizationId: input.organizationId,
@@ -173,9 +173,9 @@ export async function createDiagnosticWave(input: CreateWaveInput) {
     },
   });
 
-  await createHierarchyTeams(prisma, created.id, input.teams ?? [], new Set());
+  await createHierarchyTeams(db, created.id, input.teams ?? [], new Set());
 
-  return prisma.diagnosticWave.findUniqueOrThrow({
+  return db.diagnosticWave.findUniqueOrThrow({
     where: { id: created.id },
     include: {
       organization: { select: { id: true, name: true } },

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { hasSuperadminAccess } from "@/lib/auth/guards";
-import { prisma } from "@/lib/prisma";
+import { prismaDirect } from "@/lib/prisma-direct";
 import { SHOWCASE_ORG_NAME } from "@/lib/platform/showcase-org";
 import { seedDemoArcIndex } from "@/lib/demo/seed-demo-arc-index";
 
@@ -13,11 +13,21 @@ type Body = {
   scope?: "technova" | "showcase" | "both";
 };
 
-/** 운영 DB에 ARC 조직진단 데모 캠페인 시드 — 로컬 CLI는 prod DATABASE_URL 접근 불가 */
+/** 운영 DB에 ARC 조직진단 데모 캠페인 시드 — DIRECT_URL(세션) 연결 사용 */
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user || !hasSuperadminAccess(user)) {
     return NextResponse.json({ error: "슈퍼어드민 권한이 필요합니다." }, { status: 403 });
+  }
+
+  if (process.env.VERCEL && !process.env.DIRECT_URL?.trim()) {
+    return NextResponse.json(
+      {
+        error:
+          "Vercel에 DIRECT_URL(Supabase Session pooler, 5432) 환경변수가 없습니다. Settings → Environment Variables에 추가 후 재배포하세요.",
+      },
+      { status: 503 },
+    );
   }
 
   const body = (await req.json().catch(() => ({}))) as Body;
@@ -27,11 +37,11 @@ export async function POST(req: Request) {
     const results: Record<string, unknown> = {};
 
     if (scope === "technova" || scope === "both") {
-      results.technova = await seedDemoArcIndex(prisma);
+      results.technova = await seedDemoArcIndex(prismaDirect);
     }
 
     if (scope === "showcase" || scope === "both") {
-      const showcase = await prisma.organization.findFirst({
+      const showcase = await prismaDirect.organization.findFirst({
         where: { name: SHOWCASE_ORG_NAME },
         select: { id: true, name: true },
       });
@@ -41,7 +51,7 @@ export async function POST(req: Request) {
           { status: 400 },
         );
       }
-      results.showcase = await seedDemoArcIndex(prisma, {
+      results.showcase = await seedDemoArcIndex(prismaDirect, {
         organizationId: showcase.id,
         waveLabelPrefix: "쇼케이스",
       });
@@ -60,5 +70,7 @@ export async function POST(req: Request) {
       { error: e instanceof Error ? e.message : "데모 시드 실패" },
       { status: 500 },
     );
+  } finally {
+    await prismaDirect.$disconnect();
   }
 }

@@ -281,7 +281,9 @@ function toStoredValue(target: number, isReversed: boolean): number {
   return isReversed ? clampLikert(6 - good) : good;
 }
 
-async function createRespondent(opts: {
+async function createRespondent(
+  db: import("@prisma/client").PrismaClient,
+  opts: {
   waveId: string;
   teamId: string;
   teamDef: TeamDef;
@@ -294,7 +296,7 @@ async function createRespondent(opts: {
 }) {
   const { waveId, teamId, teamDef, persona, waveIdx, scoredItems, oeItems, rand, submittedAt } = opts;
 
-  const response = await prisma.diagnosticResponse.create({
+  const response = await db.diagnosticResponse.create({
     data: {
       waveId,
       teamId,
@@ -337,7 +339,7 @@ async function createRespondent(opts: {
   }
 
   if (answers.length > 0) {
-    await prisma.diagnosticAnswer.createMany({ data: answers, skipDuplicates: true });
+    await db.diagnosticAnswer.createMany({ data: answers, skipDuplicates: true });
   }
 
   // 주관식(OPEN_TEXT) — 일부 응답자만, 페르소나 성향에 맞는 문구 샘플링 (numericValue 대신 textValue)
@@ -351,7 +353,7 @@ async function createRespondent(opts: {
     oeRows.push({ responseId: response.id, itemId: oe.id, axis: "CURRENT", textValue: text });
   }
   if (oeRows.length > 0) {
-    await prisma.diagnosticAnswer.createMany({ data: oeRows, skipDuplicates: true });
+    await db.diagnosticAnswer.createMany({ data: oeRows, skipDuplicates: true });
   }
 }
 
@@ -451,7 +453,7 @@ export async function seedDemoArcIndex(
         divisionName: t.divisionName,
         unitName: t.unitName,
       })),
-    });
+    }, db);
 
     const submittedAt = daysAgo(waveIdx === 0 ? 62 : 5);
     const rand = mulberry32(1000 + waveIdx * 7919);
@@ -462,7 +464,7 @@ export async function seedDemoArcIndex(
       if (!teamDef) continue;
       for (let p = 0; p < teamDef.size; p++) {
         const persona = pickPersona(rand);
-        await createRespondent({
+        await createRespondent(db, {
           waveId: wave.id,
           teamId: team.id,
           teamDef,
