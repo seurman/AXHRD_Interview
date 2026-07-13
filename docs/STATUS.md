@@ -2,6 +2,33 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 개인/기관 활동 로그 고도화 + 자소서 질문 연결 버그 수정 (2026-07-13, Cowork 세션)
+
+- **벤치마킹**: LMS·러닝 플랫폼 활동 로그 UX(타임라인 패턴 — 날짜별 그룹핑, 관리자용은 필터 가능한 테이블)를 웹 리서치로 확인 후 아래에 반영.
+- **개인 "내 활동"(`/dashboard/activity`) 고도화**:
+  - `lib/dashboard/get-recent-activity.ts` — 모의면접 항목에 `focusCompetency`(역량)·`startedAt` 추가 조회, `competencyLabel()`로 변환.
+  - `components/dashboard/RecentActivityPanel.tsx` — 날짜별 그룹 헤더("7월 13일 (월)") + 항목마다 접속 시각·역량 배지·소요 시간(시작~완료) 표시하는 타임라인으로 개편. `ActivityItem` 타입에 `competency?`/`startedAt?` 추가(하위 호환 — optional).
+- **기관용 활동 로그 신규**:
+  - `lib/org/activity-log.ts` 신규 — `getOrgActivityLog(organizationId, limit)`: 소속 구성원(코호트) 전체의 완료 모의면접·자기발견 인터뷰를 이름·역량·시각과 함께 최신순 반환. 상세 리포트 링크는 기존 `orgCoachingConsent` 동의 여부에 따라 노출(기존 코호트 테이블과 동일한 공개 범위 — 답변 원문·점수 상세는 여전히 비노출).
+  - `components/org/OrgActivityLogPanel.tsx` 신규 — 이름/역량 검색 가능한 테이블(클라이언트 컴포넌트).
+  - `app/org/dashboard/activity/page.tsx` 신규 — 전체 로그 페이지.
+  - `app/org/dashboard/page.tsx` — "최근 활동" 미리보기(6건) + "전체 보기" 링크 추가.
+- **별개로 발견·수정한 버그**: 자소서 인용 뒤에 이어지는 질문이 인용 내용과 무관하게 나오는 문제 — `lib/interview/personalize-question.ts`의 `heuristicPersonalize()`(Gemini 실패/그라운딩 체크 탈락 시 폴백 경로)가 인용한 자소서 경험이 이번 질문의 역량과 무관해도 원래 질문 템플릿을 그대로 이어붙이고 있었음. 인용 경험이 역량과 안 맞으면(`anchorRelevantToCompetency` 체크) 원래 템플릿 대신 방금 인용한 경험/성과를 직접 캐묻는 질문으로 연결하도록 수정.
+- 검증 필요(로컬): `npx tsc --noEmit`, `/dashboard/activity`·`/org/dashboard/activity` 수동 확인, 자소서 인용형 질문이 실제로 자연스럽게 연결되는지 몇 세션 확인.
+
+## 최근 작업 — "내 활동" 별도 페이지 분리 (2026-07-13, 커서의 org_home_by_entitlement 커밋 후)
+
+- **문제**: `lib/platform/nav-registry.ts`에서 `activityHref = ${dashboardHref}#activity`로 정의돼 있어 "홈"과 "내 활동" 네비 링크가 사실상 같은 `/dashboard` 페이지였음(해시만 다름). 활동이 적으면 스크롤할 것도 없어 두 메뉴가 동일하게 보임 — 사용자 리포트로 발견.
+- **수정**: `activityHref`를 `/dashboard/activity` 독립 라우트로 변경.
+  - `lib/dashboard/get-recent-activity.ts` 신규 — 완료 세션·자기발견 인터뷰·자소서 첨삭을 합쳐 최신순 반환하는 공용 헬퍼(`limit` 파라미터로 홈 미리보기/전체 페이지 재사용). `app/dashboard/page.tsx`가 하던 개별 prisma 쿼리를 여기로 이동, `activitySource.name` 중복 조회는 제거하고 `dashboard.userName`(`getCompetencyDashboardData` 리턴값)으로 대체.
+  - `app/dashboard/page.tsx` — 활동 미리보기 4개만(`HOME_ACTIVITY_PREVIEW_LIMIT`), `RecentActivityPanel`에 `viewAllHref="/dashboard/activity"` 전달.
+  - `app/dashboard/activity/page.tsx` 신규 — 전체 활동(최대 60개) 페이지, "홈으로" 백링크.
+  - `components/dashboard/RecentActivityPanel.tsx` — 선택적 `viewAllHref` prop 추가(있으면 "전체 보기" 링크 렌더).
+  - `components/layout/MainNav.tsx` — "내 활동" 링크에 빠져있던 `linkActive` 하이라이트 추가(모바일 네비는 이미 정상 동작 확인).
+  - `api/nav/route.ts` — 에러 폴백값도 `/dashboard/activity`로 통일.
+- **선행 확인**: `dashboard/page.tsx`/`get-competency-dashboard-data.ts`가 커서의 `org_home_by_entitlement` 작업과 겹쳐서 커밋(`00d8283`) 완료 확인 후 진행함.
+- 검증 필요(로컬): `npx tsc --noEmit`, `/dashboard`에서 "내 활동" 클릭 시 `/dashboard/activity`로 이동하고 "홈" 메뉴와 하이라이트가 구분되는지 확인.
+
 ## 최신 배포 스냅샷 — `00d8283` (2026-07-13, master 푸시 완료)
 
 **커밋:** `00d8283` — `feat: org diagnostic hierarchy, interview rounds, flags, and coach dashboard`  
@@ -53,6 +80,34 @@ npm test
 - 자소서 **500~1000자 마크다운 청크** 분할 저장 (`resume-summary.ts`는 여전히 JSON 요약 + experience 1문장 배열)
 - ARC LPA(GMM)·HLM 완전판·주관식 LDA·처방 탭
 - `org_home_by_entitlement` 전면 분리 (`/org/dashboard` entitlement별 홈)
+
+## 고객 시연 데모 패키지 (2026-07-13)
+
+JSON 팩을 DB에 적재하는 통합 시드. **데이터 수정은 `web/src/data/demo/*.json` 편집 후 시드 재실행.**
+
+```powershell
+cd D:\HR_IN_Solution\web
+npx prisma migrate deploy
+npm run db:seed:demo
+```
+
+| 시연 | 로그인 | 비밀번호 | 확인 경로 |
+|------|--------|----------|-----------|
+| **개인 대시보드** (6축·차수 요약·자기발견) | `dashboard-demo@demo.axhrd.local` | `Demo2026!` | `/dashboard` |
+| **조직진단 기관 콘솔** (테크노바) | `arc-demo-admin@demo.axhrd.local` | `Demo2026!` | `/org/diagnosis` |
+| **조직진단 슈퍼어드민 리포트** | 슈퍼어드민 계정 | — | `/admin/diagnostic` → 「테크노바 (ARC 데모)」 |
+| **쇼케이스 코호트** | `showcase-axhrd-showcase-m0@demo.axhrd.local` | `Demo2026!` | `/org/dashboard`, `/org/diagnosis` |
+
+**데이터 파일:**
+
+- `web/src/data/demo/personal-dashboard.pack.json` — 면접 5세션·2차수·6축 `ResponseRecord`·`roundBrief`·자기발견 프로필
+- `web/src/data/demo/demo-access.json` — 시연 계정·경로 메타
+
+**개인 대시보드 시드 내용:** 역량 5회 완료(2차수), 6축 답변 9건(세션별 추이), 차수 요약 2건, 자기발견 강점 덱, 세션 리포트 링크.
+
+**조직진단 시드 내용:** `db:seed:demo-arc`와 동일 — 2웨이브·5팀·3단 하이어라키·~100명 합성 응답·IPA/ICC 차트.
+
+**운영 DB 반영:** 배포 후 한 번 `npm run db:seed:demo` 실행(멱등 — 개인 데모 유저는 재생성, ARC 웨이브는 기존 삭제 후 재생성).
 
 ## 최근 작업 — 조직 하이어라키(사업본부/사업부/팀) 드릴다운 (2026-07-13, Cowork 세션 · 이어서)
 

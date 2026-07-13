@@ -1,0 +1,313 @@
+{
+  "version": 1,
+  "user": {
+    "email": "dashboard-demo@demo.axhrd.local",
+    "name": "김하은",
+    "profile": {
+      "careerYears": 3,
+      "education": "경영학과 졸업",
+      "desiredJobRole": "MARKETING"
+    }
+  },
+  "rounds": [
+    {
+      "prepMode": "COMPETENCY_SET",
+      "timeBudgetMinutes": 20,
+      "competencies": ["COMMUNICATION", "PROBLEM_SOLVING", "JOB_FIT"],
+      "roundBrief": {
+        "strengthsText": "의사소통에서 상대의 관점을 먼저 정리하고, 문제 상황을 구조화해 설명하는 힘이 돋보였습니다.",
+        "improvementsText": "성과 수치와 본인 기여 범위를 한 문장 더 분명히 말하면 설득력이 올라갑니다.",
+        "strengthBullets": [
+          "[의사소통] 이해관계자 요구를 먼저 요약해 합의 속도를 높임",
+          "[문제해결] 원인 가설을 2~3개로 나눠 검증 순서를 제시",
+          "[직무적합] 마케팅 KPI와 본인 역할을 연결해 설명"
+        ],
+        "improvementBullets": [
+          "[의사소통] 결론을 먼저 말한 뒤 근거를 펼치는 연습",
+          "[문제해결] 대안 비교 시 선택 기준을 명시",
+          "[직무적합] 캠페인 규모·예산 등 정량 지표 추가"
+        ]
+      },
+      "sessions": [
+        {
+          "focusCompetency": "COMMUNICATION",
+          "daysAgo": 18,
+          "theta": -0.35,
+          "percentile": 52,
+          "levelEst": 2,
+          "responses": [
+            {
+              "transcript": "팀 회의에서 마케팅·영업 의견이 엇갈릴 때, 먼저 각 팀이 원하는 KPI를 화이트보드에 적고 공통 목표를 한 줄로 정리했습니다. 그다음 우선순위를 합의해 일정을 조정했고, 이후 주간 회의 시간이 30분 줄었습니다.",
+              "rubricScore": 0.58,
+              "dimensions": {
+                "questionIntent": 0.62,
+                "situationSpecificity": 0.55,
+                "individualOwnership": 0.6,
+                "logic": 0.58,
+                "outcomeQuantification": 0.45,
+                "delivery": 0.64
+              }
+            },
+            {
+              "transcript": "신규 채널 런칭 전에 이해관계자 인터뷰 5명을 진행해 메시지 톤을 맞췄습니다. 반복되는 우려는 FAQ로 정리해 영업팀에 공유했습니다.",
+              "rubricScore": 0.61,
+              "dimensions": {
+                "questionIntent": 0.65,
+                "situationSpecificity": 0.58,
+                "individualOwnership": 0.63,
+                "logic": 0.6,
+                "outcomeQuantification": 0.5,
+                "delivery": 0.66
+              }
+            }
+          ],
+          "report": {
+            "summary": "이해관계 조율 경험을 구체적으로 설명했으며, 본인 행동과 결과 연결이 점차 선명해졌습니다.",
+            "strengths": ["상대 관점 요약", "회의 구조화"],
+            "improvements": ["정량 성과 보강"],
+            "score": 61
+          }
+        },
+        {
+          "focusCompetency": "PROBLEM_SOLVING",
+          "daysAgo": 14,
+          "theta": -0.15,
+          "percentile": 58,
+          "levelEst": 3,
+          "responses": [
+            {
+              "transcript": "랜딩 전환율이 2주 연속 하락했을 때, 트래픽·체류·CTA 클릭을 단계별로 쪼개 봤습니다. 이탈이 큰 구간은 모바일 폼이었고, 필드 수를 줄인 A/B 테스트로 전환율을 0.4%p 회복했습니다.",
+              "rubricScore": 0.66,
+              "dimensions": {
+                "questionIntent": 0.68,
+                "situationSpecificity": 0.64,
+                "individualOwnership": 0.67,
+                "logic": 0.7,
+                "outcomeQuantification": 0.62,
+                "delivery": 0.65
+              }
+            },
+            {
+              "transcript": "예산 제약으로 채널을 줄여야 할 때, CPA와 잔여 수요를 표로 비교해 상위 2개 채널만 유지하는안을 제안했습니다.",
+              "rubricScore": 0.64,
+              "dimensions": {
+                "questionIntent": 0.66,
+                "situationSpecificity": 0.6,
+                "individualOwnership": 0.65,
+                "logic": 0.68,
+                "outcomeQuantification": 0.58,
+                "delivery": 0.63
+              }
+            }
+          ],
+          "report": {
+            "summary": "문제를 측정 가능한 단위로 분해하고, 가설 검증 순서가 논리적입니다.",
+            "strengths": ["퍼널 분해", "A/B 검증"],
+            "improvements": ["대안 기각 이유 명시"],
+            "score": 65
+          }
+        },
+        {
+          "focusCompetency": "JOB_FIT",
+          "daysAgo": 10,
+          "theta": 0.05,
+          "percentile": 64,
+          "levelEst": 3,
+          "responses": [
+            {
+              "transcript": "지원 동기는 B2B SaaS에서 제품 가치를 고객 언어로 번역하는 일에 매력을 느껴서입니다. 이전 인턴십에서 온보딩 메일 시퀀스를 개선해 활성화율을 6%p 올린 경험이 있습니다.",
+              "rubricScore": 0.7,
+              "dimensions": {
+                "questionIntent": 0.72,
+                "situationSpecificity": 0.66,
+                "individualOwnership": 0.7,
+                "logic": 0.68,
+                "outcomeQuantification": 0.68,
+                "delivery": 0.71
+              }
+            }
+          ],
+          "report": {
+            "summary": "직무·산업 맥락과 본인 경험이 잘 연결되었습니다.",
+            "strengths": ["직무 동기 명확", "관련 성과 제시"],
+            "improvements": ["장기 성장 목표 추가"],
+            "score": 70
+          }
+        }
+      ]
+    },
+    {
+      "prepMode": "COMPANY_TARGET",
+      "timeBudgetMinutes": 20,
+      "competencies": ["ORG_FIT", "LEADERSHIP"],
+      "roundBrief": {
+        "strengthsText": "조직 문화에 맞는 협업 방식을 이해하고, 작은 규모 팀에서도 주도적으로 일정을 끌고 갔습니다.",
+        "improvementsText": "갈등 상황에서 본인이 내린 결정과 그 근거를 더 짧고 단호하게 말하는 연습이 필요합니다.",
+        "strengthBullets": [
+          "[조직적합] 팀 규범·커뮤니케이션 채널에 맞춰 업무 방식 조정",
+          "[리더십] 마감 전 리스크를 조기에 공유해 재분배 제안"
+        ],
+        "improvementBullets": [
+          "[조직적합] 윗선 보고 시 핵심 메시지 1문장 요약",
+          "[리더십] 어려운 결정의 트레이드오프 명시"
+        ]
+      },
+      "sessions": [
+        {
+          "focusCompetency": "ORG_FIT",
+          "daysAgo": 6,
+          "theta": 0.2,
+          "percentile": 68,
+          "levelEst": 3,
+          "responses": [
+            {
+              "transcript": "스타트업에서 빠른 피드백 문화에 맞추려 일일 스탠드업 노트를 슬랙에 남기고, 불확실한 가정은 당일 안에 질문으로 정리했습니다.",
+              "rubricScore": 0.72,
+              "dimensions": {
+                "questionIntent": 0.74,
+                "situationSpecificity": 0.68,
+                "individualOwnership": 0.73,
+                "logic": 0.7,
+                "outcomeQuantification": 0.6,
+                "delivery": 0.75
+              }
+            },
+            {
+              "transcript": "원격 근무 팀이라 문서화를 중시했고, 캠페인 브리프 템플릿을 만들어 재사용률을 높였습니다.",
+              "rubricScore": 0.7,
+              "dimensions": {
+                "questionIntent": 0.72,
+                "situationSpecificity": 0.66,
+                "individualOwnership": 0.71,
+                "logic": 0.69,
+                "outcomeQuantification": 0.58,
+                "delivery": 0.73
+              }
+            }
+          ],
+          "report": {
+            "summary": "조직 문화 적응 사례가 구체적이며 협업 습관이 드러납니다.",
+            "strengths": ["피드백 루프", "문서화"],
+            "improvements": ["조직 기여 지표"],
+            "score": 71
+          }
+        },
+        {
+          "focusCompetency": "LEADERSHIP",
+          "daysAgo": 3,
+          "theta": 0.35,
+          "percentile": 72,
+          "levelEst": 4,
+          "responses": [
+            {
+              "transcript": "인턴 2명과 콘텐츠 캘린더를 맡았을 때, 역할을 주간 단위로 나누고 금요일에 15분 회고를 진행했습니다. 마감 지연 없이 4주 캠페인을 완료했습니다.",
+              "rubricScore": 0.76,
+              "dimensions": {
+                "questionIntent": 0.78,
+                "situationSpecificity": 0.72,
+                "individualOwnership": 0.8,
+                "logic": 0.74,
+                "outcomeQuantification": 0.7,
+                "delivery": 0.77
+              }
+            },
+            {
+              "transcript": "의견 충돌 시 데이터 근거를 먼저 공유하고, 실험으로 검증 가능한 안만 남기도록 합의했습니다.",
+              "rubricScore": 0.74,
+              "dimensions": {
+                "questionIntent": 0.76,
+                "situationSpecificity": 0.7,
+                "individualOwnership": 0.77,
+                "logic": 0.76,
+                "outcomeQuantification": 0.65,
+                "delivery": 0.75
+              }
+            }
+          ],
+          "report": {
+            "summary": "작은 팀 리딩 경험에서 목표·역할·일정 관리가 균형 잡혀 있습니다.",
+            "strengths": ["역할 분배", "회고 루틴"],
+            "improvements": ["갈등 시 결정 기준"],
+            "score": 75
+          }
+        }
+      ]
+    }
+  ],
+  "selfDiscovery": {
+    "daysAgo": 20,
+    "profile": {
+      "narrativeSummary": "타인의 관점을 연결해 의미를 만드는 일에서 에너지를 얻는 편이며, 데이터로 가설을 검증하는 방식을 선호합니다.",
+      "strengths": [
+        {
+          "viaCode": "SOCIAL_INTELLIGENCE",
+          "viaLabelKo": "사회성 지능",
+          "virtueKo": "인간애",
+          "quote": "팀이 엇갈릴 때 먼저 각자의 목표를 적어 공통점을 찾았습니다.",
+          "explanation": "대화 상대의 의도를 읽고 중재하는 강점이 면접에서도 드러납니다."
+        },
+        {
+          "viaCode": "JUDGMENT",
+          "viaLabelKo": "판단력",
+          "virtueKo": "지혜",
+          "quote": "전환율 하락 구간을 퍼널로 쪼개 원인을 좁혔습니다.",
+          "explanation": "복잡한 문제를 측정 가능한 단위로 나누는 습관이 있습니다."
+        },
+        {
+          "viaCode": "PERSEVERANCE",
+          "viaLabelKo": "끈기",
+          "virtueKo": "용기",
+          "quote": "A/B 테스트가 끝날 때까지 매일 지표를 추적했습니다.",
+          "explanation": "실험·개선 과정을 끝까지 밀고 가는 실행력이 있습니다."
+        }
+      ],
+      "weaknesses": [
+        {
+          "area": "자기 PR",
+          "suggestion": "성과 수치를 먼저 말한 뒤 맥락을 설명해 보세요.",
+          "quote": "팀 덕분에 좋은 결과가 났다고만 말한 적이 있습니다."
+        }
+      ],
+      "values": [
+        {
+          "schwartzCode": "ACHIEVEMENT",
+          "schwartzLabelKo": "성취",
+          "quote": "목표 수치를 달성했을 때 가장 보람을 느낍니다.",
+          "explanation": "성과 지향 가치가 높게 나타났습니다."
+        },
+        {
+          "schwartzCode": "BENEVOLENCE",
+          "schwartzLabelKo": "친밀",
+          "quote": "동료의 성장을 돕는 일이 즐겁습니다.",
+          "explanation": "협업·지원 맥락에서 동기가 강합니다."
+        }
+      ],
+      "competencySignals": [
+        {
+          "code": "COMMUNICATION",
+          "labelKo": "의사소통",
+          "signal": "이해관계 정리·메시지 조율",
+          "quote": "회의에서 공통 KPI를 한 줄로 정리했습니다."
+        },
+        {
+          "code": "PROBLEM_SOLVING",
+          "labelKo": "문제해결",
+          "signal": "가설·실험 기반 개선",
+          "quote": "랜딩 폼 A/B로 전환율을 회복했습니다."
+        }
+      ],
+      "interviewAdvice": [
+        {
+          "viaCode": "SOCIAL_INTELLIGENCE",
+          "viaLabelKo": "사회성 지능",
+          "competencyCode": "COMMUNICATION",
+          "competencyLabelKo": "의사소통",
+          "bridge": "상대 관점 요약 능력",
+          "interviewTip": "갈등 조율 사례에서 본인이 취한 첫 행동을 한 문장으로 말하세요.",
+          "starPrompt": "이해관계자 의견이 갈렸을 때 어떻게 합의를 이끌었나요?",
+          "quote": "각 팀 KPI를 화이트보드에 적었습니다."
+        }
+      ]
+    }
+  }
+}

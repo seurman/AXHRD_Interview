@@ -19,6 +19,7 @@
     "db:seed:global": "tsx prisma/seed-global-competencies.ts",
     "db:seed:meaning": "tsx prisma/seed-meaning-layer.ts",
     "db:seed:demo-arc": "tsx prisma/seed/demo-arc-index.ts",
+    "db:seed:demo": "tsx prisma/seed/demo-suite.ts",
     "db:grant-role": "tsx scripts/grant-platform-role.ts",
     "db:studio": "prisma studio",
     "test": "vitest run",

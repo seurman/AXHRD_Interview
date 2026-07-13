@@ -355,14 +355,14 @@ async function createRespondent(opts: {
   }
 }
 
-async function upsertDemoOrg() {
-  const existing = await prisma.organization.findUnique({ where: { joinCode: DEMO_ORG_JOIN_CODE } });
+async function upsertDemoOrg(db: import("@prisma/client").PrismaClient) {
+  const existing = await db.organization.findUnique({ where: { joinCode: DEMO_ORG_JOIN_CODE } });
   if (existing) {
     // 재실행 시 깨끗하게 다시 생성 — 웨이브(팀·응답·답변은 cascade)만 삭제, 기관은 유지
-    await prisma.diagnosticWave.deleteMany({ where: { organizationId: existing.id } });
+    await db.diagnosticWave.deleteMany({ where: { organizationId: existing.id } });
     return existing;
   }
-  return prisma.organization.create({
+  return db.organization.create({
     data: {
       name: DEMO_ORG_NAME,
       kind: "HR_ENTERPRISE",
@@ -374,14 +374,15 @@ async function upsertDemoOrg() {
   });
 }
 
-async function main() {
+export async function seedDemoArcIndex(client?: import("@prisma/client").PrismaClient) {
+  const db = client ?? prisma;
   console.log("[demo-arc-index] ARC Index 문항 동기화 중…");
-  const instrumentId = await seedArcIndex(prisma);
+  const instrumentId = await seedArcIndex(db);
 
   console.log("[demo-arc-index] 데모 기관 준비 중…");
-  const org = await upsertDemoOrg();
+  const org = await upsertDemoOrg(db);
 
-  const items = await prisma.diagnosticItem.findMany({
+  const items = await db.diagnosticItem.findMany({
     where: { section: { instrumentId } },
     include: { subscale: true },
   });
@@ -458,13 +459,28 @@ async function main() {
   console.log(
     `[demo-arc-index] 완료 — /admin/diagnostic 에서 "${DEMO_ORG_NAME}" 조직을 확인하세요 (조인코드 ${DEMO_ORG_JOIN_CODE}).`,
   );
+
+  return {
+    organizationId: org.id,
+    organizationName: DEMO_ORG_NAME,
+    joinCode: DEMO_ORG_JOIN_CODE,
+    adminDiagnosticUrl: "/admin/diagnostic",
+  };
 }
 
-main()
-  .catch((err) => {
-    console.error("[demo-arc-index] 실패:", err);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+async function main() {
+  await seedDemoArcIndex();
+}
+
+const invokedDirectly = process.argv[1]?.replace(/\\/g, "/").endsWith("demo-arc-index.ts");
+
+if (invokedDirectly) {
+  main()
+    .catch((err) => {
+      console.error("[demo-arc-index] 실패:", err);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

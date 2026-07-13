@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "defaultPassword": "Demo2026!",
+  "accounts": [
+    {
+      "id": "personal_dashboard",
+      "email": "dashboard-demo@demo.axhrd.local",
+      "name": "김하은",
+      "password": "Demo2026!",
+      "loginUrl": "/login",
+      "demoPaths": ["/dashboard", "/interview/setup"]
+    },
+    {
+      "id": "org_diagnostic",
+      "email": "arc-demo-admin@demo.axhrd.local",
+      "name": "테크노바 데모관리자",
+      "password": "Demo2026!",
+      "organization": "테크노바 (ARC 데모)",
+      "joinCode": "ARC-DEMO-2026",
+      "demoPaths": ["/org/diagnosis"]
+    },
+    {
+      "id": "showcase_org_admin",
+      "email": "showcase-axhrd-showcase-m0@demo.axhrd.local",
+      "name": "데모관리자",
+      "password": "Demo2026!",
+      "organization": "AXHRD 쇼케이스 (매뉴얼·시연)",
+      "demoPaths": ["/org/diagnosis", "/org/dashboard"]
+    },
+    {
+      "id": "superadmin_diagnostic",
+      "note": "슈퍼어드민 계정(환경변수 SUPERADMIN_EMAIL)으로 로그인 후 /admin/diagnostic 에서 테크노바 ARC 데모 리포트 확인"
+    }
+  ],
+  "seedCommand": "cd web && npm run db:seed:demo"
+}
