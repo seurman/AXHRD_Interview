@@ -1,0 +1,6 @@
+/* 홈(/) 전용 — ChapbookLanding.tsx에서만 import */
+@import "./colors_and_type.css";
+@import "./chapbook.css";
+@import "./landing-page.css";
+@import "./chapbook-integrate.css";
+@import "./chapbook-home-fixes.css";

@@ -2,7 +2,11 @@ import { prisma } from "@/lib/prisma";
 import {
   buildReversedSet,
   computeArcScoresFromAnswers,
+  computeDriverImportance,
+  computeIcc1,
   computeTeamGapMatrix,
+  type DriverImportanceSummary,
+  type IccResult,
   type ScoredAnswers,
 } from "@/lib/diagnostic/arc-scoring";
 
@@ -52,7 +56,40 @@ function summarizeRespondents(
   };
 }
 
-async function scoreResponsesForScope(waveId: string, teamId?: string) {
+type HierarchyNode = {
+  id: string;
+  name: string;
+  level: "DIVISION" | "UNIT" | "TEAM";
+  parentId: string | null;
+  department: string | null;
+};
+
+function buildHierarchyIndex(nodes: HierarchyNode[]) {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const childrenOf = new Map<string, HierarchyNode[]>();
+  for (const n of nodes) {
+    if (!n.parentId) continue;
+    const list = childrenOf.get(n.parentId) ?? [];
+    list.push(n);
+    childrenOf.set(n.parentId, list);
+  }
+  return { byId, childrenOf };
+}
+
+/** 어떤 레벨(사업본부/사업부/팀)이 오든 실제 응답이 붙는 리프(TEAM) id 목록으로 롤업한다. */
+function resolveLeafTeamIds(
+  nodeId: string,
+  byId: Map<string, HierarchyNode>,
+  childrenOf: Map<string, HierarchyNode[]>,
+): string[] {
+  const node = byId.get(nodeId);
+  if (!node) return [];
+  if (node.level === "TEAM") return [nodeId];
+  const kids = childrenOf.get(nodeId) ?? [];
+  return kids.flatMap((k) => resolveLeafTeamIds(k.id, byId, childrenOf));
+}
+
+async function loadWaveAndItems(waveId: string) {
   const wave = await prisma.diagnosticWave.findUnique({
     where: { id: waveId },
     include: { instrument: true },
@@ -69,32 +106,45 @@ async function scoreResponsesForScope(waveId: string, teamId?: string) {
   });
   const codeById = new Map(items.map((i) => [i.id, i.itemCode]));
   const reversed = buildReversedSet(items);
+  const itemIds = items.map((i) => i.id);
+
+  return { wave, codeById, reversed, itemIds };
+}
+
+/** leafTeamIds가 null이면 웨이브 전체(필터 없음), []면 응답 0건으로 취급(존재하지 않는 노드 등). */
+async function scoreResponsesForTeamIds(
+  waveId: string,
+  ctx: { codeById: Map<string, string>; reversed: Set<string>; itemIds: string[] },
+  leafTeamIds: string[] | null,
+) {
+  if (leafTeamIds != null && leafTeamIds.length === 0) {
+    return { sampleSize: 0, perRespondent: [] as ReturnType<typeof computeArcScoresFromAnswers>[], summary: null };
+  }
 
   const responses = await prisma.diagnosticResponse.findMany({
     where: {
       waveId,
       submittedAt: { not: null },
-      ...(teamId ? { teamId } : {}),
+      ...(leafTeamIds ? { teamId: { in: leafTeamIds } } : {}),
     },
     include: {
-      answers: { where: { itemId: { in: items.map((i) => i.id) } } },
+      answers: { where: { itemId: { in: ctx.itemIds } } },
     },
   });
 
   const perRespondent = responses.map((r) => {
     const map: ScoredAnswers = {};
     for (const a of r.answers) {
-      const code = codeById.get(a.itemId);
+      const code = ctx.codeById.get(a.itemId);
       if (!code) continue;
       if (!map[code]) map[code] = {};
       if (a.axis === "CURRENT") map[code].current = a.numericValue;
       else map[code].importance = a.numericValue;
     }
-    return computeArcScoresFromAnswers(map, reversed);
+    return computeArcScoresFromAnswers(map, ctx.reversed);
   });
 
   return {
-    wave,
     sampleSize: responses.length,
     perRespondent,
     summary: summarizeRespondents(perRespondent),
@@ -103,13 +153,23 @@ async function scoreResponsesForScope(waveId: string, teamId?: string) {
 
 export async function computeAggregateScores(scope: {
   waveId: string;
+  /** 사업본부·사업부·팀 어떤 레벨의 id든 가능 — 내부에서 리프(팀)로 롤업해 집계한다. 생략하면 전사 집계. */
   teamId?: string;
   minGroupSize?: number;
 }) {
-  const scored = await scoreResponsesForScope(scope.waveId, scope.teamId);
-  if (!scored) return { hidden: true, reason: "웨이브를 찾을 수 없습니다." };
+  const ctx = await loadWaveAndItems(scope.waveId);
+  if (!ctx) return { hidden: true, reason: "웨이브를 찾을 수 없습니다." };
 
-  const minN = scope.minGroupSize ?? scored.wave.instrument.minGroupSize;
+  const hierarchyRows: HierarchyNode[] = await prisma.diagnosticTeam.findMany({
+    where: { waveId: scope.waveId },
+    select: { id: true, name: true, level: true, parentId: true, department: true },
+  });
+  const { byId, childrenOf } = buildHierarchyIndex(hierarchyRows);
+
+  const scopeLeafIds = scope.teamId ? resolveLeafTeamIds(scope.teamId, byId, childrenOf) : null;
+  const scored = await scoreResponsesForTeamIds(scope.waveId, ctx, scopeLeafIds);
+
+  const minN = scope.minGroupSize ?? ctx.wave.instrument.minGroupSize;
   if (scored.sampleSize < minN) {
     return {
       hidden: true,
@@ -119,50 +179,61 @@ export async function computeAggregateScores(scope: {
     };
   }
 
+  // β회귀 기반 IPA — 응답자 단위 완전사례 회귀(예측변수 10개 대비 표본 부족 시 insufficientData=true)
+  const driverImportance: DriverImportanceSummary = computeDriverImportance(scored.perRespondent);
+
   if (!scope.teamId) {
-    const wave = await prisma.diagnosticWave.findUnique({
-      where: { id: scope.waveId },
-      include: { teams: true },
-    });
-    const teamRows = await Promise.all(
-      (wave?.teams ?? []).map(async (team) => {
-        const t = await scoreResponsesForScope(scope.waveId, team.id);
-        if (!t || t.sampleSize < minN) {
-          return {
-            teamId: team.id,
-            teamName: team.name,
-            hidden: true as const,
-            ORI: null,
-            OVI: null,
-            OHI_SE: null,
-            OAI: null,
-          };
-        }
+    // 전사 조회 — 하이어라키 전체 노드(사업본부·사업부·팀)마다 각자의 리프 응답으로 집계.
+    // 프런트는 parentId로 그룹핑해 전사→사업본부→사업부→팀 드릴다운 트리를 한 번에 그린다.
+    const nodeResults = await Promise.all(
+      hierarchyRows.map(async (node) => {
+        const leafIds = resolveLeafTeamIds(node.id, byId, childrenOf);
+        const t = await scoreResponsesForTeamIds(scope.waveId, ctx, leafIds);
+        const hidden = t.sampleSize < minN;
+        const seValues = hidden
+          ? null
+          : t.perRespondent.map((r) => r.ohi.SE).filter((v): v is number => v != null);
         return {
-          teamId: team.id,
-          teamName: team.name,
-          hidden: false as const,
-          ORI: t.summary?.ori.ORI ?? null,
-          OVI: t.summary?.ovi.OVI ?? null,
-          OHI_SE: t.summary?.ohi.SE ?? null,
-          OAI: t.summary?.oai.OAI ?? null,
+          row: {
+            teamId: node.id,
+            teamName: node.name,
+            level: node.level,
+            parentId: node.parentId,
+            department: node.department,
+            sampleSize: t.sampleSize,
+            hidden,
+            ORI: hidden ? null : t.summary?.ori.ORI ?? null,
+            OVI: hidden ? null : t.summary?.ovi.OVI ?? null,
+            OHI_SE: hidden ? null : t.summary?.ohi.SE ?? null,
+            OAI: hidden ? null : t.summary?.oai.OAI ?? null,
+          },
+          seValues,
         };
       }),
     );
-    const visible = teamRows.filter((t) => !t.hidden);
+    const teamRows = nodeResults.map((r) => r.row);
+
+    // 갭 매트릭스·ICC는 리프(팀) 레벨 분산만 본다 — 사업본부/사업부 롤업 값을 섞으면 해석이 왜곡된다.
+    const leafRows = nodeResults.filter((r) => r.row.level === "TEAM");
+    const visibleLeaf = leafRows.filter((r) => !r.row.hidden);
     const gapMatrix =
-      visible.length >= 2
+      visibleLeaf.length >= 2
         ? computeTeamGapMatrix(
-            visible.map((t) => ({
-              teamId: t.teamId,
-              teamName: t.teamName,
-              ORI: t.ORI,
-              OVI: t.OVI,
-              OHI_SE: t.OHI_SE,
-              OAI: t.OAI,
+            visibleLeaf.map((r) => ({
+              teamId: r.row.teamId,
+              teamName: r.row.teamName,
+              ORI: r.row.ORI,
+              OVI: r.row.OVI,
+              OHI_SE: r.row.OHI_SE,
+              OAI: r.row.OAI,
             })),
           )
         : null;
+
+    const iccGroups = leafRows
+      .filter((r) => !r.row.hidden && r.seValues && r.seValues.length >= 2)
+      .map((r) => r.seValues as number[]);
+    const teamReliability: IccResult = computeIcc1(iccGroups);
 
     return {
       hidden: false,
@@ -170,6 +241,8 @@ export async function computeAggregateScores(scope: {
       minGroupSize: minN,
       scores: scored.summary,
       perRespondent: scored.perRespondent,
+      driverImportance,
+      teamReliability,
       teams: teamRows,
       gapMatrix,
     };
@@ -181,5 +254,6 @@ export async function computeAggregateScores(scope: {
     minGroupSize: minN,
     scores: scored.summary,
     perRespondent: scored.perRespondent,
+    driverImportance,
   };
 }

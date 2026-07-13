@@ -1,0 +1,93 @@
+/* AXHRD 앱 통합 — 홈 화첩 + 기존 헤더 */
+
+body.chapbook-page {
+  background: var(--cream-100) !important;
+  color: var(--ink-900);
+  word-break: keep-all;
+}
+
+html.dark body.chapbook-page {
+  background: var(--cream-100) !important;
+  color: var(--ink-900);
+}
+
+html.dark body.chapbook-page .chapbook-root {
+  --fg: var(--ink-900);
+  --fg-2: var(--ink-500);
+  --fg-3: var(--ink-400);
+  color: var(--ink-900);
+}
+
+body.chapbook-page .header-premium {
+  background: rgb(251 247 241 / 0.94);
+  border-bottom: 1px solid var(--ink-200);
+  backdrop-filter: blur(14px);
+}
+
+body.chapbook-page .header-premium .axhrd-logo {
+  color: var(--ink-900);
+}
+
+body.chapbook-page .header-premium .nav-pill,
+body.chapbook-page .header-premium .user-greeting,
+body.chapbook-page .header-premium .lang-switch button {
+  color: var(--ink-700) !important;
+}
+
+body.chapbook-page .header-premium .nav-pill {
+  border-color: var(--ink-200);
+}
+
+body.chapbook-page .header-premium .nav-pill:hover,
+body.chapbook-page .header-premium .nav-pill-active {
+  border-color: var(--coral-500);
+  background: rgb(214 74 44 / 0.08);
+  color: var(--coral-600) !important;
+}
+
+body.chapbook-page .header-premium .nav-pill-gold {
+  background: var(--coral-500);
+  border-color: var(--coral-500);
+  color: #fff !important;
+}
+
+body.chapbook-page .header-premium .nav-pill-gold:hover {
+  background: var(--coral-600);
+  border-color: var(--coral-600);
+}
+
+body.chapbook-page .header-premium .lang-switch {
+  border-color: var(--ink-200);
+  background: rgb(255 255 255 / 0.55);
+}
+
+body.chapbook-page::before {
+  opacity: 0.12 !important;
+}
+
+body.chapbook-page .chapbook-root .hero {
+  padding-top: 24px;
+}
+
+body.chapbook-page footer .foot-cols {
+  display: none;
+}
+
+body.chapbook-page .chapbook-root .cta-form input,
+body.chapbook-page .chapbook-root .cta-form select {
+  padding: 12px 14px;
+  margin: 0;
+}
+
+body.chapbook-page .chapbook-root .cta-form label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+body.chapbook-page .chapbook-root .cta-form .form-row {
+  margin-bottom: 14px;
+}
+
+body.chapbook-page .chapbook-root .btn {
+  margin: 0;
+}

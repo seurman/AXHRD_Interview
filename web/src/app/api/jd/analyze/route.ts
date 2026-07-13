@@ -63,6 +63,7 @@ export async function POST(req: Request) {
       ...base,
       meaningGraphScores: [],
       recommendationSource: base.recommendedCompetency ? "llm" : null,
+      recommendedCompetencySet: base.recommendedCompetency ? [base.recommendedCompetency] : [],
     });
   }
 }

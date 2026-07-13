@@ -5,6 +5,8 @@ import { deriveInitialWaveStatus, waveStatusLabel } from "@/lib/diagnostic/wave-
 import { uniqueSlug, waveSlug } from "@/lib/diagnostic/slug";
 import type { DiagnosticWaveStatus } from "@prisma/client";
 
+type Tx = Prisma.TransactionClient;
+
 export const ARC_SECTION_CODES = ["OHI", "ORI", "OVI", "OAI"] as const;
 
 export function parseWaveDate(value: unknown): Date | null {
@@ -22,7 +24,23 @@ export function normalizeEnabledSectionCodes(
   return filtered.length > 0 ? filtered : null;
 }
 
-export type TeamInput = { name: string; department?: string | null };
+export type TeamInput = {
+  name: string;
+  department?: string | null;
+  /** 사업본부 — 생략하면 하이어라키 없이 팀만 평면 생성(기존 동작과 100% 호환) */
+  divisionName?: string | null;
+  /** 사업부 — divisionName 없이 unitName만 줘도 2단계(사업부→팀)로 생성 가능 */
+  unitName?: string | null;
+};
+
+export type HierarchyNodeDto = {
+  id: string;
+  name: string;
+  department: string | null;
+  slug: string;
+  level: "DIVISION" | "UNIT" | "TEAM";
+  parentId: string | null;
+};
 
 export type CreateWaveInput = {
   organizationId: string;
@@ -48,12 +66,21 @@ type WaveListRow = {
   enabledSectionCodes: unknown;
   organization: { id: string; name: string };
   instrument: { nameKo: string };
-  teams?: Array<{ id: string; name: string; department: string | null; slug: string }>;
+  teams?: Array<{
+    id: string;
+    name: string;
+    department: string | null;
+    slug: string;
+    level?: "DIVISION" | "UNIT" | "TEAM";
+    parentId?: string | null;
+  }>;
   _count: { responses: number; teams: number };
 };
 
 export function waveListDto(wave: WaveListRow, baseUrl: string) {
   const enabled = parseEnabledSectionCodes(wave.enabledSectionCodes);
+  const allNodes = wave.teams ?? [];
+  const leafTeams = allNodes.filter((t) => (t.level ?? "TEAM") === "TEAM");
   return {
     id: wave.id,
     slug: wave.slug,
@@ -68,17 +95,27 @@ export function waveListDto(wave: WaveListRow, baseUrl: string) {
     organizationId: wave.organization.id,
     organizationName: wave.organization.name,
     instrumentName: wave.instrument.nameKo,
-    teamCount: wave._count.teams,
+    // teams 관계를 안 불러온 목록 쿼리(예: 관리자 전체 웨이브 목록)에서도 정확하도록 _count 우선 사용
+    teamCount: wave.teams ? leafTeams.length : wave._count.teams,
     responseCount: wave._count.responses,
     orgWideLink: `${baseUrl}/diagnosis/w/${wave.slug}`,
-    teams:
-      wave.teams?.map((t) => ({
-        id: t.id,
-        name: t.name,
-        department: t.department,
-        slug: t.slug,
-        link: `${baseUrl}/diagnosis/w/${wave.slug}/t/${t.slug}`,
-      })) ?? undefined,
+    // 팀(리프)만 — 실제 응답 링크가 있는 노드
+    teams: leafTeams.map((t) => ({
+      id: t.id,
+      name: t.name,
+      department: t.department,
+      slug: t.slug,
+      link: `${baseUrl}/diagnosis/w/${wave.slug}/t/${t.slug}`,
+    })),
+    // 사업본부·사업부·팀 전체 트리 — 하이어라키 드릴다운 UI용
+    hierarchy: allNodes.map((t) => ({
+      id: t.id,
+      name: t.name,
+      department: t.department,
+      slug: t.slug,
+      level: t.level ?? "TEAM",
+      parentId: t.parentId ?? null,
+    })),
   };
 }
 
@@ -111,8 +148,6 @@ export async function createDiagnosticWave(input: CreateWaveInput) {
   const waveNumber = (last?.waveNumber ?? 0) + 1;
   const slug = waveSlug(input.organizationId, waveNumber);
 
-  const teamRows = buildTeamRows(input.teams ?? []);
-
   return prisma.$transaction(async (tx) => {
     if (input.enableDiagnosticSku) {
       await tx.organization.update({
@@ -121,7 +156,7 @@ export async function createDiagnosticWave(input: CreateWaveInput) {
       });
     }
 
-    return tx.diagnosticWave.create({
+    const created = await tx.diagnosticWave.create({
       data: {
         instrumentId: input.instrumentId,
         organizationId: input.organizationId,
@@ -133,15 +168,20 @@ export async function createDiagnosticWave(input: CreateWaveInput) {
         closesAt,
         enabledSectionCodes: enabledSectionCodes ?? undefined,
         instrumentVersionSnapshot: instrument.version,
-        teams: teamRows.length > 0 ? { create: teamRows } : undefined,
       },
+    });
+
+    await createHierarchyTeams(tx, created.id, input.teams ?? [], new Set());
+
+    return tx.diagnosticWave.findUniqueOrThrow({
+      where: { id: created.id },
       include: {
         organization: { select: { id: true, name: true } },
         instrument: { select: { nameKo: true } },
         teams: { orderBy: { name: "asc" } },
         _count: {
           select: {
-            teams: true,
+            teams: { where: { level: "TEAM" } },
             responses: { where: { submittedAt: { not: null } } },
           },
         },
@@ -150,19 +190,98 @@ export async function createDiagnosticWave(input: CreateWaveInput) {
   });
 }
 
-function buildTeamRows(teams: TeamInput[]) {
-  const slugSet = new Set<string>();
-  const rows: Array<{ name: string; department: string | null; slug: string }> = [];
+/**
+ * 사업본부(DIVISION) → 사업부(UNIT) → 팀(TEAM) 순으로 없는 노드만 생성하고, 리프(TEAM) 행을 리턴한다.
+ * 같은 이름의 사업본부/사업부가 여러 입력 행에 걸쳐 반복돼도 노드가 중복 생성되지 않도록 이름으로 dedupe한다.
+ * divisionName/unitName을 안 주면 기존과 동일하게 평면 팀(level=TEAM, parentId=null)만 생성된다.
+ */
+async function createHierarchyTeams(
+  tx: Tx,
+  waveId: string,
+  teams: TeamInput[],
+  existingSlugs: Set<string>,
+) {
+  const divisionByName = new Map<string, string>(); // name -> id
+  const unitByKey = new Map<string, string>(); // `${divisionName ?? ""}::${unitName}` -> id
+  const createdLeaves: Array<{ id: string }> = [];
+
   for (const t of teams) {
     const name = t.name.trim();
     if (!name) continue;
-    rows.push({
-      name,
-      department: t.department?.trim() || null,
-      slug: uniqueSlug(name, slugSet),
+    const divisionName = t.divisionName?.trim() || null;
+    const unitName = t.unitName?.trim() || null;
+
+    let parentId: string | null = null;
+
+    if (divisionName) {
+      let divisionId = divisionByName.get(divisionName);
+      if (!divisionId) {
+        const existing = await tx.diagnosticTeam.findFirst({
+          where: { waveId, level: "DIVISION", name: divisionName },
+          select: { id: true },
+        });
+        if (existing) {
+          divisionId = existing.id;
+        } else {
+          const row = await tx.diagnosticTeam.create({
+            data: {
+              waveId,
+              name: divisionName,
+              level: "DIVISION",
+              slug: uniqueSlug(divisionName, existingSlugs),
+            },
+            select: { id: true },
+          });
+          divisionId = row.id;
+        }
+        divisionByName.set(divisionName, divisionId);
+      }
+      parentId = divisionId;
+    }
+
+    if (unitName) {
+      const unitKey = `${divisionName ?? ""}::${unitName}`;
+      let unitId = unitByKey.get(unitKey);
+      if (!unitId) {
+        const existing = await tx.diagnosticTeam.findFirst({
+          where: { waveId, level: "UNIT", name: unitName, parentId },
+          select: { id: true },
+        });
+        if (existing) {
+          unitId = existing.id;
+        } else {
+          const row = await tx.diagnosticTeam.create({
+            data: {
+              waveId,
+              name: unitName,
+              level: "UNIT",
+              parentId,
+              slug: uniqueSlug(unitName, existingSlugs),
+            },
+            select: { id: true },
+          });
+          unitId = row.id;
+        }
+        unitByKey.set(unitKey, unitId);
+      }
+      parentId = unitId;
+    }
+
+    const leaf = await tx.diagnosticTeam.create({
+      data: {
+        waveId,
+        name,
+        department: t.department?.trim() || null,
+        level: "TEAM",
+        parentId,
+        slug: uniqueSlug(name, existingSlugs),
+      },
+      select: { id: true },
     });
+    createdLeaves.push(leaf);
   }
-  return rows;
+
+  return createdLeaves;
 }
 
 export async function addTeamsToWave(
@@ -179,24 +298,17 @@ export async function addTeamsToWave(
   });
   if (!wave) throw new CampaignError("WAVE_NOT_FOUND", "웨이브를 찾을 수 없습니다.");
 
-  const slugSet = new Set(wave.teams.map((t) => t.slug));
-  const rows = buildTeamRows(teams);
-  if (rows.length === 0) {
+  const cleaned = teams.filter((t) => t.name.trim());
+  if (cleaned.length === 0) {
     throw new CampaignError("EMPTY_TEAMS", "팀 이름을 입력해 주세요.");
   }
 
-  const created = await prisma.$transaction(
-    rows.map((row) =>
-      prisma.diagnosticTeam.create({
-        data: {
-          waveId: wave.id,
-          name: row.name,
-          department: row.department,
-          slug: row.slug,
-        },
-      }),
-    ),
-  );
+  const slugSet = new Set(wave.teams.map((t) => t.slug));
+  const createdIds = await prisma.$transaction((tx) => createHierarchyTeams(tx, wave.id, cleaned, slugSet));
+
+  const created = await prisma.diagnosticTeam.findMany({
+    where: { id: { in: createdIds.map((c) => c.id) } },
+  });
 
   return { wave, teams: created };
 }

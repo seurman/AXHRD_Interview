@@ -1,14 +1,11 @@
 import type { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
-import { readFileSync } from "fs";
-import { join } from "path";
+import coreQuestionSeed from "@/data/ncs/questions.json";
+import extendedQuestionSeed from "@/data/ncs/ncs-extended.json";
+import ncsRubricsSeed from "@/data/ncs/ncs-rubrics.json";
 import { findPlatformCompetencyByCode } from "@/lib/content/ownership";
 import { normalizeImportLevels, parseRubricImportFile } from "@/lib/competency/rubric";
 import { COMPETENCY_CODES } from "@/types";
-
-function seedRoot() {
-  return join(process.cwd(), "..", "seed");
-}
 
 type SeedQuestion = {
   externalId: string;
@@ -30,17 +27,6 @@ type QuestionSeedFile = {
   competencies: SeedCompetency[];
   questions: SeedQuestion[];
 };
-
-function loadQuestionSeed(fileName: string): QuestionSeedFile {
-  const seedPath = join(seedRoot(), fileName);
-  return JSON.parse(readFileSync(seedPath, "utf-8")) as QuestionSeedFile;
-}
-
-function loadRubrics() {
-  const seedPath = join(seedRoot(), "ncs-rubrics.json");
-  const raw = JSON.parse(readFileSync(seedPath, "utf-8"));
-  return parseRubricImportFile(raw);
-}
 
 async function ensureNcsCluster(prisma: PrismaClient) {
   const cluster = await prisma.competencyCluster.upsert({
@@ -83,9 +69,9 @@ export async function syncNcsCompetencyBank(prisma?: PrismaClient) {
   });
   if (!cluster) throw new Error("NCS_IRT cluster missing");
 
-  const core = loadQuestionSeed("questions.json");
-  const extended = loadQuestionSeed("ncs-extended.json");
-  const rubrics = loadRubrics();
+  const core = coreQuestionSeed as QuestionSeedFile;
+  const extended = extendedQuestionSeed as QuestionSeedFile;
+  const rubrics = parseRubricImportFile(ncsRubricsSeed);
 
   const competencies = [...core.competencies, ...extended.competencies];
   const questions = [...core.questions, ...extended.questions];

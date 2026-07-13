@@ -80,6 +80,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
           { href: "/admin/organizations", label: "기관 관리 · 테넌트 허브 →" },
           ...(hasSuperadminAccess(user)
             ? [
+                { href: "/admin/settings/features", label: "기능 설정 →" },
                 { href: "/admin/users", label: "ADMIN 권한 부여 →" },
                 { href: "/admin/audit", label: "감사 로그 · 롤백 →" },
               ]

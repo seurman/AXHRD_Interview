@@ -13,7 +13,7 @@ import {
 type Ctx = { params: Promise<{ id: string }> };
 
 type PostBody = {
-  teams?: Array<{ name: string; department?: string }>;
+  teams?: Array<{ name: string; department?: string; divisionName?: string; unitName?: string }>;
 };
 
 export async function POST(req: Request, ctx: Ctx) {
@@ -37,6 +37,8 @@ export async function POST(req: Request, ctx: Ctx) {
       incoming.map((t) => ({
         name: typeof t.name === "string" ? t.name : "",
         department: typeof t.department === "string" ? t.department : null,
+        divisionName: typeof t.divisionName === "string" ? t.divisionName : null,
+        unitName: typeof t.unitName === "string" ? t.unitName : null,
       })),
       { organizationId: access.organizationId },
     );

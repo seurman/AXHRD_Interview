@@ -10,6 +10,14 @@ import { COMPETENCY_CODES, INDUSTRY_CODES, COMPANY_SIZE_CODES } from "@/types";
 import type { IndustryCode, JobRoleCode, CompanySizeCode } from "@/types";
 import { matchPersona } from "@/lib/interview/persona-archetype";
 import type { JDMapResult } from "@/lib/company/jd-mapper";
+import type { EnrichedJdMapResult } from "@/lib/company/jd-enrichment";
+import { suggestCompetencySet } from "@/lib/meaning/suggest-competency-set";
+import type { PrepMode } from "@/lib/interview/competency-round";
+import {
+  DEFAULT_TIME_BUDGET_MINUTES,
+  TIME_BUDGET_MINUTES_OPTIONS,
+  questionsPerCompetencyForRound,
+} from "@/lib/interview/session-limits";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 const JOB_ROLES = [
@@ -25,6 +33,9 @@ const JOB_ROLES = [
 
 const ACCEPT =
   ".pdf,.doc,.docx,.txt,.md,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain";
+
+const JD_ACCEPT =
+  ".pdf,.doc,.docx,.txt,.md,.png,.jpg,.jpeg,.webp,.gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,image/png,image/jpeg,image/webp,image/gif";
 
 type CompetencyRow = {
   code: string;
@@ -66,8 +77,18 @@ function ReflectChip({
 
 export function SetupForm({
   user,
+  featureFlags = {
+    resumeClaimVerification: true,
+    jdBonusQuestion: true,
+    tripleFeedbackMode: true,
+  },
 }: {
   user: { id: string; name: string; email: string };
+  featureFlags?: {
+    resumeClaimVerification: boolean;
+    jdBonusQuestion: boolean;
+    tripleFeedbackMode: boolean;
+  };
 }) {
   const { dict, locale } = useI18n();
   const s = dict.setup;
@@ -81,12 +102,9 @@ export function SetupForm({
   const [companySize, setCompanySize] = useState<CompanySizeCode>("MID");
   const [companyName, setCompanyName] = useState("");
   const [jdText, setJdText] = useState("");
-  const [jdUrl, setJdUrl] = useState("");
-  const [jdUrlStatus, setJdUrlStatus] = useState<string | null>(null);
-  const [jdUrlError, setJdUrlError] = useState<string | null>(null);
-  const [fetchingJdUrl, setFetchingJdUrl] = useState(false);
   const [jdFileName, setJdFileName] = useState<string | null>(null);
   const [jdFileError, setJdFileError] = useState<string | null>(null);
+  const [jdSourceNote, setJdSourceNote] = useState<string | null>(null);
   const [parsingJdFile, setParsingJdFile] = useState(false);
   const [showJdEditor, setShowJdEditor] = useState(false);
   const [jdAnalysis, setJdAnalysis] = useState<JDMapResult | null>(null);
@@ -107,7 +125,8 @@ export function SetupForm({
   const [tripleFeedbackMode, setTripleFeedbackMode] = useState(false);
   const [jdBonusEnabled, setJdBonusEnabled] = useState(false);
   const [resumeClaimEnabled, setResumeClaimEnabled] = useState(false);
-  const [questionCount, setQuestionCount] = useState(3);
+  const [timeBudgetMinutes, setTimeBudgetMinutes] = useState(DEFAULT_TIME_BUDGET_MINUTES);
+  const [prepMode, setPrepMode] = useState<PrepMode>("COMPETENCY_SET");
   // 역량 카드를 직접 클릭했는지 여부 — 산업/직무를 고를 때 자동으로 역량을 바꿔주되,
   // 사용자가 이미 직접 골랐다면(또는 URL의 ?competency=로 왔다면) 덮어쓰지 않기 위한 플래그.
   const competencyManuallyChanged = useRef(false);
@@ -159,35 +178,41 @@ export function SetupForm({
     loadProgress(pid, Boolean(comp));
   }, [searchParams, loadProgress]);
 
-  // 산업+직무를 다 고르면(페르소나가 계산되면) 그 페르소나가 중요하게 보는 역량 세트
-  // (focusCompetencies, 보통 3개) 중 아직 완료하지 않은 것들을 통째로 기본 선택으로
-  // 체크해 준다. NCS "직업기초능력"은 모든 직무 공통이라 역량 선택 자체를 막지는
-  // 않되(자유롭게 추가·해제 가능), 실제 채용에서 직무별로 중점 역량이 다르다는 관행을
-  // 반영한 추천일 뿐이다 — 사용자가 이미 카드를 직접 클릭한 뒤라면 덮어쓰지 않는다.
+  useEffect(() => {
+    if (companyName.trim() || jdText.trim()) {
+      setPrepMode("COMPANY_TARGET");
+    }
+  }, [companyName, jdText]);
+
   useEffect(() => {
     if (!persona || competencyManuallyChanged.current) return;
-    if (jdAnalysis?.recommendedCompetency) return;
-    const recommended = persona.focusCompetencies.filter((code) => {
+    if (jdAnalysis) return;
+    const recommended = suggestCompetencySet({
+      prepMode,
+      personaFocus: persona.focusCompetencies,
+      meaningGraphScores: [],
+      completedCompetencies: competencies
+        .filter((c) => c.status === "COMPLETED")
+        .map((c) => c.code),
+    });
+    if (recommended.length > 0) setFocusCompetencies(recommended);
+  }, [persona, competencies, jdAnalysis, prepMode]);
+
+  useEffect(() => {
+    if (!jdAnalysis || competencyManuallyChanged.current) return;
+    const enriched = jdAnalysis as EnrichedJdMapResult;
+    const set =
+      enriched.recommendedCompetencySet?.length
+        ? enriched.recommendedCompetencySet
+        : jdAnalysis.recommendedCompetency
+          ? [jdAnalysis.recommendedCompetency]
+          : [];
+    const filtered = set.filter((code) => {
       const row = competencies.find((c) => c.code === code);
       return row && row.status !== "COMPLETED";
     });
-    if (recommended.length > 0) setFocusCompetencies(recommended);
-  }, [persona, competencies, jdAnalysis?.recommendedCompetency]);
-
-  // 공고 분석이 역량을 추천하면 그 역량을 세트의 맨 앞(=이번에 시작할 역량)으로 올리고,
-  // 나머지는 페르소나 추천 세트를 이어 붙인다 — 공고 추천이 페르소나 추천보다 우선한다.
-  useEffect(() => {
-    if (!jdAnalysis?.recommendedCompetency || competencyManuallyChanged.current) return;
-    const rec = jdAnalysis.recommendedCompetency;
-    const row = competencies.find((c) => c.code === rec);
-    if (!row || row.status === "COMPLETED") return;
-    const rest = (persona?.focusCompetencies ?? []).filter((code) => {
-      if (code === rec) return false;
-      const r = competencies.find((c) => c.code === code);
-      return r && r.status !== "COMPLETED";
-    });
-    setFocusCompetencies([rec, ...rest]);
-  }, [jdAnalysis, competencies, persona]);
+    if (filtered.length > 0) setFocusCompetencies(filtered);
+  }, [jdAnalysis, competencies]);
 
   useEffect(() => {
     if (companySize === "PUBLIC") setIndustry("PUBLIC");
@@ -248,11 +273,9 @@ export function SetupForm({
 
   const clearJd = () => {
     setJdText("");
-    setJdUrl("");
-    setJdUrlStatus(null);
-    setJdUrlError(null);
     setJdFileName(null);
     setJdFileError(null);
+    setJdSourceNote(null);
     setShowJdEditor(false);
     setJdAnalysis(null);
     setJdAnalysisSource("");
@@ -310,6 +333,7 @@ export function SetupForm({
 
   const handleJdFile = async (file: File) => {
     setJdFileError(null);
+    setJdSourceNote(null);
     setParsingJdFile(true);
     const ext = file.name.toLowerCase().split(".").pop() ?? "";
     const isPlainText = ext === "txt" || ext === "md";
@@ -321,56 +345,34 @@ export function SetupForm({
         setJdText(text.trim());
         setJdFileName(file.name);
         setShowJdEditor(false);
+        if (text.trim().length >= 15) await analyzeJdText(text.trim());
         return;
       }
 
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/resume/parse", { method: "POST", body: formData });
-      const data = await res.json();
+      const res = await fetch("/api/jd/parse", { method: "POST", body: formData });
+      const data = (await res.json()) as {
+        text?: string;
+        fileName?: string;
+        error?: string;
+        ocrUsed?: boolean;
+      };
       if (!res.ok) throw new Error(data.error ?? "파일을 읽지 못했습니다.");
-      setJdText(data.text);
+      const text = typeof data.text === "string" ? data.text : "";
+      if (!text.trim()) throw new Error("파일에서 텍스트를 읽지 못했습니다.");
+      setJdText(text);
       setJdFileName(data.fileName ?? file.name);
       setShowJdEditor(false);
+      if (data.ocrUsed) {
+        setJdSourceNote(s.jd.imageOcrSuccess);
+      }
+      if (text.trim().length >= 15) await analyzeJdText(text.trim());
     } catch (e) {
       setJdFileError(e instanceof Error ? e.message : "파일 업로드 실패");
       setJdFileName(null);
     } finally {
       setParsingJdFile(false);
-    }
-  };
-
-  const fetchJdFromUrl = async () => {
-    const url = jdUrl.trim();
-    if (!url) {
-      setJdUrlError(s.jd.urlRequired);
-      return;
-    }
-    setFetchingJdUrl(true);
-    setJdUrlError(null);
-    setJdUrlStatus(null);
-    try {
-      const res = await fetch("/api/jd/fetch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to fetch JD");
-      const text = typeof data.text === "string" ? data.text : "";
-      setJdText(text);
-      setShowJdEditor(false);
-      setJdUrlStatus(
-        `${s.jd.urlSuccess}${data.title ? ` · ${data.title}` : ""} (${data.chars ?? data.text?.length ?? 0}자)`,
-      );
-      if (typeof data.url === "string" && data.url !== url) setJdUrl(data.url);
-      if (text.trim().length >= 15) {
-        await analyzeJdText(text);
-      }
-    } catch (e) {
-      setJdUrlError(e instanceof Error ? e.message : "채용공고를 가져오지 못했습니다.");
-    } finally {
-      setFetchingJdUrl(false);
     }
   };
 
@@ -402,11 +404,11 @@ export function SetupForm({
           // 미리 함께 보내둔다 (하위 호환: 몰라도 그냥 무시됨).
           queuedCompetencies: focusCompetencies.slice(1),
           jdText,
-          jdUrl: jdUrl.trim() || undefined,
           tripleFeedbackMode,
-          jdBonusEnabled: jdBonusEnabled && (!!jdText.trim() || !!jdUrl.trim()),
+          jdBonusEnabled: jdBonusEnabled && !!jdText.trim(),
           resumeClaimEnabled: resumeClaimEnabled && !!resumeText.trim(),
-          questionCount,
+          timeBudgetMinutes,
+          prepMode,
           precomputedJdAnalysis:
             jdAnalysis && jdDraft && jdAnalysisSource === jdDraft
               ? { ...jdAnalysis, sourceText: jdDraft }
@@ -459,7 +461,6 @@ export function SetupForm({
           industry,
           jobRole,
           jdText,
-          jdUrl: jdUrl.trim() || undefined,
           companyName,
         }),
       });
@@ -477,13 +478,13 @@ export function SetupForm({
   const completedCount = competencies.filter((c) => c.status === "COMPLETED").length;
   const resumeDraft = resumeText.trim();
   const jdDraft = jdText.trim();
-  const jdReflectLabel = jdUrlStatus
-    ? jdUrlStatus
-    : jdFileName && jdDraft
+  const jdReflectLabel =
+    jdSourceNote ??
+    (jdFileName && jdDraft
       ? `${jdFileName} · ${s.jd.charsApplied.replace("{chars}", String(jdDraft.length))}`
       : jdDraft
         ? s.jd.charsApplied.replace("{chars}", String(jdDraft.length))
-        : null;
+        : null);
   const resumeReflectLabel =
     resumeDraft.length > 0
       ? uploadedFileName
@@ -555,46 +556,6 @@ export function SetupForm({
 
         <div className="space-y-2">
           <p className="text-xs leading-relaxed text-muted">{s.jd.hint}</p>
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-foreground">{s.jd.urlLabel}</label>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <input
-                type="url"
-                value={jdUrl}
-                onChange={(e) => {
-                  setJdUrl(e.target.value);
-                  setJdUrlError(null);
-                  setJdUrlStatus(null);
-                }}
-                placeholder={s.jd.urlPlaceholder}
-                className="input-luxe min-w-0 flex-1 text-sm"
-                disabled={fetchingJdUrl}
-              />
-              <button
-                type="button"
-                onClick={() => void fetchJdFromUrl()}
-                disabled={fetchingJdUrl || !jdUrl.trim()}
-                className="btn-secondary shrink-0 px-4 py-2 text-sm disabled:opacity-50"
-              >
-                {fetchingJdUrl ? s.jd.urlFetching : s.jd.urlFetch}
-              </button>
-            </div>
-            {jdUrlError && (
-              <p className="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
-                {jdUrlError}
-              </p>
-            )}
-            {jdAnalysisNote && (
-              <p className="rounded-lg border border-gold/30 bg-gold/10 p-3 text-sm text-foreground">
-                {jdAnalysisNote}
-              </p>
-            )}
-            {jdAnalysisError && (
-              <p className="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
-                {jdAnalysisError}
-              </p>
-            )}
-          </div>
           <label
             className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed p-5 transition ${
               parsingJdFile
@@ -615,7 +576,7 @@ export function SetupForm({
             )}
             <input
               type="file"
-              accept={ACCEPT}
+              accept={JD_ACCEPT}
               className="hidden"
               disabled={parsingJdFile}
               onChange={(e) => {
@@ -625,6 +586,16 @@ export function SetupForm({
               }}
             />
           </label>
+          {jdAnalysisNote && (
+            <p className="rounded-lg border border-gold/30 bg-gold/10 p-3 text-sm text-foreground">
+              {jdAnalysisNote}
+            </p>
+          )}
+          {jdAnalysisError && (
+            <p className="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+              {jdAnalysisError}
+            </p>
+          )}
           {jdFileError && (
             <p className="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
               {jdFileError}
@@ -661,7 +632,7 @@ export function SetupForm({
                 <button
                   type="button"
                   onClick={() => void analyzeJdText(jdDraft)}
-                  disabled={analyzingJd || fetchingJdUrl}
+                  disabled={analyzingJd}
                   className="btn-secondary px-4 py-2 text-sm disabled:opacity-50"
                 >
                   {analyzingJd ? "공고 분석 중…" : "AI로 필요역량 분석"}
@@ -713,6 +684,27 @@ export function SetupForm({
           <p className="mx-auto max-w-md text-sm text-white/90">{persona.description}</p>
         </section>
       )}
+
+      <section className="card-luxe space-y-4 p-6">
+        <h2 className="font-semibold text-foreground">{s.prepMode.title}</h2>
+        <p className="text-xs leading-relaxed text-muted">{s.prepMode.hint}</p>
+        <div className="flex flex-wrap gap-2">
+          {(["COMPETENCY_SET", "COMPANY_TARGET"] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setPrepMode(mode)}
+              className={`rounded-xl border px-4 py-2.5 text-sm font-medium transition ${
+                prepMode === mode
+                  ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/25"
+                  : "border-card-border text-foreground hover:border-primary/30"
+              }`}
+            >
+              {mode === "COMPETENCY_SET" ? s.prepMode.competencySet : s.prepMode.companyTarget}
+            </button>
+          ))}
+        </div>
+      </section>
 
       <section className="card-luxe space-y-4 p-6">
         <h2 className="font-semibold text-foreground">{s.competency.title}</h2>
@@ -804,31 +796,43 @@ export function SetupForm({
         {focusCompetencies.length > 1 && (
           <p className="text-xs text-accent">
             {locale === "ko"
-              ? `${competencyLabel(focusCompetencies[0])}부터 시작하고, 완료 후 나머지 ${focusCompetencies.length - 1}개도 이어서 추천해 드려요.`
-              : `Starting with ${competencyLabel(focusCompetencies[0])} — we'll suggest the other ${focusCompetencies.length - 1} next.`}
+              ? `${competencyLabel(focusCompetencies[0])}부터 시작하고, 이번 차수에서 선택한 ${focusCompetencies.length}개 역량을 모두 물어봅니다.`
+              : `Starting with ${competencyLabel(focusCompetencies[0])} — all ${focusCompetencies.length} selected competencies in this round.`}
           </p>
         )}
 
         <div className="space-y-2 border-t border-card-border pt-4">
-          <h3 className="text-sm font-semibold text-foreground">{s.questionCount.title}</h3>
-          <p className="text-xs leading-relaxed text-muted">{s.questionCount.hint}</p>
+          <h3 className="text-sm font-semibold text-foreground">{s.timeBudget.title}</h3>
+          <p className="text-xs leading-relaxed text-muted">{s.timeBudget.hint}</p>
           <div className="flex flex-wrap gap-2">
-            {[1, 2, 3, 4, 5].map((n) => (
+            {TIME_BUDGET_MINUTES_OPTIONS.map((n) => (
               <button
                 key={n}
                 type="button"
-                onClick={() => setQuestionCount(n)}
-                className={`min-w-[3.25rem] rounded-xl border px-4 py-2.5 text-sm font-medium transition ${
-                  questionCount === n
+                onClick={() => setTimeBudgetMinutes(n)}
+                className={`min-w-[4.5rem] rounded-xl border px-4 py-2.5 text-sm font-medium transition ${
+                  timeBudgetMinutes === n
                     ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/25"
                     : "border-card-border text-foreground hover:border-primary/30"
                 }`}
               >
                 {n}
-                <span className="ml-1 text-xs font-normal opacity-70">{s.questionCount.unit}</span>
+                <span className="ml-1 text-xs font-normal opacity-70">{s.timeBudget.unit}</span>
               </button>
             ))}
           </div>
+          {focusCompetencies.length > 0 && (
+            <p className="text-xs text-muted">
+              {s.timeBudget.perCompetency
+                .replace("{minutes}", String(timeBudgetMinutes))
+                .replace(
+                  "{questions}",
+                  String(
+                    questionsPerCompetencyForRound(timeBudgetMinutes, focusCompetencies.length),
+                  ),
+                )}
+            </p>
+          )}
         </div>
       </section>
 
@@ -957,22 +961,27 @@ export function SetupForm({
         </div>
       </section>
 
+      {(featureFlags.tripleFeedbackMode ||
+        featureFlags.jdBonusQuestion ||
+        featureFlags.resumeClaimVerification) && (
       <section className="card-luxe space-y-2 p-5">
-        <label className="flex cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            checked={tripleFeedbackMode}
-            onChange={(e) => setTripleFeedbackMode(e.target.checked)}
-            className="mt-1"
-          />
-          <span>
-            <span className="block font-semibold text-foreground">{s.tripleFeedback.title}</span>
-            <span className="mt-1 block text-xs leading-relaxed text-muted">
-              {s.tripleFeedback.hint}
+        {featureFlags.tripleFeedbackMode && (
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={tripleFeedbackMode}
+              onChange={(e) => setTripleFeedbackMode(e.target.checked)}
+              className="mt-1"
+            />
+            <span>
+              <span className="block font-semibold text-foreground">{s.tripleFeedback.title}</span>
+              <span className="mt-1 block text-xs leading-relaxed text-muted">
+                {s.tripleFeedback.hint}
+              </span>
             </span>
-          </span>
-        </label>
-        {(jdText.trim().length > 0 || jdUrl.trim().length > 0) && (
+          </label>
+        )}
+        {featureFlags.jdBonusQuestion && jdText.trim().length > 0 && (
           <label className="flex cursor-pointer gap-3 rounded-xl border border-border/60 bg-surface/40 p-4 transition hover:border-gold/40">
             <input
               type="checkbox"
@@ -988,7 +997,7 @@ export function SetupForm({
             </span>
           </label>
         )}
-        {resumeText.trim().length > 0 && (
+        {featureFlags.resumeClaimVerification && resumeText.trim().length > 0 && (
           <label className="flex cursor-pointer gap-3 rounded-xl border border-border/60 bg-surface/40 p-4 transition hover:border-gold/40">
             <input
               type="checkbox"
@@ -1005,6 +1014,7 @@ export function SetupForm({
           </label>
         )}
       </section>
+      )}
 
       <button
         type="button"

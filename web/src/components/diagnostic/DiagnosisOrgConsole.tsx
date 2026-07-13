@@ -11,6 +11,13 @@ type TeamLink = {
   link: string;
 };
 
+type HierarchyNode = {
+  id: string;
+  name: string;
+  level: "DIVISION" | "UNIT" | "TEAM";
+  parentId: string | null;
+};
+
 type SectionMeta = { code: string; nameKo: string };
 
 type Wave = {
@@ -26,7 +33,21 @@ type Wave = {
   opensAt: string | null;
   closesAt: string | null;
   teams: TeamLink[];
+  hierarchy?: HierarchyNode[];
 };
+
+/** id로부터 사업본부 › 사업부 › 팀 전체 경로 이름을 조립한다. 하이어라키가 없으면 팀 이름만 반환. */
+function nodePath(nodeId: string, hierarchy: HierarchyNode[] | undefined): string {
+  if (!hierarchy?.length) return "";
+  const byId = new Map(hierarchy.map((n) => [n.id, n]));
+  const path: string[] = [];
+  let current = byId.get(nodeId);
+  while (current) {
+    path.unshift(current.name);
+    current = current.parentId ? byId.get(current.parentId) : undefined;
+  }
+  return path.join(" › ");
+}
 
 export function DiagnosisOrgConsole() {
   const [waves, setWaves] = useState<Wave[]>([]);
@@ -69,15 +90,28 @@ export function DiagnosisOrgConsole() {
     void load();
   }, [load]);
 
+  // 한 줄에 팀 하나. 콤마로 구분한 열 개수에 따라 하이어라키 깊이가 달라진다:
+  //   팀만               → "콘텐츠팀"
+  //   사업부, 팀         → "마케팅사업부, 콘텐츠팀"
+  //   사업본부, 사업부, 팀 → "그로스본부, 마케팅사업부, 콘텐츠팀"
   const parseTeams = (text: string) =>
     text
       .split("\n")
       .map((line) => line.trim())
       .filter(Boolean)
       .map((line) => {
-        const [name, department] = line.split(",").map((s) => s.trim());
-        return { name, department: department || undefined };
-      });
+        const cols = line.split(",").map((s) => s.trim()).filter(Boolean);
+        if (cols.length >= 3) {
+          const [divisionName, unitName, name] = cols;
+          return { name, divisionName, unitName };
+        }
+        if (cols.length === 2) {
+          const [unitName, name] = cols;
+          return { name, unitName };
+        }
+        return { name: cols[0] ?? "" };
+      })
+      .filter((t) => t.name);
 
   const toggleSection = (code: string) => {
     setEnabledSections((prev) => {
@@ -119,9 +153,9 @@ export function DiagnosisOrgConsole() {
 
   const exportCsv = (wave: Wave) => {
     const rows = [
-      ["유형", "이름", "부서", "응답 링크"],
-      ["조직 전체", "—", "—", wave.orgWideLink],
-      ...wave.teams.map((t) => ["팀", t.name, t.department ?? "", t.link]),
+      ["유형", "조직 경로", "응답 링크"],
+      ["조직 전체", "—", wave.orgWideLink],
+      ...wave.teams.map((t) => ["팀", nodePath(t.id, wave.hierarchy) || t.name, t.link]),
     ];
     const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
@@ -202,14 +236,25 @@ export function DiagnosisOrgConsole() {
 
         <details className="rounded-lg border border-card-border bg-background/40 px-4 py-3">
           <summary className="cursor-pointer text-sm font-medium text-foreground">
-            팀별 링크 (선택)
+            조직 구조 · 팀별 링크 (선택)
           </summary>
           <p className="mt-2 text-xs text-muted">
-            비워두면 조직 전체 링크만 사용합니다. 한 줄에 팀 하나, 부서는 쉼표로 구분합니다.
+            비워두면 조직 전체 링크만 사용합니다. 한 줄에 팀 하나, 쉼표로 구분합니다 — 열 개수로 하이어라키
+            깊이가 정해집니다.
           </p>
+          <ul className="mt-1 list-inside list-disc text-xs text-muted">
+            <li>팀만: <code className="rounded bg-background px-1">콘텐츠팀</code></li>
+            <li>사업부, 팀: <code className="rounded bg-background px-1">마케팅사업부, 콘텐츠팀</code></li>
+            <li>
+              사업본부, 사업부, 팀:{" "}
+              <code className="rounded bg-background px-1">그로스본부, 마케팅사업부, 콘텐츠팀</code>
+            </li>
+          </ul>
           <textarea
-            className="mt-2 min-h-[100px] w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm"
-            placeholder={"전략기획팀, 경영지원\n개발1팀"}
+            className="mt-2 min-h-[120px] w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm"
+            placeholder={
+              "그로스본부, 마케팅사업부, 콘텐츠팀\n그로스본부, 마케팅사업부, 퍼포먼스팀\n그로스본부, 세일즈사업부, 인바운드팀\n오퍼레이션본부, 운영사업부, CS팀"
+            }
             value={teamText}
             onChange={(e) => setTeamText(e.target.value)}
           />
@@ -264,19 +309,22 @@ export function DiagnosisOrgConsole() {
 
               {w.teams.length > 0 && (
                 <ul className="space-y-1 text-xs text-muted">
-                  {w.teams.map((t) => (
-                    <li key={t.id} className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium text-foreground">{t.name}</span>
-                      <code className="truncate rounded bg-background px-1 py-0.5">{t.link}</code>
-                      <button
-                        type="button"
-                        className="text-accent hover:underline"
-                        onClick={() => void navigator.clipboard.writeText(t.link)}
-                      >
-                        복사
-                      </button>
-                    </li>
-                  ))}
+                  {w.teams.map((t) => {
+                    const path = nodePath(t.id, w.hierarchy);
+                    return (
+                      <li key={t.id} className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium text-foreground">{path || t.name}</span>
+                        <code className="truncate rounded bg-background px-1 py-0.5">{t.link}</code>
+                        <button
+                          type="button"
+                          className="text-accent hover:underline"
+                          onClick={() => void navigator.clipboard.writeText(t.link)}
+                        >
+                          복사
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>

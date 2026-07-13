@@ -286,6 +286,17 @@ model AdminAuditLog {
   @@index([actorId])
 }
 
+model PlatformFeatureFlag {
+  id          String   @id @default(cuid())
+  /** "resume_claim_verification" | "jd_bonus_question" | "triple_feedback_mode" */
+  key         String   @unique
+  label       String
+  description String?  @db.Text
+  enabled     Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+}
+
 // ── Social login (카카오/네이버) ──
 // 이메일/비밀번호 없이도 가입 가능하도록 User.passwordHash는 nullable 유지.
 // 향후 다른 provider 추가 시 enum만 확장하면 됨.
@@ -401,6 +412,16 @@ model InterviewPlan {
   resume          Resume?    @relation(fields: [resumeId], references: [id])
   jobRole         JobRole    @default(OTHER)
   status          PlanStatus @default(IN_PROGRESS)
+  /** 이번 차수에서 순차 진행할 전체 역량 코드 목록 — 차수 시작 시 스냅샷 */
+  roundCompetencyCodes Json?
+  /** 아직 진행하지 않은 역량 큐(첫 역량 제외) — 세션 완료마다 갱신 */
+  queuedCompetencyCodes Json?
+  /** 면접 전 사용자가 선택한 총 시간 예산(분) — 10/20/30 */
+  timeBudgetMinutes     Int?
+  /** COMPETENCY_SET | COMPANY_TARGET */
+  prepMode              String?
+  /** 차수 완료 후 강점·보완점 텍스트 요약 */
+  roundBrief            Json?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
@@ -738,6 +759,12 @@ model InterviewSession {
   jdBonusEnabled  Boolean       @default(false)
   /** 자소서 경험 확인 질문 — 자소서 experiences가 있을 때만, 기본 OFF */
   resumeClaimEnabled Boolean    @default(false)
+  /** 차수 시작 시 선택한 총 시간 예산(분) 스냅샷 */
+  timeBudgetMinutes  Int?
+  /** 차수 시작 시 남은 역량 큐 스냅샷 */
+  queuedCompetencyCodes Json?
+  /** 차수 내 몇 번째 역량 세션인지 (1-based) */
+  roundIndex         Int?
   createdAt       DateTime      @default(now())
 
   responses ResponseRecord[]
@@ -1354,16 +1381,30 @@ model DiagnosticWave {
   @@index([organizationId, waveNumber(sort: Desc)])
 }
 
+/** 조직 하이어라키 레벨 — DIVISION(사업본부) > UNIT(사업부) > TEAM(팀, 응답이 실제로 붙는 리프) */
+enum DiagnosticTeamLevel {
+  DIVISION
+  UNIT
+  TEAM
+}
+
 model DiagnosticTeam {
   id         String   @id @default(cuid())
   waveId     String
   wave       DiagnosticWave @relation(fields: [waveId], references: [id], onDelete: Cascade)
   name       String
+  /** @deprecated 자유텍스트 부서 태그 — 하이어라키 도입 전 데이터 호환용, 신규 입력은 level/parentId 사용 */
   department String?
   slug       String
+  level      DiagnosticTeamLevel @default(TEAM)
+  parentId   String?
+  parent     DiagnosticTeam?  @relation("DiagnosticTeamHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children   DiagnosticTeam[] @relation("DiagnosticTeamHierarchy")
   responses  DiagnosticResponse[]
 
   @@unique([waveId, slug])
+  @@index([parentId])
+  @@index([waveId, level])
 }
 
 model DiagnosticResponse {

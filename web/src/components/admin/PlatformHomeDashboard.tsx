@@ -163,6 +163,9 @@ export function PlatformHomeDashboard({ snapshot }: { snapshot: PlatformHomeSnap
             <Link href="/admin/audit" className="font-medium text-[var(--platform-accent)] hover:underline">
               감사 로그 →
             </Link>
+            <Link href="/admin/settings/features" className="font-medium text-[var(--platform-accent)] hover:underline">
+              기능 설정 →
+            </Link>
             <Link href="/admin/permissions" className="font-medium text-[var(--platform-accent)] hover:underline">
               권한 매트릭스 →
             </Link>

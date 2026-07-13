@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { resolveCompanyContext } from "@/lib/company/enrich";
 import { deriveInterviewStyleFromJD, type PrecomputedJdAnalysis } from "@/lib/company/jd-mapper";
 import { initIrtSession } from "@/lib/irt-client";
@@ -18,6 +19,7 @@ import {
   prepareRankedQuestionPool,
 } from "@/lib/interview/question-pool";
 import { filterQuestionsByOrgKit } from "@/lib/org/interview-kit";
+import { FEATURE_FLAG_KEYS, isFeatureEnabled } from "@/lib/platform/feature-flags";
 import { getActiveCompetencyCodes } from "@/lib/competency/bank";
 import {
   appendUserTextRecord,
@@ -26,7 +28,17 @@ import {
 import {
   DEFAULT_QUESTION_COUNT,
   sessionItemLimits,
+  clampTimeBudgetMinutes,
 } from "@/lib/interview/session-limits";
+import {
+  buildRoundBriefFromFeedbacks,
+  filterQueueByProgress,
+  inferPrepMode,
+  normalizeRoundCompetencies,
+  parseCompetencyQueue,
+  resolveRoundQuestionCount,
+  type PrepMode,
+} from "@/lib/interview/competency-round";
 import { COMPETENCY_CODES, INDUSTRY_CODES, JOB_ROLES, COMPANY_SIZE_CODES } from "@/types";
 import type {
   CompanyContext,
@@ -55,8 +67,14 @@ export type StartSessionBody = {
   jdBonusEnabled?: boolean;
   /** 자소서 경험 확인 보너스 질문 — experiences가 있을 때만, 기본 OFF */
   resumeClaimEnabled?: boolean;
-  /** 역량당 문항 수 (1~5, 기본 3) */
+  /** 역량당 문항 수 (1~5, 기본 3) — timeBudgetMinutes가 있으면 무시 */
   questionCount?: number;
+  /** 차수 전체 시간 예산(분) — 10/20/30 */
+  timeBudgetMinutes?: number;
+  /** 이번 차수에서 이어서 진행할 역량 코드 목록 */
+  queuedCompetencies?: string[];
+  /** COMPETENCY_SET | COMPANY_TARGET */
+  prepMode?: string;
   /** SetupForm에서 미리 분석한 JD 결과 — 동일 원문이면 세션 시작 시 Gemini 재호출 생략 */
   precomputedJdAnalysis?: PrecomputedJdAnalysis;
 };
@@ -93,6 +111,10 @@ export type StartSessionResult =
         userId: string;
         totalCompetencies: number;
         completedCount: number;
+        timeBudgetMinutes?: number | null;
+        questionsPerCompetency?: number;
+        roundSize?: number;
+        queuedCompetencies?: string[];
       };
     }
   | { ok: false; status: number; body: Record<string, unknown> };
@@ -120,12 +142,18 @@ export async function startInterviewSession(
     jdBonusEnabled,
     resumeClaimEnabled,
     questionCount: questionCountBody,
+    timeBudgetMinutes: timeBudgetBody,
+    queuedCompetencies: queuedCompetenciesBody,
+    prepMode: prepModeBody,
     precomputedJdAnalysis,
   } = body;
 
-  const { minItems, maxItems, questionCount } = sessionItemLimits(
-    questionCountBody ?? DEFAULT_QUESTION_COUNT,
-  );
+  const timeBudgetMinutes = timeBudgetBody
+    ? clampTimeBudgetMinutes(timeBudgetBody)
+    : null;
+  const queuedFromBody = Array.isArray(queuedCompetenciesBody)
+    ? queuedCompetenciesBody.filter((c): c is string => typeof c === "string")
+    : [];
 
   const industryCode: IndustryCode = INDUSTRY_CODES.includes(industry as IndustryCode)
     ? (industry as IndustryCode)
@@ -255,6 +283,63 @@ export async function startInterviewSession(
     planId,
   });
 
+  const hasCompanyTarget = Boolean(
+    trimmedJdText || (companyName && companyName.trim()) || existingPlan?.targetCompany,
+  );
+  const prepMode: PrepMode = inferPrepMode({
+    prepMode: prepModeBody,
+    hasCompanyTarget,
+  });
+
+  const roundFromBody = normalizeRoundCompetencies(
+    focusCompetency?.trim(),
+    queuedFromBody,
+    opts.allowedCompetencies,
+  );
+
+  const existingRound = parseCompetencyQueue(plan.roundCompetencyCodes);
+  const isNewMultiRound =
+    roundFromBody.length > 0 &&
+    existingRound.length === 0 &&
+    (queuedFromBody.length > 0 || roundFromBody.length > 1);
+
+  if (isNewMultiRound) {
+    const [, ...rest] = roundFromBody;
+    await prisma.interviewPlan.update({
+      where: { id: plan.id },
+      data: {
+        roundCompetencyCodes: roundFromBody,
+        queuedCompetencyCodes: rest,
+        timeBudgetMinutes: timeBudgetMinutes ?? null,
+        prepMode,
+        roundBrief: Prisma.JsonNull,
+      },
+    });
+  } else if (timeBudgetMinutes || prepMode) {
+    await prisma.interviewPlan.update({
+      where: { id: plan.id },
+      data: {
+        ...(timeBudgetMinutes ? { timeBudgetMinutes } : {}),
+        prepMode,
+      },
+    });
+  }
+
+  const planFresh = await prisma.interviewPlan.findUnique({
+    where: { id: plan.id },
+    include: { competencyProgress: true },
+  });
+  const planForSession = planFresh ?? plan;
+
+  const roundCompetencies = parseCompetencyQueue(planForSession.roundCompetencyCodes);
+  const roundSize = Math.max(1, roundCompetencies.length || roundFromBody.length || 1);
+  const questionCount = resolveRoundQuestionCount({
+    timeBudgetMinutes: timeBudgetMinutes ?? planForSession.timeBudgetMinutes,
+    questionCount: questionCountBody,
+    roundSize,
+  });
+  const { minItems, maxItems } = sessionItemLimits(questionCount);
+
   await syncInterviewPlan({
     planId: plan.id,
     candidateId: user.id,
@@ -262,7 +347,17 @@ export async function startInterviewSession(
     jobRole: jobRole ?? "OTHER",
   });
 
-  const competencyOrder = opts.allowedCompetencies ?? (await getActiveCompetencyCodes());
+  const competencyOrder =
+    roundCompetencies.length > 0
+      ? roundCompetencies
+      : parseCompetencyQueue(planForSession.queuedCompetencyCodes).length > 0
+        ? [
+            ...new Set([
+              ...roundCompetencies,
+              ...parseCompetencyQueue(planForSession.queuedCompetencyCodes),
+            ]),
+          ]
+        : (opts.allowedCompetencies ?? (await getActiveCompetencyCodes()));
 
   let competency = (focusCompetency?.trim().toUpperCase() || undefined) as string | undefined;
   if (competency && opts.allowedCompetencies && !opts.allowedCompetencies.includes(competency)) {
@@ -273,8 +368,18 @@ export async function startInterviewSession(
     };
   }
   if (!competency) {
+    const queueOrder =
+      roundCompetencies.length > 0
+        ? roundCompetencies
+        : filterQueueByProgress(
+            [
+              ...parseCompetencyQueue(planForSession.queuedCompetencyCodes),
+              ...competencyOrder,
+            ],
+            planForSession.competencyProgress,
+          );
     competency =
-      nextRecommendedCompetency(plan.competencyProgress, competencyOrder) ?? undefined;
+      nextRecommendedCompetency(planForSession.competencyProgress, queueOrder) ?? undefined;
   }
 
   if (!competency) {
@@ -309,7 +414,7 @@ export async function startInterviewSession(
     };
   }
 
-  const progressRow = plan.competencyProgress.find((p) => p.competency === competency);
+  const progressRow = planForSession.competencyProgress.find((p) => p.competency === competency);
   if (progressRow?.status === "COMPLETED") {
     return {
       ok: false,
@@ -347,6 +452,21 @@ export async function startInterviewSession(
     ? opts.kitOrganizationId
     : user.organizationId;
 
+  const [resumeClaimAllowed, jdBonusAllowed, tripleFeedbackAllowed] = await Promise.all([
+    isFeatureEnabled(FEATURE_FLAG_KEYS.RESUME_CLAIM_VERIFICATION),
+    isFeatureEnabled(FEATURE_FLAG_KEYS.JD_BONUS_QUESTION),
+    isFeatureEnabled(FEATURE_FLAG_KEYS.TRIPLE_FEEDBACK_MODE),
+  ]);
+
+  const roundIndex =
+    roundCompetencies.length > 0
+      ? Math.max(1, roundCompetencies.indexOf(competency) + 1)
+      : null;
+  const remainingQueue = filterQueueByProgress(
+    parseCompetencyQueue(planForSession.queuedCompetencyCodes),
+    planForSession.competencyProgress,
+  ).filter((c) => c !== competency);
+
   const session = await prisma.interviewSession.create({
     data: {
       userId: user.id,
@@ -364,11 +484,15 @@ export async function startInterviewSession(
       orgKitShareId: opts.orgKitShareId ?? null,
       isPresenterDemo: opts.isPresenterDemo ?? false,
       demoWorkspaceId: opts.demoWorkspaceId ?? null,
-      tripleFeedbackMode: tripleFeedbackMode === true,
-      jdBonusEnabled: jdBonusEnabled === true && !!jdRequirements,
+      tripleFeedbackMode: tripleFeedbackMode === true && tripleFeedbackAllowed,
+      jdBonusEnabled: jdBonusEnabled === true && !!jdRequirements && jdBonusAllowed,
       resumeClaimEnabled:
         resumeClaimEnabled === true &&
-        (parseResumeSummary(resume?.parsedTags)?.experiences?.length ?? 0) > 0,
+        (parseResumeSummary(resume?.parsedTags)?.experiences?.length ?? 0) > 0 &&
+        resumeClaimAllowed,
+      timeBudgetMinutes: timeBudgetMinutes ?? planForSession.timeBudgetMinutes,
+      queuedCompetencyCodes: remainingQueue,
+      roundIndex,
     },
   });
 
@@ -477,13 +601,18 @@ export async function startInterviewSession(
   return {
     ok: true,
     status: 200,
-    body: {
-      sessionId: session.id,
-      planId: plan.id,
-      focusCompetency: competency,
-      userId: user.id,
-      totalCompetencies: competencyOrder.length,
-      completedCount: plan.competencyProgress.filter((p) => p.status === "COMPLETED").length,
-    },
+      body: {
+        sessionId: session.id,
+        planId: plan.id,
+        focusCompetency: competency,
+        userId: user.id,
+        totalCompetencies: roundCompetencies.length || competencyOrder.length,
+        completedCount: planForSession.competencyProgress.filter((p) => p.status === "COMPLETED")
+          .length,
+        timeBudgetMinutes: session.timeBudgetMinutes,
+        questionsPerCompetency: questionCount,
+        roundSize: roundCompetencies.length || roundSize,
+        queuedCompetencies: remainingQueue,
+      },
   };
 }

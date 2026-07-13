@@ -1,0 +1,2001 @@
+{
+  "competencies": [
+    {
+      "code": "COMMUNICATION",
+      "nameKo": "의사소통",
+      "description": "논리적 전달, 간결성, 설득력"
+    },
+    {
+      "code": "PROBLEM_SOLVING",
+      "nameKo": "문제해결",
+      "description": "STAR 구조, 분석력, 실행력"
+    },
+    {
+      "code": "JOB_FIT",
+      "nameKo": "직무전문성",
+      "description": "직무 지식, 경험 연계, JD 적합"
+    },
+    {
+      "code": "ORG_FIT",
+      "nameKo": "조직적합",
+      "description": "협업, 가치관, 팀워크"
+    },
+    {
+      "code": "LEADERSHIP",
+      "nameKo": "리더십",
+      "description": "주도성, 영향력, 책임감"
+    },
+    {
+      "code": "GROWTH",
+      "nameKo": "성장·학습",
+      "description": "회고, 자기개발, 피드백 수용"
+    }
+  ],
+  "questions": [
+    {
+      "externalId": "COMM-L1-001",
+      "competency": "COMMUNICATION",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "간단히 자기소개를 해 주세요. 지원 직무와 관련된 강점을 포함해 주세요.",
+      "followUpHints": [
+        "1분 이내",
+        "직무 연결"
+      ]
+    },
+    {
+      "externalId": "COMM-L2-001",
+      "competency": "COMMUNICATION",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "복잡한 내용을 비전문가에게 설명했던 경험이 있나요? 어떻게 전달했는지 말씀해 주세요.",
+      "followUpHints": [
+        "대상",
+        "방법",
+        "결과"
+      ]
+    },
+    {
+      "externalId": "COMM-L3-001",
+      "competency": "COMMUNICATION",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "의견 충돌 상황에서 상대를 설득했던 경험을 구체적으로 말씀해 주세요.",
+      "followUpHints": [
+        "상황",
+        "전략",
+        "성과"
+      ]
+    },
+    {
+      "externalId": "COMM-L4-001",
+      "competency": "COMMUNICATION",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.1,
+      "template": "조직 내 이해관계자가 다른 프로젝트에서 갈등이 났을 때, 어떻게 조율했나요?",
+      "followUpHints": [
+        "이해관계",
+        "절충안",
+        "후속"
+      ]
+    },
+    {
+      "externalId": "COMM-L5-001",
+      "competency": "COMMUNICATION",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "경영진, 고객, 실무진처럼 이해도와 이해관계가 서로 다른 대상에게 하나의 사안을 각기 다르게 전달해야 했던 경험이 있나요? 어떻게 메시지를 조율했는지 말씀해 주세요.",
+      "followUpHints": [
+        "이해관계자별 메시지 차별화",
+        "일관성 유지",
+        "위기·민감 사안 여부"
+      ]
+    },
+    {
+      "externalId": "PS-L1-001",
+      "competency": "PROBLEM_SOLVING",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "업무나 학교에서 문제를 해결했던 경험 하나를 말씀해 주세요.",
+      "followUpHints": [
+        "문제",
+        "행동"
+      ]
+    },
+    {
+      "externalId": "PS-L2-001",
+      "competency": "PROBLEM_SOLVING",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "제한된 시간과 자원 안에서 목표를 달성했던 경험을 STAR로 설명해 주세요.",
+      "followUpHints": [
+        "Situation",
+        "Task",
+        "Action",
+        "Result"
+      ]
+    },
+    {
+      "externalId": "PS-L3-001",
+      "competency": "PROBLEM_SOLVING",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "데이터나 근거 없이 진행되던 의사결정을 바꿔본 적이 있나요?",
+      "followUpHints": [
+        "근거",
+        "저항",
+        "결과"
+      ]
+    },
+    {
+      "externalId": "PS-L4-001",
+      "competency": "PROBLEM_SOLVING",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.2,
+      "template": "근본 원인 분석 없이 반복되던 문제를 구조적으로 개선한 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "원인",
+        "시스템",
+        "지표"
+      ]
+    },
+    {
+      "externalId": "PS-L5-001",
+      "competency": "PROBLEM_SOLVING",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "여러 부서의 이해관계가 얽혀 정답이 없던 문제를, 트레이드오프를 감수하며 해결한 경험이 있나요? 어떤 기준으로 우선순위를 정했는지 말씀해 주세요.",
+      "followUpHints": [
+        "트레이드오프 기준",
+        "이해관계자 설득",
+        "결과와 부작용"
+      ]
+    },
+    {
+      "externalId": "JF-L1-001",
+      "competency": "JOB_FIT",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "지원하신 직무에 관심을 갖게 된 계기는 무엇인가요?",
+      "followUpHints": [
+        "동기",
+        "직무 이해"
+      ]
+    },
+    {
+      "externalId": "JF-L2-001",
+      "competency": "JOB_FIT",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "자기소개서에 적으신 프로젝트 중 가장 직무와 연관된 경험을 설명해 주세요.",
+      "followUpHints": [
+        "역할",
+        "기술",
+        "성과"
+      ]
+    },
+    {
+      "externalId": "JF-L3-001",
+      "competency": "JOB_FIT",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "입사 후 6개월 안에 기여할 수 있는 구체적 계획을 말씀해 주세요.",
+      "followUpHints": [
+        "목표",
+        "역량",
+        "측정"
+      ]
+    },
+    {
+      "externalId": "JF-L4-001",
+      "competency": "JOB_FIT",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.2,
+      "template": "직무 수행 중 예상과 다른 결과나 실패를 겪었던 경험이 있나요? 원인을 어떻게 분석하고 무엇을 개선했는지 구체적으로 말씀해 주세요.",
+      "followUpHints": [
+        "실패 원인 분석",
+        "개선 조치",
+        "재발 방지"
+      ]
+    },
+    {
+      "externalId": "JF-L5-001",
+      "competency": "JOB_FIT",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "이 직무가 속한 산업이나 시장이 앞으로 어떻게 변화할 것으로 예상하며, 그 변화에 대응하기 위해 본인의 전문성을 어떻게 발전시킬 계획인가요?",
+      "followUpHints": [
+        "산업 변화 전망",
+        "역량 개발 계획",
+        "구체적 실행 방법"
+      ]
+    },
+    {
+      "externalId": "OF-L1-001",
+      "competency": "ORG_FIT",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "팀 프로젝트에서 본인의 역할은 보통 어떤 편인가요?",
+      "followUpHints": [
+        "역할",
+        "협업"
+      ]
+    },
+    {
+      "externalId": "OF-L2-001",
+      "competency": "ORG_FIT",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "팀원과 업무 방식이 맞지 않았을 때 어떻게 대처했나요?",
+      "followUpHints": [
+        "갈등",
+        "조율"
+      ]
+    },
+    {
+      "externalId": "OF-L3-001",
+      "competency": "ORG_FIT",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "회사의 가치와 본인 가치가 충돌할 수 있는 상황을 가정하고, 어떻게 행동할지 말씀해 주세요.",
+      "followUpHints": [
+        "원칙",
+        "균형"
+      ]
+    },
+    {
+      "externalId": "OF-L4-001",
+      "competency": "ORG_FIT",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.2,
+      "template": "조직의 결정 방향이 본인의 판단과 달랐던 경험이 있나요? 이의를 제기했는지 혹은 어떻게 수용했는지 사례를 들어 말씀해 주세요.",
+      "followUpHints": [
+        "의견 개진 방식",
+        "수용 기준",
+        "이후 결과"
+      ]
+    },
+    {
+      "externalId": "OF-L5-001",
+      "competency": "ORG_FIT",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "인수합병, 부서 통합처럼 서로 다른 조직문화가 섞인 환경에서 신뢰를 새로 쌓아야 했던 경험이 있다면, 어떤 방식으로 접근했는지 말씀해 주세요.",
+      "followUpHints": [
+        "문화 차이 인식",
+        "신뢰 구축 전략",
+        "장기적 결과"
+      ]
+    },
+    {
+      "externalId": "LD-L1-001",
+      "competency": "LEADERSHIP",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "주도적으로 시작했던 일이 있나요? 간단히 소개해 주세요.",
+      "followUpHints": [
+        "시작",
+        "결과"
+      ]
+    },
+    {
+      "externalId": "LD-L2-001",
+      "competency": "LEADERSHIP",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "팀원의 사기가 떨어졌을 때 본인이 한 행동을 말씀해 주세요.",
+      "followUpHints": [
+        "상황",
+        "행동",
+        "변화"
+      ]
+    },
+    {
+      "externalId": "LD-L3-001",
+      "competency": "LEADERSHIP",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "책임져야 할 실패 경험과, 그 후 조직에 미친 영향을 설명해 주세요.",
+      "followUpHints": [
+        "책임",
+        "회복",
+        "학습"
+      ]
+    },
+    {
+      "externalId": "LD-L4-001",
+      "competency": "LEADERSHIP",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.2,
+      "template": "공식적인 권한이 없는 상태에서 여러 사람을 설득해 하나의 목표로 이끌었던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "비공식적 영향력",
+        "설득 전략",
+        "성과"
+      ]
+    },
+    {
+      "externalId": "LD-L5-001",
+      "competency": "LEADERSHIP",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "조직의 방향을 바꿀 만큼 중대한 결정을 본인이 주도했던 경험이 있다면, 그에 따른 리스크와 책임을 어떻게 감당했는지 말씀해 주세요.",
+      "followUpHints": [
+        "의사결정 배경",
+        "리스크 관리",
+        "장기적 영향"
+      ]
+    },
+    {
+      "externalId": "GR-L1-001",
+      "competency": "GROWTH",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "최근 새롭게 배운 것이 있다면 무엇인가요?",
+      "followUpHints": [
+        "동기",
+        "적용"
+      ]
+    },
+    {
+      "externalId": "GR-L2-001",
+      "competency": "GROWTH",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "피드백을 받고 행동을 바꿨던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "피드백",
+        "변화",
+        "결과"
+      ]
+    },
+    {
+      "externalId": "GR-L3-001",
+      "competency": "GROWTH",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "3년 후 이 직무에서 어떤 전문가가 되고 싶은지, 그를 위한 학습 계획을 말씀해 주세요.",
+      "followUpHints": [
+        "비전",
+        "계획",
+        "지표"
+      ]
+    },
+    {
+      "externalId": "GR-L4-001",
+      "competency": "GROWTH",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.2,
+      "template": "본인의 강점이라고 믿었던 부분이 실제로는 한계였음을 깨달은 경험이 있나요? 이후 어떻게 보완했는지 말씀해 주세요.",
+      "followUpHints": [
+        "자기인식 전환",
+        "구체적 보완 노력",
+        "변화 증거"
+      ]
+    },
+    {
+      "externalId": "GR-L5-001",
+      "competency": "GROWTH",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "3~5년 뒤에도 유효할 역량과, 지금 배우고 있지만 아직 가치가 불확실한 역량 사이에서 학습 우선순위를 어떻게 정하고 있나요?",
+      "followUpHints": [
+        "장기 역량 vs 단기 역량",
+        "우선순위 기준",
+        "실행 계획"
+      ]
+    },
+    {
+      "externalId": "COMM-L1-002",
+      "competency": "COMMUNICATION",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "본인의 의사소통 스타일을 한 단어로 표현한다면 무엇이고, 왜 그렇게 생각하는지 말씀해 주세요.",
+      "followUpHints": [
+        "강점 키워드",
+        "이유"
+      ]
+    },
+    {
+      "externalId": "COMM-L2-002",
+      "competency": "COMMUNICATION",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "이메일이나 메신저 등 글로 소통하다가 오해가 생겼던 경험이 있나요? 어떻게 풀었는지 말씀해 주세요.",
+      "followUpHints": [
+        "오해 상황",
+        "해결 방법"
+      ]
+    },
+    {
+      "externalId": "COMM-L3-002",
+      "competency": "COMMUNICATION",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "많은 사람 앞에서 발표하거나 설명해야 했던 상황 중 가장 어려웠던 경우를 말씀해 주세요.",
+      "followUpHints": [
+        "발표 상황",
+        "어려움 극복"
+      ]
+    },
+    {
+      "externalId": "COMM-L4-002",
+      "competency": "COMMUNICATION",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.1,
+      "template": "본인의 의견이 처음에는 받아들여지지 않았지만, 지속적으로 설득해 결국 반영시켰던 경험이 있나요?",
+      "followUpHints": [
+        "설득 지속",
+        "최종 반영"
+      ]
+    },
+    {
+      "externalId": "COMM-L5-002",
+      "competency": "COMMUNICATION",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "정보가 불충분한 위기 상황에서 신속하게 커뮤니케이션해야 했던 경험이 있다면, 어떻게 판단하고 전달했는지 말씀해 주세요.",
+      "followUpHints": [
+        "정보 불확실성",
+        "신속 판단"
+      ]
+    },
+    {
+      "externalId": "PS-L1-002",
+      "competency": "PROBLEM_SOLVING",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "정해진 방법이 없어서 스스로 방법을 찾아야 했던 경험이 있나요?",
+      "followUpHints": [
+        "방법 탐색",
+        "시행착오"
+      ]
+    },
+    {
+      "externalId": "PS-L2-002",
+      "competency": "PROBLEM_SOLVING",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "예상치 못한 문제가 갑자기 발생했을 때 즉흥적으로 대처했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "돌발 상황",
+        "즉흥 대처"
+      ]
+    },
+    {
+      "externalId": "PS-L3-002",
+      "competency": "PROBLEM_SOLVING",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "여러 해결책 중 하나를 선택해야 했던 상황에서, 어떤 기준으로 결정했나요?",
+      "followUpHints": [
+        "대안 비교",
+        "결정 기준"
+      ]
+    },
+    {
+      "externalId": "PS-L4-002",
+      "competency": "PROBLEM_SOLVING",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.2,
+      "template": "본인의 담당 범위를 넘어서는 문제를 발견하고 먼저 나서서 해결한 경험이 있나요?",
+      "followUpHints": [
+        "담당 범위 밖",
+        "선제적 해결"
+      ]
+    },
+    {
+      "externalId": "PS-L5-002",
+      "competency": "PROBLEM_SOLVING",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "장기적으로는 옳지만 단기적으로는 손해가 되는 결정을 내려야 했던 경험이 있다면, 어떻게 설득하고 실행했는지 말씀해 주세요.",
+      "followUpHints": [
+        "단기 손해",
+        "장기 이익",
+        "설득"
+      ]
+    },
+    {
+      "externalId": "JF-L1-002",
+      "competency": "JOB_FIT",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "이 직무를 수행하기 위해 지금까지 어떤 준비를 해왔는지 말씀해 주세요.",
+      "followUpHints": [
+        "사전 준비",
+        "자격/경험"
+      ]
+    },
+    {
+      "externalId": "JF-L2-002",
+      "competency": "JOB_FIT",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "직무와 관련된 지식이나 기술 중 본인이 가장 자신 있는 부분과 그 이유를 말씀해 주세요.",
+      "followUpHints": [
+        "강점 지식/기술",
+        "근거"
+      ]
+    },
+    {
+      "externalId": "JF-L3-002",
+      "competency": "JOB_FIT",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "이 직무에서 가장 어려울 것으로 예상되는 부분은 무엇이며, 어떻게 준비하고 있나요?",
+      "followUpHints": [
+        "예상 어려움",
+        "대비 방법"
+      ]
+    },
+    {
+      "externalId": "JF-L4-002",
+      "competency": "JOB_FIT",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.2,
+      "template": "직무 전문성을 높이기 위해 스스로 학습하거나 자격을 취득한 경험이 있다면, 실제 업무에 어떻게 적용했는지 말씀해 주세요.",
+      "followUpHints": [
+        "자기주도 학습",
+        "실무 적용"
+      ]
+    },
+    {
+      "externalId": "JF-L5-002",
+      "competency": "JOB_FIT",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "이 회사와 유사한 다른 회사들과 비교했을 때, 이 직무 관점에서 이 회사의 차별점을 어떻게 이해하고 있나요?",
+      "followUpHints": [
+        "경쟁사 비교",
+        "차별점 이해"
+      ]
+    },
+    {
+      "externalId": "OF-L1-002",
+      "competency": "ORG_FIT",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "새로운 팀이나 조직에 합류했을 때 적응을 위해 본인이 주로 하는 행동은 무엇인가요?",
+      "followUpHints": [
+        "적응 행동",
+        "초기 노력"
+      ]
+    },
+    {
+      "externalId": "OF-L2-002",
+      "competency": "ORG_FIT",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "성격이나 일하는 방식이 본인과 다른 동료와 함께 일하며 어려움을 겪었던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "성향 차이",
+        "협업 방법"
+      ]
+    },
+    {
+      "externalId": "OF-L3-002",
+      "competency": "ORG_FIT",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "조직의 규칙이나 절차가 비효율적이라고 느꼈을 때 어떻게 행동했나요?",
+      "followUpHints": [
+        "비효율 발견",
+        "개선 시도"
+      ]
+    },
+    {
+      "externalId": "OF-L4-002",
+      "competency": "ORG_FIT",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.2,
+      "template": "본인이 속하지 않은 다른 팀과 협업해야 했을 때, 신뢰를 얻기 위해 어떤 노력을 했나요?",
+      "followUpHints": [
+        "타팀 협업",
+        "신뢰 구축"
+      ]
+    },
+    {
+      "externalId": "OF-L5-002",
+      "competency": "ORG_FIT",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "조직 개편이나 리더십 교체처럼 불확실성이 큰 시기에, 팀의 안정을 위해 본인이 했던 역할이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "조직 불확실성",
+        "안정화 역할"
+      ]
+    },
+    {
+      "externalId": "LD-L1-002",
+      "competency": "LEADERSHIP",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "다른 사람이 나서지 않을 때 먼저 손을 들었던 경험이 있나요?",
+      "followUpHints": [
+        "자발적 참여",
+        "계기"
+      ]
+    },
+    {
+      "externalId": "LD-L2-002",
+      "competency": "LEADERSHIP",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "후배나 동료를 가르치거나 이끌어야 했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "티칭/멘토링",
+        "결과"
+      ]
+    },
+    {
+      "externalId": "LD-L3-002",
+      "competency": "LEADERSHIP",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "의견이 갈리는 팀에서 합의를 이끌어내야 했던 경험이 있나요?",
+      "followUpHints": [
+        "의견 대립",
+        "합의 도출"
+      ]
+    },
+    {
+      "externalId": "LD-L4-002",
+      "competency": "LEADERSHIP",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.2,
+      "template": "본인보다 경력이 많거나 직급이 높은 사람들 사이에서 리더 역할을 해야 했던 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "연장자/상급자 대상",
+        "리더십 발휘"
+      ]
+    },
+    {
+      "externalId": "LD-L5-002",
+      "competency": "LEADERSHIP",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "실패 위험이 큰 도전을 팀에게 제안하고 이끌었던 경험이 있다면, 팀을 어떻게 설득하고 결과를 책임졌는지 말씀해 주세요.",
+      "followUpHints": [
+        "도전 제안",
+        "팀 설득",
+        "책임"
+      ]
+    },
+    {
+      "externalId": "GR-L1-002",
+      "competency": "GROWTH",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "실수했던 경험 중 가장 크게 배운 점이 있다면 무엇인가요?",
+      "followUpHints": [
+        "실수 경험",
+        "배운 점"
+      ]
+    },
+    {
+      "externalId": "GR-L2-002",
+      "competency": "GROWTH",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "본인의 부족한 점을 스스로 발견하고 개선하려 노력했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "자기 인식",
+        "개선 노력"
+      ]
+    },
+    {
+      "externalId": "GR-L3-002",
+      "competency": "GROWTH",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "낯설거나 익숙하지 않은 업무를 새로 배워야 했던 경험이 있나요? 어떻게 학습했는지 말씀해 주세요.",
+      "followUpHints": [
+        "새 분야 학습",
+        "학습 방법"
+      ]
+    },
+    {
+      "externalId": "GR-L4-002",
+      "competency": "GROWTH",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.2,
+      "template": "본인에게 불편하거나 듣기 싫은 피드백을 받았을 때, 어떻게 받아들이고 반영했는지 말씀해 주세요.",
+      "followUpHints": [
+        "불편한 피드백",
+        "수용 태도"
+      ]
+    },
+    {
+      "externalId": "GR-L5-002",
+      "competency": "GROWTH",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "지금까지의 성장 과정에서 가장 중요한 전환점이 있었다면, 그 이후 학습 방식이 어떻게 달라졌는지 말씀해 주세요.",
+      "followUpHints": [
+        "전환점",
+        "학습 방식 변화"
+      ]
+    },
+    {
+      "externalId": "COMM-L1-003",
+      "competency": "COMMUNICATION",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "문서나 자료를 읽고 핵심만 추려 다른 사람에게 전달했던 경험이 있나요?",
+      "followUpHints": [
+        "문서 이해",
+        "요약 전달"
+      ]
+    },
+    {
+      "externalId": "COMM-L2-003",
+      "competency": "COMMUNICATION",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "상대의 말을 끝까지 듣고 오해를 막았던 경험이 있나요? 어떤 상황이었는지 말씀해 주세요.",
+      "followUpHints": [
+        "경청 태도",
+        "오해 방지"
+      ]
+    },
+    {
+      "externalId": "COMM-L3-003",
+      "competency": "COMMUNICATION",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "보고서나 제안서를 작성해 실제 의사결정에 영향을 준 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "문서 작성",
+        "의사결정 영향"
+      ]
+    },
+    {
+      "externalId": "COMM-L4-003",
+      "competency": "COMMUNICATION",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.1,
+      "template": "배경지식이나 용어가 낯선 상대(외국인, 타 부서, 비전문가 등)에게 눈높이를 맞춰 설명해야 했던 경험이 있나요?",
+      "followUpHints": [
+        "눈높이 조정",
+        "용어 번역"
+      ]
+    },
+    {
+      "externalId": "COMM-L5-003",
+      "competency": "COMMUNICATION",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "민감하거나 왜곡되기 쉬운 정보를 문서로 정리해 정확히 전달해야 했던 경험이 있다면, 오독을 막기 위해 어떤 장치를 두었는지 말씀해 주세요.",
+      "followUpHints": [
+        "민감 정보 문서화",
+        "오독 방지 장치"
+      ]
+    },
+    {
+      "externalId": "PS-L1-003",
+      "competency": "PROBLEM_SOLVING",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "작은 문제라도 스스로 원인을 진단하고 고쳐본 경험이 있나요?",
+      "followUpHints": [
+        "자가 진단",
+        "직접 해결"
+      ]
+    },
+    {
+      "externalId": "PS-L2-003",
+      "competency": "PROBLEM_SOLVING",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "숫자나 데이터를 직접 정리해 문제의 원인을 찾아냈던 경험이 있나요?",
+      "followUpHints": [
+        "데이터 정리",
+        "원인 파악"
+      ]
+    },
+    {
+      "externalId": "PS-L3-003",
+      "competency": "PROBLEM_SOLVING",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "여러 원인이 뒤섞여 있던 문제를 하나씩 좁혀가며 진짜 원인을 찾아낸 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "원인 분리",
+        "핵심 원인 특정"
+      ]
+    },
+    {
+      "externalId": "PS-L4-003",
+      "competency": "PROBLEM_SOLVING",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.2,
+      "template": "정해진 해결 절차가 없는 문제를 새로운 방식으로 접근해 풀어낸 경험이 있나요?",
+      "followUpHints": [
+        "새로운 접근",
+        "절차 부재"
+      ]
+    },
+    {
+      "externalId": "PS-L5-003",
+      "competency": "PROBLEM_SOLVING",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "처음 시도한 해결책이 실패한 뒤, 원인을 재분석해 다른 방식으로 다시 도전해 결국 성공시킨 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "실패 후 재설계",
+        "최종 성공"
+      ]
+    },
+    {
+      "externalId": "JF-L1-003",
+      "competency": "JOB_FIT",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "직무와 관련된 정보나 지식을 스스로 찾아서 학습해본 경험이 있나요?",
+      "followUpHints": [
+        "자기주도 정보 탐색",
+        "학습 방법"
+      ]
+    },
+    {
+      "externalId": "JF-L2-003",
+      "competency": "JOB_FIT",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "직무에 필요한 도구나 기술을 새로 익혀 실제 업무나 프로젝트에 적용해본 경험이 있나요?",
+      "followUpHints": [
+        "신규 툴/기술 습득",
+        "적용 사례"
+      ]
+    },
+    {
+      "externalId": "JF-L3-003",
+      "competency": "JOB_FIT",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "이 직무와 관련된 최신 트렌드나 기술 변화를 실제 업무·과제에 반영해본 경험이 있나요?",
+      "followUpHints": [
+        "트렌드 파악",
+        "실제 반영"
+      ]
+    },
+    {
+      "externalId": "JF-L4-003",
+      "competency": "JOB_FIT",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.2,
+      "template": "본인의 직무 전문성을 활용해 동료나 후배가 겪던 어려움을 해결해 준 경험이 있나요?",
+      "followUpHints": [
+        "전문성 공유",
+        "동료 지원"
+      ]
+    },
+    {
+      "externalId": "JF-L5-003",
+      "competency": "JOB_FIT",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "직무 관련 오류나 장애처럼 위기 상황을 본인의 전문성으로 해결했던 경험이 있다면, 어떤 지식과 판단이 결정적이었는지 말씀해 주세요.",
+      "followUpHints": [
+        "위기 상황",
+        "전문성 기반 해결"
+      ]
+    },
+    {
+      "externalId": "OF-L1-003",
+      "competency": "ORG_FIT",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "새로운 규칙이나 조직 문화에 적응하며 배운 점이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "적응 과정",
+        "배운 점"
+      ]
+    },
+    {
+      "externalId": "OF-L2-003",
+      "competency": "ORG_FIT",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "조직의 목표나 방향을 이해하고, 본인의 업무를 그것과 연결지어 본 경험이 있나요?",
+      "followUpHints": [
+        "조직 목표 이해",
+        "업무 연결"
+      ]
+    },
+    {
+      "externalId": "OF-L3-003",
+      "competency": "ORG_FIT",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "이해관계가 서로 다른 부서와 협업하며 균형점을 찾아야 했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "부서 간 이해관계",
+        "균형점 도출"
+      ]
+    },
+    {
+      "externalId": "OF-L4-003",
+      "competency": "ORG_FIT",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.2,
+      "template": "조직 개편이나 리브랜딩처럼 변화가 큰 시기에 적응하면서 동시에 기여했던 경험이 있나요? 어떤 역할을 맡았는지 말씀해 주세요.",
+      "followUpHints": [
+        "조직 변화 적응",
+        "동시 기여"
+      ]
+    },
+    {
+      "externalId": "OF-L5-003",
+      "competency": "ORG_FIT",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "조직 문화나 일하는 방식 자체를 개선하는 데 기여한 경험이 있다면, 어떤 문제의식에서 시작했는지 말씀해 주세요.",
+      "followUpHints": [
+        "문화 개선 기여",
+        "문제의식 출발점"
+      ]
+    },
+    {
+      "externalId": "LD-L1-003",
+      "competency": "LEADERSHIP",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "팀 내 작은 역할이라도 끝까지 책임지고 완수했던 경험이 있나요?",
+      "followUpHints": [
+        "작은 역할",
+        "책임 완수"
+      ]
+    },
+    {
+      "externalId": "LD-L2-003",
+      "competency": "LEADERSHIP",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "서로 다른 의견을 조율해 양쪽이 납득할 만한 결론을 이끌어낸 경험이 있나요?",
+      "followUpHints": [
+        "의견 조율",
+        "합의 도출"
+      ]
+    },
+    {
+      "externalId": "LD-L3-003",
+      "competency": "LEADERSHIP",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "동료·타 부서 또는 외부 고객의 요구를 파악해 기대 이상으로 대응했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "요구 파악",
+        "기대 이상 대응"
+      ]
+    },
+    {
+      "externalId": "LD-L4-003",
+      "competency": "LEADERSHIP",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.2,
+      "template": "예상치 못한 위기 상황에서 팀을 침착하게 이끌었던 경험이 있나요?",
+      "followUpHints": [
+        "위기 대응",
+        "침착한 리더십"
+      ]
+    },
+    {
+      "externalId": "LD-L5-003",
+      "competency": "LEADERSHIP",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "장기적인 비전이나 방향을 먼저 제시하고, 구성원들의 자발적인 동참을 이끌어낸 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "비전 제시",
+        "자발적 동참 유도"
+      ]
+    },
+    {
+      "externalId": "GR-L1-003",
+      "competency": "GROWTH",
+      "level": 1,
+      "difficulty": -2,
+      "discrimination": 1,
+      "template": "본인의 강점과 약점을 객관적으로 되짚어본 경험이 있나요? 어떻게 파악했는지 말씀해 주세요.",
+      "followUpHints": [
+        "자아 인식",
+        "파악 방법"
+      ]
+    },
+    {
+      "externalId": "GR-L2-003",
+      "competency": "GROWTH",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "시간이나 에너지를 스스로 관리해 목표를 달성했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "자기 관리",
+        "목표 달성"
+      ]
+    },
+    {
+      "externalId": "GR-L3-003",
+      "competency": "GROWTH",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.2,
+      "template": "장기적인 경력 목표를 세우고, 이를 위해 지금 준비하고 있는 것이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "경력 목표",
+        "현재 준비 과정"
+      ]
+    },
+    {
+      "externalId": "GR-L4-003",
+      "competency": "GROWTH",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.2,
+      "template": "예상과 다른 방향으로 커리어가 흘러갔을 때, 스스로 방향을 재설정했던 경험이 있나요?",
+      "followUpHints": [
+        "방향 전환",
+        "재설정 과정"
+      ]
+    },
+    {
+      "externalId": "GR-L5-003",
+      "competency": "GROWTH",
+      "level": 5,
+      "difficulty": 2,
+      "discrimination": 1.15,
+      "template": "완전히 새로운 분야나 역할로 옮겨가며 처음부터 다시 배워야 했던 경험이 있다면, 그 과정에서 어떤 학습 전략을 썼는지 말씀해 주세요.",
+      "followUpHints": [
+        "새 분야 도전",
+        "학습 전략"
+      ]
+    },
+    {
+      "externalId": "COMM-L1-004",
+      "competency": "COMMUNICATION",
+      "level": 1,
+      "template": "팀이나 동아리에서 본인 역할을 한 문장으로 설명해 주세요.",
+      "followUpHints": [
+        "역할",
+        "기여"
+      ],
+      "difficulty": -2,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "COMM-L1-005",
+      "competency": "COMMUNICATION",
+      "level": 1,
+      "template": "최근에 누군가에게 설명하거나 안내했던 일이 있다면 간단히 말씀해 주세요.",
+      "followUpHints": [
+        "대상",
+        "내용"
+      ],
+      "difficulty": -1.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "COMM-L2-004",
+      "competency": "COMMUNICATION",
+      "level": 2,
+      "template": "회의나 발표에서 본인 의견을 전달했던 경험이 있나요? 어떻게 준비했는지 말씀해 주세요.",
+      "followUpHints": [
+        "준비",
+        "전달 방식"
+      ],
+      "difficulty": -1,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "COMM-L2-005",
+      "competency": "COMMUNICATION",
+      "level": 2,
+      "template": "문서나 메일로 업무 내용을 공유했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "수신자",
+        "핵심 메시지"
+      ],
+      "difficulty": -0.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "COMM-L3-004",
+      "competency": "COMMUNICATION",
+      "level": 3,
+      "template": "상대가 이해하지 못할 때 다른 방식으로 다시 설명했던 경험이 있나요?",
+      "followUpHints": [
+        "상황",
+        "재설명 전략"
+      ],
+      "difficulty": 0,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "COMM-L3-005",
+      "competency": "COMMUNICATION",
+      "level": 3,
+      "template": "부정적인 피드백을 전달해야 했던 상황이 있다면, 어떻게 말씀하셨는지 말씀해 주세요.",
+      "followUpHints": [
+        "상황",
+        "전달 방식",
+        "결과"
+      ],
+      "difficulty": 0.05,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "COMM-L4-004",
+      "competency": "COMMUNICATION",
+      "level": 4,
+      "template": "이해관계가 다른 여러 사람 앞에서 본인 입장을 정리해 발표했던 경험이 있나요?",
+      "followUpHints": [
+        "청중",
+        "메시지 구조"
+      ],
+      "difficulty": 1,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "COMM-L4-005",
+      "competency": "COMMUNICATION",
+      "level": 4,
+      "template": "중요한 결정을 내리기 전에 관련자들의 의견을 어떻게 수렴했는지 말씀해 주세요.",
+      "followUpHints": [
+        "수렴 방법",
+        "반영 결과"
+      ],
+      "difficulty": 1.05,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "COMM-L5-004",
+      "competency": "COMMUNICATION",
+      "level": 5,
+      "template": "조직 차원의 변화나 정책을 구성원에게 설득해야 했던 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "변화 내용",
+        "설득 전략"
+      ],
+      "difficulty": 2,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "COMM-L5-005",
+      "competency": "COMMUNICATION",
+      "level": 5,
+      "template": "위기 상황에서 이해관계자에게 신뢰를 유지하며 소통했던 경험이 있나요?",
+      "followUpHints": [
+        "위기 상황",
+        "소통 원칙"
+      ],
+      "difficulty": 1.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "PS-L1-004",
+      "competency": "PROBLEM_SOLVING",
+      "level": 1,
+      "template": "일상이나 학교·직장에서 작은 문제를 스스로 해결했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "문제",
+        "해결"
+      ],
+      "difficulty": -2,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "PS-L1-005",
+      "competency": "PROBLEM_SOLVING",
+      "level": 1,
+      "template": "계획이 틀어졌을 때 어떻게 대응했는지 간단한 예를 들어 주세요.",
+      "followUpHints": [
+        "상황",
+        "대응"
+      ],
+      "difficulty": -1.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "PS-L2-004",
+      "competency": "PROBLEM_SOLVING",
+      "level": 2,
+      "template": "업무나 과제에서 예상치 못한 오류가 났을 때 어떻게 원인을 찾았는지 말씀해 주세요.",
+      "followUpHints": [
+        "오류",
+        "원인 파악"
+      ],
+      "difficulty": -1,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "PS-L2-005",
+      "competency": "PROBLEM_SOLVING",
+      "level": 2,
+      "template": "제한된 시간 안에 과제를 마쳐야 했던 경험이 있다면 우선순위를 어떻게 정했는지 말씀해 주세요.",
+      "followUpHints": [
+        "시간 제약",
+        "우선순위"
+      ],
+      "difficulty": -0.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "PS-L3-004",
+      "competency": "PROBLEM_SOLVING",
+      "level": 3,
+      "template": "데이터나 사실을 근거로 개선안을 제시했던 경험이 있나요?",
+      "followUpHints": [
+        "근거",
+        "개선안"
+      ],
+      "difficulty": 0,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "PS-L3-005",
+      "competency": "PROBLEM_SOLVING",
+      "level": 3,
+      "template": "같은 문제에 대해 여러 해결책을 비교해 선택했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "대안",
+        "선택 기준"
+      ],
+      "difficulty": 0.05,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "PS-L4-004",
+      "competency": "PROBLEM_SOLVING",
+      "level": 4,
+      "template": "근본 원인 분석을 통해 반복되는 문제를 줄였던 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "근본 원인",
+        "재발 방지"
+      ],
+      "difficulty": 1,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "PS-L4-005",
+      "competency": "PROBLEM_SOLVING",
+      "level": 4,
+      "template": "여러 부서·팀이 얽힌 복잡한 이슈를 해결했던 경험을 구체적으로 말씀해 주세요.",
+      "followUpHints": [
+        "이해관계",
+        "해결 과정"
+      ],
+      "difficulty": 1.05,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "PS-L5-004",
+      "competency": "PROBLEM_SOLVING",
+      "level": 5,
+      "template": "장기적으로 조직 성과에 영향을 준 구조적 문제를 정의하고 해결했던 경험이 있나요?",
+      "followUpHints": [
+        "문제 정의",
+        "구조적 해결"
+      ],
+      "difficulty": 2,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "PS-L5-005",
+      "competency": "PROBLEM_SOLVING",
+      "level": 5,
+      "template": "불확실한 상황에서 가설을 세우고 검증하며 의사결정했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "가설",
+        "검증",
+        "결정"
+      ],
+      "difficulty": 1.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "JF-L1-004",
+      "competency": "JOB_FIT",
+      "level": 1,
+      "template": "지원 직무와 관련해 본인이 해본 일이나 배운 내용을 말씀해 주세요.",
+      "followUpHints": [
+        "관련 경험"
+      ],
+      "difficulty": -2,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "JF-L1-005",
+      "competency": "JOB_FIT",
+      "level": 1,
+      "template": "이 직무에 관심을 갖게 된 계기가 무엇인지 말씀해 주세요.",
+      "followUpHints": [
+        "관심 계기"
+      ],
+      "difficulty": -1.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "JF-L2-004",
+      "competency": "JOB_FIT",
+      "level": 2,
+      "template": "직무와 관련된 도구나 방법을 새로 익혀 업무에 적용했던 경험이 있나요?",
+      "followUpHints": [
+        "학습",
+        "적용"
+      ],
+      "difficulty": -1,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "JF-L2-005",
+      "competency": "JOB_FIT",
+      "level": 2,
+      "template": "맡은 업무의 목표와 본인 역할을 어떻게 이해하고 수행했는지 말씀해 주세요.",
+      "followUpHints": [
+        "목표 이해",
+        "수행"
+      ],
+      "difficulty": -0.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "JF-L3-004",
+      "competency": "JOB_FIT",
+      "level": 3,
+      "template": "직무 성과를 수치나 결과로 설명할 수 있는 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "성과 지표"
+      ],
+      "difficulty": 0,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "JF-L3-005",
+      "competency": "JOB_FIT",
+      "level": 3,
+      "template": "직무 요구사항과 본인 역량의 차이를 어떻게 메웠는지 말씀해 주세요.",
+      "followUpHints": [
+        "격차",
+        "보완"
+      ],
+      "difficulty": 0.05,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "JF-L4-004",
+      "competency": "JOB_FIT",
+      "level": 4,
+      "template": "직무 전문성을 바탕으로 팀이나 조직에 기여했던 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "전문성",
+        "기여"
+      ],
+      "difficulty": 1,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "JF-L4-005",
+      "competency": "JOB_FIT",
+      "level": 4,
+      "template": "업계·직무 트렌드를 파악해 업무 방식을 바꿨던 경험이 있나요?",
+      "followUpHints": [
+        "트렌드",
+        "변화"
+      ],
+      "difficulty": 1.05,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "JF-L5-004",
+      "competency": "JOB_FIT",
+      "level": 5,
+      "template": "직무 영역에서 표준·프로세스를 새로 정립하거나 개선했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "표준화",
+        "개선"
+      ],
+      "difficulty": 2,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "JF-L5-005",
+      "competency": "JOB_FIT",
+      "level": 5,
+      "template": "핵심 직무 역량을 조직 전체에 전파하거나 멘토링했던 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "역량 전파",
+        "멘토링"
+      ],
+      "difficulty": 1.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "OF-L1-004",
+      "competency": "ORG_FIT",
+      "level": 1,
+      "template": "팀 활동이나 그룹 과제에서 본인이 맡았던 역할을 말씀해 주세요.",
+      "followUpHints": [
+        "역할",
+        "협업"
+      ],
+      "difficulty": -2,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "OF-L1-005",
+      "competency": "ORG_FIT",
+      "level": 1,
+      "template": "함께 일하는 사람과 좋은 관계를 유지하기 위해 노력했던 점이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "관계 유지"
+      ],
+      "difficulty": -1.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "OF-L2-004",
+      "competency": "ORG_FIT",
+      "level": 2,
+      "template": "팀 목표와 개인 목표가 다를 때 어떻게 조율했는지 말씀해 주세요.",
+      "followUpHints": [
+        "목표 조율"
+      ],
+      "difficulty": -1,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "OF-L2-005",
+      "competency": "ORG_FIT",
+      "level": 2,
+      "template": "다른 성향의 동료와 협업할 때 본인이 맞춘 부분이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "성향 차이",
+        "협업"
+      ],
+      "difficulty": -0.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "OF-L3-004",
+      "competency": "ORG_FIT",
+      "level": 3,
+      "template": "팀 내 갈등이나 불만이 있을 때 본인이 한 행동이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "갈등 상황",
+        "본인 역할"
+      ],
+      "difficulty": 0,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "OF-L3-005",
+      "competency": "ORG_FIT",
+      "level": 3,
+      "template": "조직 규칙이나 프로세스를 지키면서도 효율을 높였던 경험이 있나요?",
+      "followUpHints": [
+        "규칙 준수",
+        "효율"
+      ],
+      "difficulty": 0.05,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "OF-L4-004",
+      "competency": "ORG_FIT",
+      "level": 4,
+      "template": "조직 문화나 가치에 맞게 팀 분위기를 개선했던 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "문화",
+        "개선"
+      ],
+      "difficulty": 1,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "OF-L4-005",
+      "competency": "ORG_FIT",
+      "level": 4,
+      "template": "이해관계가 다른 팀과 협력해 공동 목표를 달성했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "팀 간 협력",
+        "목표"
+      ],
+      "difficulty": 1.05,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "OF-L5-004",
+      "competency": "ORG_FIT",
+      "level": 5,
+      "template": "조직 변화(합병·개편 등) 시 구성원의 저항을 줄이기 위해 어떤 노력을 했는지 말씀해 주세요.",
+      "followUpHints": [
+        "변화 관리",
+        "저항 완화"
+      ],
+      "difficulty": 2,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "OF-L5-005",
+      "competency": "ORG_FIT",
+      "level": 5,
+      "template": "장기적으로 신뢰를 쌓아 조직 내 영향력을 키웠던 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "신뢰",
+        "영향력"
+      ],
+      "difficulty": 1.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "LD-L1-004",
+      "competency": "LEADERSHIP",
+      "level": 1,
+      "template": "스스로 먼저 나서서 맡았던 일이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "주도",
+        "결과"
+      ],
+      "difficulty": -2,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "LD-L1-005",
+      "competency": "LEADERSHIP",
+      "level": 1,
+      "template": "다른 사람을 도와주거나 이끌어준 경험이 있다면 간단히 말씀해 주세요.",
+      "followUpHints": [
+        "도움",
+        "상황"
+      ],
+      "difficulty": -1.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "LD-L2-004",
+      "competency": "LEADERSHIP",
+      "level": 2,
+      "template": "작은 규모라도 본인이 리더 역할을 맡았던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "리더 역할",
+        "성과"
+      ],
+      "difficulty": -1,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "LD-L2-005",
+      "competency": "LEADERSHIP",
+      "level": 2,
+      "template": "팀원의 의견을 듣고 방향을 정했던 경험이 있나요?",
+      "followUpHints": [
+        "의견 수렴",
+        "방향 설정"
+      ],
+      "difficulty": -0.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "LD-L3-004",
+      "competency": "LEADERSHIP",
+      "level": 3,
+      "template": "팀원의 동기를 높이기 위해 본인이 한 행동이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "동기 부여"
+      ],
+      "difficulty": 0,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "LD-L3-005",
+      "competency": "LEADERSHIP",
+      "level": 3,
+      "template": "어려운 결정을 내려야 했을 때 기준을 어떻게 세웠는지 말씀해 주세요.",
+      "followUpHints": [
+        "결정 기준",
+        "결과"
+      ],
+      "difficulty": 0.05,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "LD-L4-004",
+      "competency": "LEADERSHIP",
+      "level": 4,
+      "template": "성과가 부진한 팀원이나 상황을 개선하기 위해 개입했던 경험이 있나요?",
+      "followUpHints": [
+        "개입",
+        "개선"
+      ],
+      "difficulty": 1,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "LD-L4-005",
+      "competency": "LEADERSHIP",
+      "level": 4,
+      "template": "장기 목표를 위해 단기 불편을 감수하고 팀을 이끌었던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "장기 목표",
+        "리더십"
+      ],
+      "difficulty": 1.05,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "LD-L5-004",
+      "competency": "LEADERSHIP",
+      "level": 5,
+      "template": "조직의 방향성을 제시하고 여러 팀이 따라오게 만들었던 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "비전",
+        "실행"
+      ],
+      "difficulty": 2,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "LD-L5-005",
+      "competency": "LEADERSHIP",
+      "level": 5,
+      "template": "후임 리더를 육성하거나 조직의 리더십 파이프라인에 기여했던 경험이 있나요?",
+      "followUpHints": [
+        "육성",
+        "기여"
+      ],
+      "difficulty": 1.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "GR-L1-004",
+      "competency": "GROWTH",
+      "level": 1,
+      "template": "최근에 새로 배우거나 시도해 본 것이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "학습",
+        "시도"
+      ],
+      "difficulty": -2,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "GR-L1-005",
+      "competency": "GROWTH",
+      "level": 1,
+      "template": "본인의 약점을 인식하고 보완하려 했던 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "약점",
+        "보완"
+      ],
+      "difficulty": -1.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "GR-L2-004",
+      "competency": "GROWTH",
+      "level": 2,
+      "template": "실수나 부족한 점을 지적받았을 때 방어적으로 반응하지 않고 그대로 받아들였던 경험이 있나요?",
+      "followUpHints": [
+        "수용",
+        "태도"
+      ],
+      "difficulty": -1,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "GR-L2-005",
+      "competency": "GROWTH",
+      "level": 2,
+      "template": "실패나 좌절 후 다시 도전했던 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "실패",
+        "재도전"
+      ],
+      "difficulty": -0.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "GR-L3-004",
+      "competency": "GROWTH",
+      "level": 3,
+      "template": "스스로 학습 계획을 세우고 실행했던 경험이 있나요?",
+      "followUpHints": [
+        "계획",
+        "실행"
+      ],
+      "difficulty": 0,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "GR-L3-005",
+      "competency": "GROWTH",
+      "level": 3,
+      "template": "익숙한 방식에서 벗어나 새로운 방법을 시도했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "기존 방식",
+        "새 시도"
+      ],
+      "difficulty": 0.05,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "GR-L4-004",
+      "competency": "GROWTH",
+      "level": 4,
+      "template": "장기적인 커리어 목표와 연결해 자기개발에 투자했던 경험이 있나요?",
+      "followUpHints": [
+        "목표",
+        "투자"
+      ],
+      "difficulty": 1,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "GR-L4-005",
+      "competency": "GROWTH",
+      "level": 4,
+      "template": "실패를 회고해 팀이나 조직에 공유했던 경험이 있다면 말씀해 주세요.",
+      "followUpHints": [
+        "회고",
+        "공유"
+      ],
+      "difficulty": 1.05,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "GR-L5-004",
+      "competency": "GROWTH",
+      "level": 5,
+      "template": "학습하는 조직 문화를 만들기 위해 본인이 기여했던 사례가 있나요?",
+      "followUpHints": [
+        "학습 문화",
+        "기여"
+      ],
+      "difficulty": 2,
+      "discrimination": 1.05
+    },
+    {
+      "externalId": "GR-L5-005",
+      "competency": "GROWTH",
+      "level": 5,
+      "template": "빠르게 변하는 환경에서 본인의 전문성을 지속적으로 갱신한 방법을 말씀해 주세요.",
+      "followUpHints": [
+        "환경 변화",
+        "전문성 갱신"
+      ],
+      "difficulty": 1.95,
+      "discrimination": 1.1
+    },
+    {
+      "externalId": "CORE-COMMUNICATION-EXT-01",
+      "competency": "COMMUNICATION",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "상대방이 이해하기 어려운 전문적인 내용을 쉽게 풀어서 설명해야 했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "전문 용어",
+        "쉬운 설명"
+      ]
+    },
+    {
+      "externalId": "CORE-COMMUNICATION-EXT-02",
+      "competency": "COMMUNICATION",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "의견 차이가 있는 상황에서 상대방의 말을 끝까지 경청한 후 오해를 해소했던 경험이 있나요?",
+      "followUpHints": [
+        "경청",
+        "오해 해소"
+      ]
+    },
+    {
+      "externalId": "CORE-PROBLEM_SOLVING-EXT-01",
+      "competency": "PROBLEM_SOLVING",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "문제의 원인을 정확히 파악하지 못한 채 성급하게 대응했다가 접근 방식을 바꾼 경험이 있나요?",
+      "followUpHints": [
+        "재진단",
+        "방향 전환"
+      ]
+    },
+    {
+      "externalId": "CORE-PROBLEM_SOLVING-EXT-02",
+      "competency": "PROBLEM_SOLVING",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.1,
+      "template": "제한된 시간과 자원 안에서 창의적인 방법으로 문제를 해결했던 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "제약",
+        "창의적 해법"
+      ]
+    },
+    {
+      "externalId": "CORE-JOB_FIT-EXT-01",
+      "competency": "JOB_FIT",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "지원 직무와 관련된 지식이나 기술을 독학이나 실무 경험을 통해 습득한 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "자기주도 학습",
+        "적용"
+      ]
+    },
+    {
+      "externalId": "CORE-JOB_FIT-EXT-02",
+      "competency": "JOB_FIT",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "본인의 전문성이 실제 업무 성과로 이어졌던 구체적인 경험이 있나요?",
+      "followUpHints": [
+        "전문성",
+        "성과 연결"
+      ]
+    },
+    {
+      "externalId": "CORE-ORG_FIT-EXT-01",
+      "competency": "ORG_FIT",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "본인의 가치관과 조직(팀)의 방향이 다를 때 어떻게 조율했는지 말씀해 주세요.",
+      "followUpHints": [
+        "가치관 차이",
+        "조율"
+      ]
+    },
+    {
+      "externalId": "CORE-ORG_FIT-EXT-02",
+      "competency": "ORG_FIT",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "새로운 환경이나 조직 문화에 빠르게 적응했던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "적응",
+        "속도"
+      ]
+    },
+    {
+      "externalId": "CORE-LEADERSHIP-EXT-01",
+      "competency": "LEADERSHIP",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "의견이 갈리는 팀원들을 하나의 방향으로 이끌었던 경험을 말씀해 주세요.",
+      "followUpHints": [
+        "의견 조율",
+        "방향 제시"
+      ]
+    },
+    {
+      "externalId": "CORE-LEADERSHIP-EXT-02",
+      "competency": "LEADERSHIP",
+      "level": 4,
+      "difficulty": 1,
+      "discrimination": 1.1,
+      "template": "공식적인 권한이 없는 상황에서도 주도적으로 팀을 이끌었던 사례가 있나요?",
+      "followUpHints": [
+        "비공식 리더십",
+        "주도성"
+      ]
+    },
+    {
+      "externalId": "CORE-GROWTH-EXT-01",
+      "competency": "GROWTH",
+      "level": 2,
+      "difficulty": -1,
+      "discrimination": 1.1,
+      "template": "실패나 실수를 통해 배운 점을 이후 업무에 어떻게 적용했는지 말씀해 주세요.",
+      "followUpHints": [
+        "실패",
+        "적용"
+      ]
+    },
+    {
+      "externalId": "CORE-GROWTH-EXT-02",
+      "competency": "GROWTH",
+      "level": 3,
+      "difficulty": 0,
+      "discrimination": 1.1,
+      "template": "스스로 부족한 부분을 인지하고 개선하기 위해 노력한 구체적인 사례를 말씀해 주세요.",
+      "followUpHints": [
+        "자기 인식",
+        "개선 노력"
+      ]
+    }
+  ]
+}

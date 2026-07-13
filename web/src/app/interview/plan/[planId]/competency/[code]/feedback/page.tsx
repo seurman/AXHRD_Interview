@@ -8,6 +8,13 @@ import { ScoreGauge } from "@/components/report/ScoreGauge";
 import { BonusQuestionSection } from "@/components/report/BonusQuestionSection";
 import { ClaimVerificationSection } from "@/components/report/ClaimVerificationSection";
 import { computeDeliveryStats } from "@/lib/interview/feedback-helpers";
+import { NextCompetencyButton } from "@/components/interview/NextCompetencyButton";
+import { RoundBriefPanel } from "@/components/interview/RoundBriefPanel";
+import {
+  filterQueueByProgress,
+  parseCompetencyQueue,
+  type RoundBrief,
+} from "@/lib/interview/competency-round";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +60,11 @@ export default async function CompetencyFeedbackPage({
 
   const session = await prisma.interviewSession.findUnique({
     where: { id: fb.sessionId },
-    include: { responses: true },
+    include: {
+      responses: true,
+      targetCompany: true,
+      resume: true,
+    },
   });
   const bonusResponse = session?.responses.find((r) => r.isBonusQuestion) ?? null;
   const claimResponse = session?.responses.find((r) => r.isClaimVerification) ?? null;
@@ -66,10 +77,25 @@ export default async function CompetencyFeedbackPage({
     }))
   );
 
-  const next = COMPETENCY_CODES.find((c) => {
-    const row = progress.plan.competencyProgress.find((p) => p.competency === c);
-    return row && row.status !== "COMPLETED";
-  });
+  const roundCodes = parseCompetencyQueue(progress.plan.roundCompetencyCodes);
+  const queue = filterQueueByProgress(
+    parseCompetencyQueue(progress.plan.queuedCompetencyCodes),
+    progress.plan.competencyProgress,
+  );
+  const roundDone =
+    roundCodes.length > 0 &&
+    roundCodes.every((c) => {
+      const row = progress.plan.competencyProgress.find((p) => p.competency === c);
+      return row?.status === "COMPLETED";
+    });
+  const roundBrief = progress.plan.roundBrief as RoundBrief | null;
+  const roundDoneCount =
+    roundCodes.length > 0
+      ? roundCodes.filter((c) => {
+          const row = progress.plan.competencyProgress.find((p) => p.competency === c);
+          return row?.status === "COMPLETED";
+        }).length
+      : 0;
 
   const doneCount = progress.plan.competencyProgress.filter(
     (p) => p.status === "COMPLETED"
@@ -81,7 +107,10 @@ export default async function CompetencyFeedbackPage({
     <div className="mx-auto max-w-2xl space-y-8 pb-16">
       <div>
         <p className="text-sm font-medium text-accent">
-          {user.name} · {doneCount}/{COMPETENCY_CODES.length} 역량 완료
+          {user.name} ·{" "}
+          {roundCodes.length > 0
+            ? `이번 차수 ${roundDoneCount}/${roundCodes.length} 역량`
+            : `${doneCount}/${COMPETENCY_CODES.length} 역량 완료`}
         </p>
         <h1 className="mt-2 text-2xl font-bold text-foreground">
           {competencyLabel(code)} 피드백
@@ -208,13 +237,25 @@ export default async function CompetencyFeedbackPage({
         </ul>
       </section>
 
-      <div className="flex flex-wrap gap-3">
-        {next ? (
-          <Link
-            href={`/interview/setup?planId=${planId}&competency=${next}`}
-            className="btn-primary"
-          >
-            다음 역량: {competencyLabel(next)} →
+      {roundDone && roundBrief && <RoundBriefPanel brief={roundBrief} />}
+
+      <div className="flex flex-wrap gap-3 print-hide">
+        {queue.length > 0 ? (
+          <NextCompetencyButton
+            planId={planId}
+            queue={queue}
+            industry={session?.targetCompany?.industryCode ?? undefined}
+            companySize={session?.targetCompany?.size ?? undefined}
+            companyName={session?.targetCompany?.name ?? undefined}
+            jobRole={session?.jobRole}
+            resumeText={session?.resume?.rawText}
+            resumeFileName={session?.resume?.fileName}
+            timeBudgetMinutes={progress.plan.timeBudgetMinutes ?? session?.timeBudgetMinutes}
+            prepMode={progress.plan.prepMode ?? undefined}
+          />
+        ) : roundDone ? (
+          <Link href={`/interview/plan/${planId}`} className="btn-primary">
+            차수 결과 보기
           </Link>
         ) : (
           <Link href={`/interview/plan/${planId}`} className="btn-primary">

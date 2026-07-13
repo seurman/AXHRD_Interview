@@ -47,7 +47,7 @@ export default async function AdminDiagnosticPage({
           _count: {
             select: {
               responses: { where: { submittedAt: { not: null } } },
-              teams: true,
+              teams: { where: { level: "TEAM" } },
             },
           },
         },

@@ -154,7 +154,7 @@ export async function loadTeamSurvey(waveSlug: string, teamSlug: string, respond
           },
         },
       },
-      teams: { where: { slug: teamSlug } },
+      teams: { where: { slug: teamSlug, level: "TEAM" } },
     },
   });
   if (!wave || wave.teams.length === 0) return null;

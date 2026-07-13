@@ -15,6 +15,9 @@ interface NextCompetencyButtonProps {
   jobRole?: string;
   resumeText?: string;
   resumeFileName?: string;
+  timeBudgetMinutes?: number | null;
+  prepMode?: string;
+  jdText?: string;
 }
 
 /**
@@ -33,6 +36,9 @@ export function NextCompetencyButton({
   jobRole,
   resumeText,
   resumeFileName,
+  timeBudgetMinutes,
+  prepMode,
+  jdText,
 }: NextCompetencyButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -59,6 +65,9 @@ export function NextCompetencyButton({
           resumeText,
           resumeFileName,
           queuedCompetencies: rest,
+          timeBudgetMinutes: timeBudgetMinutes ?? undefined,
+          prepMode,
+          jdText,
         }),
       });
       const data = await res.json();

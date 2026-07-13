@@ -5,12 +5,15 @@ import {
   scoreJdWithMeaningGraph,
   type MeaningGraphCompetencyScore,
 } from "@/lib/meaning/jd-competency-match";
+import { buildRecommendedCompetencySet } from "@/lib/meaning/suggest-competency-set";
 
 export type JdRecommendationSource = "llm" | "meaning_graph" | "blended";
 
 export type EnrichedJdMapResult = JDMapResult & {
   meaningGraphScores: MeaningGraphCompetencyScore[];
   recommendationSource: JdRecommendationSource | null;
+  /** 공고·그래프 기반 역량 세트(최대 4개) — 차수 면접 추천용 */
+  recommendedCompetencySet: CompetencyCode[];
 };
 
 export async function enrichJdAnalysisWithMeaningGraph(
@@ -57,6 +60,10 @@ export async function enrichJdAnalysisWithMeaningGraph(
     competencyRationale,
     meaningGraphScores,
     recommendationSource,
+    recommendedCompetencySet: buildRecommendedCompetencySet(
+      meaningGraphScores,
+      recommendedCompetency,
+    ),
   };
 }
 

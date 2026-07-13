@@ -24,6 +24,19 @@ import {
 
 type Props = { waveId: string };
 
+const LEVEL_LABEL: Record<"DIVISION" | "UNIT" | "TEAM", string> = {
+  DIVISION: "사업본부",
+  UNIT: "사업부",
+  TEAM: "팀",
+};
+
+type HierarchyNode = {
+  id: string;
+  name: string;
+  level: "DIVISION" | "UNIT" | "TEAM";
+  parentId: string | null;
+};
+
 type Scores = {
   hidden: boolean;
   reason?: string;
@@ -36,7 +49,18 @@ type Scores = {
     oai: { OAI: number | null; band: string | null };
     oaiPattern: { pattern: string; message: string } | null;
   };
-  teams?: Array<{ teamId: string; teamName: string; hidden: boolean }>;
+  teams?: Array<{
+    teamId: string;
+    teamName: string;
+    level?: "DIVISION" | "UNIT" | "TEAM";
+    parentId?: string | null;
+    sampleSize?: number;
+    hidden: boolean;
+    ORI?: number | null;
+    OVI?: number | null;
+    OHI_SE?: number | null;
+    OAI?: number | null;
+  }>;
   gapMatrix?: {
     mode: string;
     note?: string;
@@ -55,7 +79,27 @@ type WaveMeta = {
   enabledSectionCodes: string[] | null;
   reportConfig?: ResolvedReportConfig | null;
   teams: Array<{ id: string; name: string }>;
+  hierarchy?: HierarchyNode[];
 };
+
+/** 하이어라키를 DFS 순서로 펼치면서 depth를 매긴다 — 들여쓰기 셀렉트용 */
+function flattenHierarchy(nodes: HierarchyNode[]): Array<{ node: HierarchyNode; depth: number }> {
+  const byParent = new Map<string | null, HierarchyNode[]>();
+  for (const n of nodes) {
+    const list = byParent.get(n.parentId) ?? [];
+    list.push(n);
+    byParent.set(n.parentId, list);
+  }
+  const out: Array<{ node: HierarchyNode; depth: number }> = [];
+  const visit = (parentId: string | null, depth: number) => {
+    for (const n of byParent.get(parentId) ?? []) {
+      out.push({ node: n, depth });
+      visit(n.id, depth + 1);
+    }
+  };
+  visit(null, 0);
+  return out;
+}
 
 function sectionEnabled(code: string, config: ResolvedReportConfig | null | undefined, fallback: string[] | null) {
   if (config) return isSectionEnabledInReport(code, config);
@@ -70,6 +114,7 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
   const [teamScores, setTeamScores] = useState<Record<string, Scores>>({});
   const [selectedTeam, setSelectedTeam] = useState<string | "all">("all");
   const [loading, setLoading] = useState(true);
+  const [drillId, setDrillId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -136,6 +181,29 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
       }))
     : [];
 
+  const hierarchyRows = aggregate?.teams ?? [];
+  const nodeById = new Map(hierarchyRows.map((r) => [r.teamId, r]));
+  const childrenOf = (parentId: string | null) =>
+    hierarchyRows.filter((r) => (r.parentId ?? null) === parentId);
+  const drillBreadcrumb: typeof hierarchyRows = [];
+  {
+    let cur = drillId ? nodeById.get(drillId) : undefined;
+    while (cur) {
+      drillBreadcrumb.unshift(cur);
+      cur = cur.parentId ? nodeById.get(cur.parentId) : undefined;
+    }
+  }
+  const drillChildren = childrenOf(drillId);
+  const drillBarData = drillChildren
+    .filter((t) => !t.hidden)
+    .map((t) => ({
+      name: t.teamName,
+      OHI: t.OHI_SE ?? 0,
+      ORI: t.ORI ?? 0,
+      OVI: t.OVI ?? 0,
+      OAI: t.OAI ?? 0,
+    }));
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -187,11 +255,19 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
               onChange={(e) => setSelectedTeam(e.target.value)}
             >
               <option value="all">전사 종합</option>
-              {wave.teams.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
+              {wave.hierarchy && wave.hierarchy.length > 0
+                ? flattenHierarchy(wave.hierarchy).map(({ node, depth }) => (
+                    <option key={node.id} value={node.id}>
+                      {"  ".repeat(depth)}
+                      {depth > 0 ? "› " : ""}
+                      {LEVEL_LABEL[node.level]} · {node.name}
+                    </option>
+                  ))
+                : wave.teams.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
             </select>
           </div>
 
@@ -298,14 +374,64 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
 
       {tab === "teams" && (
         <div className="space-y-4">
-          {aggregate?.gapMatrix?.mode === "OLS_REQUIRED" && (
-            <div className="card-luxe p-4 text-sm text-muted">
-              {aggregate.gapMatrix.note}
-            </div>
+          {/* 전사 → 사업본부 → 사업부 → 팀 브레드크럼 */}
+          <div className="flex flex-wrap items-center gap-1 text-sm">
+            <button
+              type="button"
+              className={`nav-pill text-xs ${drillId === null ? "nav-pill-active" : ""}`}
+              onClick={() => setDrillId(null)}
+            >
+              전사 종합
+            </button>
+            {drillBreadcrumb.map((node) => (
+              <span key={node.teamId} className="flex items-center gap-1">
+                <span className="text-muted">›</span>
+                <button
+                  type="button"
+                  className={`nav-pill text-xs ${drillId === node.teamId ? "nav-pill-active" : ""}`}
+                  onClick={() => setDrillId(node.teamId)}
+                >
+                  {LEVEL_LABEL[node.level ?? "TEAM"]} · {node.teamName}
+                </button>
+              </span>
+            ))}
+          </div>
+
+          {drillId &&
+            (() => {
+              const self = nodeById.get(drillId);
+              if (!self) return null;
+              if (self.hidden) {
+                return (
+                  <div className="card-luxe p-4 text-sm text-muted">
+                    표본 부족 — 최소 5명 필요 (현재 N={self.sampleSize ?? 0})
+                  </div>
+                );
+              }
+              return (
+                <div className="card-luxe p-4">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold text-foreground">
+                      {LEVEL_LABEL[self.level ?? "TEAM"]} · {self.teamName}
+                    </span>
+                    <span className="text-xs text-muted">N={self.sampleSize ?? "—"}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {isEnabled("OHI") && <MetricCard label="OHI(SE)" value={self.OHI_SE} band={null} />}
+                    {isEnabled("ORI") && <MetricCard label="ORI" value={self.ORI} band={null} />}
+                    {isEnabled("OVI") && <MetricCard label="OVI" value={self.OVI} band={null} />}
+                    {isEnabled("OAI") && <MetricCard label="OAI" value={self.OAI} band={null} />}
+                  </div>
+                </div>
+              );
+            })()}
+
+          {drillId === null && aggregate?.gapMatrix?.mode === "OLS_REQUIRED" && (
+            <div className="card-luxe p-4 text-sm text-muted">{aggregate.gapMatrix.note}</div>
           )}
-          {aggregate?.gapMatrix?.mode === "GAP_MATRIX" && aggregate.gapMatrix.teams && (
+          {drillId === null && aggregate?.gapMatrix?.mode === "GAP_MATRIX" && aggregate.gapMatrix.teams && (
             <div className="card-luxe p-4">
-              <h3 className="mb-2 text-sm font-semibold">팀 Gap 매트릭스 (ORI vs OVI)</h3>
+              <h3 className="mb-2 text-sm font-semibold">팀 Gap 매트릭스 (ORI vs OVI) — 리프(팀) 전체</h3>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -324,18 +450,60 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
               </div>
             </div>
           )}
-          <ul className="space-y-2">
-            {(aggregate?.teams ?? []).map((t) => (
-              <li key={t.teamId} className="card-luxe flex items-center justify-between p-4 text-sm">
-                <span className="font-medium text-foreground">{t.teamName}</span>
-                {t.hidden ? (
-                  <span className="text-muted">표본 부족</span>
-                ) : (
-                  <span className="text-muted">집계 가능</span>
-                )}
-              </li>
-            ))}
-          </ul>
+
+          {drillBarData.length >= 2 && (
+            <div className="card-luxe p-4">
+              <h3 className="mb-2 text-sm font-semibold">
+                {LEVEL_LABEL[drillChildren[0]?.level ?? "TEAM"]} 간 비교
+              </h3>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={drillBarData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                    <YAxis domain={[1, 5]} />
+                    <Tooltip />
+                    {isEnabled("OHI") && <Bar dataKey="OHI" name="OHI(SE)" fill="#c9a227" />}
+                    {isEnabled("ORI") && <Bar dataKey="ORI" fill="#64748b" />}
+                    {isEnabled("OVI") && <Bar dataKey="OVI" fill="#94a3b8" />}
+                    {isEnabled("OAI") && <Bar dataKey="OAI" fill="#475569" />}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {drillChildren.length > 0 ? (
+            <ul className="space-y-2">
+              {drillChildren.map((t) => {
+                const hasChildren = childrenOf(t.teamId).length > 0;
+                return (
+                  <li key={t.teamId} className={`card-luxe p-4 text-sm ${t.hidden ? "opacity-50" : ""}`}>
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-2 text-left"
+                      onClick={() => setDrillId(t.teamId)}
+                    >
+                      <span className="font-medium text-foreground">
+                        <span className="mr-2 rounded-full bg-black/5 px-2 py-0.5 text-[10px] text-muted dark:bg-white/10">
+                          {LEVEL_LABEL[t.level ?? "TEAM"]}
+                        </span>
+                        {t.teamName}
+                        {hasChildren && <span className="ml-1 text-muted">›</span>}
+                      </span>
+                      {t.hidden ? (
+                        <span className="text-muted">표본 부족</span>
+                      ) : (
+                        <span className="text-muted">집계 가능 · N={t.sampleSize ?? "—"}</span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            drillId && <p className="text-sm text-muted">하위 조직이 없습니다.</p>
+          )}
         </div>
       )}
     </div>

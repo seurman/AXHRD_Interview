@@ -50,7 +50,7 @@ export async function GET(req: Request) {
       teams: { orderBy: { name: "asc" } },
       _count: {
         select: {
-          teams: true,
+          teams: { where: { level: "TEAM" } },
           responses: { where: { submittedAt: { not: null } } },
         },
       },
@@ -67,7 +67,7 @@ export async function GET(req: Request) {
 
 type PostBody = {
   label?: string;
-  teams?: Array<{ name: string; department?: string }>;
+  teams?: Array<{ name: string; department?: string; divisionName?: string; unitName?: string }>;
   enabledSectionCodes?: string[];
   opensAt?: string | null;
   closesAt?: string | null;
@@ -110,6 +110,8 @@ export async function POST(req: Request) {
       teams: teams.map((t) => ({
         name: typeof t.name === "string" ? t.name : "",
         department: typeof t.department === "string" ? t.department : null,
+        divisionName: typeof t.divisionName === "string" ? t.divisionName : null,
+        unitName: typeof t.unitName === "string" ? t.unitName : null,
       })),
     });
 

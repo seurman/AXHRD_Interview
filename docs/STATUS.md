@@ -1,6 +1,35 @@
-# 현재 상태 (2026-07-10 기준)
+# 현재 상태 (2026-07-13 기준)
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
+
+## 최근 작업 — 조직 하이어라키(사업본부/사업부/팀) 드릴다운 (2026-07-13, Cowork 세션 · 이어서)
+
+- **배경**: "회사 전체 → 조직 하이어라키 드릴다운"을 보고 싶고, 하이어라키(사업본부→사업부→팀)는 **기관 담당자가 캠페인 생성 시 직접 세팅**할 수 있어야 한다는 요청. 새 모델을 만들지 않고 기존 `DiagnosticTeam`을 self-relation 트리로 확장하는 방식으로 구현 — 스키마 충격 최소화.
+- **스키마** (`prisma/schema.prisma`): `enum DiagnosticTeamLevel { DIVISION UNIT TEAM }` 추가. `DiagnosticTeam`에 `level`(기본 `TEAM`, 하위호환) · `parentId`(self-relation, `onDelete: Cascade`) 추가 + 인덱스 2개. 마이그레이션 `20260713200000_diagnostic_team_hierarchy/migration.sql` **손으로 작성**(이 세션은 Prisma 엔진 바이너리가 네트워크 정책상 다운로드 불가 — `prisma migrate dev` 자체를 못 돌림).
+- **`lib/diagnostic/campaigns.ts`**: `TeamInput`에 `divisionName?`/`unitName?` 추가. `createHierarchyTeams()` 신규 — 팀 행마다 `divisionName`→DIVISION 노드, `unitName`→UNIT 노드를 이름 기준 dedupe 생성 후 리프 TEAM 생성. 두 필드를 안 주면 기존과 100% 동일하게 flat `level=TEAM, parentId=null`. `waveListDto()`에 `hierarchy`(전체 노드) 필드 추가, `teamCount`/`teams`는 리프(TEAM)만 세도록 수정.
+- **`lib/diagnostic/aggregate.ts`**: `computeAggregateScores({waveId, teamId})`의 `teamId`가 이제 계층 어느 레벨의 id든 받을 수 있음 — 내부적으로 리프 팀 id로 해석(`resolveLeafTeamIds`) 후 집계. `teamId` 없이(전사) 호출하면 **모든 계층 노드**(본부·사업부·팀)의 점수를 한 번에 계산해 `teams: [...]`로 반환 → 프론트가 API 1회 호출로 전체 드릴다운 트리를 그림. `gapMatrix`/ICC(`teamReliability`)는 `level === "TEAM"` 행만 사용(롤업 분산 혼입 방지).
+- **API 라우트 4곳** (`api/org/diagnosis/waves/route.ts`, `waves/[id]/route.ts`, `waves/[id]/teams/route.ts`, `api/admin/diagnostic/waves/route.ts`, `waves/[id]/route.ts`): `_count.teams`를 `{where:{level:"TEAM"}}`로 제한, GET 응답에 `hierarchy` 필드 추가, `divisionName`/`unitName` pass-through. `admin/diagnostic/waves/[id]/teams/route.ts`(수퍼어드민 단순 빠른추가용)는 의도적으로 flat-only 유지.
+- **`lib/diagnostic/survey-loader.ts`**: `loadTeamSurvey`가 `level:"TEAM"` slug만 응답 링크로 인식하도록 방어 추가.
+- **UI**:
+  - `components/diagnostic/DiagnosisOrgConsole.tsx`(기관 담당자 콘솔): 팀 입력 textarea가 콤마 열 개수로 깊이 인식 — `팀만` / `사업부, 팀` / `사업본부, 사업부, 팀`. 링크 목록·CSV export에 `nodePath()`(사업본부 › 사업부 › 팀) 표시.
+  - `components/diagnostic/DiagnosisWaveDashboard.tsx`(기관용 리포트), `components/admin/AdminDiagnosticReport.tsx`(수퍼어드민 리포트): "teams" 탭을 브레드크럼(전사 종합 → 사업본부 → 사업부 → 팀) 드릴다운으로 전면 교체. 각 단계에서 선택 노드 요약 카드(OHI/ORI/OVI/OAI) + 하위 조직 비교 막대차트 + 클릭 가능한 하위 목록. Gap 매트릭스/ICC는 전사(root) 화면에만 노출.
+- **데모 시드에 하이어라키 반영 완료**: `prisma/seed/demo-arc-index.ts`의 5개 팀을 3개 사업본부(경영기획본부·연구개발본부·오퍼레이션본부) 산하 사업부로 묶음 — 전략기획팀/사업개발팀(경영기획본부), 연구1팀(연구개발본부), 지원행정팀/현장서비스A(오퍼레이션본부). `createDiagnosticWave` 호출에 `divisionName`/`unitName` 전달만 추가, 응답 생성 로직은 변경 없음(팀명으로 매칭하므로 DIVISION/UNIT 노드는 자동으로 건너뜀). **재시드 필요**: `cd web && npx tsx prisma/seed/demo-arc-index.ts`.
+- **로컬 필수 실행 (이 세션은 DB/Prisma 엔진 접근 불가)**:
+  1. `cd web && npx prisma migrate dev` — 위 손작성 마이그레이션 적용 + Prisma client에 `level`/`parentId`/`DiagnosticTeamLevel` 타입 반영 (client 재생성 전에는 새 필드 관련 타입에러가 날 수 있음)
+  2. `npx tsc --noEmit` — 전체 타입체크
+  3. `npx vitest run` — 기존 테스트 회귀 확인
+  4. (선택) 캠페인 생성 화면에서 `그로스본부, 마케팅사업부, 콘텐츠팀` 형식으로 팀을 넣어보고 리포트 "팀" 탭에서 드릴다운이 되는지 수동 확인
+
+## 최근 작업 — ARC Index 리포트 β회귀 IPA·ICC(JS) + 데모 데이터 (2026-07-13, Cowork 세션)
+
+- **배경**: 업로드된 `ARC 인덱스 보고서_v1.0.docx` 목업 대비, 실제 `/admin/diagnostic/waves/[id]/report`는 IPA(β회귀)·LPA·HLM/ICC가 전부 "통계분석 엔진 연결 예정" placeholder였음(2026-07-10 기록과 일치). 이번 세션은 그중 **JS로 가능한 부분(β회귀 IPA, ICC)만** 먼저 구현 — LPA(GMM)·완전한 HLM·주관식 LDA는 여전히 별도 파이썬 통계 서비스 대상(미구현).
+- **`lib/diagnostic/arc-scoring.ts`**: `olsRegression()`(Gauss-Jordan 다중회귀) · `computeDriverImportance()`(Y=SE, X=10개 영역 표준화 β, 완전사례 n<30이면 `insufficientData` 반환) · `computeIcc1()`(일원배치 ANOVA, Fisher 불균형 n̄ 근사) 순수함수 추가. 독립적으로 수치 검증 완료(별도 스크립트로 계수 복원·ICC 고저 분리 확인 — 이 세션 bash 샌드박스는 방금 수정한 파일의 mtime을 과거 스냅샷으로 캐싱하는 현상이 있어 `npx tsc`/`vitest`를 이 세션에서 신뢰성 있게 못 돌렸음, **로컬에서 재검증 필요**).
+- **버그 수정**: `DRIVER_CODES`에 `D`(전략방향, D01/D02)가 누락되어 있었음 — 원 설계 문서(`ARC_OHI_최종_v2.md`)엔 "X=10개 영역"이라 명시. `DRIVER_ORDER`에 `D` 추가해 9→10개 영역으로 정정.
+- **`lib/diagnostic/aggregate.ts`**: `computeAggregateScores()`가 `driverImportance`(웨이브 전체)·`teamReliability`(ICC, N<5 팀은 원자료도 제외)를 반환하도록 확장. API 라우트는 그대로 pass-through라 수정 불필요.
+- **`components/admin/AdminDiagnosticReport.tsx`**: IPA·HLM/ICC placeholder를 실제 `DriverPriorityChart`/`IccCard`로 교체. LPA는 그대로 placeholder(파이썬 서비스 필요).
+- **데모 데이터**: `prisma/seed/demo-arc-index.ts`(`npm run db:seed:demo-arc`) — 데모 기관 "테크노바 (ARC 데모)"(joinCode `ARC-DEMO-2026`) 생성, 5개 팀·Wave 1→2·팀당 18~24명 페르소나 기반 합성 응답. 심리적안전·성과보상 낮음/문화포용 높음/CV01만 Wave2 하락/팀간 편차(ICC용) 내러티브를 실제 DB 문항 스키마(`DiagnosticItem.isReversed`/`hasImportanceAxis`/`scaleType`)에 맞춰 생성 — 재실행 시 기존 웨이브만 삭제 후 재생성(멱등). **로컬에서 `cd web && npx tsx prisma/seed/demo-arc-index.ts` 실행 필요(이 세션은 Prisma 엔진 네트워크 제약으로 실행 불가)**.
+- **다음 배치(미구현)**: 주관식 LDA(Gemini 호출 기반으로 대체 예정) · LPA(GMM) · 완전한 HLM(팀수준 예측변수) · 처방(Prescription) 탭 · 인과흐름/우선순위 카드(종합 탭) — 목업엔 있으나 아직 리포트에 없음.
+- 검증 필요(로컬): `npx tsc --noEmit`, `npx vitest run src/lib/diagnostic/arc-scoring.test.ts`, 시드 스크립트 실행 후 `/admin/diagnostic`에서 결과 확인.
 
 ## 최근 작업 — Platform CMS 운영성 개선 (2026-07-10)
 

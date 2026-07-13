@@ -1,0 +1,154 @@
+/* 홈 랜딩 정리 — 친근 + 전문 (회전·손글씨 과잉 제거, 콜라주 레이아웃 유지) */
+
+/* subtle 고정 시 landing-page.css가 콜라주 회전을 지우는 규칙 무효화 */
+body.chapbook-page .chapbook-root .collage .polaroid-1 {
+  transform: rotate(-3deg) !important;
+}
+body.chapbook-page .chapbook-root .collage .polaroid-2 {
+  transform: rotate(2.5deg) !important;
+}
+body.chapbook-page .chapbook-root .collage .note-1 {
+  transform: rotate(-2deg) !important;
+}
+body.chapbook-page .chapbook-root .collage .tape-1 {
+  transform: rotate(-4deg) !important;
+}
+
+/* 강조어 — 한글은 sans 세미볼드, 라틴/숫자만 세리프 이탤릭 */
+body.chapbook-page .chapbook-root .hand-emph {
+  font-family: var(--font-kr) !important;
+  font-style: normal !important;
+  font-weight: 700 !important;
+  color: var(--coral-600) !important;
+  transform: none !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  letter-spacing: -0.02em !important;
+}
+
+body.chapbook-page .chapbook-root .serif {
+  font-family: var(--font-serif) !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+  color: var(--coral-600) !important;
+}
+
+/* 제목 스케일 — landing-page 88px 덮어쓰기 */
+body.chapbook-page .chapbook-root .hero h1 {
+  font-size: clamp(2rem, 3.8vw, 3.25rem) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.035em !important;
+  line-height: 1.12 !important;
+}
+
+body.chapbook-page .chapbook-root .intro-line h2,
+body.chapbook-page .chapbook-root .map-section .head h2,
+body.chapbook-page .chapbook-root .chapter-head h2,
+body.chapbook-page .chapbook-root .diff-head h2 {
+  font-size: clamp(1.625rem, 2.6vw, 2.125rem) !important;
+  line-height: 1.2 !important;
+}
+
+body.chapbook-page .chapbook-root .closing h2 {
+  font-size: clamp(1.75rem, 3vw, 2.5rem) !important;
+}
+
+body.chapbook-page .chapbook-root .cta h2 {
+  font-size: clamp(1.5rem, 2.4vw, 2rem) !important;
+}
+
+/* 챕터 라벨 */
+body.chapbook-page .chapbook-root .chapter-num {
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  color: var(--coral-600) !important;
+}
+
+/* 본문·캡션 */
+body.chapbook-page .chapbook-root .hero .sub,
+body.chapbook-page .chapbook-root .lead-txt {
+  font-size: 16px !important;
+  line-height: 1.75 !important;
+}
+
+body.chapbook-page .chapbook-root .intro-line .caption {
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transform: none !important;
+}
+
+/* 지도·카드 — 정렬 유지 */
+body.chapbook-page .chapbook-root .landmark .label {
+  font-family: var(--font-sans) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  background: var(--cream-50) !important;
+  border: 1px solid var(--ink-200) !important;
+  border-radius: 999px !important;
+  padding: 6px 12px !important;
+  transform: none !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+body.chapbook-page .chapbook-root .landmark .num {
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+body.chapbook-page .chapbook-root .axis .n,
+body.chapbook-page .chapbook-root .diff-card .n {
+  font-family: var(--font-mono) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase !important;
+  color: var(--coral-600) !important;
+}
+
+body.chapbook-page .chapbook-root .diff-card .n {
+  font-size: 10px !important;
+  margin-bottom: 12px !important;
+}
+
+body.chapbook-page .chapbook-root .diff-card {
+  transform: none !important;
+}
+
+body.chapbook-page .chapbook-root .diff-card:hover {
+  transform: translateY(-3px) !important;
+}
+
+body.chapbook-page .chapbook-root .diff-card .tape {
+  display: none !important;
+}
+
+body.chapbook-page .chapbook-root .note {
+  font-family: var(--font-kr) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.55 !important;
+}
+
+body.chapbook-page .chapbook-root .map-label,
+body.chapbook-page .chapbook-root .closing .sig {
+  transform: none !important;
+  font-family: var(--font-mono) !important;
+  font-size: 10px !important;
+  letter-spacing: 0.14em !important;
+}
+
+/* 모바일 — 콜라주 숨기고 카피 중심 */
+@media (max-width: 900px) {
+  body.chapbook-page .chapbook-root .collage {
+    display: none !important;
+  }
+  body.chapbook-page .chapbook-root .hero-inner {
+    grid-template-columns: 1fr !important;
+    min-height: auto !important;
+  }
+}

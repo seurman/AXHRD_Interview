@@ -21,7 +21,7 @@ export async function GET(req: Request) {
       instrument: { select: { nameKo: true } },
       _count: {
         select: {
-          teams: true,
+          teams: { where: { level: "TEAM" } },
           responses: { where: { submittedAt: { not: null } } },
         },
       },

@@ -118,6 +118,7 @@ export function computeTL(answers: ScoredAnswers, reversed: Set<string>) {
 }
 
 const DRIVER_CODES: Record<string, string[]> = {
+  D: ["D01", "D02"],
   SL: ["SL01", "SL02", "SL03"],
   SV: ["SV01", "SV02", "SV03"],
   PS: ["PS01", "PS02", "PS03"],
@@ -308,6 +309,227 @@ export function computeTeamGapMatrix(
 
 export function buildReversedSet(items: Pick<DiagnosticItem, "itemCode" | "isReversed">[]): Set<string> {
   return new Set(items.filter((i) => i.isReversed).map((i) => i.itemCode));
+}
+
+/**
+ * Phase 1 JS 통계 근사치 — 다중선형회귀(OLS)·ICC(1).
+ * LPA(구성원 유형)·HLM(다층모형 전체)·LDA(주관식 테마)는 별도 파이썬 통계 서비스 대상 (docs/STATUS.md 참고).
+ * 여기서는 β회귀 기반 IPA와 팀간 신뢰도(ICC)만 순수 함수로 구현한다.
+ */
+
+function stdDev(values: number[]): number {
+  const n = values.length;
+  if (n < 2) return 0;
+  const mean = values.reduce((a, b) => a + b, 0) / n;
+  const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / (n - 1);
+  return Math.sqrt(variance);
+}
+
+export function median(values: number[]): number {
+  if (!values.length) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+/** Gauss-Jordan 소거법으로 Ax=b 를 푼다. 특이행렬(공선성 등)이면 null. */
+function solveLinearSystem(A: number[][], b: number[]): number[] | null {
+  const n = A.length;
+  const M = A.map((row, i) => [...row, b[i]]);
+
+  for (let col = 0; col < n; col++) {
+    let pivotRow = col;
+    for (let r = col + 1; r < n; r++) {
+      if (Math.abs(M[r][col]) > Math.abs(M[pivotRow][col])) pivotRow = r;
+    }
+    if (Math.abs(M[pivotRow][col]) < 1e-10) return null;
+    [M[col], M[pivotRow]] = [M[pivotRow], M[col]];
+
+    const pivot = M[col][col];
+    for (let c = col; c <= n; c++) M[col][c] /= pivot;
+
+    for (let r = 0; r < n; r++) {
+      if (r === col) continue;
+      const factor = M[r][col];
+      if (factor === 0) continue;
+      for (let c = col; c <= n; c++) M[r][c] -= factor * M[col][c];
+    }
+  }
+
+  return M.map((row) => row[n]);
+}
+
+export type RegressionResult = {
+  coefficients: number[];
+  standardizedCoefficients: number[];
+  rSquared: number;
+  n: number;
+};
+
+/**
+ * 다중선형회귀(OLS). X는 관측치×예측변수 행렬(절편 제외), y는 종속변인.
+ * 표준화 β_j = raw β_j × SD(X_j) / SD(y) — 예측변수 단위가 달라도 상대적 영향력 비교 가능.
+ */
+export function olsRegression(X: number[][], y: number[]): RegressionResult | null {
+  const n = X.length;
+  if (n === 0 || y.length !== n) return null;
+  const p = X[0].length;
+  if (p === 0) return null;
+
+  const design = X.map((row) => [1, ...row]);
+  const k = p + 1;
+
+  const XtX: number[][] = Array.from({ length: k }, () => new Array(k).fill(0));
+  const Xty: number[] = new Array(k).fill(0);
+  for (let i = 0; i < n; i++) {
+    for (let a = 0; a < k; a++) {
+      Xty[a] += design[i][a] * y[i];
+      for (let b = 0; b < k; b++) {
+        XtX[a][b] += design[i][a] * design[i][b];
+      }
+    }
+  }
+
+  const coeffs = solveLinearSystem(XtX, Xty);
+  if (!coeffs) return null;
+
+  const yMean = y.reduce((a, b) => a + b, 0) / n;
+  let ssRes = 0;
+  let ssTot = 0;
+  for (let i = 0; i < n; i++) {
+    const pred = design[i].reduce((sum, v, idx) => sum + v * coeffs[idx], 0);
+    ssRes += (y[i] - pred) ** 2;
+    ssTot += (y[i] - yMean) ** 2;
+  }
+  const rSquared = ssTot > 0 ? 1 - ssRes / ssTot : 0;
+
+  const ySd = stdDev(y);
+  const standardizedCoefficients = coeffs.slice(1).map((b, j) => {
+    const xj = X.map((row) => row[j]);
+    const xSd = stdDev(xj);
+    return ySd > 0 ? b * (xSd / ySd) : 0;
+  });
+
+  return { coefficients: coeffs, standardizedCoefficients, rSquared, n };
+}
+
+/** IPA(β회귀 기반 우선순위)에 사용하는 10개 영역 순서 — DRIVER_CODES 키와 동일해야 함(D=전략방향 포함). */
+export const DRIVER_ORDER = ["D", "SL", "SV", "PS", "EM", "PM", "LG", "CI", "WE", "C"] as const;
+
+export type DriverImportance = {
+  code: string;
+  current: number | null;
+  beta: number | null;
+  priority: "FOCUS" | "MAINTAIN" | null;
+};
+
+export type DriverImportanceSummary = {
+  entries: DriverImportance[];
+  rSquared: number | null;
+  n: number;
+  insufficientData: boolean;
+};
+
+/**
+ * Y=SE(활력·헌신·몰두 종합) / X=10개 영역(전략방향+9개 드라이버) 현재점수 — 응답자 단위 완전사례만 사용.
+ * 예측변수(10개) 대비 표본이 너무 적으면(경험칙 n < p×3) 불안정하므로 계산하지 않는다.
+ */
+export function computeDriverImportance(
+  perRespondent: Array<{ ohi: { SE: number | null; drivers: Record<string, { current: number | null }> } }>,
+): DriverImportanceSummary {
+  const rows: number[][] = [];
+  const ys: number[] = [];
+  for (const r of perRespondent) {
+    const se = r.ohi.SE;
+    if (se == null) continue;
+    const vals = DRIVER_ORDER.map((code) => r.ohi.drivers[code]?.current ?? null);
+    if (vals.some((v) => v == null)) continue;
+    rows.push(vals as number[]);
+    ys.push(se);
+  }
+
+  const minN = DRIVER_ORDER.length * 3;
+  if (rows.length < minN) {
+    return {
+      entries: DRIVER_ORDER.map((code) => ({ code, current: null, beta: null, priority: null })),
+      rSquared: null,
+      n: rows.length,
+      insufficientData: true,
+    };
+  }
+
+  const reg = olsRegression(rows, ys);
+  const currentAvg = DRIVER_ORDER.map((_, idx) => average(rows.map((row) => row[idx])));
+  const betas = reg?.standardizedCoefficients ?? DRIVER_ORDER.map(() => null);
+  const betaMedian = median(betas.filter((b): b is number => b != null));
+  const currentMedian = median(currentAvg.filter((v): v is number => v != null));
+
+  const entries = DRIVER_ORDER.map((code, idx) => {
+    const beta = reg ? betas[idx] : null;
+    const current = currentAvg[idx];
+    const priority: DriverImportance["priority"] =
+      beta != null && current != null ? (beta >= betaMedian && current < currentMedian ? "FOCUS" : "MAINTAIN") : null;
+    return { code, current, beta, priority };
+  });
+
+  return { entries, rSquared: reg?.rSquared ?? null, n: rows.length, insufficientData: false };
+}
+
+export type IccResult = {
+  icc: number | null;
+  n: number;
+  k: number;
+  interpretation: string | null;
+};
+
+function iccInterpretation(icc: number | null): string | null {
+  if (icc == null) return null;
+  if (icc < 0.05) return "팀 간 차이 미미 — 조직 전체 개입으로 충분";
+  if (icc < 0.15) return "팀 간 차이 존재 — 팀 단위 코칭 고려";
+  return "팀마다 편차 큼 — 팀별 맞춤 개입 필수(조직 평균만으로는 오진 위험)";
+}
+
+/**
+ * ICC(1) — 일원배치 랜덤효과 분산분석. groups는 팀별 원자료 배열(예: 응답자별 SE).
+ * 그룹 크기가 다를 때는 Fisher의 불균형 근사식으로 평균 그룹크기(n̄)를 구한다.
+ */
+export function computeIcc1(groups: number[][]): IccResult {
+  const validGroups = groups.filter((g) => g.length >= 2);
+  const k = validGroups.length;
+  if (k < 2) return { icc: null, n: 0, k, interpretation: null };
+
+  const allValues = validGroups.flat();
+  const N = allValues.length;
+  const grandMean = allValues.reduce((a, b) => a + b, 0) / N;
+
+  let ssBetween = 0;
+  let ssWithin = 0;
+  for (const g of validGroups) {
+    const gMean = g.reduce((a, b) => a + b, 0) / g.length;
+    ssBetween += g.length * (gMean - grandMean) ** 2;
+    for (const v of g) ssWithin += (v - gMean) ** 2;
+  }
+
+  const dfBetween = k - 1;
+  const dfWithin = N - k;
+  if (dfWithin <= 0 || dfBetween <= 0) return { icc: null, n: N, k, interpretation: null };
+
+  const msBetween = ssBetween / dfBetween;
+  const msWithin = ssWithin / dfWithin;
+  const sumSquaredGroupSizes = validGroups.reduce((sum, g) => sum + g.length * g.length, 0);
+  const nBar = (N - sumSquaredGroupSizes / N) / dfBetween;
+
+  let icc: number | null;
+  if (msWithin <= 0) {
+    icc = msBetween > 0 ? 1 : null;
+  } else if (nBar <= 1) {
+    icc = null;
+  } else {
+    const raw = (msBetween - msWithin) / (msBetween + (nBar - 1) * msWithin);
+    icc = Math.max(0, raw);
+  }
+
+  return { icc, n: N, k, interpretation: iccInterpretation(icc) };
 }
 
 export function computeArcScoresFromAnswers(

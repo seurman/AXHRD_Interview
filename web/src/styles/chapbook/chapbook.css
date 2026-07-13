@@ -1,0 +1,308 @@
+/* ─────────────────────────────────────────────────────────────
+   AXHRD Chapbook — 화첩(畵帖) styling layer
+   Sits on top of colors_and_type.css. Two intensities via
+   body[data-intensity="subtle"|"strong"].
+   ───────────────────────────────────────────────────────────── */
+
+/* Handwriting accents — 기본은 세리프 이탤릭, strong 모드에서만 손글씨 느낌 */
+:root {
+  --font-hand: var(--font-serif);
+  --font-hand-kr: var(--font-kr);
+
+  /* Chapbook-specific tokens */
+  --tape-yellow: #F2D97A;
+  --tape-coral:  #FFC9B8;
+  --tape-mint:   #C9DFC7;
+  --tape-plum:   #D7BFCC;
+  --note-yellow: #FBECB6;
+  --note-pink:   #FFD9CB;
+  --note-mint:   #DDECD5;
+  --note-blue:   #C9D8E6;
+  --pencil:      #4A3E36;
+  --paper-shadow: 0 1px 2px rgba(31,26,23,0.08), 0 8px 20px rgba(31,26,23,0.10);
+  --paper-shadow-lg: 0 2px 4px rgba(31,26,23,0.10), 0 20px 40px rgba(31,26,23,0.15);
+}
+
+/* ─── PAGE / PAPER (scoped to chapbook home) ─── */
+body.chapbook-page .chapbook-root,
+body.chapbook-page .chapbook-root * {
+  box-sizing: border-box;
+}
+
+body.chapbook-page {
+  background: var(--cream-100) !important;
+  color: var(--ink-900);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+body.chapbook-page .chapbook-root img { display: block; max-width: 100%; }
+body.chapbook-page .chapbook-root a { color: inherit; text-decoration: none; }
+body.chapbook-page .chapbook-root button { font: inherit; cursor: pointer; }
+
+/* Paper texture — subtle noise via SVG data-uri */
+body.chapbook-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.09  0 0 0 0 0.07  0 0 0 0 0.06  0 0 0 0.08 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: multiply;
+}
+body[data-intensity="subtle"]::before { opacity: 0.35; }
+body[data-intensity="strong"]::before { opacity: 0.85; }
+
+/* Everything sits above the noise */
+body.chapbook-page .site,
+body.chapbook-page nav.top,
+body.chapbook-page footer,
+body.chapbook-page .chapbook-root section {
+  position: relative;
+  z-index: 2;
+}
+
+body.chapbook-page .site { max-width: 1240px; margin: 0 auto; padding: 0 32px; }
+
+/* ─── NAV ─── */
+nav.top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24px 0 20px;
+}
+.brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+.brand .dot { color: var(--coral-500); }
+.menu { display: flex; gap: 32px; font-size: 14px; color: var(--fg-2); font-weight: 500; }
+.menu a { position: relative; transition: color .2s var(--ease); }
+.menu a:hover { color: var(--fg); }
+.menu a:hover::after {
+  content: ''; position: absolute; left: -2px; right: -2px; bottom: -6px; height: 6px;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 6' preserveAspectRatio='none'><path d='M1 3 Q 15 0, 30 3 T 59 3' fill='none' stroke='%23D64A2C' stroke-width='1.6' stroke-linecap='round'/></svg>") center/100% 100% no-repeat;
+}
+.nav-cta { display: flex; align-items: center; gap: 12px; }
+
+/* ─── HAND-DRAWN PRIMITIVES ─── */
+.squiggle {
+  position: relative;
+  display: inline-block;
+}
+.squiggle::after {
+  content: '';
+  position: absolute; left: -4px; right: -4px; bottom: -8px; height: 10px;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'><path d='M2 6 Q 15 1, 30 5 T 60 5 T 98 5' fill='none' stroke='%23D64A2C' stroke-width='2.4' stroke-linecap='round'/></svg>") center/100% 100% no-repeat;
+}
+
+.circle-hi {
+  position: relative;
+  display: inline-block;
+  padding: 0 6px;
+}
+.circle-hi::before {
+  content: '';
+  position: absolute; inset: -8px -4px -6px -4px;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'><path d='M8 20 Q 8 6, 50 5 T 92 20 Q 92 34, 50 35 T 8 20 Z' fill='none' stroke='%23D64A2C' stroke-width='2.4' stroke-linecap='round'/></svg>") center/100% 100% no-repeat;
+  z-index: -1;
+}
+
+.hand {
+  font-family: var(--font-hand);
+  font-weight: 600;
+  color: var(--coral-600);
+  transform: rotate(-2deg);
+  display: inline-block;
+}
+.hand-kr {
+  font-family: var(--font-hand-kr);
+  font-weight: 700;
+  color: var(--coral-600);
+}
+
+/* Masking tape */
+.tape {
+  position: absolute;
+  background: var(--tape-coral);
+  opacity: 0.75;
+  padding: 3px 20px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(31,26,23,0.55);
+  box-shadow: 0 1px 2px rgba(31,26,23,0.08);
+  transform: rotate(-3deg);
+  z-index: 5;
+  /* torn edges via clip-path */
+  clip-path: polygon(
+    2% 12%, 6% 4%, 15% 8%, 24% 2%, 35% 6%, 48% 3%, 60% 8%, 72% 2%, 84% 6%, 94% 3%, 98% 12%,
+    97% 88%, 92% 96%, 82% 92%, 70% 98%, 58% 93%, 45% 97%, 32% 92%, 20% 98%, 10% 93%, 4% 96%, 2% 88%
+  );
+}
+.tape.yellow { background: var(--tape-yellow); }
+.tape.mint { background: var(--tape-mint); }
+.tape.plum { background: var(--tape-plum); }
+
+/* Post-it note */
+.note {
+  background: var(--note-yellow);
+  padding: 20px 22px 22px;
+  border-radius: 2px;
+  box-shadow: var(--paper-shadow);
+  transform: rotate(-2deg);
+  position: relative;
+  font-family: var(--font-hand-kr);
+  color: var(--pencil);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.35;
+  min-width: 160px;
+}
+.note.pink { background: var(--note-pink); transform: rotate(2deg); }
+.note.mint { background: var(--note-mint); transform: rotate(-1deg); }
+.note.blue { background: var(--note-blue); transform: rotate(1.5deg); }
+/* Folded corner */
+.note::after {
+  content: '';
+  position: absolute; bottom: 0; right: 0;
+  width: 24px; height: 24px;
+  background: linear-gradient(-135deg, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0) 50%);
+}
+
+/* Polaroid */
+.polaroid {
+  background: #FBF7F1;
+  padding: 14px 14px 44px;
+  box-shadow: var(--paper-shadow-lg);
+  border-radius: 3px;
+  position: relative;
+  display: inline-block;
+}
+.polaroid .frame {
+  background: var(--cream-200);
+  aspect-ratio: 4/5;
+  width: 240px;
+  overflow: hidden;
+  position: relative;
+}
+.polaroid .caption {
+  position: absolute; bottom: 12px; left: 0; right: 0;
+  text-align: center;
+  font-family: var(--font-hand-kr);
+  font-size: 18px;
+  color: var(--pencil);
+  font-weight: 700;
+}
+
+/* Push pin */
+.pin {
+  position: absolute;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #FF8A70, var(--coral-500) 60%, var(--coral-600));
+  box-shadow: 0 2px 3px rgba(31,26,23,0.35), inset -2px -2px 3px rgba(0,0,0,0.15);
+  z-index: 6;
+}
+
+/* Star burst / stamp */
+.stamp {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 76px; height: 76px;
+  border-radius: 50%;
+  border: 2px dashed var(--coral-500);
+  color: var(--coral-600);
+  font-family: var(--font-hand-kr);
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.1;
+  transform: rotate(-8deg);
+  background: rgba(252,228,218,0.5);
+}
+
+/* Rotation utility */
+.tilt-l { transform: rotate(-2deg); }
+.tilt-r { transform: rotate(2deg); }
+.tilt-l3 { transform: rotate(-3deg); }
+.tilt-r3 { transform: rotate(3deg); }
+.tilt-l5 { transform: rotate(-5deg); }
+.tilt-r5 { transform: rotate(5deg); }
+
+/* Intensity toggle — 'subtle' pulls back the chapbook layer */
+body[data-intensity="subtle"] .tape { opacity: 0.45; }
+body[data-intensity="subtle"] .note { transform: rotate(-0.5deg); box-shadow: var(--shadow-md); }
+body[data-intensity="subtle"] .note.pink { transform: rotate(0.5deg); }
+body[data-intensity="subtle"] .note.mint { transform: rotate(-0.3deg); }
+body[data-intensity="subtle"] .note.blue { transform: rotate(0.3deg); }
+body[data-intensity="subtle"] .polaroid { box-shadow: var(--shadow-md); transform: none !important; }
+body[data-intensity="subtle"] .tilt-l, body[data-intensity="subtle"] .tilt-r,
+body[data-intensity="subtle"] .tilt-l3, body[data-intensity="subtle"] .tilt-r3,
+body[data-intensity="subtle"] .tilt-l5, body[data-intensity="subtle"] .tilt-r5 { transform: none; }
+body[data-intensity="subtle"] .hand { transform: none; color: var(--coral-600); }
+body[data-intensity="subtle"] .stamp { transform: none; }
+
+/* ─── SECTIONS ─── */
+body.chapbook-page .chapbook-root section { padding: 96px 0; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.24em;
+  text-transform: uppercase; color: var(--coral-600);
+  padding: 5px 12px; background: var(--coral-100); border-radius: 100px;
+}
+.eyebrow .dot { width: 6px; height: 6px; background: var(--coral-500); border-radius: 50%; }
+
+.chapter-num {
+  font-family: var(--font-hand);
+  font-size: 34px;
+  color: var(--coral-500);
+  font-weight: 700;
+  line-height: 1;
+}
+body[data-intensity="subtle"] .chapter-num {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--coral-600);
+  font-size: 28px;
+}
+
+/* ─── BUTTONS EXTENSION ─── */
+.btn { padding: 14px 22px; font-size: 14px; }
+.btn-accent { background: var(--coral-500); color: #fff; }
+.btn-accent:hover { background: var(--coral-600); }
+.btn-primary { background: var(--ink-900); color: var(--cream-100); }
+.btn-primary:hover { background: var(--ink-700); }
+.btn-ghost { background: transparent; color: var(--fg); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--cream-200); }
+
+/* Handwritten link arrow */
+.arrow-link {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--coral-600);
+  font-weight: 600;
+  font-size: 15px;
+}
+.arrow-link svg { transition: transform .3s var(--ease); }
+.arrow-link:hover svg { transform: translateX(6px); }
+
+/* ─── UTILS ─── */
+.divider {
+  border: 0;
+  height: 1px;
+  background: var(--ink-200);
+  margin: 0;
+}
+.container { max-width: 1240px; margin: 0 auto; padding: 0 32px; }
+
+/* Torn paper divider */
+.torn-divider {
+  height: 24px;
+  background-repeat: repeat-x;
+  background-position: center;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24'><path d='M0 12 L8 8 L16 14 L24 6 L32 15 L40 9 L48 13 L56 7 L64 16 L72 10 L80 14 L88 8 L96 15 L104 9 L112 13 L120 11 L120 24 L0 24 Z' fill='%23EFE4D5'/></svg>");
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  .site, .container { padding: 0 20px; }
+  section { padding: 64px 0; }
+  .menu { display: none; }
+}

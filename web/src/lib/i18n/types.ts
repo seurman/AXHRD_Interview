@@ -444,6 +444,18 @@ export type Dictionary = {
         empty: string;
       };
     };
+    coachInsights: {
+      sectionTitle: string;
+      masteryTitle: string;
+      masteryHint: string;
+      dimensionsTitle: string;
+      dimensionsHint: string;
+      dimensionsEmpty: string;
+      roundsTitle: string;
+      accessTitle: string;
+      accessHint: string;
+      view: string;
+    };
   };
   setup: {
     title: string;
@@ -454,22 +466,19 @@ export type Dictionary = {
       hint: string;
       upload: string;
       parsing: string;
+      imageOcrSuccess: string;
       manual: string;
       viewEdit: string;
       collapse: string;
       remove: string;
       charsApplied: string;
       placeholder: string;
-      urlLabel: string;
-      urlPlaceholder: string;
-      urlFetch: string;
-      urlFetching: string;
-      urlSuccess: string;
-      urlRequired: string;
     };
     job: { title: string };
     persona: { eyebrow: string };
     competency: { title: string; hint: string; plan: string; recommended: string; done: string; inProgress: string; notStarted: string };
+    prepMode: { title: string; hint: string; competencySet: string; companyTarget: string };
+    timeBudget: { title: string; hint: string; unit: string; perCompetency: string };
     questionCount: { title: string; hint: string; unit: string };
     resume: {
       title: string;

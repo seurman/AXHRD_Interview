@@ -39,6 +39,7 @@ export async function GET(req: Request, ctx: Ctx) {
 
   const enabled = parseEnabledSectionCodes(wave.enabledSectionCodes);
   const reportConfig = await resolveReportConfigForWave(wave.id);
+  const leafTeams = wave.teams.filter((t) => t.level === "TEAM");
 
   return NextResponse.json({
     wave: {
@@ -60,7 +61,16 @@ export async function GET(req: Request, ctx: Ctx) {
       organization: { id: wave.organization.id, name: wave.organization.name },
       memberCount: wave.organization._count.members,
       instrument: wave.instrument,
-      teams: teamLinksFromWave(wave, wave.teams, baseUrl),
+      teams: teamLinksFromWave(wave, leafTeams, baseUrl),
+      // 사업본부·사업부·팀 전체 트리 — 하이어라키 드릴다운 UI용
+      hierarchy: wave.teams.map((t) => ({
+        id: t.id,
+        name: t.name,
+        department: t.department,
+        slug: t.slug,
+        level: t.level,
+        parentId: t.parentId,
+      })),
     },
   });
 }

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { CompetencyDashboard } from "@/components/dashboard/CompetencyDashboard";
+import { CoachInsightsPanel } from "@/components/dashboard/CoachInsightsPanel";
 import { RecentActivityPanel, type ActivityItem } from "@/components/dashboard/RecentActivityPanel";
 import { WelcomeBanner } from "@/components/auth/WelcomeBanner";
 import { getCompetencyDashboardData } from "@/lib/dashboard/get-competency-dashboard-data";
@@ -140,6 +141,8 @@ export default async function DashboardPage() {
             level={dashboard.level}
             strengthDeck={dashboard.strengthDeck}
           />
+          <h2 className="text-lg font-semibold text-foreground">{d.coachInsights.sectionTitle}</h2>
+          <CoachInsightsPanel {...dashboard.coachInsights} />
         </>
       )}
 

@@ -35,6 +35,12 @@ import {
   FULL_SESSION_MIN_ITEMS,
   sessionItemLimits,
 } from "@/lib/interview/session-limits";
+import {
+  buildRoundBriefFromFeedbacks,
+  filterQueueByProgress,
+  isValidPrepMode,
+  parseCompetencyQueue,
+} from "@/lib/interview/competency-round";
 import { generateJdBonusQuestion } from "@/lib/interview/jd-bonus-question";
 import { generateResumeClaimQuestion } from "@/lib/interview/resume-claim-question";
 import {
@@ -583,11 +589,7 @@ async function handleRespond(req: Request, userId: string) {
   }
 
   if (planId && redirectUrl?.includes("/feedback")) {
-    const progress = await prisma.competencyProgress.findMany({
-      where: { planId },
-    });
-    const pendingProgress = progress.find((p) => p.status !== "COMPLETED");
-    nextCompetency = pendingProgress?.competency ?? null;
+    nextCompetency = await resolveNextQueuedCompetency(planId);
   }
 
   return NextResponse.json({
@@ -823,9 +825,7 @@ async function handleClaimVerificationRespond(params: {
   }
 
   if (planId && redirectUrl?.includes("/feedback")) {
-    const progress = await prisma.competencyProgress.findMany({ where: { planId } });
-    const pendingProgress = progress.find((p) => p.status !== "COMPLETED");
-    nextCompetency = pendingProgress?.competency ?? null;
+    nextCompetency = await resolveNextQueuedCompetency(planId);
   }
 
   return NextResponse.json({
@@ -983,9 +983,7 @@ async function handleBonusRespond(params: {
   }
 
   if (planId && redirectUrl?.includes("/feedback")) {
-    const progress = await prisma.competencyProgress.findMany({ where: { planId } });
-    const pendingProgress = progress.find((p) => p.status !== "COMPLETED");
-    nextCompetency = pendingProgress?.competency ?? null;
+    nextCompetency = await resolveNextQueuedCompetency(planId);
   }
 
   return NextResponse.json({
@@ -1135,6 +1133,59 @@ async function finalizeCompetencySession(params: {
 
   await markPlanCompleteIfNeeded(params.planId);
 
+  const plan = await prisma.interviewPlan.findUnique({
+    where: { id: params.planId },
+    include: { competencyProgress: true },
+  });
+
+  if (plan) {
+    const roundCodes = parseCompetencyQueue(plan.roundCompetencyCodes);
+    const remainingQueue = filterQueueByProgress(
+      parseCompetencyQueue(plan.queuedCompetencyCodes),
+      plan.competencyProgress,
+    ).filter((c) => c !== params.focusCompetency);
+
+    await prisma.interviewPlan.update({
+      where: { id: params.planId },
+      data: { queuedCompetencyCodes: remainingQueue },
+    });
+
+    if (roundCodes.length > 0) {
+      const roundDone = roundCodes.every((code) => {
+        const row = plan.competencyProgress.find((p) => p.competency === code);
+        return row?.status === "COMPLETED" || code === params.focusCompetency;
+      });
+
+      if (roundDone) {
+        const feedbackRows = await prisma.competencyFeedback.findMany({
+          where: {
+            progress: { planId: params.planId, competency: { in: roundCodes } },
+          },
+          include: { progress: { select: { competency: true } } },
+        });
+
+        const roundBrief = buildRoundBriefFromFeedbacks(
+          feedbackRows.map((fb) => ({
+            competency: fb.progress.competency,
+            strengths: fb.strengths,
+            improvements: fb.improvements,
+            summary: fb.summary,
+          })),
+          {
+            competencies: roundCodes,
+            timeBudgetMinutes: plan.timeBudgetMinutes,
+            prepMode: isValidPrepMode(plan.prepMode) ? plan.prepMode : null,
+          },
+        );
+
+        await prisma.interviewPlan.update({
+          where: { id: params.planId },
+          data: { roundBrief: roundBrief as unknown as Prisma.InputJsonValue },
+        });
+      }
+    }
+  }
+
   return `/interview/plan/${params.planId}/competency/${params.focusCompetency}/feedback?sessionId=${params.sessionId}`;
 }
 
@@ -1196,4 +1247,17 @@ async function finalizeFullSession(
       summaryJson: reportData as unknown as Prisma.InputJsonValue,
     },
   });
+}
+
+async function resolveNextQueuedCompetency(planId: string): Promise<string | null> {
+  const planRow = await prisma.interviewPlan.findUnique({
+    where: { id: planId },
+    include: { competencyProgress: true },
+  });
+  if (!planRow) return null;
+  const queue = filterQueueByProgress(
+    parseCompetencyQueue(planRow.queuedCompetencyCodes),
+    planRow.competencyProgress,
+  );
+  return queue[0] ?? null;
 }

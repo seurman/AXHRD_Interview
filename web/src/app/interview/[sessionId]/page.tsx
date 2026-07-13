@@ -170,7 +170,10 @@ export default async function InterviewPage({ params, searchParams }: PageProps)
         </p>
       )}
       <p className="mb-6 text-sm text-muted">
-        역량당 {questionCount}문항 · 자소서·공고 맞춤 · 완료 후 피드백
+        {session.timeBudgetMinutes
+          ? `약 ${session.timeBudgetMinutes}분 · 역량당 ${questionCount}문항`
+          : `역량당 ${questionCount}문항`}
+        {" · "}자소서·공고 맞춤 · 완료 후 피드백
       </p>
       <InterviewSession
         sessionId={sessionId}

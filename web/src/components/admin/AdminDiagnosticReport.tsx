@@ -26,11 +26,53 @@ import {
 
 type Tab = ReportTab;
 
+const LEVEL_LABEL: Record<"DIVISION" | "UNIT" | "TEAM", string> = {
+  DIVISION: "사업본부",
+  UNIT: "사업부",
+  TEAM: "팀",
+};
+
+const DRIVER_LABELS: Record<string, string> = {
+  D: "전략방향",
+  SL: "경영진리더십",
+  SV: "직속상사",
+  PS: "심리적안전",
+  EM: "구조·자율권",
+  PM: "성과·보상",
+  LG: "학습·성장",
+  CI: "문화·포용",
+  WE: "업무환경",
+  C: "소통·정보",
+};
+
+type DriverImportanceEntry = {
+  code: string;
+  current: number | null;
+  beta: number | null;
+  priority: "FOCUS" | "MAINTAIN" | null;
+};
+
+type DriverImportanceSummary = {
+  entries: DriverImportanceEntry[];
+  rSquared: number | null;
+  n: number;
+  insufficientData: boolean;
+};
+
+type TeamReliability = {
+  icc: number | null;
+  n: number;
+  k: number;
+  interpretation: string | null;
+};
+
 type Scores = {
   hidden: boolean;
   reason?: string;
   sampleSize?: number;
   minGroupSize?: number;
+  driverImportance?: DriverImportanceSummary;
+  teamReliability?: TeamReliability;
   scores?: {
     ohi: {
       overall: number | null;
@@ -52,7 +94,18 @@ type Scores = {
     oai: { OAI: number | null; band: string | null };
     oaiPattern: { pattern: string; message: string } | null;
   };
-  teams?: Array<{ teamId: string; teamName: string; hidden: boolean }>;
+  teams?: Array<{
+    teamId: string;
+    teamName: string;
+    level?: "DIVISION" | "UNIT" | "TEAM";
+    parentId?: string | null;
+    sampleSize?: number;
+    hidden: boolean;
+    ORI?: number | null;
+    OVI?: number | null;
+    OHI_SE?: number | null;
+    OAI?: number | null;
+  }>;
   gapMatrix?: {
     mode: string;
     note?: string;
@@ -130,6 +183,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
   const [teamScores, setTeamScores] = useState<Record<string, Scores>>({});
   const [detailSection, setDetailSection] = useState<string>("OHI");
   const [loading, setLoading] = useState(true);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -176,12 +230,11 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
   };
 
   useEffect(() => {
-    if (tab !== "teams" || !wave) return;
-    for (const t of wave.teams) {
-      const row = aggregate?.teams?.find((r) => r.teamId === t.id);
-      if (row && !row.hidden) void loadTeamScore(t.id);
-    }
-  }, [tab, wave, aggregate?.teams, teamScores, waveId]);
+    if (tab !== "teams") return;
+    if (!selectedNodeId) return;
+    const row = aggregate?.teams?.find((r) => r.teamId === selectedNodeId);
+    if (row && !row.hidden) void loadTeamScore(selectedNodeId);
+  }, [tab, selectedNodeId, aggregate?.teams, teamScores, waveId]);
 
   const reportConfig = wave?.reportConfig ?? null;
   const enabled = reportConfig?.activeSectionCodes ?? wave?.enabledSectionCodes ?? null;
@@ -227,17 +280,28 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
       ? driverInsights(aggregate.scores.ohi.drivers)
       : null;
 
-  const visibleTeams = (aggregate?.teams ?? []).filter((t) => !t.hidden);
-  const teamBarData = visibleTeams.map((t) => {
-    const sc = teamScores[t.teamId]?.scores;
-    return {
-      name: t.teamName,
-      OHI: sc?.ohi.overall ?? 0,
-      ORI: sc?.ori.ORI ?? 0,
-      OVI: sc?.ovi.OVI ?? 0,
-      OAI: sc?.oai.OAI ?? 0,
-    };
-  });
+  const hierarchyRows = aggregate?.teams ?? [];
+  const nodeById = new Map(hierarchyRows.map((r) => [r.teamId, r]));
+  const childrenOf = (parentId: string | null) =>
+    hierarchyRows.filter((r) => (r.parentId ?? null) === parentId);
+  const breadcrumb: typeof hierarchyRows = [];
+  {
+    let cur = selectedNodeId ? nodeById.get(selectedNodeId) : undefined;
+    while (cur) {
+      breadcrumb.unshift(cur);
+      cur = cur.parentId ? nodeById.get(cur.parentId) : undefined;
+    }
+  }
+  const currentChildren = childrenOf(selectedNodeId);
+  const visibleChildren = currentChildren.filter((t) => !t.hidden);
+  const childBarData = visibleChildren.map((t) => ({
+    name: t.teamName,
+    OHI: t.OHI_SE ?? 0,
+    ORI: t.ORI ?? 0,
+    OVI: t.OVI ?? 0,
+    OAI: t.OAI ?? 0,
+  }));
+  const selectedDetail = selectedNodeId ? teamScores[selectedNodeId] : null;
 
   if (loading) return <p className="text-sm text-muted">집계 중…</p>;
   if (!wave) return <p className="text-sm text-muted">캠페인을 찾을 수 없습니다.</p>;
@@ -402,10 +466,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                   ) : (
                     <SampleInsufficient sampleSize={aggregate?.sampleSize} minGroupSize={aggregate?.minGroupSize} />
                   )}
-                  <StatsEnginePlaceholder
-                    title="IPA (β회귀 기반 중요도-성과 매트릭스)"
-                    description="β회귀 기반 IPA는 통계분석 엔진 연결 후 활성화됩니다."
-                  />
+                  <DriverPriorityChart summary={aggregate?.driverImportance} />
                 </>
               )}
 
@@ -453,8 +514,11 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
               )}
 
               <div className="grid gap-4 md:grid-cols-2">
-                <StatsEnginePlaceholder title="LPA 구성원 유형" />
-                <StatsEnginePlaceholder title="HLM / ICC (다준위 신뢰도)" />
+                <StatsEnginePlaceholder
+                  title="LPA 구성원 유형"
+                  description="잠재프로파일분석(GMM 기반)은 파이썬 통계 서비스 연결 후 활성화됩니다."
+                />
+                <IccCard reliability={aggregate?.teamReliability} />
               </div>
             </>
           )}
@@ -463,7 +527,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
 
       {tab === "teams" && (
         <div className="space-y-4">
-          {wave.teams.length === 0 ? (
+          {hierarchyRows.length === 0 ? (
             <div className="card-luxe space-y-3 p-6 text-center">
               <p className="text-sm text-muted">
                 팀별 링크를 발급하면 팀별 리포트가 활성화됩니다.
@@ -477,7 +541,76 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
             </div>
           ) : (
             <>
-              {aggregate?.gapMatrix?.mode === "OLS_REQUIRED" && (
+              {/* 전사 → 사업본부 → 사업부 → 팀 브레드크럼 */}
+              <div className="flex flex-wrap items-center gap-1 text-sm">
+                <button
+                  type="button"
+                  className={`nav-pill text-xs ${selectedNodeId === null ? "nav-pill-active" : ""}`}
+                  onClick={() => setSelectedNodeId(null)}
+                >
+                  전사 종합
+                </button>
+                {breadcrumb.map((node) => (
+                  <span key={node.teamId} className="flex items-center gap-1">
+                    <span className="text-muted">›</span>
+                    <button
+                      type="button"
+                      className={`nav-pill text-xs ${selectedNodeId === node.teamId ? "nav-pill-active" : ""}`}
+                      onClick={() => setSelectedNodeId(node.teamId)}
+                    >
+                      {LEVEL_LABEL[node.level ?? "TEAM"]} · {node.teamName}
+                    </button>
+                  </span>
+                ))}
+              </div>
+
+              {/* 현재 선택된 노드 자체의 숫자 — 하이어라키 행에 이미 있는 값이라 즉시 표시 가능 */}
+              {selectedNodeId &&
+                (() => {
+                  const self = nodeById.get(selectedNodeId);
+                  if (!self) return null;
+                  if (self.hidden) {
+                    return (
+                      <div className="card-luxe p-4 text-sm text-muted">
+                        표본 부족 — 최소 5명 필요 (현재 N={self.sampleSize ?? 0})
+                      </div>
+                    );
+                  }
+                  const selfInsights =
+                    selectedDetail?.scores && !selectedDetail.hidden && isEnabled("OHI")
+                      ? driverInsights(selectedDetail.scores.ohi.drivers)
+                      : null;
+                  return (
+                    <div className="card-luxe space-y-3 p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold text-foreground">
+                          {LEVEL_LABEL[self.level ?? "TEAM"]} · {self.teamName}
+                        </span>
+                        <span className="text-xs text-muted">N={self.sampleSize ?? "—"}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        {isEnabled("OHI") && <MetricCard label="OHI(SE)" value={self.OHI_SE} band={null} />}
+                        {isEnabled("ORI") && <MetricCard label="ORI" value={self.ORI} band={null} />}
+                        {isEnabled("OVI") && <MetricCard label="OVI" value={self.OVI} band={null} />}
+                        {isEnabled("OAI") && <MetricCard label="OAI" value={self.OAI} band={null} />}
+                      </div>
+                      {selfInsights && (selfInsights.strengths.length > 0 || selfInsights.improvements.length > 0) && (
+                        <div className="grid gap-2 text-xs sm:grid-cols-2">
+                          <p className="text-muted">
+                            <span className="font-medium text-foreground">강점: </span>
+                            {selfInsights.strengths.map((s) => s.code).join(", ") || "—"}
+                          </p>
+                          <p className="text-muted">
+                            <span className="font-medium text-foreground">개선: </span>
+                            {selfInsights.improvements.map((s) => s.code).join(", ") || "—"}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+              {selectedNodeId === null && aggregate?.gapMatrix?.mode === "OLS_REQUIRED" && (
                 <div className="card-luxe p-4 text-sm text-muted">
                   <span className="mr-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950/50">
                     OLS 회귀분석 엔진 연결 예정
@@ -486,11 +619,11 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                 </div>
               )}
 
-              {aggregate?.gapMatrix?.mode === "GAP_MATRIX" &&
-                visibleTeams.length >= 5 &&
+              {selectedNodeId === null &&
+                aggregate?.gapMatrix?.mode === "GAP_MATRIX" &&
                 aggregate.gapMatrix.teams && (
                   <div className="card-luxe p-4">
-                    <h3 className="mb-2 text-sm font-semibold">팀 Gap 매트릭스 (ORI vs OVI)</h3>
+                    <h3 className="mb-2 text-sm font-semibold">팀 Gap 매트릭스 (ORI vs OVI) — 리프(팀) 전체</h3>
                     <div className="h-80">
                       <ResponsiveContainer width="100%" height="100%">
                         <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -512,18 +645,20 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                   </div>
                 )}
 
-              {teamBarData.length >= 2 && (
+              {childBarData.length >= 2 && (
                 <div className="card-luxe p-4">
-                  <h3 className="mb-2 text-sm font-semibold">팀 간 비교</h3>
+                  <h3 className="mb-2 text-sm font-semibold">
+                    {LEVEL_LABEL[currentChildren[0]?.level ?? "TEAM"]} 간 비교
+                  </h3>
                   <div className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={teamBarData}>
+                      <BarChart data={childBarData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                         <YAxis domain={[1, 5]} />
                         <Tooltip />
                         <Legend />
-                        {isEnabled("OHI") && <Bar dataKey="OHI" fill="#c9a227" />}
+                        {isEnabled("OHI") && <Bar dataKey="OHI" name="OHI(SE)" fill="#c9a227" />}
                         {isEnabled("ORI") && <Bar dataKey="ORI" fill="#64748b" />}
                         {isEnabled("OVI") && <Bar dataKey="OVI" fill="#94a3b8" />}
                         {isEnabled("OAI") && <Bar dataKey="OAI" fill="#475569" />}
@@ -533,46 +668,41 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                 </div>
               )}
 
-              <ul className="space-y-3">
-                {(aggregate?.teams ?? []).map((t) => {
-                  const sc = teamScores[t.teamId];
-                  const teamInsights =
-                    sc?.scores && !sc.hidden && isEnabled("OHI")
-                      ? driverInsights(sc.scores.ohi.drivers)
-                      : null;
-                  return (
-                    <li
-                      key={t.teamId}
-                      className={`card-luxe p-4 ${t.hidden ? "opacity-50" : ""}`}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-medium text-foreground">{t.teamName}</span>
-                        {t.hidden ? (
-                          <span className="text-xs text-muted">표본 부족 — 최소 5명 필요</span>
-                        ) : (
-                          <span className="text-xs text-muted">N={sc?.sampleSize ?? "—"}</span>
-                        )}
-                      </div>
-                      {!t.hidden && sc?.scores && (
-                        <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
-                          {teamInsights && (
-                            <>
-                              <p className="text-muted">
-                                <span className="font-medium text-foreground">강점: </span>
-                                {teamInsights.strengths.map((s) => s.code).join(", ") || "—"}
-                              </p>
-                              <p className="text-muted">
-                                <span className="font-medium text-foreground">개선: </span>
-                                {teamInsights.improvements.map((s) => s.code).join(", ") || "—"}
-                              </p>
-                            </>
+              {currentChildren.length > 0 ? (
+                <ul className="space-y-3">
+                  {currentChildren.map((t) => {
+                    const hasChildren = childrenOf(t.teamId).length > 0;
+                    return (
+                      <li key={t.teamId} className={`card-luxe p-4 ${t.hidden ? "opacity-50" : ""}`}>
+                        <button
+                          type="button"
+                          className="flex w-full items-center justify-between gap-2 text-left"
+                          onClick={() => setSelectedNodeId(t.teamId)}
+                        >
+                          <span className="font-medium text-foreground">
+                            <span className="mr-2 rounded-full bg-black/5 px-2 py-0.5 text-[10px] text-muted dark:bg-white/10">
+                              {LEVEL_LABEL[t.level ?? "TEAM"]}
+                            </span>
+                            {t.teamName}
+                            {hasChildren && <span className="ml-1 text-muted">›</span>}
+                          </span>
+                          {t.hidden ? (
+                            <span className="text-xs text-muted">표본 부족 — 최소 5명 필요</span>
+                          ) : (
+                            <span className="text-xs text-muted">
+                              N={t.sampleSize ?? "—"} · OHI(SE) {t.OHI_SE?.toFixed(2) ?? "—"} · ORI{" "}
+                              {t.ORI?.toFixed(2) ?? "—"} · OVI {t.OVI?.toFixed(2) ?? "—"} · OAI{" "}
+                              {t.OAI?.toFixed(2) ?? "—"}
+                            </span>
                           )}
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                selectedNodeId && <p className="text-sm text-muted">하위 조직이 없습니다.</p>
+              )}
             </>
           )}
         </div>
@@ -606,6 +736,102 @@ function InsightCard({ title, body }: { title: string; body: string }) {
     <div className="card-luxe p-4">
       <h3 className="text-sm font-semibold text-foreground">{title}</h3>
       <p className="mt-2 text-sm text-muted">{body}</p>
+    </div>
+  );
+}
+
+function DriverPriorityChart({ summary }: { summary?: DriverImportanceSummary }) {
+  if (!summary) return null;
+
+  if (summary.insufficientData) {
+    return (
+      <div className="card-luxe border-dashed p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-foreground">IPA (β회귀 기반 우선순위)</h3>
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950/50 dark:text-amber-100">
+            표본 부족
+          </span>
+        </div>
+        <p className="mt-2 text-xs text-muted">
+          예측변수(9개 드라이버) 대비 완전응답 표본이 부족해(N={summary.n}) 회귀 추정을 생략합니다. 최소{" "}
+          {summary.entries.length * 3}명 이상 완전응답 필요.
+        </p>
+      </div>
+    );
+  }
+
+  const sorted = [...summary.entries]
+    .filter((e) => e.beta != null)
+    .sort((a, b) => (b.beta ?? 0) - (a.beta ?? 0));
+  const focus = sorted.filter((e) => e.priority === "FOCUS");
+  const maintain = sorted.filter((e) => e.priority === "MAINTAIN");
+
+  return (
+    <div className="card-luxe p-4">
+      <h3 className="text-sm font-semibold text-foreground">IPA — β회귀 기반 투자 우선순위</h3>
+      <p className="mt-1 text-xs text-muted">
+        Y축 = 응답자 단위 다중회귀 표준화 β(SE에 대한 실제 영향력) — 자기보고 중요도가 아님. R²=
+        {summary.rSquared != null ? summary.rSquared.toFixed(2) : "—"} · N={summary.n}
+      </p>
+      <div className="mt-3 space-y-1.5">
+        {sorted.map((e) => (
+          <div key={e.code} className="flex items-center gap-2 text-xs">
+            <span className="w-20 shrink-0 text-muted">{DRIVER_LABELS[e.code] ?? e.code}</span>
+            <div className="h-2 flex-1 rounded-full bg-black/5 dark:bg-white/10">
+              <div
+                className={`h-2 rounded-full ${e.priority === "FOCUS" ? "bg-red-500" : "bg-slate-400"}`}
+                style={{ width: `${Math.min(100, Math.max(2, ((e.beta ?? 0) / (sorted[0]?.beta || 1)) * 100))}%` }}
+              />
+            </div>
+            <span className="w-12 shrink-0 text-right font-medium text-foreground">{e.beta?.toFixed(2)}</span>
+          </div>
+        ))}
+      </div>
+      {focus.length > 0 && (
+        <p className="mt-3 text-xs text-muted">
+          <span className="font-medium text-foreground">집중 개선(영향력 높음·현재수준 낮음): </span>
+          {focus.map((e) => DRIVER_LABELS[e.code] ?? e.code).join(", ")}
+        </p>
+      )}
+      {maintain.length > 0 && (
+        <p className="mt-1 text-xs text-muted">
+          <span className="font-medium text-foreground">현상 유지: </span>
+          {maintain.map((e) => DRIVER_LABELS[e.code] ?? e.code).join(", ")}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function IccCard({ reliability }: { reliability?: TeamReliability }) {
+  if (!reliability || reliability.icc == null) {
+    return (
+      <div className="card-luxe border-dashed p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-foreground">ICC (팀간 신뢰도)</h3>
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950/50 dark:text-amber-100">
+            계산 불가
+          </span>
+        </div>
+        <p className="mt-2 text-xs text-muted">
+          유효 표본을 가진 팀이 2개 미만이라 팀간 분산을 추정할 수 없습니다. HLM 전체 모형(팀 수준 예측변수 포함)은
+          파이썬 통계 서비스 대상입니다.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="card-luxe p-4">
+      <h3 className="text-sm font-semibold text-foreground">ICC(1) — 팀간 신뢰도</h3>
+      <p className="mt-2 text-2xl font-bold text-foreground">{reliability.icc.toFixed(2)}</p>
+      <p className="mt-1 text-xs text-muted">
+        일원배치 분산분석(ANOVA) 기반 · 팀 {reliability.k}개 · N={reliability.n}
+      </p>
+      {reliability.interpretation && <p className="mt-2 text-xs text-muted">{reliability.interpretation}</p>}
+      <p className="mt-2 text-[11px] text-muted/70">
+        완전한 HLM(팀 수준 예측변수 포함 다층모형)은 별도 파이썬 통계 서비스 대상입니다 — 여기서는 팀 간 분산 비중만
+        확인합니다.
+      </p>
     </div>
   );
 }

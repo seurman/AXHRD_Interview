@@ -5,7 +5,13 @@ import { COMPETENCY_CODES } from "@/types";
 import { getUserStrengthDeck } from "@/lib/discover/user-strengths";
 import { buildCareerQuests } from "@/lib/dashboard/quests";
 import { buildDimensionTimeline } from "@/lib/dashboard/dimension-timeline";
+import {
+  averageDimensions,
+  normalizeAnswerDimensions,
+} from "@/lib/interview/answer-dimensions";
+import type { RoundBrief } from "@/lib/interview/competency-round";
 import type { QuestItem } from "@/components/dashboard/QuestPanel";
+import type { CoachInsightsPayload } from "@/components/dashboard/CoachInsightsPanel";
 import type { DiscoverInterviewAdvice, DiscoverStrengthItem } from "@/types/discover";
 import type { DimensionSessionPoint } from "@/lib/dashboard/dimension-timeline";
 
@@ -40,6 +46,7 @@ export type CompetencyDashboardPayload = {
     reportHref: string;
   } | null;
   hasDashboardContent: boolean;
+  coachInsights: CoachInsightsPayload;
 };
 
 /** 개인 홈 대시보드·기관 코칭 뷰가 공유하는 역량 데이터 조회 */
@@ -49,7 +56,19 @@ export async function getCompetencyDashboardData(
   const full = await prisma.user.findUnique({
     where: { id: userId },
     include: {
-      sessions: { where: { status: "COMPLETED" }, orderBy: { completedAt: "desc" }, take: 6 },
+      sessions: {
+        where: { status: "COMPLETED" },
+        orderBy: { completedAt: "desc" },
+        take: 6,
+        select: {
+          id: true,
+          sessionNumber: true,
+          completedAt: true,
+          startedAt: true,
+          createdAt: true,
+          focusCompetency: true,
+        },
+      },
       competencyLogs: { orderBy: { recordedAt: "asc" } },
       selfDiscoverySessions: {
         where: { status: "COMPLETED" },
@@ -134,6 +153,78 @@ export async function getCompetencyDashboardData(
     weakestCompetency: weakest ? competencyLabel(weakest[0]) : undefined,
   });
 
+  const firstSnapshotByCompetency = new Map<string, number>();
+  for (const log of full.competencyLogs) {
+    if (!firstSnapshotByCompetency.has(log.competency)) {
+      firstSnapshotByCompetency.set(log.competency, log.percentile);
+    }
+  }
+
+  const competencyDeltas = COMPETENCY_CODES.map((code) => {
+    const latest = latestByCompetency[code];
+    const first = firstSnapshotByCompetency.get(code);
+    return {
+      competency: code,
+      percentile: latest.percentile,
+      delta:
+        latest.assessed && first != null ? latest.percentile - first : null,
+      levelEst: latest.levelEst,
+      assessed: latest.assessed,
+    };
+  });
+
+  const latestDimensionResponses = dimensionResponses.slice(-12);
+  const normalizedDims = latestDimensionResponses
+    .map((r) => normalizeAnswerDimensions(r.dimensions))
+    .filter((d): d is NonNullable<typeof d> => d !== null);
+  const latestDimensions =
+    normalizedDims.length > 0 ? averageDimensions(normalizedDims) : null;
+
+  const recentPlans = await prisma.interviewPlan.findMany({
+    where: { userId, roundBrief: { not: Prisma.DbNull } },
+    orderBy: { updatedAt: "desc" },
+    take: 3,
+    select: { roundBrief: true, roundCompetencyCodes: true, timeBudgetMinutes: true },
+  });
+  const recentRounds = recentPlans
+    .map((p) => p.roundBrief as RoundBrief | null)
+    .filter((b): b is RoundBrief => Boolean(b));
+
+  const inProgressSessions = await prisma.interviewSession.findMany({
+    where: { userId, status: { in: ["IN_PROGRESS", "COMPLETED"] } },
+    orderBy: { startedAt: "desc" },
+    take: 8,
+    select: {
+      id: true,
+      sessionNumber: true,
+      focusCompetency: true,
+      startedAt: true,
+      completedAt: true,
+      createdAt: true,
+    },
+  });
+
+  const accessLog = [
+    ...inProgressSessions.map((s) => ({
+      id: s.id,
+      kind: "interview" as const,
+      label: s.focusCompetency
+        ? `${competencyLabel(s.focusCompetency)} 면접 #${s.sessionNumber}`
+        : `모의면접 #${s.sessionNumber}`,
+      href: s.completedAt ? `/interview/${s.id}/report` : `/interview/${s.id}`,
+      at: (s.startedAt ?? s.createdAt).toISOString(),
+    })),
+    ...full.selfDiscoverySessions.map((s) => ({
+      id: s.id,
+      kind: "discover" as const,
+      label: "자기발견 인터뷰",
+      href: `/discover/${s.id}/report`,
+      at: (s.completedAt ?? s.startedAt).toISOString(),
+    })),
+  ]
+    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
+    .slice(0, 8);
+
   return {
     userName: full.name,
     snapshots,
@@ -152,5 +243,11 @@ export async function getCompetencyDashboardData(
         }
       : null,
     hasDashboardContent: full.sessions.length > 0 || !!strengthDeck,
+    coachInsights: {
+      competencyDeltas,
+      latestDimensions: latestDimensions as Record<string, number> | null,
+      recentRounds,
+      accessLog,
+    },
   };
 }
