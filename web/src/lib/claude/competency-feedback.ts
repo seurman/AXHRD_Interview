@@ -14,6 +14,7 @@ import {
 import type { CompetencySummary } from "@/types";
 import {
   normalizeCompetencyDimensions,
+  type CompetencyReportDimensions,
 } from "@/lib/interview/answer-dimensions";
 
 const DEEPSEEK_BASE = "https://api.deepseek.com";
@@ -23,12 +24,7 @@ export interface CompetencyFeedbackData {
   strengths: string[];
   improvements: string[];
   suggestions: string[];
-  dimensions: {
-    starStructure: number;
-    questionIntent: number;
-    logic: number;
-    delivery: number;
-  };
+  dimensions: CompetencyReportDimensions;
   score: number;
   /** 실제 답변에서 뽑은 인용문 + 코칭 노트 (Yoodli 등 선도 서비스의 "답변 하이라이트" 패턴 참고) */
   highlights: Array<{ quote: string; note: string }>;
@@ -56,7 +52,7 @@ const SYSTEM = `당신은 한국 취업 면접 코치입니다.
   "strengths": ["..."],
   "improvements": ["..."],
   "suggestions": ["다음 연습 방법"],
-  "dimensions": {"starStructure":0-100,"questionIntent":0-100,"logic":0-100,"delivery":0-100},
+  "dimensions": {"questionIntent":0-100,"situationSpecificity":0-100,"individualOwnership":0-100,"logic":0-100,"outcomeQuantification":0-100,"delivery":0-100},
   "score": 0-100,
   "highlights": [{"quote": "실제 답변 인용", "note": "1문장 코칭"}],
   "rewriteExample": "STAR로 다시 쓴 예시 문장",
@@ -137,14 +133,7 @@ export async function generateCompetencyFeedback(params: {
       const normalizedDims = normalizeCompetencyDimensions(parsed.dimensions);
       return {
         ...parsed,
-        dimensions: normalizedDims
-          ? {
-              starStructure: normalizedDims.starStructure,
-              questionIntent: normalizedDims.questionIntent,
-              logic: normalizedDims.logic,
-              delivery: normalizedDims.delivery,
-            }
-          : mockCompetencyFeedback(params).dimensions,
+        dimensions: normalizedDims ?? mockCompetencyFeedback(params).dimensions,
         personaAlignmentNote: parsed.personaAlignmentNote?.trim() || null,
       };
     }
@@ -212,9 +201,13 @@ function mockCompetencyFeedback(params: {
       "다음 역량 면접 전 키워드 3개 메모",
     ],
     dimensions: {
-      starStructure: Math.round(avg * 100),
       questionIntent: Math.round(params.summary.percentile),
+      situationSpecificity: Math.round(
+        ((coverageCount("situation") + coverageCount("task")) / (2 * total)) * 100,
+      ),
+      individualOwnership: Math.round((coverageCount("action") / total) * 100),
       logic: Math.round(avg * 90),
+      outcomeQuantification: Math.round((coverageCount("result") / total) * 100),
       delivery: Math.round(avg * 95),
     },
     score,

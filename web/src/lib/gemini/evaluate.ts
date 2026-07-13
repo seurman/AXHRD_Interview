@@ -18,22 +18,33 @@ export interface RubricResult {
   dimensions: AnswerDimensions;
 }
 
+const DIMENSIONS_SCORING_INSTRUCTION = `dimensions는 다음 6개 기준으로 0.0~1.0을 매기세요:
+- questionIntent: 질문 의도를 정확히 파악해 답했는가
+- situationSpecificity: 상황·과제를 구체적으로 묘사했는가(막연한 일반론이 아닌지)
+- individualOwnership: 본인이 실제로 한 행동·의사결정이 "나는" 주도로 명확히 드러나는가(팀 성과에 묻어가듯 "우리는"으로만 서술하면 낮게)
+- logic: 원인→행동→결과로 이어지는 논리 흐름이 자연스러운가
+- outcomeQuantification: 결과를 수치나 구체적 근거로 뒷받침했는가
+- delivery: 명확하고 이해하기 쉽게 전달했는가`;
+
+const DIMENSIONS_JSON_SCHEMA = `  "dimensions": {
+    "questionIntent": 0.0-1.0,
+    "situationSpecificity": 0.0-1.0,
+    "individualOwnership": 0.0-1.0,
+    "logic": 0.0-1.0,
+    "outcomeQuantification": 0.0-1.0,
+    "delivery": 0.0-1.0
+  }`;
+
 const RUBRIC_SYSTEM = `당신은 BEI(행동사건면접) 기법에 능숙한 한국 기업 면접 평가관입니다.
 답변을 0.0~1.0 루브릭 점수로 평가하세요. "채점 기준"이 주어지면 반드시 그 기준을 우선 적용하고,
 briefFeedback에는 STAR(상황-과제-행동-결과) 구조 중 어떤 요소가 드러났고 어떤 요소가 부족한지
 구체적으로 짚어 2~3문장으로 코칭하세요(어떤 기준이 충족/미흡했는지도 함께 언급).
-dimensions는 starStructure(STAR 구조), questionIntent(질문 의도 파악), logic(원인→행동→결과 논리 흐름),
-delivery(명확하고 이해하기 쉬운 전달력) 기준으로 0.0~1.0을 매기세요.
+${DIMENSIONS_SCORING_INSTRUCTION}
 반드시 JSON만 출력:
 {
   "score": 0.0-1.0,
   "briefFeedback": "STAR 구조 분석을 포함한 2~3문장 한국어 피드백",
-  "dimensions": {
-    "starStructure": 0.0-1.0,
-    "questionIntent": 0.0-1.0,
-    "logic": 0.0-1.0,
-    "delivery": 0.0-1.0
-  }
+${DIMENSIONS_JSON_SCHEMA}
 }`;
 
 export async function evaluateAnswer(params: {
@@ -115,8 +126,7 @@ const CORRECT_AND_EVALUATE_SYSTEM = `당신은 BEI(행동사건면접, Behaviora
    작성하세요 — 답변에서 상황·과제·행동·결과 중 어떤 요소가 구체적으로 드러났고 어떤
    요소가 빠졌는지 짚고, 빠진 요소를 보강하려면 무엇을 덧붙이면 좋을지 실질적인 코칭을
    담으세요("채점 기준"이 있으면 그 기준 충족/미흡 여부도 함께 언급).
-   dimensions는 starStructure(STAR 구조), questionIntent(질문 의도 파악), logic(원인→행동→결과 논리 흐름),
-   delivery(명확하고 이해하기 쉬운 전달력) 기준으로 0.0~1.0을 매기세요.
+   ${DIMENSIONS_SCORING_INSTRUCTION}
 3. "자소서 맥락"이 주어졌다면, 답변 내용이 자소서와 명백히 모순되는 사실(기간·숫자·역할·
    기술 스택 등)이 있는지만 확인하세요. 모순이 있으면 consistencyNote에 부드러운 코칭 톤
    1문장으로 적으세요(예: "자소서에는 3년으로 적혀 있는데 방금은 1년이라 하셨어요 — 정리해서
@@ -135,12 +145,7 @@ const CORRECT_AND_EVALUATE_SYSTEM = `당신은 BEI(행동사건면접, Behaviora
   "correctedAnswer": "교정된 답변 전체 텍스트",
   "score": 0.0-1.0,
   "briefFeedback": "답변 인용을 포함한 STAR 분석 2~3문장",
-  "dimensions": {
-    "starStructure": 0.0-1.0,
-    "questionIntent": 0.0-1.0,
-    "logic": 0.0-1.0,
-    "delivery": 0.0-1.0
-  },
+${DIMENSIONS_JSON_SCHEMA},
   "consistencyNote": "1문장 또는 null",
   "suggestedFollowUp": "답변 구절을 「」로 인용한 1문장 또는 null"
 }`;
@@ -248,19 +253,29 @@ export function mockEvaluate(answer: string): RubricResult {
   score = Math.min(score, 0.95);
 
   const hasLogic = /그래서|따라서|왜냐하면|결과적으로|이로 인해/.test(answer);
+  const hasFirstPerson = /(?:저는|제가|내가|본인|직접)/.test(answer);
+  const teamCentric = /(?:우리는|팀은|팀이|함께)/.test(answer) && !hasFirstPerson;
+
+  const situationScore =
+    coverage.situation && coverage.task ? 0.7 : coverage.situation || coverage.task ? 0.5 : 0.3;
+  const ownershipScore = teamCentric
+    ? 0.25
+    : coverage.action && hasFirstPerson
+      ? 0.75
+      : coverage.action
+        ? 0.55
+        : 0.3;
+  const outcomeScore = coverage.result ? 0.75 : hasNumber ? 0.55 : 0.3;
 
   return {
     score,
     briefFeedback: starCoachingNote(coverage),
     dimensions: {
-      starStructure:
-        coverage.situation && coverage.task
-          ? 0.7
-          : coverage.situation || coverage.task
-            ? 0.5
-            : 0.3,
       questionIntent: coverage.action ? 0.65 : len > 50 ? 0.5 : 0.3,
+      situationSpecificity: situationScore,
+      individualOwnership: ownershipScore,
       logic: hasLogic ? (starHits >= 2 ? 0.7 : 0.55) : starHits >= 1 ? 0.45 : 0.3,
+      outcomeQuantification: outcomeScore,
       delivery: len > 100 ? 0.65 : 0.4,
     },
   };

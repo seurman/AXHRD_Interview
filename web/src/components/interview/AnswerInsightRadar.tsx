@@ -83,7 +83,7 @@ export function AnswerInsightRadar({
     >
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-          4축 인사이트
+          6축 인사이트
         </p>
         {sessionAverage && (
           <p className="text-[10px] text-muted">
@@ -92,7 +92,7 @@ export function AnswerInsightRadar({
         )}
       </div>
 
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={260}>
         <RadarChart data={chartData} cx="50%" cy="50%" outerRadius="72%">
           <defs>
             <linearGradient id="answerInsightGradient" x1="0" y1="0" x2="1" y2="1">

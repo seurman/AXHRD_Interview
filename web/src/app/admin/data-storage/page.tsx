@@ -19,10 +19,12 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const DIMENSION_LABEL: Record<(typeof ANSWER_DIMENSION_KEYS)[number], string> = {
-  starStructure: "STAR",
+const DIMENSION_SHORT: Record<(typeof ANSWER_DIMENSION_KEYS)[number], string> = {
   questionIntent: "의도",
+  situationSpecificity: "상황",
+  individualOwnership: "기여",
   logic: "논리",
+  outcomeQuantification: "성과",
   delivery: "전달",
 };
 
@@ -43,7 +45,7 @@ function DimensionPills({ dimensions }: { dimensions: AnswerDimensions }) {
           key={key}
           className="rounded-full border border-card-border bg-background/60 px-2 py-0.5 font-mono text-[11px] text-muted"
         >
-          {DIMENSION_LABEL[key]} {pct01(dimensions[key])}
+          {DIMENSION_SHORT[key]} {pct01(dimensions[key])}
         </span>
       ))}
     </div>
@@ -114,7 +116,7 @@ export default async function AdminDataStoragePage() {
                   <th className="py-2 pr-3 font-medium">역량</th>
                   <th className="py-2 pr-3 font-medium">점수</th>
                   <th className="py-2 pr-3 font-medium">저장</th>
-                  <th className="py-2 pr-3 font-medium">4축 (0~1)</th>
+                  <th className="py-2 pr-3 font-medium">6축 (0~1)</th>
                   <th className="py-2 font-medium">세션</th>
                 </tr>
               </thead>
@@ -206,7 +208,7 @@ export default async function AdminDataStoragePage() {
                         <div className="flex flex-wrap gap-1 font-mono text-[11px] text-muted">
                           {ANSWER_DIMENSION_KEYS.map((key) => (
                             <span key={key}>
-                              {DIMENSION_LABEL[key]} {row.measured![key]}
+                              {DIMENSION_SHORT[key]} {row.measured![key]}
                             </span>
                           ))}
                         </div>
@@ -219,7 +221,7 @@ export default async function AdminDataStoragePage() {
                         <div className="flex flex-wrap gap-1 font-mono text-[11px] text-muted">
                           {ANSWER_DIMENSION_KEYS.map((key) => (
                             <span key={key}>
-                              {DIMENSION_LABEL[key]} {row.stored![key]}
+                              {DIMENSION_SHORT[key]} {row.stored![key]}
                             </span>
                           ))}
                         </div>

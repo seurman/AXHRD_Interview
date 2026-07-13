@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSuperadmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
-import { competencyLabel } from "@/lib/labels";
-import { normalizeAnswerDimensions } from "@/lib/interview/answer-dimensions";
+import { competencyLabel, dimensionLabel } from "@/lib/labels";
+import { ANSWER_DIMENSION_KEYS, normalizeAnswerDimensions } from "@/lib/interview/answer-dimensions";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Badge } from "@/components/admin/Badge";
 import { ADMIN_CONTAINER } from "@/lib/admin/page-shell";
@@ -213,32 +213,16 @@ export default async function AdminSessionDetailPage({
                   }
                   return (
                     <div>
-                      <p className="text-xs font-semibold text-foreground">4축 dimensions (0~1)</p>
-                      <dl className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted sm:grid-cols-4">
-                        <div>
-                          <dt>STAR</dt>
-                          <dd className="font-mono text-foreground">
-                            {Math.round(dimensions.starStructure * 100)}%
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>의도</dt>
-                          <dd className="font-mono text-foreground">
-                            {Math.round(dimensions.questionIntent * 100)}%
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>논리</dt>
-                          <dd className="font-mono text-foreground">
-                            {Math.round(dimensions.logic * 100)}%
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>전달</dt>
-                          <dd className="font-mono text-foreground">
-                            {Math.round(dimensions.delivery * 100)}%
-                          </dd>
-                        </div>
+                      <p className="text-xs font-semibold text-foreground">6축 dimensions (0~1)</p>
+                      <dl className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted sm:grid-cols-3">
+                        {ANSWER_DIMENSION_KEYS.map((key) => (
+                          <div key={key}>
+                            <dt>{dimensionLabel(key)}</dt>
+                            <dd className="font-mono text-foreground">
+                              {Math.round(dimensions[key] * 100)}%
+                            </dd>
+                          </div>
+                        ))}
                       </dl>
                     </div>
                   );

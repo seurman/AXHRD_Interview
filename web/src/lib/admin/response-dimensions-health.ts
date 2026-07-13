@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import {
   averageDimensions,
+  ANSWER_DIMENSION_KEYS,
   normalizeAnswerDimensions,
   normalizeCompetencyDimensions,
   type CompetencyReportDimensions,
@@ -45,7 +46,7 @@ function dimensionsMatch(
   measured: CompetencyReportDimensions | null,
 ): boolean | null {
   if (!stored || !measured) return null;
-  const keys = ["starStructure", "questionIntent", "logic", "delivery"] as const;
+  const keys = ANSWER_DIMENSION_KEYS;
   return keys.every((key) => Math.abs(stored[key] - measured[key]) <= 1);
 }
 

@@ -58,10 +58,14 @@ export function formatPercentile(p: number): string {
 
 export function dimensionLabel(key: string): string {
   const map: Record<string, string> = {
-    starStructure: "STAR 구조",
     questionIntent: "질문 의도 파악",
+    situationSpecificity: "상황 구체도",
+    individualOwnership: "자기 기여도",
     logic: "논리적 설명력",
+    outcomeQuantification: "성과 구체성",
     delivery: "전달력·의사소통",
+    // 구버전 키 라벨(과거 데이터 표시용)
+    starStructure: "STAR 구조",
     structure: "구조",
     specificity: "구체성",
     relevance: "관련성",

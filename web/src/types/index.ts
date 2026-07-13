@@ -1,5 +1,7 @@
 // ── Competencies ──
 
+import type { AnswerDimensions } from "@/lib/interview/answer-dimensions";
+
 export const COMPETENCY_CODES = [
   "COMMUNICATION",
   "PROBLEM_SOLVING",
@@ -89,12 +91,7 @@ export interface AnswerFeedback {
   competency?: string;
   isInterim?: boolean;
   tripleFeedback?: import("@/lib/interview/triple-feedback").TripleFeedbackResult;
-  dimensions?: {
-    starStructure: number;
-    questionIntent: number;
-    logic: number;
-    delivery: number;
-  };
+  dimensions?: AnswerDimensions;
   weakestDimension?: string;
   /** 자소서 경험 확인 질문 피드백 — 점수 없이 라벨·근거만 */
   claimVerification?: {
