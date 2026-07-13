@@ -9,6 +9,8 @@ import { ClaimVerificationSection } from "@/components/report/ClaimVerificationS
 import { Logo } from "@/components/brand/Logo";
 import { PrintButton } from "@/components/ui/PrintButton";
 import { SessionIntegrityNotice } from "@/components/interview/SessionIntegrityNotice";
+import { NarrativeLead } from "@/components/dashboard/NarrativeLead";
+import { buildSessionReportNarrative } from "@/lib/dashboard/career-narrative";
 import { computeDeliveryStats } from "@/lib/interview/feedback-helpers";
 import type { SessionReportData } from "@/types";
 import type { Prisma } from "@prisma/client";
@@ -59,6 +61,15 @@ export function SessionReportView({
       })),
   );
 
+  const reportNarrative = report
+    ? buildSessionReportNarrative({
+        competency: session.focusCompetency,
+        summary: report.summary,
+        improvements: report.improvements,
+        avgScore,
+      })
+    : null;
+
   return (
     <div className="report-print-wrap print-root mx-auto max-w-3xl space-y-8 pb-16">
       <div
@@ -100,6 +111,8 @@ export function SessionReportView({
         pasteDetected={session.pasteDetected}
         tabSwitchCount={session.tabSwitchCount}
       />
+
+      {reportNarrative ? <NarrativeLead text={reportNarrative} label="리포트 한 줄" /> : null}
 
       {report ? (
         <>

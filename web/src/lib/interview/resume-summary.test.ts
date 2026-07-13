@@ -39,7 +39,17 @@ describe("heuristicSummary", () => {
       skills: [],
       experiences: [],
       keywords: [],
+      chunks: [],
     });
+  });
+
+  it("경험 문장에서 chunks를 생성한다", () => {
+    const result = heuristicSummary(
+      "카카오에서 데이터 분석 프로젝트를 맡았습니다. 처리 시간을 30% 단축했습니다. 팀원 5명과 협업했습니다."
+    );
+    expect(result.chunks.length).toBeGreaterThan(0);
+    expect(result.chunks[0]?.title).toBeTruthy();
+    expect(result.chunks[0]?.markdown.length).toBeGreaterThan(10);
   });
 });
 

@@ -1,5 +1,7 @@
 import { competencyLabel } from "@/lib/labels";
 import type { RoundBrief } from "@/lib/interview/competency-round";
+import { buildRoundNarrative } from "@/lib/dashboard/career-narrative";
+import { NarrativeLead } from "@/components/dashboard/NarrativeLead";
 
 interface RoundBriefPanelProps {
   brief: RoundBrief;
@@ -8,8 +10,10 @@ interface RoundBriefPanelProps {
 
 /** 차수 면접 완료 후 강점·보완점 텍스트 요약 */
 export function RoundBriefPanel({ brief, roundLabel }: RoundBriefPanelProps) {
+  const narrative = buildRoundNarrative(brief);
   return (
     <section className="card-luxe space-y-4 p-6">
+      <NarrativeLead text={narrative} label="차수 한 줄" />
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gold">
           {roundLabel ?? "이번 차수 요약"}

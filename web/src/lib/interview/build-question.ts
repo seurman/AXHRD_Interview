@@ -5,6 +5,7 @@ import {
   type InterviewStyleHint,
 } from "@/lib/interview/personalize-question";
 import type { ResumeSummary } from "@/lib/interview/resume-summary";
+import { normalizeResumeSummary } from "@/lib/interview/resume-summary";
 import { resolveRubricCriteria } from "@/lib/competency/rubric-ssot";
 import type { QuestionRubricContext } from "@/lib/competency/rubric-loader";
 import { parseJdRequirements } from "@/lib/company/jd-mapper";
@@ -51,17 +52,7 @@ type SessionContext = {
 /** Resume.parsedTags(Json)를 안전하게 ResumeSummary로 파싱한다 — 아직 요약이 없는
  *  옛날 레코드(null)나 예상 못한 형태면 undefined를 반환해 레거시 원문 폴백을 타게 한다. */
 export function parseResumeSummary(raw: unknown): ResumeSummary | undefined {
-  if (!raw || typeof raw !== "object") return undefined;
-  const o = raw as Record<string, unknown>;
-  if (
-    typeof o.summary === "string" &&
-    Array.isArray(o.skills) &&
-    Array.isArray(o.experiences) &&
-    Array.isArray(o.keywords)
-  ) {
-    return o as unknown as ResumeSummary;
-  }
-  return undefined;
+  return normalizeResumeSummary(raw);
 }
 
 /** TargetCompany.interviewStyle(Json)을 안전하게 파싱한다 */

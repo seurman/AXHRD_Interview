@@ -12,7 +12,7 @@
 import { competencyLabel, jobRoleLabel } from "@/lib/labels";
 import { buildNcsRubric } from "@/lib/competency/ncs-rubric";
 import { generateGeminiText } from "@/lib/gemini/client";
-import type { ResumeSummary } from "@/lib/interview/resume-summary";
+import type { ResumeSummary, ResumeChunk } from "@/lib/interview/resume-summary";
 import type { JdRequirements } from "@/lib/company/jd-mapper";
 
 const PERSONALIZE_SYSTEM = `당신은 한국 기업 면접관입니다.
@@ -74,13 +74,20 @@ export async function personalizeQuestion(params: {
   const excludeJd = new Set(params.excludeJdTerms ?? []);
 
   const summaryExperiences = params.resumeSummary?.experiences ?? [];
-  const hasSummary = summaryExperiences.length > 0;
+  const summaryChunks = params.resumeSummary?.chunks ?? [];
+  const hasSummary = summaryExperiences.length > 0 || summaryChunks.length > 0;
   const legacyText = !hasSummary ? params.legacyResumeText?.trim() ?? "" : "";
 
+  const chunkCandidates = rankChunksByCompetency(summaryChunks, params.competency).filter(
+    (c) => !exclude.has(c.markdown) && !exclude.has(c.title),
+  );
+
   const highlights = hasSummary
-    ? rankExperiencesByCompetency(summaryExperiences, params.competency).filter(
-        (h) => !exclude.has(h)
-      )
+    ? chunkCandidates.length > 0
+      ? chunkCandidates.map((c) => excerptForCitation(c.markdown))
+      : rankExperiencesByCompetency(summaryExperiences, params.competency).filter(
+          (h) => !exclude.has(h),
+        )
     : legacyText
       ? extractResumeHighlights(legacyText, params.competency).filter((h) => !exclude.has(h))
       : [];
@@ -96,6 +103,7 @@ export async function personalizeQuestion(params: {
 
   const useJdOnly = highlights.length === 0;
   const anchor = useJdOnly ? jdTerms[0] : highlights[0];
+  const anchorChunk = !useJdOnly && chunkCandidates.length > 0 ? chunkCandidates[0] : null;
   const groundingTerms = useJdOnly ? jdTerms : highlights;
   // 인용하려는 자소서 경험이 이번 질문의 역량 주제와 실제로 겹치는지 — 겹치지 않으면(=이
   // 역량과 관련된 경험이 소진돼 무관한 경험을 어쩔 수 없이 앵커로 쓴 경우) heuristic 폴백에서
@@ -110,7 +118,13 @@ export async function personalizeQuestion(params: {
       {
         ...params,
         resumeContext: hasSummary
-          ? [params.resumeSummary?.summary, ...summaryExperiences].filter(Boolean).join(" ")
+          ? [
+              params.resumeSummary?.summary,
+              ...summaryChunks.map((c) => `${c.title}: ${c.markdown}`),
+              ...summaryExperiences,
+            ]
+              .filter(Boolean)
+              .join(" ")
           : legacyText.slice(0, 1500),
         useJdOnly,
         jdTerms,
@@ -118,11 +132,11 @@ export async function personalizeQuestion(params: {
       groundingTerms
     );
     if (llm && isQuestionGroundedInTerms(llm.question, groundingTerms)) {
-      const anchors = pickDisplayedAnchors(groundingTerms, llm.citedPhrase);
+      const anchors = pickDisplayedAnchors(groundingTerms, llm.citedPhrase, anchorChunk);
       return {
         text: llm.question,
         rubric: llm.rubric.length > 0 ? llm.rubric : heuristicRubric(params.competency, groundingTerms, useJdOnly),
-        usedHighlight: useJdOnly ? undefined : anchor,
+        usedHighlight: useJdOnly ? undefined : anchorChunk ? anchorChunk.markdown : anchor,
         usedJdTerm: useJdOnly ? anchor : undefined,
         resumeAnchors: anchors,
       };
@@ -141,9 +155,9 @@ export async function personalizeQuestion(params: {
   return {
     text: heuristicText,
     rubric: heuristicRubric(params.competency, groundingTerms, useJdOnly),
-    usedHighlight: useJdOnly ? undefined : anchor,
+    usedHighlight: useJdOnly ? undefined : anchorChunk ? anchorChunk.markdown : anchor,
     usedJdTerm: useJdOnly ? anchor : undefined,
-    resumeAnchors: pickDisplayedAnchors(groundingTerms),
+    resumeAnchors: pickDisplayedAnchors(groundingTerms, undefined, anchorChunk),
   };
 }
 
@@ -179,8 +193,15 @@ function extractGroundingTokens(highlight: string): string[] {
   return [...new Set(tokens)].slice(0, 8);
 }
 
-function pickDisplayedAnchors(highlights: string[], citedPhrase?: string | null): string[] {
+function pickDisplayedAnchors(
+  highlights: string[],
+  citedPhrase?: string | null,
+  chunk?: ResumeChunk | null,
+): string[] {
   const out: string[] = [];
+  if (chunk) {
+    out.push(`[${chunk.title}] ${excerptForCitation(chunk.markdown, 120)}`);
+  }
   if (citedPhrase?.trim()) {
     const c = citedPhrase.trim();
     out.push(c.length > 72 ? `${c.slice(0, 70)}…` : c);
@@ -193,6 +214,20 @@ function pickDisplayedAnchors(highlights: string[], citedPhrase?: string | null)
     if (out.length >= 2) break;
   }
   return out;
+}
+
+function excerptForCitation(markdown: string, max = 85): string {
+  const flat = markdown.replace(/\s+/g, " ").trim();
+  return flat.length <= max ? flat : `${flat.slice(0, max - 1)}…`;
+}
+
+function rankChunksByCompetency(chunks: ResumeChunk[], competency: string): ResumeChunk[] {
+  const hint = COMPETENCY_HINTS[competency] ?? /./;
+  const matched = chunks.filter(
+    (c) => hint.test(c.markdown) || (c.tags ?? []).some((t) => hint.test(t)),
+  );
+  const rest = chunks.filter((c) => !matched.includes(c));
+  return [...matched, ...rest];
 }
 
 /** 정리된 경험 목록(요약 단계에서 이미 뽑아둔 것) 중 이 역량과 관련성 높은 것을 앞으로 정렬 */

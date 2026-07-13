@@ -4,10 +4,9 @@
  * Usage: cd web && npm run db:seed:demo
  *
  * 포함:
- * - 개인 대시보드 (6축·차수 요약·자기발견) — dashboard-demo@demo.axhrd.local
- * - 조직진단 ARC 리포트 (2웨이브·하이어라키) — 테크노바 (ARC 데모)
- * - 기관 콘솔 로그인 — arc-demo-admin@demo.axhrd.local
- * - 쇼케이스 코호트·경량 진단 웨이브
+ * - 개인 대시보드 (6축·차수 요약·자기발견·자소서 청크) — dashboard-demo@demo.axhrd.local
+ * - 기관 풀패키지 (진단·코호트·지원자) — arc-demo-admin@demo.axhrd.local
+ * - 테크노바 ARC 풀 리포트 — 슈퍼어드민 /admin/diagnostic 전용
  */
 import { PrismaClient, Prisma } from "@prisma/client";
 import { syncNcsCompetencyBank } from "../../src/lib/competency/ncs-bank-sync";
@@ -58,10 +57,10 @@ async function main() {
 
   console.log("\n=== AXHRD Demo Suite ===\n");
   console.log(JSON.stringify(summary, null, 2));
-  console.log("\n로그인: dashboard-demo@demo.axhrd.local / Demo2026! → /dashboard");
-  console.log("기관: arc-demo-admin@demo.axhrd.local / Demo2026! → /org/diagnosis");
-  console.log("지원자 결과: showcase-axhrd-showcase-m0@demo.axhrd.local → /org/candidates");
-  console.log("슈퍼어드민: /admin/diagnostic → 테크노바 (ARC 데모) 리포트\n");
+  console.log("\n시연 스크립트: docs/DEMO_SCRIPT.md");
+  console.log("계정 A: dashboard-demo@demo.axhrd.local / Demo2026! → /dashboard");
+  console.log("계정 B: arc-demo-admin@demo.axhrd.local / Demo2026! → /org/diagnosis · /org/candidates");
+  console.log("슈퍼어드민: /admin/diagnostic → 테크노바 ARC 풀 리포트\n");
 }
 
 main()

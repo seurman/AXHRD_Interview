@@ -121,6 +121,7 @@ describe("filterAndRankQuestionPool", () => {
         skills: ["마케팅"],
         experiences: ["캠페인 보고서 작성"],
         keywords: ["보고서"],
+        chunks: [],
       },
       jobRole: "MARKETING",
     });

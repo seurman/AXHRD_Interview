@@ -11,7 +11,11 @@ export function buildSaasNavConfig(
   const settingsLinks: SaasNavConfig["settingsLinks"] = [];
 
   if (caps.has("tenant.cohort") && entitlements.interview) {
-    links.push({ href: "/org/dashboard", labelKey: "cohortDashboard" });
+    const cohortHref =
+      entitlements.competency || entitlements.diagnostic
+        ? "/org/dashboard/cohort"
+        : "/org/dashboard";
+    links.push({ href: cohortHref, labelKey: "cohortDashboard" });
   }
   if (caps.has("tenant.interview_kit") && entitlements.competency) {
     links.push({ href: "/org/candidates", labelKey: "candidateResults" });

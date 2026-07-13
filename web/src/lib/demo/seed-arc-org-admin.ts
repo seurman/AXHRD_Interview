@@ -1,29 +1,27 @@
 import type { PrismaClient } from "@prisma/client";
 import { hashPassword } from "@/lib/auth/password";
+import { SHOWCASE_ORG_NAME } from "@/lib/platform/showcase-org";
 import access from "@/data/demo/demo-access.json";
 
-const ARC_DEMO_JOIN_CODE = "ARC-DEMO-2026";
-const ARC_DEMO_ORG_NAME = "테크노바 (ARC 데모)";
-
-/** 테크노바 ARC 데모 기관에 기관 관리자 계정 연결 — /org/diagnosis 시연용 */
+/** 쇼케이스 기관(풀 SKU)에 기관 관리자 계정 연결 — 조직진단·지원자 결과 시연용 */
 export async function seedArcDemoOrgAdmin(client: PrismaClient) {
-  const account = access.accounts.find((a) => a.id === "org_diagnostic");
+  const account = access.accounts.find((a) => a.id === "org_full");
   if (!account || !("email" in account) || !account.email) {
-    throw new Error("demo-access.json: org_diagnostic account missing");
+    throw new Error("demo-access.json: org_full account missing");
   }
 
   const email = account.email;
-  const name = account.name ?? "테크노바 데모관리자";
+  const name = account.name ?? "AXHRD 데모관리자";
 
   const org = await client.organization.findFirst({
-    where: { OR: [{ joinCode: ARC_DEMO_JOIN_CODE }, { name: ARC_DEMO_ORG_NAME }] },
+    where: { name: SHOWCASE_ORG_NAME },
   });
 
   if (!org) {
     return {
       email,
       organizationId: null,
-      reason: "ARC demo org not found — run seedDemoArcIndex first",
+      reason: "showcase org not found — run seedShowcaseDemoData first",
     };
   }
 
@@ -57,5 +55,7 @@ export async function seedArcDemoOrgAdmin(client: PrismaClient) {
     organizationName: org.name,
     joinCode: org.joinCode,
     orgDiagnosisUrl: "/org/diagnosis",
+    candidatesUrl: "/org/candidates",
+    orgDashboardUrl: "/org/dashboard",
   };
 }

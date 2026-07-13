@@ -48,6 +48,7 @@ async function wipePersonalDemoData(db: PrismaClient, userId: string) {
   await db.interviewSession.deleteMany({ where: { userId } });
   await db.interviewPlan.deleteMany({ where: { userId } });
   await db.selfDiscoverySession.deleteMany({ where: { userId } });
+  await db.resume.deleteMany({ where: { userId } });
 }
 
 function buildRoundBrief(round: PackRound, completedAt: Date): RoundBrief {
@@ -132,6 +133,20 @@ export async function seedPersonalDashboardFromPack(client: PrismaClient) {
   }
 
   await wipePersonalDemoData(client, user.id);
+
+  const packResume = (pack as { resume?: { fileName: string; rawText: string; parsedTags: unknown } })
+    .resume;
+  if (packResume) {
+    await client.resume.deleteMany({ where: { userId: user.id } });
+    await client.resume.create({
+      data: {
+        userId: user.id,
+        fileName: packResume.fileName,
+        rawText: packResume.rawText,
+        parsedTags: packResume.parsedTags as Prisma.InputJsonValue,
+      },
+    });
+  }
 
   let sessionNumber = 0;
   let totalResponses = 0;

@@ -12,6 +12,14 @@
 
 import { generateGeminiText } from "@/lib/gemini/client";
 
+export type ResumeChunk = {
+  /** 경험/프로젝트 제목 — 질문 UI에 표시 */
+  title: string;
+  /** 500~1000자 마크다운 본문 — 질문 인용·근거 표시의 원천 */
+  markdown: string;
+  tags?: string[];
+};
+
 export interface ResumeSummary {
   /** 3~4문장 평이한 요약 — 어떤 배경·경험을 가진 지원자인지 */
   summary: string;
@@ -21,6 +29,8 @@ export interface ResumeSummary {
   experiences: string[];
   /** 직무/JD 매칭용 키워드(산업·직무·기술 용어) */
   keywords: string[];
+  /** 의미 단위 마크다운 청크 — personalize-question이 인용의 1차 소스 */
+  chunks: ResumeChunk[];
 }
 
 const SUMMARY_SYSTEM = `당신은 채용 담당자를 돕는 자기소개서 분석가입니다.
@@ -32,6 +42,10 @@ const SUMMARY_SYSTEM = `당신은 채용 담당자를 돕는 자기소개서 분
 - 원문에 실제로 없는 내용을 지어내지 마세요. 추측하지 말고 원문에 근거한 사실만 정리하세요.
 - 이메일·전화번호·생년월일 등 개인정보/인적사항은 요약에 포함하지 마세요.
 - experiences는 회사명·프로젝트명·역할·성과(가능하면 수치)를 담아 1문장씩, 최대 5개.
+- chunks: 자소서를 **의미 있는 단위**(프로젝트·인턴·대외활동 등)로 나눈 마크다운 배열. 각 청크는:
+  - title: 10~30자 제목
+  - markdown: **500~1000자**(짧은 자소서면 가능한 만큼), 원문 사실만 bullet·짧은 문단으로 정리. 지어내지 말 것.
+  - tags: 역량 힌트 키워드(선택)
 - 원문이 너무 짧거나 실질적 경험 서술이 없으면 배열은 빈 배열로 두세요.
 
 반드시 JSON만:
@@ -39,11 +53,37 @@ const SUMMARY_SYSTEM = `당신은 채용 담당자를 돕는 자기소개서 분
   "summary": "3~4문장 요약",
   "skills": ["..."],
   "experiences": ["..."],
-  "keywords": ["..."]
+  "keywords": ["..."],
+  "chunks": [{ "title": "...", "markdown": "...", "tags": ["..."] }]
 }`;
 
 function emptySummary(): ResumeSummary {
-  return { summary: "", skills: [], experiences: [], keywords: [] };
+  return { summary: "", skills: [], experiences: [], keywords: [], chunks: [] };
+}
+
+function normalizeChunks(raw: unknown, experiences: string[]): ResumeChunk[] {
+  if (!Array.isArray(raw)) return experiencesToChunks(experiences);
+  const chunks: ResumeChunk[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const o = item as Record<string, unknown>;
+    const title = typeof o.title === "string" ? o.title.trim() : "";
+    const markdown = typeof o.markdown === "string" ? o.markdown.trim() : "";
+    if (!title || markdown.length < 40) continue;
+    const tags = Array.isArray(o.tags)
+      ? o.tags.filter((t): t is string => typeof t === "string")
+      : undefined;
+    chunks.push({ title, markdown: markdown.slice(0, 1200), tags });
+  }
+  return chunks.length > 0 ? chunks.slice(0, 8) : experiencesToChunks(experiences);
+}
+
+function experiencesToChunks(experiences: string[]): ResumeChunk[] {
+  return experiences.slice(0, 5).map((exp, i) => ({
+    title: `경험 ${i + 1}`,
+    markdown: exp,
+    tags: [],
+  }));
 }
 
 /** 사용자 자소서 원문에서 프롬프트 인젝션 시도를 완화(완전 차단은 아님 — 시스템 지시와 병행) */
@@ -77,6 +117,9 @@ export function heuristicSummary(rawText: string): ResumeSummary {
     skills: [],
     experiences: experiences.length > 0 ? experiences : sentences.slice(0, 3),
     keywords: [],
+    chunks: experiencesToChunks(
+      experiences.length > 0 ? experiences : sentences.slice(0, 3),
+    ),
   };
 }
 
@@ -102,6 +145,22 @@ function isValidSummary(v: unknown): v is ResumeSummary {
   );
 }
 
+export function normalizeResumeSummary(raw: unknown): ResumeSummary | undefined {
+  if (!isValidSummary(raw)) return undefined;
+  const o = raw as ResumeSummary;
+  const experiences = o.experiences.filter((s): s is string => typeof s === "string");
+  const chunks = Array.isArray(o.chunks) && o.chunks.length > 0
+    ? normalizeChunks(o.chunks, experiences)
+    : normalizeChunks(undefined, experiences);
+  return {
+    summary: o.summary.trim(),
+    skills: o.skills.filter((s): s is string => typeof s === "string"),
+    experiences,
+    keywords: o.keywords.filter((s): s is string => typeof s === "string"),
+    chunks,
+  };
+}
+
 export async function summarizeResume(rawText: string): Promise<ResumeSummary> {
   const trimmed = sanitizeResumeForLlm(rawText.trim());
   if (!trimmed) return emptySummary();
@@ -124,11 +183,13 @@ export async function summarizeResume(rawText: string): Promise<ResumeSummary> {
       try {
         const parsed = JSON.parse(jsonMatch[0]);
         if (isValidSummary(parsed)) {
+          const experiences = parsed.experiences.filter((s): s is string => typeof s === "string");
           return {
             summary: parsed.summary.trim(),
             skills: parsed.skills.filter((s): s is string => typeof s === "string"),
-            experiences: parsed.experiences.filter((s): s is string => typeof s === "string"),
+            experiences,
             keywords: parsed.keywords.filter((s): s is string => typeof s === "string"),
+            chunks: normalizeChunks((parsed as ResumeSummary).chunks, experiences),
           };
         }
       } catch (e) {

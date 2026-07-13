@@ -48,6 +48,17 @@ export default async function OrgCandidateListPage({
       </div>
 
       <div className="card-luxe p-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted">완료 {sessions.length}명</p>
+          {sessions.length >= 2 && (
+            <Link
+              href={`/org/candidates/${shareId}/compare`}
+              className="btn-secondary text-sm"
+            >
+              지원자 비교표
+            </Link>
+          )}
+        </div>
         {sessions.length === 0 ? (
           <p className="text-sm text-muted">아직 완료된 지원자 면접이 없습니다.</p>
         ) : (
