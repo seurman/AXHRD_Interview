@@ -21,6 +21,7 @@ import { compareDimensionHalves, type DimensionSessionPoint } from "@/lib/dashbo
 import { QuestPanel } from "./QuestPanel";
 import { StrengthCardDeck } from "@/components/profile/StrengthCardDeck";
 import { DimensionComparisonRadar } from "./DimensionComparisonRadar";
+import { DimensionTimeSeriesChart } from "./DimensionTimeSeriesChart";
 import type { QuestItem } from "./QuestPanel";
 import type { DiscoverInterviewAdvice, DiscoverStrengthItem } from "@/types/discover";
 
@@ -54,6 +55,7 @@ interface DashboardProps {
     reportHref: string;
   } | null;
   readOnly?: boolean;
+  showOnboardingBanner?: boolean;
 }
 
 const LEVEL_COLORS = [
@@ -75,6 +77,7 @@ export function CompetencyDashboard({
   level,
   strengthDeck,
   readOnly = false,
+  showOnboardingBanner = false,
 }: DashboardProps) {
   const { dict } = useI18n();
   const diff = dict.dashboard.differentiation;
@@ -82,7 +85,6 @@ export function CompetencyDashboard({
 
   const assessed = Object.entries(latestByCompetency).filter(([, v]) => v.assessed);
 
-  // 레이더는 전체 6역량을 보여 주되, 미시작은 0점으로 표시 (빈 축이 보이게)
   const radarData = Object.entries(latestByCompetency).map(([code, v]) => ({
     competency: competencyLabel(code),
     score: v.assessed ? v.percentile : 0,
@@ -110,94 +112,161 @@ export function CompetencyDashboard({
 
   return (
     <div className="space-y-8">
+      {showOnboardingBanner && (
+        <div className="card-luxe flex flex-col gap-4 border-dashed border-gold/30 bg-gold/5 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-medium text-foreground">{st.onboarding.title}</p>
+            <p className="mt-1 text-sm text-muted">{st.onboarding.subtitle}</p>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <Link href="/interview/setup" className="btn-primary text-sm">
+              {st.onboarding.ctaInterview}
+            </Link>
+            <Link href="/demo#trial" className="btn-secondary text-sm">
+              {st.onboarding.ctaTrial}
+            </Link>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label={st.careerLevel} value={`Lv.${level}`} sub={`${totalXp} XP`} accent />
         <StatCard label={st.sessions} value={`${sessionCount}`} sub="IRT" />
         <StatCard
           label={st.avgPercentile}
-          value={`${Math.round(avgPercentile)}%`}
-          sub={growthDelta >= 0 ? `θ +${growthDelta.toFixed(2)}` : `θ ${growthDelta.toFixed(2)}`}
-          hint={st.avgPercentileBasis}
+          value={assessed.length > 0 ? `${Math.round(avgPercentile)}%` : "—"}
+          sub={
+            timelineData.length >= 2
+              ? growthDelta >= 0
+                ? `θ +${growthDelta.toFixed(2)}`
+                : `θ ${growthDelta.toFixed(2)}`
+              : st.avgPercentileBasis
+          }
+          hint={assessed.length > 0 ? st.avgPercentileBasis : undefined}
         />
         <StatCard
           label={st.strongest}
           value={strongest ? competencyLabel(strongest[0]) : "—"}
-          sub={weakest ? `${st.improve}: ${competencyLabel(weakest[0])}` : undefined}
+          sub={weakest ? `${st.improve}: ${competencyLabel(weakest[0])}` : st.onboarding.skillTreeHint}
         />
       </div>
 
       <div className={`grid gap-6 ${readOnly ? "" : "lg:grid-cols-3"}`}>
         <div className={`space-y-6 ${readOnly ? "" : "lg:col-span-2"}`}>
           <div className="grid gap-6 lg:grid-cols-2">
-            <ChartCard title={st.radar}>
-              {assessedCount >= 3 ? (
-                <ResponsiveContainer width="100%" height={260}>
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke="var(--color-card-border)" />
-                    <PolarAngleAxis dataKey="competency" tick={{ fill: "var(--color-muted)", fontSize: 10 }} />
-                    <Radar
-                      dataKey="score"
-                      stroke="var(--color-primary)"
-                      fill="var(--color-primary)"
-                      fillOpacity={0.3}
-                      dot={<AssessedRadarDot />}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex h-[260px] flex-col items-center justify-center text-center text-sm text-muted">
-                  <p>{st.radarNeedMore}</p>
-                  <p className="mt-1 text-xs">{st.radarMeasuredCount.replace("{count}", String(assessedCount))}</p>
-                </div>
+            <ChartCard
+              title={st.radar}
+              hint={
+                assessedCount < 3
+                  ? st.radarMeasuredCount.replace("{count}", String(assessedCount))
+                  : undefined
+              }
+            >
+              <ResponsiveContainer width="100%" height={260}>
+                <RadarChart data={radarData}>
+                  <PolarGrid stroke="var(--color-card-border)" />
+                  <PolarAngleAxis
+                    dataKey="competency"
+                    tick={{ fill: "var(--color-muted)", fontSize: 10 }}
+                  />
+                  <Radar
+                    dataKey="score"
+                    stroke="var(--color-primary)"
+                    fill="var(--color-primary)"
+                    fillOpacity={assessedCount > 0 ? 0.3 : 0.08}
+                    strokeOpacity={assessedCount > 0 ? 1 : 0.35}
+                    dot={<AssessedRadarDot />}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+              {assessedCount === 0 && (
+                <p className="mt-2 text-center text-xs text-muted">{st.radarEmpty}</p>
               )}
             </ChartCard>
 
-            <ChartCard title={st.growth}>
-              {!showGrowthTrendLine && timelineData.length > 0 && (
-                <p className="mb-2 text-xs text-muted">{st.growthTrendHint}</p>
+            <ChartCard
+              title={st.growth}
+              hint={!showGrowthTrendLine && timelineData.length > 0 ? st.growthTrendHint : undefined}
+            >
+              {timelineData.length === 0 ? (
+                <div className="flex h-[260px] flex-col items-center justify-center rounded-xl border border-dashed border-card-border bg-background/40 text-center text-sm text-muted">
+                  <p>{st.growthEmpty}</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <LineChart data={timelineData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-card-border)" />
+                    <XAxis dataKey="session" tick={{ fill: "var(--color-muted)", fontSize: 11 }} />
+                    <YAxis domain={[-2, 2]} tick={{ fill: "var(--color-muted)", fontSize: 11 }} />
+                    <Tooltip
+                      contentStyle={{
+                        background: "var(--color-card)",
+                        border: "1px solid var(--color-card-border)",
+                        borderRadius: 8,
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="theta"
+                      stroke="var(--color-gold)"
+                      strokeWidth={showGrowthTrendLine ? 2 : 1.5}
+                      dot={{ r: 5, fill: "var(--color-gold)" }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               )}
-              <ResponsiveContainer width="100%" height={260}>
-                <LineChart data={timelineData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-card-border)" />
-                  <XAxis dataKey="session" tick={{ fill: "var(--color-muted)", fontSize: 11 }} />
-                  <YAxis domain={[-2, 2]} tick={{ fill: "var(--color-muted)", fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-card-border)", borderRadius: 8 }} />
-                  <Line
-                    type="monotone"
-                    dataKey="theta"
-                    stroke="var(--color-gold)"
-                    strokeWidth={showGrowthTrendLine ? 2 : 0}
-                    dot={{ r: 5, fill: "var(--color-gold)" }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
             </ChartCard>
           </div>
 
-          <ChartCard title={st.dimensionTrend.title}>
-            {dimensionComparison ? (
-              <>
-                <p className="mb-3 text-xs text-muted">
-                  {st.dimensionTrend.comparison
+          <ChartCard
+            title={st.dimensionTrend.timeSeriesTitle}
+            hint={
+              dimensionTimeline.length >= 2
+                ? st.dimensionTrend.timeSeriesHint.replace(
+                    "{count}",
+                    String(dimensionTimeline.length),
+                  )
+                : st.dimensionTrend.timeSeriesEmpty
+            }
+          >
+            <DimensionTimeSeriesChart
+              timeline={dimensionTimeline}
+              emptyHint={st.dimensionTrend.timeSeriesEmpty}
+            />
+          </ChartCard>
+
+          <ChartCard
+            title={st.dimensionTrend.title}
+            hint={
+              dimensionComparison
+                ? st.dimensionTrend.comparison
                     .replace("{recent}", String(dimensionComparison.recentSessionCount))
-                    .replace("{previous}", String(dimensionComparison.previousSessionCount))}
-                </p>
-                <DimensionComparisonRadar
-                  recent={dimensionComparison.recent}
-                  previous={dimensionComparison.previous}
-                  recentLegend={st.dimensionTrend.recentLegend}
-                  previousLegend={st.dimensionTrend.previousLegend}
-                />
-              </>
+                    .replace("{previous}", String(dimensionComparison.previousSessionCount))
+                : st.dimensionTrend.comparisonEmpty
+            }
+          >
+            {dimensionComparison ? (
+              <DimensionComparisonRadar
+                recent={dimensionComparison.recent}
+                previous={dimensionComparison.previous}
+                recentLegend={st.dimensionTrend.recentLegend}
+                previousLegend={st.dimensionTrend.previousLegend}
+              />
             ) : (
-              <div className="flex h-[200px] flex-col items-center justify-center text-center text-sm text-muted">
-                <p>{st.dimensionTrend.empty}</p>
-              </div>
+              <DimensionComparisonRadar
+                recent={ZERO_DIMENSIONS}
+                previous={ZERO_DIMENSIONS}
+                recentLegend={st.dimensionTrend.recentLegend}
+                previousLegend={st.dimensionTrend.previousLegend}
+                placeholder
+                placeholderHint={st.dimensionTrend.empty}
+              />
             )}
           </ChartCard>
 
           <div className="card-luxe p-6">
-            <h3 className="mb-4 font-semibold text-foreground">{st.skillTree}</h3>
+            <h3 className="mb-1 font-semibold text-foreground">{st.skillTree}</h3>
+            <p className="mb-4 text-xs text-muted">{st.onboarding.skillTreeHint}</p>
             <div className="grid gap-3 sm:grid-cols-2">
               {Object.entries(latestByCompetency).map(([code, v]) => (
                 <CompetencySkillBar key={code} code={code} {...v} />
@@ -220,26 +289,35 @@ export function CompetencyDashboard({
         </div>
 
         {!readOnly && (
-        <div className="space-y-6">
-          <QuestPanel quests={quests} totalXp={totalXp} level={level} />
+          <div className="space-y-6">
+            <QuestPanel quests={quests} totalXp={totalXp} level={level} />
 
-          <div className="card-luxe p-5">
-            <h3 className="font-semibold text-foreground">{diff.title}</h3>
-            <ul className="mt-3 space-y-2 text-sm leading-relaxed text-muted">
-              {diff.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-            <Link href="/discover" className="mt-4 block text-sm font-medium text-primary hover:underline">
-              {diff.link}
-            </Link>
+            <div className="card-luxe p-5">
+              <h3 className="font-semibold text-foreground">{diff.title}</h3>
+              <ul className="mt-3 space-y-2 text-sm leading-relaxed text-muted">
+                {diff.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              <Link href="/discover" className="mt-4 block text-sm font-medium text-primary hover:underline">
+                {diff.link}
+              </Link>
+            </div>
           </div>
-        </div>
         )}
       </div>
     </div>
   );
 }
+
+const ZERO_DIMENSIONS = {
+  questionIntent: 0,
+  situationSpecificity: 0,
+  individualOwnership: 0,
+  logic: 0,
+  outcomeQuantification: 0,
+  delivery: 0,
+} as const;
 
 function AssessedRadarDot(props: DotProps & { payload?: { assessed?: boolean } }) {
   const { cx, cy, payload } = props;
@@ -278,7 +356,7 @@ function CompetencySkillBar({
     : LEVEL_COLORS[0];
 
   return (
-    <div className={`rounded-xl bg-background p-4 ${!assessed ? "opacity-70" : ""}`}>
+    <div className={`rounded-xl bg-background p-4 ring-1 ring-inset ring-card-border/50 ${!assessed ? "opacity-80" : ""}`}>
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium text-foreground">{competencyLabel(code)}</span>
         <span className={`font-bold ${color}`}>{assessed ? `L${levelEst}` : "미시작"}</span>
@@ -286,7 +364,7 @@ function CompetencySkillBar({
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-primary/10">
         <div
           className={`h-full rounded-full transition-all ${
-            assessed ? "bg-gradient-to-r from-primary to-gold" : "bg-muted/40"
+            assessed ? "bg-gradient-to-r from-primary to-gold" : "bg-muted/30"
           }`}
           style={{ width: `${assessed ? percentile : 0}%` }}
         />
@@ -321,10 +399,21 @@ function StatCard({
   );
 }
 
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+function ChartCard({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="card-luxe p-5">
-      <h3 className="mb-4 font-semibold text-foreground">{title}</h3>
+      <div className="mb-4">
+        <h3 className="font-semibold text-foreground">{title}</h3>
+        {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+      </div>
       {children}
     </div>
   );

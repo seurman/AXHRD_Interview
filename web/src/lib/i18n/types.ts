@@ -431,14 +431,26 @@ export type Dictionary = {
       improve: string;
       skillTree: string;
       radar: string;
-      radarNeedMore: string;
+      radarEmpty: string;
       radarMeasuredCount: string;
       growth: string;
+      growthEmpty: string;
       growthTrendHint: string;
       strengthDeckNote: string;
+      onboarding: {
+        title: string;
+        subtitle: string;
+        ctaInterview: string;
+        ctaTrial: string;
+        skillTreeHint: string;
+      };
       dimensionTrend: {
         title: string;
+        timeSeriesTitle: string;
+        timeSeriesHint: string;
+        timeSeriesEmpty: string;
         comparison: string;
+        comparisonEmpty: string;
         recentLegend: string;
         previousLegend: string;
         empty: string;
@@ -452,6 +464,7 @@ export type Dictionary = {
       dimensionsHint: string;
       dimensionsEmpty: string;
       roundsTitle: string;
+      roundsEmpty: string;
       accessTitle: string;
       accessHint: string;
       view: string;

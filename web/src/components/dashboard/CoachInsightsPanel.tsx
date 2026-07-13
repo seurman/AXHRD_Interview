@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { competencyLabel, dimensionLabel } from "@/lib/labels";
-import { ANSWER_DIMENSION_KEYS } from "@/lib/interview/answer-dimensions";
+import { competencyLabel } from "@/lib/labels";
 import { RoundBriefPanel } from "@/components/interview/RoundBriefPanel";
 import type { RoundBrief } from "@/lib/interview/competency-round";
 import { useI18n } from "@/lib/i18n/I18nProvider";
+import { DimensionAxesPanel } from "./DimensionAxesPanel";
 
 export type CompetencyDeltaRow = {
   competency: string;
@@ -66,9 +66,9 @@ export function CoachInsightsPanel({
                     )}
                   </span>
                 </div>
-                <div className="h-2 rounded-full bg-background">
+                <div className="h-2 overflow-hidden rounded-full bg-background ring-1 ring-inset ring-card-border/50">
                   <div
-                    className="h-2 rounded-full bg-primary/70"
+                    className={`h-2 rounded-full ${row.assessed ? "bg-primary/70" : "bg-muted/25"}`}
                     style={{
                       width: `${row.assessed ? Math.min(100, row.percentile) : 0}%`,
                     }}
@@ -82,40 +82,27 @@ export function CoachInsightsPanel({
         <section className="card-luxe p-6">
           <h3 className="font-semibold text-foreground">{ci.dimensionsTitle}</h3>
           <p className="mt-1 text-xs text-muted">{ci.dimensionsHint}</p>
-          {latestDimensions ? (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {ANSWER_DIMENSION_KEYS.map((key) => (
-                <div key={key}>
-                  <div className="mb-1 flex justify-between text-xs text-muted">
-                    <span>{dimensionLabel(key)}</span>
-                    <span className="font-medium text-foreground">
-                      {Math.round((latestDimensions[key] ?? 0) * 100)}%
-                    </span>
-                  </div>
-                  <div className="h-2 rounded-full bg-background">
-                    <div
-                      className="h-2 rounded-full bg-gold"
-                      style={{
-                        width: `${Math.min(100, Math.max(0, (latestDimensions[key] ?? 0) * 100))}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="mt-6 text-sm text-muted">{ci.dimensionsEmpty}</p>
-          )}
+          <div className="mt-4">
+            <DimensionAxesPanel
+              values={latestDimensions}
+              emptyHint={!latestDimensions ? ci.dimensionsEmpty : undefined}
+            />
+          </div>
         </section>
       </div>
 
-      {recentRounds.length > 0 && (
+      {recentRounds.length > 0 ? (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">{ci.roundsTitle}</h3>
           {recentRounds.slice(0, 2).map((brief, i) => (
             <RoundBriefPanel key={`${brief.completedAt}-${i}`} brief={brief} />
           ))}
         </div>
+      ) : (
+        <section className="card-luxe border-dashed p-6">
+          <h3 className="font-semibold text-foreground">{ci.roundsTitle}</h3>
+          <p className="mt-2 text-sm text-muted">{ci.roundsEmpty}</p>
+        </section>
       )}
 
       {accessLog.length > 0 && (

@@ -25,11 +25,15 @@ export function DimensionComparisonRadar({
   previous,
   recentLegend,
   previousLegend,
+  placeholder = false,
+  placeholderHint,
 }: {
   recent: AnswerDimensions;
   previous: AnswerDimensions;
   recentLegend: string;
   previousLegend: string;
+  placeholder?: boolean;
+  placeholderHint?: string;
 }) {
   const chartData = useMemo<RadarRow[]>(
     () =>
@@ -54,39 +58,48 @@ export function DimensionComparisonRadar({
         </span>
       </div>
 
-      <ResponsiveContainer width="100%" height={280}>
-        <RadarChart data={chartData} cx="50%" cy="50%" outerRadius="70%">
-          <defs>
-            <linearGradient id="dashboardDimensionRecent" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="var(--color-gold)" stopOpacity={0.5} />
-              <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0.3} />
-            </linearGradient>
-          </defs>
-          <PolarGrid stroke="var(--color-card-border)" />
-          <PolarAngleAxis
-            dataKey="axis"
-            tick={{ fill: "var(--color-muted)", fontSize: 10 }}
-          />
-          <Radar
-            name={previousLegend}
-            dataKey="previous"
-            stroke="var(--color-muted)"
-            strokeWidth={1.5}
-            strokeDasharray="5 4"
-            fill="none"
-            fillOpacity={0}
-            dot={false}
-          />
-          <Radar
-            name={recentLegend}
-            dataKey="recent"
-            stroke="var(--color-gold)"
-            strokeWidth={2}
-            fill="url(#dashboardDimensionRecent)"
-            fillOpacity={1}
-          />
-        </RadarChart>
-      </ResponsiveContainer>
+      <div className={placeholder ? "relative" : undefined}>
+        <ResponsiveContainer width="100%" height={280}>
+          <RadarChart data={chartData} cx="50%" cy="50%" outerRadius="70%">
+            <defs>
+              <linearGradient id="dashboardDimensionRecent" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="var(--color-gold)" stopOpacity={placeholder ? 0.15 : 0.5} />
+                <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={placeholder ? 0.08 : 0.3} />
+              </linearGradient>
+            </defs>
+            <PolarGrid stroke="var(--color-card-border)" />
+            <PolarAngleAxis
+              dataKey="axis"
+              tick={{ fill: "var(--color-muted)", fontSize: 10 }}
+            />
+            <Radar
+              name={previousLegend}
+              dataKey="previous"
+              stroke="var(--color-muted)"
+              strokeWidth={1.5}
+              strokeDasharray="5 4"
+              fill="none"
+              fillOpacity={0}
+              dot={false}
+              strokeOpacity={placeholder ? 0.35 : 1}
+            />
+            <Radar
+              name={recentLegend}
+              dataKey="recent"
+              stroke="var(--color-gold)"
+              strokeWidth={2}
+              fill="url(#dashboardDimensionRecent)"
+              fillOpacity={1}
+              strokeOpacity={placeholder ? 0.35 : 1}
+            />
+          </RadarChart>
+        </ResponsiveContainer>
+        {placeholder && placeholderHint && (
+          <p className="pointer-events-none absolute inset-x-0 bottom-6 text-center text-xs text-muted">
+            {placeholderHint}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
