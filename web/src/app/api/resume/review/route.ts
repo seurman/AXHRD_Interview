@@ -255,6 +255,8 @@ export async function POST(req: Request) {
         jdMatch: jdMatch as Prisma.InputJsonValue,
         improvementPlan: narrative.improvementPlan as Prisma.InputJsonValue,
         suggestedCompetencies: narrative.suggestedCompetencies,
+        dimensionScores: narrative.dimensionScores as Prisma.InputJsonValue,
+        criteriaResults: narrative.criteriaResults as Prisma.InputJsonValue,
       },
     });
 

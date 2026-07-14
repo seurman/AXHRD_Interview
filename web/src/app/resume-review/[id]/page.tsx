@@ -5,6 +5,8 @@ import { requireProductCapability } from "@/lib/platform/page-guards";
 import { prisma } from "@/lib/prisma";
 import {
   ResumeReviewReport,
+  type CriterionResultView,
+  type DimensionScoreView,
   type ImprovementItem,
   type JdMatch,
   type ParagraphFeedback,
@@ -38,6 +40,8 @@ export default async function ResumeReviewDetailPage({
   const suggested = Array.isArray(review.suggestedCompetencies)
     ? (review.suggestedCompetencies as string[])
     : [];
+  const dimensionScores = review.dimensionScores as DimensionScoreView[] | null;
+  const criteriaResults = review.criteriaResults as CriterionResultView[] | null;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-12">
@@ -47,8 +51,8 @@ export default async function ResumeReviewDetailPage({
         </Link>
         <h1 className="mt-3 text-2xl font-bold text-foreground">자소서 첨삭 리포트</h1>
         <p className="mt-1 text-sm text-muted">
-          총평과 문단별 피드백을 한눈에 확인하고, 추천 역량으로 이어서 모의면접을 진행할 수
-          있습니다.
+          형식·논리, 산업 역량, STAR·BEI 기준과 비교한 강점·부족·수정안을 확인하고, 추천
+          역량으로 모의면접을 이어갈 수 있습니다.
         </p>
       </div>
 
@@ -62,6 +66,8 @@ export default async function ResumeReviewDetailPage({
           suggestedCompetencies={suggested}
           companyName={review.targetCompany?.name}
           createdAt={review.createdAt}
+          dimensionScores={dimensionScores}
+          criteriaResults={criteriaResults}
         />
       </Reveal>
     </div>

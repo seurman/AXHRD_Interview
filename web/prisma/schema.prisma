@@ -374,6 +374,32 @@ model Resume {
   @@index([userId])
 }
 
+/**
+ * 자소서 첨삭 평가 기준 (관리자 CRUD).
+ * category: FORMAT_LOGIC | INDUSTRY_FIT | STAR_BEI
+ */
+model ResumeReviewCriterion {
+  id          String   @id @default(cuid())
+  /** 안정적 식별자 — 시드/코드에서 참조 (예: STAR_RESULT_METRICS) */
+  code        String   @unique
+  /** FORMAT_LOGIC | INDUSTRY_FIT | STAR_BEI */
+  category    String
+  title       String
+  description String   @db.Text
+  /** LLM·휴리스틱이 확인할 체크 포인트 */
+  howToCheck  String   @db.Text
+  weight      Float    @default(1)
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  /** 근거 출처·연구 메모 (관리자 참고용) */
+  sourceNote  String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category, sortOrder])
+  @@index([isActive, sortOrder])
+}
+
 /** 자소서 첨삭 리포트 — 공고 대사(있으면) 또는 산업군/직무 프리셋(없으면) 기준 */
 model ResumeReview {
   id                String         @id @default(cuid())
@@ -394,6 +420,13 @@ model ResumeReview {
   improvementPlan   Json
   /** NCS 역량 코드 — 다음 모의면접 추천에 사용 */
   suggestedCompetencies Json       @default("[]")
+  /**
+   * [{ category, label, score, band, strengths[], gaps[] }]
+   * FORMAT_LOGIC / INDUSTRY_FIT / STAR_BEI 축 점수
+   */
+  dimensionScores   Json?
+  /** [{ code, category, title, status, strengthNote, gapNote }] 기준별 판정 */
+  criteriaResults   Json?
   createdAt         DateTime       @default(now())
 
   @@index([userId, createdAt(sort: Desc)])

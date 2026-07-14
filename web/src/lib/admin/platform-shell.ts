@@ -54,6 +54,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/admin/organizations": "기관",
   "/admin/organizations/benchmark": "기관 비교",
   "/admin/content": "IRT 문항",
+  "/admin/content/resume-review": "자소서 첨삭 기준",
   "/admin/irt-recalibration": "IRT 재보정",
   "/admin/repository": "역량·루브릭",
   "/admin/diagnostic": "진단 캠페인",
