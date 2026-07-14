@@ -8,6 +8,7 @@ import {
   syncInterviewPlan,
   syncCompetencyProgress,
 } from "@/lib/neo4j/ontology";
+import { recommendNextCompetencies } from "@/lib/neo4j/graph-analytics";
 
 export async function upsertCandidate(params: {
   email: string;
@@ -94,11 +95,30 @@ export async function getOrCreateActivePlan(params: {
 }
 
 export function nextRecommendedCompetency(
-  progress: Array<{ competency: string; status: string }>,
+  progress: Array<{ competency: string; status: string; latestTheta?: number | null; levelEst?: number | null }>,
   order: readonly string[] = COMPETENCY_CODES
 ): string | null {
   const inProgress = progress.find((p) => p.status === "IN_PROGRESS");
   if (inProgress) return inProgress.competency;
+
+  try {
+    const recs = recommendNextCompetencies({
+      performances: progress.map((p) => ({
+        code: p.competency,
+        status: p.status,
+        theta: p.latestTheta,
+        levelEst: p.levelEst,
+      })),
+      limit: 1,
+    });
+    if (recs[0]) {
+      const code = recs[0].code;
+      const row = progress.find((p) => p.competency === code);
+      if (!row || row.status !== "COMPLETED") return code;
+    }
+  } catch {
+    /* fall through to linear order */
+  }
 
   for (const code of order) {
     const row = progress.find((p) => p.competency === code);

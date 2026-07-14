@@ -9,6 +9,12 @@ import {
   type CompetencyPerformance,
   type ResumeEvidenceClaim,
 } from "@/lib/interview/resume-evidence";
+import {
+  enrichResumeWithLlm,
+  interpretResume,
+  interpretResumeFast,
+  needsEnrichment,
+} from "@/lib/interview/resume-interpret";
 import type { ResumeSummary } from "@/lib/interview/resume-summary";
 import {
   mergeGraphHitsIntoEvidence,
@@ -22,13 +28,95 @@ export async function persistResumeOntology(params: {
   summary: ResumeSummary;
 }): Promise<ResumeSummary> {
   const summary = ensureResumeEvidence(params.summary);
-  // Neo4j 미러 — 실패해도 무시
   void syncResumeEvidenceGraph({
     userId: params.userId,
     resumeId: params.resumeId,
     summary,
   });
   return summary;
+}
+
+/**
+ * 새 자소서 유입용: 빠른 해석을 즉시 저장하고, LLM 보강은 요청 후처리로 올린다.
+ * waitEnrichMs>0 이면 그 시간까지 보강을 기다린 뒤 저장(첨삭처럼 대기 가능한 경로).
+ */
+export async function ingestResumeInterpretation(params: {
+  userId: string;
+  resumeId: string;
+  rawText: string;
+  waitEnrichMs?: number;
+  scheduleBackgroundEnrich?: boolean;
+}): Promise<{ summary: ResumeSummary; usedEnrich: boolean; enrichScheduled: boolean }> {
+  const wait = params.waitEnrichMs ?? 0;
+  const { summary, usedEnrich } = await interpretResume({
+    rawText: params.rawText,
+    waitEnrichMs: wait,
+  });
+
+  await prisma.resume.update({
+    where: { id: params.resumeId },
+    data: { parsedTags: JSON.parse(JSON.stringify(summary)) },
+  });
+  await persistResumeOntology({
+    userId: params.userId,
+    resumeId: params.resumeId,
+    summary,
+  });
+
+  let enrichScheduled = false;
+  if (!usedEnrich && (params.scheduleBackgroundEnrich ?? true) && needsEnrichment(summary)) {
+    enrichScheduled = scheduleResumeEnrichment({
+      userId: params.userId,
+      resumeId: params.resumeId,
+      rawText: params.rawText,
+      base: summary,
+    });
+  }
+
+  return { summary, usedEnrich, enrichScheduled };
+}
+
+/** 요청 컨텍스트에서 after()로 LLM 보강 — 실패해도 질문/첨삭은 fast evidence로 충분 */
+export function scheduleResumeEnrichment(params: {
+  userId: string;
+  resumeId: string;
+  rawText: string;
+  base?: ResumeSummary;
+}): boolean {
+  const run = async () => {
+    try {
+      const enriched =
+        (await enrichResumeWithLlm(params.rawText, params.base ?? interpretResumeFast(params.rawText))) ??
+        null;
+      if (!enriched) return;
+      await prisma.resume.update({
+        where: { id: params.resumeId },
+        data: { parsedTags: JSON.parse(JSON.stringify(enriched)) },
+      });
+      await persistResumeOntology({
+        userId: params.userId,
+        resumeId: params.resumeId,
+        summary: enriched,
+      });
+    } catch (e) {
+      console.warn("[resume-ontology] background enrich failed:", e);
+    }
+  };
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { after } = require("next/server") as { after?: (fn: () => void | Promise<void>) => void };
+    if (typeof after === "function") {
+      after(() => {
+        void run();
+      });
+      return true;
+    }
+  } catch {
+    /* non-Next context */
+  }
+  void run();
+  return true;
 }
 
 export async function loadCompetencyPerformance(

@@ -9,9 +9,8 @@ import {
   nextRecommendedCompetency,
   syncInterviewPlan,
 } from "@/lib/candidate/service";
-import { matchPersona } from "@/lib/interview/persona-archetype";
-import { summarizeResume } from "@/lib/interview/resume-summary";
 import { parseResumeSummary } from "@/lib/interview/build-question";
+import { matchPersona } from "@/lib/interview/persona-archetype";
 import { getBillingContext } from "@/lib/billing/subscription";
 import { questionBankAccessWhere } from "@/lib/interview/question-bank-access";
 import {
@@ -56,6 +55,8 @@ export type StartSessionBody = {
   jobRole?: string;
   resumeText?: string;
   resumeFileName?: string;
+  /** /api/resume/interpret 로 미리 해석·저장된 자소서 — 있으면 재사용 */
+  resumeId?: string;
   planId?: string;
   focusCompetency?: string;
   jdText?: string;
@@ -133,6 +134,7 @@ export async function startInterviewSession(
     jobRole,
     resumeText,
     resumeFileName,
+    resumeId: resumeIdBody,
     planId,
     focusCompetency,
     jdText,
@@ -250,34 +252,89 @@ export async function startInterviewSession(
 
   const trimmedResumeText: string | undefined = resumeText?.trim() || undefined;
   let resume: { id: string; parsedTags?: unknown } | null = null;
-  if (trimmedResumeText) {
-    const { persistResumeOntology } = await import("@/lib/interview/resume-ontology");
-    const summaryObj = await summarizeResume(trimmedResumeText);
-    const summary = JSON.parse(JSON.stringify(summaryObj));
-    if (existingPlan?.resumeId) {
-      resume = await prisma.resume.update({
-        where: { id: existingPlan.resumeId },
-        data: {
-          fileName: resumeFileName?.trim() || "paste.txt",
-          rawText: trimmedResumeText,
-          parsedTags: summary,
-        },
+  if (trimmedResumeText || resumeIdBody) {
+    const { ingestResumeInterpretation, persistResumeOntology } = await import(
+      "@/lib/interview/resume-ontology"
+    );
+    const { needsEnrichment } = await import("@/lib/interview/resume-interpret");
+
+    if (resumeIdBody) {
+      const owned = await prisma.resume.findFirst({
+        where: { id: resumeIdBody, userId: user.id },
       });
-    } else {
-      resume = await prisma.resume.create({
-        data: {
-          userId: user.id,
-          fileName: resumeFileName?.trim() || "paste.txt",
-          rawText: trimmedResumeText,
-          parsedTags: summary,
-        },
+      if (owned) {
+        resume = owned;
+        if (trimmedResumeText && trimmedResumeText !== owned.rawText) {
+          resume = await prisma.resume.update({
+            where: { id: owned.id },
+            data: {
+              rawText: trimmedResumeText,
+              fileName: resumeFileName?.trim() || owned.fileName,
+            },
+          });
+          await ingestResumeInterpretation({
+            userId: user.id,
+            resumeId: resume.id,
+            rawText: trimmedResumeText,
+            waitEnrichMs: 0,
+            scheduleBackgroundEnrich: true,
+          });
+        } else {
+          const parsed = parseResumeSummary(owned.parsedTags);
+          if (parsed) {
+            await persistResumeOntology({
+              userId: user.id,
+              resumeId: owned.id,
+              summary: parsed,
+            });
+            if (needsEnrichment(parsed)) {
+              const { scheduleResumeEnrichment } = await import("@/lib/interview/resume-ontology");
+              scheduleResumeEnrichment({
+                userId: user.id,
+                resumeId: owned.id,
+                rawText: owned.rawText,
+                base: parsed,
+              });
+            }
+          } else if (owned.rawText.trim().length >= 20) {
+            await ingestResumeInterpretation({
+              userId: user.id,
+              resumeId: owned.id,
+              rawText: owned.rawText,
+              waitEnrichMs: 0,
+              scheduleBackgroundEnrich: true,
+            });
+          }
+        }
+      }
+    }
+
+    if (!resume && trimmedResumeText) {
+      if (existingPlan?.resumeId) {
+        resume = await prisma.resume.update({
+          where: { id: existingPlan.resumeId },
+          data: {
+            fileName: resumeFileName?.trim() || "paste.txt",
+            rawText: trimmedResumeText,
+          },
+        });
+      } else {
+        resume = await prisma.resume.create({
+          data: {
+            userId: user.id,
+            fileName: resumeFileName?.trim() || "paste.txt",
+            rawText: trimmedResumeText,
+          },
+        });
+      }
+      await ingestResumeInterpretation({
+        userId: user.id,
+        resumeId: resume.id,
+        rawText: trimmedResumeText,
+        waitEnrichMs: 0,
+        scheduleBackgroundEnrich: true,
       });
     }
-    await persistResumeOntology({
-      userId: user.id,
-      resumeId: resume.id,
-      summary: summaryObj,
-    });
   } else if (existingPlan?.resume) {
     resume = existingPlan.resume;
     const parsed = parseResumeSummary(existingPlan.resume.parsedTags);

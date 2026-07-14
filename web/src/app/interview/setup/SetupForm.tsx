@@ -114,6 +114,7 @@ export function SetupForm({
   const [jdAnalysisError, setJdAnalysisError] = useState<string | null>(null);
   const [jobRole, setJobRole] = useState<string>("MARKETING");
   const [resumeText, setResumeText] = useState("");
+  const [preinterpretedResumeId, setPreinterpretedResumeId] = useState<string | null>(null);
   const [showResumeEditor, setShowResumeEditor] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -255,6 +256,25 @@ export function SetupForm({
       setResumeText(text);
       setUploadedFileName(file.name);
       setShowResumeEditor(false);
+      // 업로드 직후 빠른 claim↔역량 해석 — 면접 시작 전에 미리 워밍
+      void fetch("/api/resume/interpret", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeText: text,
+          resumeFileName: file.name,
+          waitEnrich: false,
+          persist: true,
+        }),
+      })
+        .then(async (r) => {
+          if (!r.ok) return;
+          const data = (await r.json()) as { resumeId?: string };
+          if (data.resumeId) setPreinterpretedResumeId(data.resumeId);
+        })
+        .catch(() => {
+          /* 해석 실패해도 면접은 시작 시 재해석 */
+        });
     } catch (e) {
       setFileError(e instanceof Error ? e.message : "파일 업로드 실패");
       setUploadedFileName(null);
@@ -267,6 +287,7 @@ export function SetupForm({
   const clearResume = () => {
     setResumeText("");
     setUploadedFileName(null);
+    setPreinterpretedResumeId(null);
     setShowResumeEditor(false);
     setFileError(null);
   };
@@ -397,6 +418,7 @@ export function SetupForm({
           jobRole,
           resumeText: resumeText.trim(),
           resumeFileName: uploadedFileName,
+          resumeId: preinterpretedResumeId ?? undefined,
           planId,
           focusCompetency,
           // 이번 세션 이후 이어서 추천할 나머지 역량들 — 현재 API는 아직 안 읽지만,

@@ -11,13 +11,16 @@ import {
   matchKeywords,
   presetRequiredKeywords,
 } from "@/lib/interview/resume-review";
-import { summarizeResume, type ResumeSummary } from "@/lib/interview/resume-summary";
-import { parseResumeSummary } from "@/lib/interview/build-question";
-import { ensureResumeEvidence, evidenceGaps, performanceBand } from "@/lib/interview/resume-evidence";
 import {
+  ingestResumeInterpretation,
   loadCompetencyPerformance,
   persistResumeOntology,
 } from "@/lib/interview/resume-ontology";
+import { interpretResume } from "@/lib/interview/resume-interpret";
+import { matchClaimsToJd, recommendNextCompetencies } from "@/lib/neo4j/graph-analytics";
+import type { ResumeSummary } from "@/lib/interview/resume-summary";
+import { ensureResumeEvidence, evidenceGaps, performanceBand } from "@/lib/interview/resume-evidence";
+import { parseResumeSummary } from "@/lib/interview/build-question";
 import { competencyLabel, industryLabel, jobRoleLabel } from "@/lib/labels";
 import { INDUSTRY_CODES, JOB_ROLES } from "@/types";
 import type { CompetencyCode, IndustryCode, JobRoleCode } from "@/types";
@@ -71,21 +74,26 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "자소서를 찾을 수 없습니다." }, { status: 404 });
       }
     } else if (resumeTextInput.length >= 20) {
-      const summaryObj = await summarizeResume(resumeTextInput);
-      const summary = JSON.parse(JSON.stringify(summaryObj));
       resumeRow = await prisma.resume.create({
         data: {
           userId: user.id,
           fileName: resumeFileName || "paste.txt",
           rawText: resumeTextInput,
-          parsedTags: summary,
         },
       });
-      await persistResumeOntology({
+      // 첨삭은 LLM 서사 대기 가능 — 최대 4s 보강 경쟁 + 미완 시 after() 보강
+      const ingested = await ingestResumeInterpretation({
         userId: user.id,
         resumeId: resumeRow.id,
-        summary: summaryObj,
+        rawText: resumeTextInput,
+        waitEnrichMs: 4000,
+        scheduleBackgroundEnrich: true,
       });
+      resumeRow = {
+        ...resumeRow,
+        parsedTags: ingested.summary,
+        rawText: resumeTextInput,
+      };
     } else {
       return NextResponse.json(
         { error: "자소서 내용이 필요합니다. 20자 이상 입력하거나 저장된 자소서를 선택해 주세요." },
@@ -95,16 +103,14 @@ export async function POST(req: Request) {
 
     let resumeSummary: ResumeSummary =
       parseResumeSummary(resumeRow.parsedTags) ??
-      (await summarizeResume(resumeRow.rawText));
+      (await interpretResume({ rawText: resumeRow.rawText, waitEnrichMs: 3500 })).summary;
     resumeSummary = ensureResumeEvidence(resumeSummary);
 
-    // 기존 자소서 재사용 시에도 온톨로지 미러 갱신
     await persistResumeOntology({
       userId: user.id,
       resumeId: resumeRow.id,
       summary: resumeSummary,
     });
-    // DB에 evidence 필드가 비어 있으면 채워 둠
     if (!parseResumeSummary(resumeRow.parsedTags)?.evidence?.length) {
       await prisma.resume.update({
         where: { id: resumeRow.id },
@@ -114,6 +120,11 @@ export async function POST(req: Request) {
 
     const performances = await loadCompetencyPerformance(user.id);
     const gaps = evidenceGaps(resumeSummary.evidence ?? []);
+    const recs = recommendNextCompetencies({
+      performances,
+      evidence: resumeSummary.evidence,
+      limit: 3,
+    });
     const evidenceContext = (resumeSummary.evidence ?? [])
       .slice(0, 8)
       .map((e) => {
@@ -121,15 +132,23 @@ export async function POST(req: Request) {
         return `- [${e.title}] → ${codes}`;
       })
       .join("\n");
-    const performanceContext = performances.length
-      ? performances
-          .map((p) => {
-            const band = performanceBand(p);
-            return `- ${competencyLabel(p.code as CompetencyCode)}: band=${band}, level=${p.levelEst ?? "—"}, θ=${p.theta?.toFixed?.(2) ?? "—"}`;
-          })
-          .join("\n")
-      : "";
+    const performanceContext = [
+      performances.length
+        ? performances
+            .map((p) => {
+              const band = performanceBand(p);
+              return `- ${competencyLabel(p.code as CompetencyCode)}: band=${band}, level=${p.levelEst ?? "—"}, θ=${p.theta?.toFixed?.(2) ?? "—"}`;
+            })
+            .join("\n")
+        : "",
+      recs.length
+        ? `추천 다음 역량:\n${recs.map((r) => `- ${competencyLabel(r.code)} (${r.reason})`).join("\n")}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
     const suggestedFromEvidence = [
+      ...recs.map((r) => r.code),
       ...gaps.filter((g) => g.strength < 0.45).map((g) => g.code),
       ...performances
         .filter((p) => performanceBand(p) === "weak")
@@ -194,6 +213,24 @@ export async function POST(req: Request) {
     const resumeKeywords = buildResumeKeywordPool(resumeSummary);
     const jdMatch = matchKeywords(resumeKeywords, requiredKeywords);
 
+    const jdClaimHits =
+      matchSource === "jd" && requiredKeywords.length > 0
+        ? matchClaimsToJd({
+            jdText: requiredKeywords.join(" "),
+            extraTerms: requiredKeywords,
+            evidence: resumeSummary.evidence ?? [],
+            limit: 5,
+          })
+        : [];
+    const jdClaimContext = jdClaimHits.length
+      ? `JD↔자소서 claim 매칭:\n${jdClaimHits
+          .map(
+            (h) =>
+              `- [${h.title}] score=${h.score.toFixed(1)} terms=${h.matchedTerms.join(",") || "—"} → ${h.competencies.join("/")}`,
+          )
+          .join("\n")}`
+      : "";
+
     const narrative = await generateResumeReviewNarrative({
       resumeSummary,
       resumeRawText: resumeRow.rawText,
@@ -202,7 +239,7 @@ export async function POST(req: Request) {
       requiredKeywords,
       industryLabel: industryLabel(industryCode),
       jobRoleLabel: jobRoleLabel(jobRoleCode),
-      evidenceContext: evidenceContext || undefined,
+      evidenceContext: [evidenceContext, jdClaimContext].filter(Boolean).join("\n\n") || undefined,
       performanceContext: performanceContext || undefined,
       suggestedFromEvidence: suggestedFromEvidence.slice(0, 3),
     });
