@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   extractGeminiVisibleText,
   resolveThinkingBudget,
+  resumeReviewModelChain,
 } from "@/lib/gemini/client";
 
 describe("gemini client text extraction", () => {
@@ -35,9 +36,20 @@ describe("gemini client text extraction", () => {
     ).toBe("");
   });
 
-  it("clamps pro thinking budget to at least 128", () => {
+  it("applies thinking budget only to pro-class models", () => {
     expect(resolveThinkingBudget("gemini-2.5-pro", 0)).toBe(128);
-    expect(resolveThinkingBudget("gemini-2.5-flash", 0)).toBe(0);
     expect(resolveThinkingBudget("gemini-2.5-pro")).toBe(1024);
+    expect(resolveThinkingBudget("gemini-flash-latest")).toBeUndefined();
+    expect(resolveThinkingBudget("gemini-3.1-flash-lite")).toBeUndefined();
+  });
+
+  it("builds resume review model chain with flash-latest first by default", () => {
+    const prev = process.env.GEMINI_RESUME_REVIEW_MODEL;
+    delete process.env.GEMINI_RESUME_REVIEW_MODEL;
+    delete process.env.GEMINI_RESUME_REVIEW_FALLBACK_MODEL;
+    const chain = resumeReviewModelChain();
+    expect(chain[0]).toBe("gemini-flash-latest");
+    expect(chain).toContain("gemini-flash-lite-latest");
+    if (prev) process.env.GEMINI_RESUME_REVIEW_MODEL = prev;
   });
 });

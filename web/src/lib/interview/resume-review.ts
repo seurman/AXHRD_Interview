@@ -893,17 +893,20 @@ ${sanitizeResumeForLlm(resumeRawText).slice(0, 5000)}
     return fallback;
   }
 
-  // Pro thinking이 출력을 삼키지 않도록 maxOutputTokens는 quality helper 기본(16384) 사용
-  const { text: content, modelUsed } = await generateGeminiQualityText({
+  // flash-latest 등 가용 모델 체인 (2.5-pro 쿼터 초과·2.5-flash 404 회피)
+  const { text: content, modelUsed, attempts } = await generateGeminiQualityText({
     systemInstruction: REVIEW_SYSTEM,
     userPrompt,
     temperature: 0.45,
-    timeoutMs: 55_000,
+    timeoutMs: 70_000,
   });
 
   if (!content) {
-    console.warn("[resume-review] LLM 본문 없음 → heuristic fallback");
-    return fallback;
+    console.warn("[resume-review] LLM 본문 없음 → heuristic fallback:", attempts);
+    return {
+      ...fallback,
+      narrativeModel: attempts ? `failed:${attempts.slice(0, 180)}` : null,
+    };
   }
   console.info("[resume-review] narrative model:", modelUsed);
 

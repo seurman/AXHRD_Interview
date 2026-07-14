@@ -125,8 +125,15 @@ export function ResumeReviewReport({
             </>
           ) : (
             <>
-              AI 서술이 비어 규칙 기반 첨삭으로 대체되었습니다. 그래서 내용이 비슷하게
-              반복될 수 있습니다. 잠시 후 다시 첨삭을 요청해 주세요.
+              AI 서술이 비어 규칙 기반 첨삭으로 대체되었습니다
+              {narrativeModel?.startsWith("failed:") ? (
+                <span className="text-muted">
+                  {" "}
+                  — {narrativeModel.replace(/^failed:/, "")}
+                </span>
+              ) : null}
+              . Gemini 쿼터/모델 가용성 문제일 수 있으니, 잠시 후 다시 첨삭을 요청해
+              주세요.
             </>
           )}
         </div>
