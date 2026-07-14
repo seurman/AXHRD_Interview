@@ -8,8 +8,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { ScoreGauge } from "@/components/report/ScoreGauge";
+import { ResumeReviewScoreProfile } from "@/components/resume-review/ResumeReviewScoreProfile";
 import { competencyLabel } from "@/lib/labels";
-import { REVIEW_CATEGORY_LABELS, type ReviewCategory } from "@/lib/interview/resume-review-criteria-data";
 
 export type ParagraphFeedback = { quote: string; issue: string; suggestion: string };
 export type ImprovementItem = { gapLabel: string; suggestion: string };
@@ -17,7 +17,7 @@ export type JdMatch = { matchScore: number | null; matched: string[]; missing: s
 
 export type CriterionResultView = {
   code: string;
-  category: ReviewCategory | string;
+  category: string;
   title: string;
   status: "pass" | "partial" | "fail" | string;
   strengthNote: string;
@@ -25,7 +25,7 @@ export type CriterionResultView = {
 };
 
 export type DimensionScoreView = {
-  category: ReviewCategory | string;
+  category: string;
   label: string;
   score: number;
   band: "strong" | "adequate" | "weak" | string;
@@ -58,24 +58,6 @@ function matchScoreLabel(score: number | null): string {
 function matchScoreVariant(score: number | null): "accent" | "gold" {
   if (score != null && score >= 60) return "gold";
   return "accent";
-}
-
-function bandLabel(band: string): string {
-  if (band === "strong") return "양호";
-  if (band === "adequate") return "보통";
-  return "약함";
-}
-
-function statusLabel(status: string): string {
-  if (status === "pass") return "충족";
-  if (status === "partial") return "부분";
-  return "부족";
-}
-
-function statusClass(status: string): string {
-  if (status === "pass") return "bg-success/15 text-success";
-  if (status === "partial") return "bg-warning/15 text-warning";
-  return "bg-danger/15 text-danger";
 }
 
 function overallFromDims(dims: DimensionScoreView[]): number {
@@ -121,7 +103,7 @@ export function ResumeReviewReport({
               {narrativeModel ? (
                 <span className="text-muted"> ({narrativeModel})</span>
               ) : null}
-              . 같은 자소서를 다시 돌리면 표현이 조금 달라질 수 있습니다.
+              .
             </>
           ) : (
             <>
@@ -132,8 +114,7 @@ export function ResumeReviewReport({
                   — {narrativeModel.replace(/^failed:/, "")}
                 </span>
               ) : null}
-              . Gemini 쿼터/모델 가용성 문제일 수 있으니, 잠시 후 다시 첨삭을 요청해
-              주세요.
+              . 잠시 후 다시 첨삭을 요청해 주세요.
             </>
           )}
         </div>
@@ -174,19 +155,12 @@ export function ResumeReviewReport({
             >
               {matchSource === "jd" ? "공고(JD) 기준" : "산업·직무 일반 기준"}
             </span>
-            {companyName && (
-              <span className="text-xs text-muted">{companyName}</span>
-            )}
-            <span className="text-xs text-muted">
-              {createdAt.toLocaleString("ko-KR")}
-            </span>
+            {companyName && <span className="text-xs text-muted">{companyName}</span>}
+            <span className="text-xs text-muted">{createdAt.toLocaleString("ko-KR")}</span>
           </div>
 
           <div>
-            <h2 className="text-lg font-bold text-foreground">기준 대비 총평</h2>
-            <p className="mt-1 text-xs text-muted">
-              자소서 요약이 아니라, 형식·논리 / 산업 역량 / STAR·BEI 기준과 비교한 평가입니다.
-            </p>
+            <h2 className="text-lg font-bold text-foreground">총평</h2>
             <p className="mt-3 whitespace-pre-line text-base leading-relaxed text-foreground report-prose">
               {overallSummary}
             </p>
@@ -208,100 +182,7 @@ export function ResumeReviewReport({
         </div>
       </section>
 
-      {hasDims && (
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">평가 축 (3)</h2>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {dims.map((d) => (
-              <div key={d.category} className="card-luxe space-y-3 p-5">
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="font-semibold text-foreground">{d.label}</h3>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      d.band === "strong"
-                        ? "bg-success/15 text-success"
-                        : d.band === "adequate"
-                          ? "bg-warning/15 text-warning"
-                          : "bg-danger/15 text-danger"
-                    }`}
-                  >
-                    {bandLabel(d.band)} · {d.score}
-                  </span>
-                </div>
-                {d.strengths.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-success">잘한 점</p>
-                    <ul className="mt-1 space-y-1 text-sm text-foreground">
-                      {d.strengths.slice(0, 3).map((s, i) => (
-                        <li key={i} className="leading-snug">
-                          · {s}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {d.gaps.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-warning">부족한 점</p>
-                    <ul className="mt-1 space-y-1 text-sm text-foreground">
-                      {d.gaps.slice(0, 3).map((g, i) => (
-                        <li key={i} className="leading-snug">
-                          · {g}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {results.length > 0 && (
-        <section className="card-luxe space-y-4 p-6">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">기준별 판정</h2>
-            <p className="mt-1 text-sm text-muted">
-              각 항목은 자소서가 갖춰야 할 기본과 비교한 결과입니다.
-            </p>
-          </div>
-          <ul className="space-y-3">
-            {results.map((r) => {
-              const catLabel =
-                REVIEW_CATEGORY_LABELS[r.category as ReviewCategory] ?? r.category;
-              return (
-                <li
-                  key={r.code}
-                  className="rounded-xl border border-card-border bg-background/50 p-4 text-sm"
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-muted">{catLabel}</span>
-                    <span className="font-semibold text-foreground">{r.title}</span>
-                    <span
-                      className={`ml-auto rounded-full px-2 py-0.5 text-xs font-medium ${statusClass(r.status)}`}
-                    >
-                      {statusLabel(r.status)}
-                    </span>
-                  </div>
-                  {r.strengthNote ? (
-                    <p className="mt-2 text-success/90">
-                      <span className="font-medium">잘함 · </span>
-                      {r.strengthNote}
-                    </p>
-                  ) : null}
-                  {r.gapNote ? (
-                    <p className="mt-1 text-warning">
-                      <span className="font-medium">부족 · </span>
-                      {r.gapNote}
-                    </p>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
+      {hasDims && <ResumeReviewScoreProfile dimensions={dims} criteria={results} />}
 
       {(jdMatch.matched.length > 0 || jdMatch.missing.length > 0) && (
         <div className="grid gap-4 sm:grid-cols-2">

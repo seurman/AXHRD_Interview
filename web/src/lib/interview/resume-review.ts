@@ -248,6 +248,20 @@ function cleanNote(note: string): string {
     .trim();
 }
 
+function polishInsight(note: string): string {
+  let t = cleanNote(note)
+    .replace(/^[「『].*?[」』]\s*/u, "")
+    .replace(/^[^—\-]{1,40}\s*[—\-]\s*/u, "")
+    .replace(/^(잘한\s*점|부족한\s*점|강점|약점)\s*[:：]?\s*/u, "")
+    .trim();
+  if (!t) return "";
+  // 체크리스트 투 끝이 아니라 문장처럼
+  if (!/[.!?。다요음임]$/u.test(t)) {
+    t = `${t.replace(/입니다$/u, "")}입니다`;
+  }
+  return t;
+}
+
 function buildDimensionScores(results: CriterionResult[]): DimensionScore[] {
   const categories: ReviewCategory[] = ["FORMAT_LOGIC", "INDUSTRY_FIT", "STAR_BEI"];
   return categories.map((category) => {
@@ -256,21 +270,33 @@ function buildDimensionScores(results: CriterionResult[]): DimensionScore[] {
       rows.length === 0
         ? 0
         : Math.round(rows.reduce((sum, r) => sum + statusScore(r.status), 0) / rows.length);
+    const band = bandFromScore(score);
+    const strengths = rows
+      .filter((r) => r.status === "pass" && r.strengthNote.trim() && !GENERIC_GAP.test(r.strengthNote))
+      .map((r) => polishInsight(r.strengthNote))
+      .filter(Boolean)
+      .slice(0, 2);
+    const gaps = rows
+      .filter((r) => r.status !== "pass" && r.gapNote.trim() && !GENERIC_GAP.test(r.gapNote))
+      .map((r) => polishInsight(r.gapNote))
+      .filter(Boolean)
+      .slice(0, 2);
+
+    // 카드에 쓸 한 줄 요약을 strengths[0] 또는 gaps[0]로 우선 배치
+    if (band === "strong" && strengths.length === 0) {
+      strengths.push("이 축의 기준을 대체로 안정적으로 충족하고 있습니다.");
+    }
+    if (band !== "strong" && gaps.length === 0) {
+      gaps.push("핵심 사례는 있으나, 이 축에서 손볼 문장이 남아 있습니다.");
+    }
+
     return {
       category,
       label: REVIEW_CATEGORY_LABELS[category],
       score,
-      band: bandFromScore(score),
-      strengths: rows
-        .filter((r) => r.status === "pass" && r.strengthNote.trim() && !GENERIC_GAP.test(r.strengthNote))
-        .map((r) => cleanNote(r.strengthNote))
-        .filter(Boolean)
-        .slice(0, 4),
-      gaps: rows
-        .filter((r) => r.status !== "pass" && r.gapNote.trim() && !GENERIC_GAP.test(r.gapNote))
-        .map((r) => cleanNote(`${r.title} — ${r.gapNote}`))
-        .filter(Boolean)
-        .slice(0, 5),
+      band,
+      strengths,
+      gaps,
     };
   });
 }
