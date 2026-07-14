@@ -44,6 +44,8 @@ type ResumeReviewReportProps = {
   createdAt: Date;
   dimensionScores?: DimensionScoreView[] | null;
   criteriaResults?: CriterionResultView[] | null;
+  narrativeSource?: string | null;
+  narrativeModel?: string | null;
 };
 
 function matchScoreLabel(score: number | null): string {
@@ -92,6 +94,8 @@ export function ResumeReviewReport({
   createdAt,
   dimensionScores,
   criteriaResults,
+  narrativeSource,
+  narrativeModel,
 }: ResumeReviewReportProps) {
   const primaryCompetency = suggestedCompetencies[0] ?? "COMMUNICATION";
   const dims = Array.isArray(dimensionScores) ? dimensionScores : [];
@@ -99,9 +103,35 @@ export function ResumeReviewReport({
   const hasDims = dims.length > 0;
   const displayScore = hasDims ? overallFromDims(dims) : (jdMatch.matchScore ?? 0);
   const hasScore = hasDims || jdMatch.matchScore != null;
+  const isLlm = narrativeSource === "llm";
 
   return (
     <div className="space-y-8">
+      {narrativeSource && (
+        <div
+          className={`rounded-lg border px-4 py-3 text-sm ${
+            isLlm
+              ? "border-success/30 bg-success/10 text-foreground"
+              : "border-warning/40 bg-warning/10 text-foreground"
+          }`}
+        >
+          {isLlm ? (
+            <>
+              AI 첨삭 모델로 생성되었습니다
+              {narrativeModel ? (
+                <span className="text-muted"> ({narrativeModel})</span>
+              ) : null}
+              . 같은 자소서를 다시 돌리면 표현이 조금 달라질 수 있습니다.
+            </>
+          ) : (
+            <>
+              AI 서술이 비어 규칙 기반 첨삭으로 대체되었습니다. 그래서 내용이 비슷하게
+              반복될 수 있습니다. 잠시 후 다시 첨삭을 요청해 주세요.
+            </>
+          )}
+        </div>
+      )}
+
       <section className="card-luxe flex flex-col gap-6 border-double border-gold/35 p-6 sm:flex-row sm:items-start">
         <div className="flex w-full flex-col items-center gap-3 sm:w-auto">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-gold">

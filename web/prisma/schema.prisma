@@ -427,6 +427,10 @@ model ResumeReview {
   dimensionScores   Json?
   /** [{ code, category, title, status, strengthNote, gapNote }] 기준별 판정 */
   criteriaResults   Json?
+  /** "llm" | "heuristic" — 서술 생성 경로 */
+  narrativeSource   String?
+  /** 실제 사용한 Gemini 모델 id (llm일 때) */
+  narrativeModel    String?
   createdAt         DateTime       @default(now())
 
   @@index([userId, createdAt(sort: Desc)])

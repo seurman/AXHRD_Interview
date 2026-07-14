@@ -68,6 +68,8 @@ export default async function ResumeReviewDetailPage({
           createdAt={review.createdAt}
           dimensionScores={dimensionScores}
           criteriaResults={criteriaResults}
+          narrativeSource={review.narrativeSource}
+          narrativeModel={review.narrativeModel}
         />
       </Reveal>
     </div>

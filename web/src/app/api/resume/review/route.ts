@@ -257,6 +257,8 @@ export async function POST(req: Request) {
         suggestedCompetencies: narrative.suggestedCompetencies,
         dimensionScores: narrative.dimensionScores as Prisma.InputJsonValue,
         criteriaResults: narrative.criteriaResults as Prisma.InputJsonValue,
+        narrativeSource: narrative.narrativeSource,
+        narrativeModel: narrative.narrativeModel,
       },
     });
 
@@ -264,6 +266,8 @@ export async function POST(req: Request) {
       id: review.id,
       matchSource: review.matchSource,
       suggestedCompetencies: narrative.suggestedCompetencies,
+      narrativeSource: narrative.narrativeSource,
+      narrativeModel: narrative.narrativeModel,
     });
   } catch (e) {
     console.error("[resume/review]", e);

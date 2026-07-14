@@ -64,6 +64,9 @@ export type ResumeReviewNarrative = {
   suggestedCompetencies: CompetencyCode[];
   dimensionScores: DimensionScore[];
   criteriaResults: CriterionResult[];
+  /** llm = 상위 모델 서술, heuristic = 규칙 폴백(문장이 비슷하게 반복될 수 있음) */
+  narrativeSource: "llm" | "heuristic";
+  narrativeModel: string | null;
 };
 
 const GENERIC_GAP =
@@ -772,15 +775,15 @@ function mergeCriteriaResults(
         r.status === "pass" || r.status === "partial" || r.status === "fail"
           ? r.status
           : base.status;
+      // LLM 문구를 우선. 비어 있거나 템플릿/점수 나열일 때만 휴리스틱.
       let strengthNote =
         typeof r.strengthNote === "string" ? r.strengthNote.trim() : "";
       let gapNote = typeof r.gapNote === "string" ? r.gapNote.trim() : "";
-      if (GENERIC_GAP.test(strengthNote) || looksNumericDump(strengthNote)) {
+      if (!strengthNote || GENERIC_GAP.test(strengthNote) || looksNumericDump(strengthNote)) {
         strengthNote = base.strengthNote;
       }
-      if (!strengthNote) strengthNote = base.strengthNote;
-      if (GENERIC_GAP.test(gapNote) || looksNumericDump(gapNote) || !gapNote) {
-        gapNote = base.gapNote;
+      if (!gapNote || GENERIC_GAP.test(gapNote) || looksNumericDump(gapNote)) {
+        gapNote = status === "pass" ? "" : base.gapNote;
       }
       byCode.set(code, {
         ...base,
@@ -843,6 +846,8 @@ export async function generateResumeReviewNarrative(params: {
         : ["PROBLEM_SOLVING"],
     dimensionScores: heuristicDimensions,
     criteriaResults: heuristicResults,
+    narrativeSource: "heuristic",
+    narrativeModel: null,
   };
 
   const matchContext =
@@ -884,25 +889,29 @@ ${sanitizeResumeForLlm(resumeRawText).slice(0, 5000)}
 `.trim();
 
   if (!process.env.GEMINI_API_KEY) {
+    console.warn("[resume-review] GEMINI_API_KEY 없음 → heuristic fallback");
     return fallback;
   }
 
-  // 첨삭 문장 품질이 핵심 → Pro(또는 GEMINI_RESUME_REVIEW_MODEL). 실패 시 Flash 폴백.
+  // Pro thinking이 출력을 삼키지 않도록 maxOutputTokens는 quality helper 기본(16384) 사용
   const { text: content, modelUsed } = await generateGeminiQualityText({
     systemInstruction: REVIEW_SYSTEM,
     userPrompt,
     temperature: 0.45,
-    maxOutputTokens: 5600,
-    timeoutMs: 50_000,
+    timeoutMs: 55_000,
   });
 
-  if (!content) return fallback;
-  if (modelUsed) {
-    console.info("[resume-review] narrative model:", modelUsed);
+  if (!content) {
+    console.warn("[resume-review] LLM 본문 없음 → heuristic fallback");
+    return fallback;
   }
+  console.info("[resume-review] narrative model:", modelUsed);
 
   const jsonMatch = content.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) return fallback;
+  if (!jsonMatch) {
+    console.warn("[resume-review] JSON 추출 실패 → heuristic fallback");
+    return fallback;
+  }
 
   try {
     const parsed = JSON.parse(jsonMatch[0]) as {
@@ -925,6 +934,7 @@ ${sanitizeResumeForLlm(resumeRawText).slice(0, 5000)}
         ? parsed.overallSummary.trim()
         : "";
     if (!overallSummary || looksNumericDump(overallSummary) || GENERIC_GAP.test(overallSummary)) {
+      console.warn("[resume-review] overallSummary 품질 부족 → 축 기반 문장으로 대체");
       overallSummary = buildNaturalOverallSummary(dimensionScores, criteriaResults, ctx);
     } else {
       overallSummary = cleanNote(overallSummary);
@@ -971,6 +981,11 @@ ${sanitizeResumeForLlm(resumeRawText).slice(0, 5000)}
       : [];
 
     const suggestedCompetencies = parseCompetencyCodes(parsed.suggestedCompetencies);
+    const usedLlmProse =
+      llmParagraphs.length > 0 ||
+      (typeof parsed.overallSummary === "string" &&
+        parsed.overallSummary.trim().length > 80 &&
+        !looksNumericDump(parsed.overallSummary));
 
     return {
       overallSummary,
@@ -988,6 +1003,8 @@ ${sanitizeResumeForLlm(resumeRawText).slice(0, 5000)}
           : fallback.suggestedCompetencies,
       dimensionScores,
       criteriaResults,
+      narrativeSource: usedLlmProse ? "llm" : "heuristic",
+      narrativeModel: modelUsed,
     };
   } catch (e) {
     console.error("[resume-review] JSON parse 실패:", e);
