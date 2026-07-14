@@ -39,14 +39,18 @@ function finishReasonOf(data: unknown): string | null {
 }
 
 /**
- * Pro(2.5)만 thinkingBudget 적용. 최신 flash-latest/3.x 별칭에는 넣지 않음(스키마 불일치·실패 방지).
+ * Pro 계열에 thinkingBudget 적용.
+ * gemini-pro-latest / 3.x pro 별칭 포함. flash에는 넣지 않음.
  */
 export function resolveThinkingBudget(model: string, requested?: number): number | undefined {
   const m = model.toLowerCase();
-  const wantsThinking =
-    m.includes("2.5-pro") || m.includes("pro-preview") || m.includes("pro-latest");
-  if (!wantsThinking) {
-    // flash에 0을 강제하면 일부 엔드포인트에서 400 → 아예 생략
+  const isFlash = m.includes("flash");
+  const isPro =
+    (!isFlash && m.includes("pro")) ||
+    m === "gemini-pro-latest" ||
+    m.includes("pro-preview") ||
+    m.includes("pro-latest");
+  if (!isPro) {
     if (requested === 0 && m.includes("2.5-flash") && !m.includes("lite")) {
       return 0;
     }
@@ -184,17 +188,19 @@ export async function generateGeminiText(params: {
   return result.text;
 }
 
-/** 첨삭용 모델 체인 — 쿼터/폐기 모델을 건너뛰고 가용 모델을 찾는다. */
+/** 첨삭용 모델 체인 — Pro(latest) 우선, 실패 시 flash 계열로 폴백. */
 export function resumeReviewModelChain(): string[] {
   const preferred = process.env.GEMINI_RESUME_REVIEW_MODEL?.trim();
   const fallback = process.env.GEMINI_RESUME_REVIEW_FALLBACK_MODEL?.trim();
   const chain = [
-    preferred,
+    // gemini-2.5-pro는 신규 키에서 404인 경우가 많음 → pro-latest가 유료 Pro 엔트리
+    preferred || "gemini-pro-latest",
+    "gemini-3.1-pro-preview",
+    "gemini-2.5-pro",
     "gemini-flash-latest",
     "gemini-3.5-flash",
     "gemini-3.1-flash-lite",
-    "gemini-flash-lite-latest",
-    fallback,
+    fallback || "gemini-flash-lite-latest",
   ].filter((m): m is string => Boolean(m && m.length > 0));
 
   const seen = new Set<string>();

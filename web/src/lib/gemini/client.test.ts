@@ -43,13 +43,15 @@ describe("gemini client text extraction", () => {
     expect(resolveThinkingBudget("gemini-3.1-flash-lite")).toBeUndefined();
   });
 
-  it("builds resume review model chain with flash-latest first by default", () => {
+  it("builds resume review model chain with Pro first by default", () => {
     const prev = process.env.GEMINI_RESUME_REVIEW_MODEL;
+    const prevFb = process.env.GEMINI_RESUME_REVIEW_FALLBACK_MODEL;
     delete process.env.GEMINI_RESUME_REVIEW_MODEL;
     delete process.env.GEMINI_RESUME_REVIEW_FALLBACK_MODEL;
     const chain = resumeReviewModelChain();
-    expect(chain[0]).toBe("gemini-flash-latest");
-    expect(chain).toContain("gemini-flash-lite-latest");
+    expect(chain[0]).toBe("gemini-pro-latest");
+    expect(chain).toContain("gemini-flash-latest");
     if (prev) process.env.GEMINI_RESUME_REVIEW_MODEL = prev;
+    if (prevFb) process.env.GEMINI_RESUME_REVIEW_FALLBACK_MODEL = prevFb;
   });
 });
