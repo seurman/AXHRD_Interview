@@ -121,7 +121,9 @@ ${jd.slice(0, 2000)}
     userPrompt,
     temperature: 0.3,
     maxOutputTokens: 450,
-    timeoutMs: 6000,
+    timeoutMs: 18_000,
+    task: "jd_map",
+    responseMimeType: "application/json",
   });
 
   if (!content) {

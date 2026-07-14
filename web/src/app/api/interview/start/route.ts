@@ -4,7 +4,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { checkUsageLimit } from "@/lib/billing/usage";
 import { startInterviewSession, type StartSessionBody } from "@/lib/interview/start-session";
 
-export const maxDuration = 60;
+export const maxDuration = 90;
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();

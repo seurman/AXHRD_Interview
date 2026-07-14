@@ -1,16 +1,33 @@
 /**
  * Gemini 텍스트/비전 공용 클라이언트.
  *
- * 첨삭(고품질)은 generateGeminiQualityText 사용.
- * 2026-07 기준 일부 키에서 gemini-2.5-pro는 429, gemini-2.5-flash는 404가 나므로
- * flash-latest / 3.1-flash-lite 등 가용 모델 체인을 탄다.
+ * 티어 라우팅: lib/gemini/model-tiers.ts
+ * - lite / standard / pro (면접·자소서 체감 품질은 Pro)
  */
 
 import { fetchWithTimeout } from "@/lib/http/fetch-with-timeout";
+import {
+  defaultMaxTokensForTier,
+  defaultTimeoutForTier,
+  modelChainForTier,
+  GEMINI_TASK_TIER,
+  type GeminiModelTier,
+  type GeminiTask,
+} from "@/lib/gemini/model-tiers";
 
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
 
-/** candidates[].content.parts 에서 thought 아닌 텍스트만 합친다. */
+export {
+  GEMINI_TASK_TIER,
+  modelChainForTier,
+  type GeminiModelTier,
+  type GeminiTask,
+} from "@/lib/gemini/model-tiers";
+
+/** @deprecated → modelChainForTier("pro") */
+export function resumeReviewModelChain(): string[] {
+  return modelChainForTier("pro");
+}
 export function extractGeminiVisibleText(data: unknown): string {
   if (!data || typeof data !== "object") return "";
   const cand = (data as { candidates?: unknown }).candidates;
@@ -183,39 +200,89 @@ export async function generateGeminiText(params: {
   responseMimeType?: "application/json" | "text/plain";
   thinkingBudget?: number;
   retries?: number;
+  tier?: GeminiModelTier;
+  task?: GeminiTask;
 }): Promise<string | null> {
+  if (params.tier || params.task) {
+    const result = await generateGeminiForTier({
+      systemInstruction: params.systemInstruction,
+      userPrompt: params.userPrompt,
+      tier: params.tier,
+      task: params.task,
+      temperature: params.temperature,
+      maxOutputTokens: params.maxOutputTokens,
+      timeoutMs: params.timeoutMs,
+      responseMimeType: params.responseMimeType,
+    });
+    return result.text;
+  }
   const result = await generateGeminiTextAttempt(params);
   return result.text;
 }
 
-/** 첨삭용 모델 체인 — Pro(latest) 우선, 실패 시 flash 계열로 폴백. */
-export function resumeReviewModelChain(): string[] {
-  const preferred = process.env.GEMINI_RESUME_REVIEW_MODEL?.trim();
-  const fallback = process.env.GEMINI_RESUME_REVIEW_FALLBACK_MODEL?.trim();
-  const chain = [
-    // gemini-2.5-pro는 신규 키에서 404인 경우가 많음 → pro-latest가 유료 Pro 엔트리
-    preferred || "gemini-pro-latest",
-    "gemini-3.1-pro-preview",
-    "gemini-2.5-pro",
-    "gemini-flash-latest",
-    "gemini-3.5-flash",
-    "gemini-3.1-flash-lite",
-    fallback || "gemini-flash-lite-latest",
-  ].filter((m): m is string => Boolean(m && m.length > 0));
+/**
+ * 티어 체인으로 텍스트 생성.
+ */
+export async function generateGeminiForTier(params: {
+  systemInstruction: string;
+  userPrompt: string;
+  tier?: GeminiModelTier;
+  task?: GeminiTask;
+  temperature?: number;
+  maxOutputTokens?: number;
+  timeoutMs?: number;
+  responseMimeType?: "application/json" | "text/plain";
+}): Promise<{
+  text: string | null;
+  modelUsed: string | null;
+  attempts: string;
+  tier: GeminiModelTier;
+}> {
+  const tier: GeminiModelTier =
+    params.tier ?? (params.task ? GEMINI_TASK_TIER[params.task] : "lite");
+  const models = modelChainForTier(tier);
+  const maxOutputTokens = params.maxOutputTokens ?? defaultMaxTokensForTier(tier);
+  const baseTimeout = params.timeoutMs ?? defaultTimeoutForTier(tier);
+  const attemptLogs: string[] = [];
 
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const m of chain) {
-    if (seen.has(m)) continue;
-    seen.add(m);
-    out.push(m);
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
+    const timeoutMs =
+      i === 0 ? baseTimeout : Math.min(baseTimeout, tier === "pro" ? 45_000 : 20_000);
+    const attempt = await generateGeminiTextAttempt({
+      systemInstruction: params.systemInstruction,
+      userPrompt: params.userPrompt,
+      temperature: params.temperature,
+      model,
+      timeoutMs,
+      maxOutputTokens,
+      responseMimeType: params.responseMimeType,
+      retries: model.includes("lite") ? 1 : 0,
+    });
+
+    if (attempt.text) {
+      console.info(`[Gemini ${tier}] ok:`, model);
+      return {
+        text: attempt.text,
+        modelUsed: model,
+        attempts: attemptLogs.join(" | "),
+        tier,
+      };
+    }
+    const log = `${model}:${attempt.error ?? "fail"}`;
+    attemptLogs.push(log);
+    console.warn(`[Gemini ${tier}] skip`, log);
   }
-  return out;
+
+  return {
+    text: null,
+    modelUsed: null,
+    attempts: attemptLogs.join(" | ") || "no models",
+    tier,
+  };
 }
 
-/**
- * 자소서 첨삭 등 문장 품질 경로 — 가용 모델을 순서대로 시도.
- */
+/** 첨삭 등 — Pro 티어 */
 export async function generateGeminiQualityText(params: {
   systemInstruction: string;
   userPrompt: string;
@@ -223,38 +290,17 @@ export async function generateGeminiQualityText(params: {
   maxOutputTokens?: number;
   timeoutMs?: number;
 }): Promise<{ text: string | null; modelUsed: string | null; attempts: string }> {
-  const models = resumeReviewModelChain();
-  const maxOutputTokens = params.maxOutputTokens ?? 8192;
-  const baseTimeout = params.timeoutMs ?? 70_000;
-  const attemptLogs: string[] = [];
-
-  for (let i = 0; i < models.length; i++) {
-    const model = models[i];
-    // 뒤쪽 lite는 짧게, 앞쪽 quality는 길게
-    const timeoutMs = i === 0 ? baseTimeout : Math.min(45_000, baseTimeout);
-    const attempt = await generateGeminiTextAttempt({
-      ...params,
-      model,
-      timeoutMs,
-      maxOutputTokens,
-      responseMimeType: "application/json",
-      retries: model.includes("lite") ? 1 : 0,
-    });
-
-    if (attempt.text) {
-      console.info("[Gemini quality] ok:", model);
-      return { text: attempt.text, modelUsed: model, attempts: attemptLogs.join(" | ") };
-    }
-
-    const log = `${model}:${attempt.error ?? "fail"}`;
-    attemptLogs.push(log);
-    console.warn("[Gemini quality] skip", log);
-  }
-
+  const result = await generateGeminiForTier({
+    ...params,
+    tier: "pro",
+    maxOutputTokens: params.maxOutputTokens ?? 8192,
+    timeoutMs: params.timeoutMs ?? 70_000,
+    responseMimeType: "application/json",
+  });
   return {
-    text: null,
-    modelUsed: null,
-    attempts: attemptLogs.join(" | ") || "no models",
+    text: result.text,
+    modelUsed: result.modelUsed,
+    attempts: result.attempts,
   };
 }
 
@@ -273,7 +319,7 @@ export async function generateGeminiVisionText(params: {
 
   const model =
     process.env.GEMINI_VISION_MODEL ??
-    process.env.GEMINI_TEXT_MODEL ??
+    modelChainForTier("lite")[0] ??
     "gemini-flash-lite-latest";
 
   try {

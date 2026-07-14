@@ -61,8 +61,10 @@ ${candidates.map((t, i) => `${i + 1}. ${t}`).join("\n")}
     systemInstruction: CLAIM_SYSTEM,
     userPrompt,
     temperature: 0.25,
-    maxOutputTokens: 280,
-    timeoutMs: 8000,
+    maxOutputTokens: 400,
+    timeoutMs: 35_000,
+    task: "claim_question",
+    responseMimeType: "application/json",
   });
 
   if (!content) return null;

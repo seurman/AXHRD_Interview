@@ -44,7 +44,9 @@ async function clusterWithGemini(quotes: string[]): Promise<OpenTextTheme[] | nu
     userPrompt,
     temperature: 0.2,
     maxOutputTokens: 800,
-    timeoutMs: 15000,
+    timeoutMs: 15_000,
+    task: "theme_mining",
+    responseMimeType: "application/json",
   });
   if (!content) return null;
 

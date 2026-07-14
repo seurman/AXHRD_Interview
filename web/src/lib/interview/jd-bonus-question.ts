@@ -44,8 +44,10 @@ ${terms.map((t, i) => `${i + 1}. ${t}`).join("\n")}
     systemInstruction: BONUS_SYSTEM,
     userPrompt,
     temperature: 0.25,
-    maxOutputTokens: 280,
-    timeoutMs: 8000,
+    maxOutputTokens: 320,
+    timeoutMs: 18_000,
+    task: "jd_bonus_question",
+    responseMimeType: "application/json",
   });
 
   if (!content) return null;

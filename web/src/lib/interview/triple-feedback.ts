@@ -103,8 +103,10 @@ export async function generateTripleFeedback(params: {
     systemInstruction: buildSystemPrompt(),
     userPrompt,
     temperature: 0.45,
-    maxOutputTokens: 900,
-    timeoutMs: 12000,
+    maxOutputTokens: 1200,
+    timeoutMs: 45_000,
+    task: "triple_feedback",
+    responseMimeType: "application/json",
   });
 
   if (!content) {

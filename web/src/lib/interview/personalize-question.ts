@@ -312,9 +312,11 @@ ${params.useJdOnly ? "" : `\n자소서 요약(참고용 — 핵심 문장에 없
   const content = await generateGeminiText({
     systemInstruction: PERSONALIZE_SYSTEM,
     userPrompt,
-    temperature: 0.2,
-    maxOutputTokens: 320,
-    timeoutMs: 6000,
+    temperature: 0.25,
+    maxOutputTokens: 640,
+    timeoutMs: 40_000,
+    task: "personalize_question",
+    responseMimeType: "application/json",
   });
 
   if (content) {

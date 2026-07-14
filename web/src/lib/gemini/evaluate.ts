@@ -71,9 +71,11 @@ ${params.resumeContext ? `자소서 맥락: ${params.resumeContext.slice(0, 500)
   const content = await generateGeminiText({
     systemInstruction: RUBRIC_SYSTEM,
     userPrompt,
-    temperature: 0.2,
-    maxOutputTokens: 256,
-    timeoutMs: 8000,
+    temperature: 0.25,
+    maxOutputTokens: 512,
+    timeoutMs: 35_000,
+    task: "evaluate_answer",
+    responseMimeType: "application/json",
   });
 
   if (content) {
@@ -183,9 +185,11 @@ ${params.pressureTier ? `면접관 태도: ${pressureTierPromptHint(params.press
   const content = await generateGeminiText({
     systemInstruction: CORRECT_AND_EVALUATE_SYSTEM,
     userPrompt,
-    temperature: 0.2,
-    maxOutputTokens: Math.max(400, Math.ceil(raw.length * 1.5)),
-    timeoutMs: 8000,
+    temperature: 0.25,
+    maxOutputTokens: Math.max(600, Math.ceil(raw.length * 1.5)),
+    timeoutMs: 40_000,
+    task: "evaluate_answer",
+    responseMimeType: "application/json",
   });
 
   if (content) {

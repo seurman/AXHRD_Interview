@@ -106,8 +106,10 @@ ${answer}
     systemInstruction: VERIFICATION_SYSTEM,
     userPrompt,
     temperature: 0.2,
-    maxOutputTokens: 320,
-    timeoutMs: 10000,
+    maxOutputTokens: 400,
+    timeoutMs: 35_000,
+    task: "claim_verification",
+    responseMimeType: "application/json",
   });
 
   if (!content) return heuristicFallback(answer);

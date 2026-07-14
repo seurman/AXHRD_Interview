@@ -30,7 +30,8 @@ export async function correctTranscript(raw: string): Promise<string> {
     userPrompt: text,
     temperature: 0.1,
     maxOutputTokens: Math.max(256, Math.ceil(text.length * 1.5)),
-    timeoutMs: 6000,
+    timeoutMs: 8_000,
+    task: "transcript_correct",
   });
 
   // 결과가 비정상적으로 짧거나(잘림) 너무 길면(내용 추가 의심) 원문을 그대로 사용

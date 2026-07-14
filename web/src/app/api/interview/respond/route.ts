@@ -56,6 +56,9 @@ import {
 } from "@/lib/interview/answer-dimensions";
 import type { CompetencyState, ItemParams, InterviewQuestion } from "@/types";
 
+/** Pro 채점·트리플 피드백 여유 */
+export const maxDuration = 90;
+
 type SessionWithRelations = Prisma.InterviewSessionGetPayload<{
   include: { resume: true; targetCompany: true; responses: true; plan: true };
 }>;

@@ -77,9 +77,12 @@
    - `DATABASE_URL` (1단계 Transaction pooler 연결 문자열)
    - `DIRECT_URL` (1단계 Direct connection 연결 문자열)
    - `IRT_ENGINE_URL` (2단계에서 받은 Render URL)
-   - `GEMINI_API_KEY`, `GEMINI_TEXT_MODEL` (권장: `gemini-flash-lite-latest`), `GEMINI_TTS_MODEL`, `GEMINI_TTS_VOICE`
-   - (선택) `GEMINI_RESUME_REVIEW_MODEL` = `gemini-pro-latest` — 자소서 첨삭(유료 Pro). `gemini-2.5-pro`는 신규 키에서 404인 경우가 많음.
-   - (선택) `GEMINI_RESUME_REVIEW_FALLBACK_MODEL` = `gemini-flash-latest` — Pro 실패 시 폴백.
+   - `GEMINI_API_KEY`
+   - `GEMINI_LITE_MODEL` = `gemini-flash-lite-latest` (STT 교정·테마 등 고빈도)
+   - `GEMINI_STANDARD_MODEL` = `gemini-flash-latest` (자소서 enrich·JD)
+   - `GEMINI_PRO_MODEL` = `gemini-pro-latest` (첨삭·자소서 기반 문항·답변 피드백)
+   - (호환) `GEMINI_TEXT_MODEL`, `GEMINI_RESUME_REVIEW_MODEL`, `GEMINI_TTS_MODEL`, `GEMINI_TTS_VOICE`
+   - 티어 비율 원칙: Lite≈고빈도 다수 / Standard≈중간 / Pro≈체감 품질 핵심(문항·피드백·첨삭)
    - `NEXTAUTH_SECRET` → 아래 값 사용 (프로덕션 전용으로 새로 생성한 값):
      ```
      4442890974814cc1dd3c2f9c1be7c6c38f12ae6300ae7fd8b63d8af0b4e9c3e4
