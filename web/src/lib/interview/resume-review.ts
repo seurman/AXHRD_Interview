@@ -3,7 +3,7 @@
  * 원칙: 요약/점수 나열이 아니라, 원문 근거가 있는 자연스러운 한글 첨삭.
  */
 
-import { generateGeminiText } from "@/lib/gemini/client";
+import { generateGeminiQualityText } from "@/lib/gemini/client";
 import { getIndustryPreset } from "@/lib/company/industry-presets";
 import { matchPersona } from "@/lib/interview/persona-archetype";
 import {
@@ -679,32 +679,29 @@ export function buildNaturalOverallSummary(
   return parts.map((p) => (p.endsWith(".") || p.endsWith("다") ? p : `${p}.`)).join(" ");
 }
 
-const REVIEW_SYSTEM = `당신은 한국 대기업·중견기업 채용을 오래 본 자기소개서 첨삭관입니다.
-목표는 요악·점수 발표가 아니라, 지원자가 바로 고쳐 쓸 수 있는 "근거 있는 첨삭"입니다.
+const REVIEW_SYSTEM = `당신은 10년 이상 대기업·중견기업 서류전형을 봐 온 자기소개서 전문 첨삭관입니다.
+지원자에게 말하듯, 교열 비평문을 한국어로 매끄럽게 씁니다. 기계역·체크리스트 나열·점수 발표는 하지 않습니다.
 
-문체 규칙 (필수):
-- 자연스러운 구어체 한글. "~입니다/~하세요" 톤.
-- overallSummary·strengthNote·gapNote·issue·suggestion에 점수(73점), 퍼센트(0%, 100%), "매칭률" 숫자를 쓰지 마세요.
-- "원문 기준으로 추가 보완이 필요할 수 있습니다"처럼 근거 없는 템플릿 금지.
-- 각 판정은 원문의 구체 내용(도구명, 행동, 결과)을 짚어야 합니다.
+문체:
+- 자연스럽고 단정한 경어체. 같은 문장 패턴 반복 금지.
+- 점수, %, "매칭률", "충족도" 같은 수치를 본문에 넣지 마세요. (내부 점수는 UI가 따로 보여 줍니다.)
+- "원문 기준으로 추가 보완이 필요할 수 있습니다", "보완이 필요합니다"처럼 근거 없는 템플릿 금지.
+- 원문에 나온 도구명·수치·행동(APM, Redis, 응답 시간 등)을 짚어 근거로 쓰세요.
+- overallSummary는 서로 이어지는 4~6문장으로, 강점 → 핵심 약점 → 고칠 순서까지 한 편의 총평처럼.
 
-문단 피드백 규칙 (필수):
-- paragraphFeedback는 서로 다른 quote만 사용. 같은 문장을 2번 이상 인용 금지.
-- quote는 반드시 제공된 원문/후보 목록에 실제로 있는 구절.
-- 한 항목 = 한 문제점. issue에 왜 문제인지, suggestion에 어떻게 고칠지(가능하면 고쳐 쓴 방향 제시).
-- 최대 5개. 약한 기준만.
+문단 피드백:
+- paragraphFeedback는 서로 다른 quote만. 같은 문장 중복 인용 금지.
+- quote는 제공된 원문/후보에 실제 있는 문장 전체(가능하면).
+- issue: 그 문장이 왜 기준에 부족한지(근거). suggestion: 어떻게 고쳐 쓰면 좋은지, 가능하면 고쳐 쓴 방향까지.
+- 최대 5개, 정말 손볼 곳만.
 
-criteriaResults:
-- 제공된 code를 모두 포함.
-- pass면 strengthNote만, fail/partial이면 gapNote에 구체 근거.
+criteriaResults: 제공 code 전부. pass면 strengthNote 중심, fail/partial이면 gapNote에 구체 근거.
+improvementPlan: fail/partial만. gapLabel "[축이름] 기준제목".
+suggestedCompetencies: COMMUNICATION|PROBLEM_SOLVING|JOB_FIT|ORG_FIT|LEADERSHIP|GROWTH 최대 3.
 
-improvementPlan: fail/partial만, gapLabel은 "[축이름] 기준제목", suggestion은 실행 지시.
-
-suggestedCompetencies: COMMUNICATION | PROBLEM_SOLVING | JOB_FIT | ORG_FIT | LEADERSHIP | GROWTH 중 최대 3.
-
-JSON만:
+JSON만 출력:
 {
-  "overallSummary": "문단 4~6개 분량의 자연스러운 총평. 점수/퍼센트 금지.",
+  "overallSummary": "...",
   "criteriaResults": [{ "code": "...", "status": "pass|partial|fail", "strengthNote": "...", "gapNote": "..." }],
   "paragraphFeedback": [{ "quote": "...", "issue": "...", "suggestion": "..." }],
   "improvementPlan": [{ "gapLabel": "[형식·논리] ...", "suggestion": "..." }],
@@ -890,15 +887,19 @@ ${sanitizeResumeForLlm(resumeRawText).slice(0, 5000)}
     return fallback;
   }
 
-  const content = await generateGeminiText({
+  // 첨삭 문장 품질이 핵심 → Pro(또는 GEMINI_RESUME_REVIEW_MODEL). 실패 시 Flash 폴백.
+  const { text: content, modelUsed } = await generateGeminiQualityText({
     systemInstruction: REVIEW_SYSTEM,
     userPrompt,
-    temperature: 0.4,
-    maxOutputTokens: 4200,
-    timeoutMs: 32000,
+    temperature: 0.45,
+    maxOutputTokens: 5600,
+    timeoutMs: 50_000,
   });
 
   if (!content) return fallback;
+  if (modelUsed) {
+    console.info("[resume-review] narrative model:", modelUsed);
+  }
 
   const jsonMatch = content.match(/\{[\s\S]*\}/);
   if (!jsonMatch) return fallback;

@@ -25,7 +25,7 @@ import { competencyLabel, industryLabel, jobRoleLabel } from "@/lib/labels";
 import { INDUSTRY_CODES, JOB_ROLES } from "@/types";
 import type { CompetencyCode, IndustryCode, JobRoleCode } from "@/types";
 
-export const maxDuration = 60;
+export const maxDuration = 90;
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
