@@ -1,5 +1,6 @@
 /**
- * 자소서 첨삭 — 관리 기준(FORMAT_LOGIC / INDUSTRY_FIT / STAR_BEI) 대비 강점·부족·수정안.
+ * 자소서 첨삭 — 관리 기준 대비 강점·부족·수정안.
+ * 원칙: 요약/점수 나열이 아니라, 원문 근거가 있는 자연스러운 한글 첨삭.
  */
 
 import { generateGeminiText } from "@/lib/gemini/client";
@@ -43,9 +44,7 @@ export type CriterionResult = {
   category: ReviewCategory;
   title: string;
   status: CriterionStatus;
-  /** 기준 대비 잘된 점 */
   strengthNote: string;
-  /** 기준 대비 부족한 점 */
   gapNote: string;
 };
 
@@ -67,6 +66,9 @@ export type ResumeReviewNarrative = {
   criteriaResults: CriterionResult[];
 };
 
+const GENERIC_GAP =
+  /원문\s*기준(?:으로)?\s*추가\s*보완|추가\s*보완이\s*필요할\s*수\s*있습니다/;
+
 function normalizeToken(value: string): string {
   return value
     .toLowerCase()
@@ -85,7 +87,6 @@ function tokensMatch(a: string, b: string): boolean {
   return false;
 }
 
-/** 자소서 키워드 vs 공고/프리셋 요구 키워드 — LLM 없이 매칭률 계산 */
 export function matchKeywords(
   resumeKeywords: string[],
   requiredKeywords: string[]
@@ -128,6 +129,42 @@ function collectResumeKeywords(summary: ResumeSummary): string[] {
   return [...new Set([...summary.skills, ...summary.keywords, ...summary.experiences])];
 }
 
+/** 원문을 문단·문장 단위로 쪼개 인용 후보를 만든다. */
+export function extractQuoteCandidates(
+  rawText: string,
+  summary: ResumeSummary
+): string[] {
+  const cleaned = sanitizeResumeForLlm(rawText).replace(/\r\n/g, "\n");
+  const fromRaw = cleaned
+    .split(/\n{2,}|\n(?=[•·\-–—▪►▶■□★◆◇※]|\d+[.)]\s|[가-힣]{2,10}\s*[:：])/u)
+    .flatMap((block) => block.split(/(?<=[.!?。]|다\.|요\.)\s+/u))
+    .map((s) => s.replace(/\s+/g, " ").trim())
+    .filter((s) => s.length >= 28 && s.length <= 280);
+
+  const fromChunks = (summary.chunks ?? [])
+    .flatMap((c) =>
+      c.markdown
+        .split(/\n+/)
+        .map((s) => s.replace(/\s+/g, " ").trim())
+        .filter((s) => s.length >= 28)
+    );
+
+  const fromExp = summary.experiences
+    .map((s) => s.replace(/\s+/g, " ").trim())
+    .filter((s) => s.length >= 20);
+
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const q of [...fromRaw, ...fromChunks, ...fromExp]) {
+    const key = normalizeToken(q).slice(0, 48);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(q.slice(0, 220));
+    if (out.length >= 24) break;
+  }
+  return out;
+}
+
 type HeuristicSignals = {
   hasMetrics: boolean;
   metricHits: string[];
@@ -137,24 +174,38 @@ type HeuristicSignals = {
   hasActionCues: boolean;
   hasResultCues: boolean;
   hasFirstPersonAction: boolean;
+  hasTopicFirst: boolean;
+  hasJobLink: boolean;
+  hasMotivationLink: boolean;
   textLength: number;
+  openingSnippet: string;
 };
 
 function collectHeuristicSignals(rawText: string, summary: ResumeSummary): HeuristicSignals {
   const text = `${rawText}\n${summary.summary}\n${summary.experiences.join("\n")}`;
+  const opening = sanitizeResumeForLlm(rawText).replace(/\s+/g, " ").trim().slice(0, 180);
   const metricRe =
     /\d+\s*(%|퍼센트|명|건|개|회|배|원|만원|억|개월|주|일|시간|위|등|점)|증가|감소|향상|단축|절감|달성/gi;
   const metricHits = [...text.matchAll(metricRe)].map((m) => m[0]).slice(0, 8);
   const vagueRe = /열심히|최선을\s*다|다양한\s*경험|많은\s*노력|열정적으로|성실히/gi;
-  const situationRe = /당시|상황|배경|프로젝트|과제|인턴|팀\s*프로젝트|문제\s*상황/gi;
-  const taskRe = /역할|담당|맡|과제|목표|해결해야|책임/gi;
+  const situationRe = /당시|상황|배경|프로젝트|과제|인턴|팀\s*프로젝트|문제\s*상황|장애|병목/gi;
+  const taskRe = /역할|담당|맡|과제|목표|해결해야|책임|맡았/gi;
   const actionRe =
-    /분석했|제안했|설계했|개선했|주도했|실행했|협업했|도입했|구현했|정리했|설득했|기획했/gi;
+    /분석했|제안했|설계했|개선했|주도했|실행했|협업했|도입했|구현했|정리했|설득했|기획했|측정했|재구성했/gi;
   const resultRe = /결과|성과|효과|덕분에|개선되어|단축|증가|감소|달성|배웠/gi;
   const firstPersonAction =
-    /(저는|제가|본인은).{0,40}(분석|제안|설계|개선|주도|실행|도입|구현|협업|설득|기획)/gi.test(
+    /(저는|제가|본인은).{0,40}(분석|제안|설계|개선|주도|실행|도입|구현|협업|설득|기획|측정)/gi.test(
       text
     );
+  const jobLinkRe =
+    /지원\s*직무|해당\s*직무|이\s*경험(?:을|이)|입사\s*후|기여하|역량으로|연결|활용/gi;
+  const motivationRe =
+    /지원\s*동기|왜\s*.{0,8}(회사|기업|직무)|비전|서비스|제품|사업|가치관/gi;
+
+  // 두괄식: 앞부분이 배경 나열만인지, 성과/행동이 먼저인지
+  const openingHasClaim =
+    /(?:했습니다|했습니다\.|단축|개선|측정|도입|주도|달성|확인)/.test(opening) &&
+    !/안녕하세요|귀사|성장과정|어릴\s*적|태어나/.test(opening);
 
   return {
     hasMetrics: metricHits.length > 0,
@@ -165,7 +216,11 @@ function collectHeuristicSignals(rawText: string, summary: ResumeSummary): Heuri
     hasActionCues: actionRe.test(text),
     hasResultCues: resultRe.test(text),
     hasFirstPersonAction: firstPersonAction,
+    hasTopicFirst: openingHasClaim,
+    hasJobLink: jobLinkRe.test(text),
+    hasMotivationLink: motivationRe.test(text),
     textLength: text.length,
+    openingSnippet: opening,
   };
 }
 
@@ -179,6 +234,15 @@ function bandFromScore(score: number): DimensionScore["band"] {
   if (score >= 75) return "strong";
   if (score >= 50) return "adequate";
   return "weak";
+}
+
+function cleanNote(note: string): string {
+  return note
+    .replace(/\s*\(\d+%\)/g, "")
+    .replace(/\b\d{1,3}%\b/g, "")
+    .replace(/\d+점/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 function buildDimensionScores(results: CriterionResult[]): DimensionScore[] {
@@ -195,35 +259,108 @@ function buildDimensionScores(results: CriterionResult[]): DimensionScore[] {
       score,
       band: bandFromScore(score),
       strengths: rows
-        .filter((r) => r.status === "pass" && r.strengthNote.trim())
-        .map((r) => `${r.title}: ${r.strengthNote}`)
+        .filter((r) => r.status === "pass" && r.strengthNote.trim() && !GENERIC_GAP.test(r.strengthNote))
+        .map((r) => cleanNote(r.strengthNote))
+        .filter(Boolean)
         .slice(0, 4),
       gaps: rows
-        .filter((r) => r.status !== "pass" && r.gapNote.trim())
-        .map((r) => `${r.title}: ${r.gapNote}`)
+        .filter((r) => r.status !== "pass" && r.gapNote.trim() && !GENERIC_GAP.test(r.gapNote))
+        .map((r) => cleanNote(`${r.title} — ${r.gapNote}`))
+        .filter(Boolean)
         .slice(0, 5),
     };
   });
 }
 
+function findQuote(
+  candidates: string[],
+  patterns: RegExp[],
+  used: Set<string>
+): string | null {
+  for (const p of patterns) {
+    const hit = candidates.find((q) => p.test(q) && !used.has(normalizeToken(q).slice(0, 40)));
+    if (hit) return hit;
+  }
+  return candidates.find((q) => !used.has(normalizeToken(q).slice(0, 40))) ?? null;
+}
+
+function markUsed(used: Set<string>, quote: string) {
+  used.add(normalizeToken(quote).slice(0, 40));
+}
+
+type HeuristicCtx = {
+  signals: HeuristicSignals;
+  jdMatch: JdMatchResult;
+  matchSource: "jd" | "industry_preset";
+  industryLabel?: string;
+  jobRoleLabel?: string;
+  requiredKeywords: string[];
+  quotes: string[];
+};
+
 function heuristicCriterionStatus(
   code: string,
-  signals: HeuristicSignals,
-  jdMatch: JdMatchResult
+  ctx: HeuristicCtx
 ): { status: CriterionStatus; strengthNote: string; gapNote: string } {
+  const { signals, jdMatch, matchSource, industryLabel, jobRoleLabel, requiredKeywords } = ctx;
+  const roleHint = [industryLabel, jobRoleLabel].filter(Boolean).join(" · ") || "지원 직무";
+  const missingWords = jdMatch.missing.slice(0, 4);
+
   switch (code) {
+    case "TOPIC_FIRST":
+      return signals.hasTopicFirst
+        ? {
+            status: "pass",
+            strengthNote: "앞부분에서 문제 해결·행동이나 성과가 먼저 읽힙니다.",
+            gapNote: "",
+          }
+        : {
+            status: "partial",
+            strengthNote: "",
+            gapNote:
+              "문단 초반이 배경 설명에 머물러 보입니다. 첫 문장에 ‘무엇을 했고 무엇이 달라졌는지’를 두고, 배경은 뒤로 빼면 두괄식이 살아납니다.",
+          };
+    case "LOGICAL_ARC":
+      return signals.hasJobLink
+        ? {
+            status: signals.hasResultCues ? "pass" : "partial",
+            strengthNote: "경험과 기여를 직무로 잇는 연결 문장이 일부 있습니다.",
+            gapNote: signals.hasResultCues
+              ? ""
+              : "성과 다음에 ‘이 경험이 지원 직무에서 어떻게 쓰이는지’ 한 문장을 덧붙이세요.",
+          }
+        : {
+            status: "fail",
+            strengthNote: "",
+            gapNote: `경험→결과 다음에 ${roleHint}와의 연결이 약합니다. ‘그래서 이 직무에서 ○○를 할 수 있다’는 문장을 넣어 주세요.`,
+          };
     case "QUANTIFIED_OUTCOME":
     case "STAR_RESULT":
       return signals.hasMetrics
         ? {
             status: "pass",
-            strengthNote: `수치·성과 표현이 보입니다(${signals.metricHits.slice(0, 3).join(", ")}).`,
+            strengthNote: "성과를 숫자로 보여 주는 문장이 있어 설득력이 있습니다.",
             gapNote: "",
           }
         : {
             status: "fail",
             strengthNote: "",
-            gapNote: "정량 수치(%, 건수, 기간, 규모 등)가 거의 없습니다. 결과에 숫자를 추가하세요.",
+            gapNote:
+              "결과 문단에 기간·규모·개선 폭 같은 객관 지표가 거의 없습니다. ‘얼마나, 어떻게 달라졌는지’를 숫자로 한 줄 보강하세요.",
+          };
+    case "OWN_ROLE_CLEAR":
+      return signals.hasFirstPersonAction || signals.hasActionCues
+        ? {
+            status: signals.hasFirstPersonAction ? "pass" : "partial",
+            strengthNote: "본인이 한 행동이 드러나는 서술이 있습니다.",
+            gapNote: signals.hasFirstPersonAction
+              ? ""
+              : "‘팀이 했다’보다 ‘내가 측정·판단·실행한 부분’을 주어로 더 분명히 쓰세요.",
+          }
+        : {
+            status: "fail",
+            strengthNote: "",
+            gapNote: "역할이 모호합니다. 본인이 결정하거나 실행한 단계를 동사 중심으로 적어 주세요.",
           };
     case "NO_VAGUE_EFFORT":
       return signals.hasVagueEffort
@@ -231,121 +368,157 @@ function heuristicCriterionStatus(
             status: "partial",
             strengthNote: "",
             gapNote:
-              "‘열심히/최선을’ 등 추상 표현이 보입니다. 판단·방법·실행으로 바꿔 쓰세요.",
+              "‘열심히’·‘최선을’ 같은 표현이 보입니다. 관찰 가능한 방법·판단으로 바꿔 주세요.",
           }
         : {
             status: "pass",
-            strengthNote: "추상적인 노력어 비중은 낮은 편입니다.",
+            strengthNote: "추상적인 노력어보다 구체 행동을 쓰는 편입니다.",
             gapNote: "",
-          };
-    case "OWN_ROLE_CLEAR":
-      return signals.hasFirstPersonAction || signals.hasActionCues
-        ? {
-            status: signals.hasFirstPersonAction ? "pass" : "partial",
-            strengthNote: "본인이 한 행동·기여가 일부 드러납니다.",
-            gapNote: signals.hasFirstPersonAction
-              ? ""
-              : "‘내가 무엇을 결정·실행했는지’를 더 분명히 쓰세요.",
-          }
-        : {
-            status: "fail",
-            strengthNote: "",
-            gapNote: "팀 성과만 있고 본인 역할·행동이 약합니다.",
-          };
-    case "STAR_SITUATION":
-      return signals.hasSituationCues
-        ? {
-            status: "pass",
-            strengthNote: "상황·배경 단서가 있습니다.",
-            gapNote: "",
-          }
-        : {
-            status: "partial",
-            strengthNote: "",
-            gapNote: "경험의 배경·제약을 2–3줄로 제시해 주세요.",
-          };
-    case "STAR_TASK":
-      return signals.hasTaskCues
-        ? {
-            status: "pass",
-            strengthNote: "과제·역할 단서가 있습니다.",
-            gapNote: "",
-          }
-        : {
-            status: "fail",
-            strengthNote: "",
-            gapNote: "그 상황에서 본인이 맡은 과제·목표가 불명확합니다.",
-          };
-    case "STAR_ACTION":
-      return signals.hasActionCues
-        ? {
-            status: "pass",
-            strengthNote: "구체 행동 동사가 보입니다.",
-            gapNote: "",
-          }
-        : {
-            status: "fail",
-            strengthNote: "",
-            gapNote: "Action(방법·판단·실행)이 빈약합니다. 분량의 40–50%를 Action에 할애하세요.",
           };
     case "JD_KEYWORD_EVIDENCE": {
+      if (matchSource === "industry_preset") {
+        if (jdMatch.matched.length >= 2) {
+          return {
+            status: "pass",
+            strengthNote: `${roleHint}에서 자주 쓰는 표현이 경험과 맞물려 읽힙니다.`,
+            gapNote: "",
+          };
+        }
+        return {
+          status: "partial",
+          strengthNote: "",
+          gapNote: missingWords.length
+            ? `기술·성과는 있는데, ${roleHint}에서 기대하는 표현(${missingWords.join(", ")})이 경험과 직접 연결되지 않습니다. 같은 사례를 그 언어로 한 줄 번역해 보세요.`
+            : `${roleHint} 언어로 본인 경험을 ‘무엇을 잘하는 사람인지’ 한 문장으로 번역해 주세요.`,
+        };
+      }
       if (jdMatch.matchScore == null) {
         return {
           status: "partial",
           strengthNote: "",
-          gapNote: "공고 키워드가 없어 산업·직무 일반 기준으로만 볼 수 있습니다.",
+          gapNote: "공고 키워드가 없어 산업·직무 일반 기준으로만 봤습니다. 공고를 붙이면 더 정확한 맞춤 첨삭이 됩니다.",
         };
       }
-      if (jdMatch.matchScore >= 70) {
+      if (jdMatch.matched.length >= Math.max(2, Math.ceil(requiredKeywords.length * 0.5))) {
         return {
           status: "pass",
-          strengthNote: `요구 키워드의 ${jdMatch.matchScore}%가 자소서에 반영되어 있습니다.`,
-          gapNote: jdMatch.missing.length
-            ? `부족 키워드: ${jdMatch.missing.slice(0, 5).join(", ")}`
+          strengthNote: "공고에서 요구하는 표현이 경험 서술과 맞물립니다.",
+          gapNote: missingWords.length
+            ? `아직 덜 드러난 요구는 ${missingWords.join(", ")} 쪽입니다. 관련 경험이 있으면 같은 맥락에 녹여 주세요.`
             : "",
-        };
-      }
-      if (jdMatch.matchScore >= 40) {
-        return {
-          status: "partial",
-          strengthNote: `일부 키워드만 매칭(${jdMatch.matchScore}%).`,
-          gapNote: `보완 키워드: ${jdMatch.missing.slice(0, 6).join(", ")}`,
         };
       }
       return {
         status: "fail",
         strengthNote: "",
-        gapNote: `요구 키워드 매칭이 낮습니다(${jdMatch.matchScore}%). 경험과 연결해 보강하세요.`,
+        gapNote: missingWords.length
+          ? `공고가 강조하는 ${missingWords.join(", ")} 등이 자소서에 거의 안 보입니다. 키워드만 넣지 말고, 관련 경험 한 문단에 근거로 담아 주세요.`
+          : "공고 요구사항과 경험의 연결이 약합니다. 관련 사례를 한 문단으로 보강하세요.",
       };
     }
-    case "BEI_BEHAVIORAL_INDICATORS":
+    case "JOB_RELEVANT_EXPERIENCE":
       return signals.hasActionCues && (signals.hasMetrics || signals.hasResultCues)
         ? {
+            status: signals.hasJobLink ? "pass" : "partial",
+            strengthNote: "현장성 있는 문제 해결 경험이 있습니다.",
+            gapNote: signals.hasJobLink
+              ? ""
+              : `그 경험이 ${roleHint}에서 왜 쓸모 있는지 연결 문장이 필요합니다.`,
+          }
+        : {
+            status: "partial",
+            strengthNote: "",
+            gapNote: `${roleHint}와 가까운 경험을 앞에 두고, 무관한 스펙 나열은 줄이세요.`,
+          };
+    case "MOTIVATION_TRIPLE_LINK":
+      return signals.hasMotivationLink && signals.hasJobLink
+        ? {
             status: "pass",
-            strengthNote: "관찰 가능한 행동·결과 단서가 있습니다.",
+            strengthNote: "회사·직무·본인 경험을 잇는 동기 단서가 있습니다.",
             gapNote: "",
           }
         : {
             status: "partial",
             strengthNote: "",
-            gapNote: "역량 형용사보다 ‘무엇을 했고 어떤 결과가 났는지’ 행동을 쓰세요.",
+            gapNote:
+              "지원동기라면 ‘왜 이 회사 / 왜 이 직무 / 왜 나’가 한 줄기에 있어야 합니다. 회사 칭찬만 길면 설득이 약해집니다.",
+          };
+    case "INDUSTRY_COMPETENCY_SIGNAL":
+      return signals.hasActionCues && signals.hasResultCues
+        ? {
+            status: "pass",
+            strengthNote: "역량을 형용사가 아니라 행동·결과로 보여 주고 있습니다.",
+            gapNote: "",
+          }
+        : {
+            status: "partial",
+            strengthNote: "",
+            gapNote: `${roleHint}에서 중시하는 역량을 ‘성실함’이 아니라 구체 행동으로 보여 주세요.`,
+          };
+    case "STAR_SITUATION":
+      return signals.hasSituationCues
+        ? {
+            status: "pass",
+            strengthNote: "문제·제약 같은 상황 배경이 잡힙니다.",
+            gapNote: "",
+          }
+        : {
+            status: "partial",
+            strengthNote: "",
+            gapNote: "상황(배경·제약)을 2~3줄로만 짧게 두고, 바로 과제·행동으로 넘어가세요.",
+          };
+    case "STAR_TASK":
+      return signals.hasTaskCues
+        ? {
+            status: "pass",
+            strengthNote: "맡았던 과제·목표가 드러납니다.",
+            gapNote: "",
+          }
+        : {
+            status: "fail",
+            strengthNote: "",
+            gapNote: "그 상황에서 본인이 풀어야 했던 과제를 한 문장으로 분명하게 쓰세요.",
+          };
+    case "STAR_ACTION":
+      return signals.hasActionCues
+        ? {
+            status: "pass",
+            strengthNote: "측정·개선·도입처럼 구체 행동 단계가 보입니다.",
+            gapNote: "",
+          }
+        : {
+            status: "fail",
+            strengthNote: "",
+            gapNote:
+              "행동(방법·판단·실행) 비중이 약합니다. Situation보다 Action을 더 길게, 단계별로 써 주세요.",
+          };
+    case "BEI_BEHAVIORAL_INDICATORS":
+      return signals.hasActionCues && (signals.hasMetrics || signals.hasResultCues)
+        ? {
+            status: "pass",
+            strengthNote: "관찰 가능한 행동과 결과가 함께 있어 BEI 관점에서도 평가하기 좋습니다.",
+            gapNote: "",
+          }
+        : {
+            status: "partial",
+            strengthNote: "",
+            gapNote: "역량 형용사 대신 ‘무슨 말을/행동을/결정을 했는지’를 사건처럼 적어 주세요.",
           };
     default:
       return {
         status: "partial",
         strengthNote: "",
-        gapNote: "원문 기준으로 추가 보완이 필요할 수 있습니다.",
+        gapNote: `${roleHint} 맥락에서 근거 문장이 더 분명하면 설득력이 커집니다. 관련 경험의 행동·결과를 한 줄 보강하세요.`,
       };
   }
 }
 
 function buildHeuristicResults(
   criteria: LoadedCriterion[],
-  signals: HeuristicSignals,
-  jdMatch: JdMatchResult
+  ctx: HeuristicCtx
 ): CriterionResult[] {
   return criteria.map((c) => {
-    const h = heuristicCriterionStatus(c.code, signals, jdMatch);
+    const h = heuristicCriterionStatus(c.code, ctx);
     return {
       code: c.code,
       category: c.category,
@@ -357,91 +530,184 @@ function buildHeuristicResults(
   });
 }
 
+/** 약한 기준마다 서로 다른 원문 인용 + 근거 있는 문단 피드백 */
+export function buildEvidenceParagraphFeedback(
+  results: CriterionResult[],
+  quotes: string[],
+  ctx: HeuristicCtx
+): ParagraphFeedbackItem[] {
+  const weak = results
+    .filter((r) => r.status !== "pass" && r.gapNote.trim() && !GENERIC_GAP.test(r.gapNote))
+    .sort((a, b) => statusScore(a.status) - statusScore(b.status));
+
+  const used = new Set<string>();
+  const items: ParagraphFeedbackItem[] = [];
+
+  const quotePatterns: Record<string, RegExp[]> = {
+    TOPIC_FIRST: [/./],
+    LOGICAL_ARC: [/결과|덕분에|개선|단축|도입/, /경험|프로젝트/],
+    OWN_ROLE_CLEAR: [/팀|함께|참여/, /측정|도입|분석|개선/],
+    JD_KEYWORD_EVIDENCE: [/결과|도입|개선|분석/, /./],
+    JOB_RELEVANT_EXPERIENCE: [/프로젝트|서버|서비스|고객|업무/, /./],
+    MOTIVATION_TRIPLE_LINK: [/지원|회사|기업|직무|비전/, /./],
+    STAR_SITUATION: [/당시|상황|병목|문제|장애/, /./],
+    STAR_TASK: [/담당|맡|역할|목표|과제/, /./],
+    STAR_ACTION: [/측정|분석|도입|개선|구현|재구성/, /./],
+    STAR_RESULT: [/\d+|결과|단축|증가|감소/, /./],
+    QUANTIFIED_OUTCOME: [/\d+/, /결과/],
+    BEI_BEHAVIORAL_INDICATORS: [/했습니다|확인|도입|개선/, /./],
+  };
+
+  for (const r of weak) {
+    if (items.length >= 5) break;
+    const patterns = quotePatterns[r.code] ?? [/./];
+    let quote = findQuote(quotes, patterns, used);
+    if (!quote && quotes.length) {
+      quote = quotes.find((q) => !used.has(normalizeToken(q).slice(0, 40))) ?? quotes[0];
+    }
+    if (!quote) continue;
+    markUsed(used, quote);
+
+    const snippet = quote.length > 160 ? `${quote.slice(0, 157)}…` : quote;
+    const why =
+      r.status === "fail"
+        ? `이 문장에서는 「${r.title}」이 충분히 안 드러납니다.`
+        : `이 문장은 「${r.title}」을 부분적으로만 충족합니다.`;
+
+    items.push({
+      quote: snippet,
+      issue: `${why} ${cleanNote(r.gapNote)}`,
+      suggestion: rewriteHint(r.code, snippet, ctx),
+    });
+  }
+
+  return items;
+}
+
+function rewriteHint(code: string, quote: string, ctx: HeuristicCtx): string {
+  const role = [ctx.industryLabel, ctx.jobRoleLabel].filter(Boolean).join(" ") || "지원 직무";
+  const short = quote.length > 60 ? `${quote.slice(0, 57)}…` : quote;
+
+  switch (code) {
+    case "TOPIC_FIRST":
+      return `문단을 「결론(성과/행동) → 배경 → 과정」 순으로 바꿔 보세요. 예: 앞문장에 성과를 두고, 지금 인용한 배경(“${short}”)은 뒷받침으로 옮깁니다.`;
+    case "LOGICAL_ARC":
+      return `이 사례 끝에 “이 경험으로 ${role}에서 ○○를 할 수 있다”는 연결 문장 한 줄을 추가하세요.`;
+    case "OWN_ROLE_CLEAR":
+      return `‘우리는/팀이’를 ‘저는 APM으로 병목을 측정했고, 인덱스를 재구성했다’처럼 주어를 본인으로 바꿔 역할을 분리해 쓰세요.`;
+    case "JD_KEYWORD_EVIDENCE":
+      return ctx.jdMatch.missing[0]
+        ? `같은 성과를 유지한 채, 공고·직무에서 쓰는 “${ctx.jdMatch.missing.slice(0, 2).join(", ")}” 맥락으로 한 문장만 번역해 덧붙이세요.`
+        : `성과 문장 뒤에 직무에서 쓰는 언어로 ‘그래서 어떤 일을 잘한다’를 한 줄 연결하세요.`;
+    case "JOB_RELEVANT_EXPERIENCE":
+      return `${role}와 직접 닿는 부분을 제목·첫 문장에 드러내고, 덜 관련한 나열은 줄이세요.`;
+    case "MOTIVATION_TRIPLE_LINK":
+      return `지원동기 문단에 회사 특징 + 직무 + 본인 사례를 한 문장씩만 짝지어 주세요.`;
+    case "STAR_ACTION":
+      return `Action을 늘리세요: (1) 무엇을 봤는지 (2) 어떤 판단을 했는지 (3) 무엇을 실행했는지 순으로 나눠 씁니다.`;
+    case "STAR_RESULT":
+    case "QUANTIFIED_OUTCOME":
+      return `결과 문장에 ‘전→후’ 숫자(시간, 비율, 규모)를 넣고, 가능하면 배운 점 한 줄을 붙이세요.`;
+    default:
+      return `인용 문장의 바로 앞뒤에, 부족한 기준을 채울 구체 행동·결과·직무 연결을 한두 문장 보강하세요.`;
+  }
+}
+
 function improvementFromResults(results: CriterionResult[]): ImprovementPlanItem[] {
   return results
-    .filter((r) => r.status !== "pass" && r.gapNote.trim())
+    .filter((r) => r.status !== "pass" && r.gapNote.trim() && !GENERIC_GAP.test(r.gapNote))
     .sort((a, b) => statusScore(a.status) - statusScore(b.status))
-    .slice(0, 8)
+    .slice(0, 6)
     .map((r) => ({
       gapLabel: `[${REVIEW_CATEGORY_LABELS[r.category]}] ${r.title}`,
-      suggestion: r.gapNote,
+      suggestion: cleanNote(r.gapNote),
     }));
 }
 
-function paragraphFromWeakResults(
-  summary: ResumeSummary,
-  results: CriterionResult[]
-): ParagraphFeedbackItem[] {
-  const weak = results.filter((r) => r.status !== "pass").slice(0, 5);
-  const quotes = summary.experiences.length
-    ? summary.experiences
-    : [summary.summary || "핵심 경험 서술"];
-
-  return weak.map((r, i) => ({
-    quote: (quotes[i % quotes.length] ?? "").slice(0, 140) || "(인용 가능한 경험 문장 없음)",
-    issue: `${r.title} 기준에서 ${r.status === "fail" ? "부족" : "부분 충족"}합니다. ${r.gapNote}`,
-    suggestion:
-      r.status === "fail"
-        ? `「${r.title}」을 충족하도록 구체 행동·수치·직무 연결을 한 문장씩 보강하세요.`
-        : `「${r.title}」을 더 분명하게 — ${r.gapNote || "근거를 한 문장 더 추가하세요."}`,
-  }));
-}
-
-function overallFromDimensions(dimensions: DimensionScore[], jdMatch: JdMatchResult): string {
-  const lines: string[] = [];
-  const weak = dimensions.filter((d) => d.band === "weak");
+/** 점수·% 없이 읽히는 총평 */
+export function buildNaturalOverallSummary(
+  dimensions: DimensionScore[],
+  results: CriterionResult[],
+  ctx: HeuristicCtx
+): string {
   const strong = dimensions.filter((d) => d.band === "strong");
+  const weak = dimensions.filter((d) => d.band === "weak");
+  const role = [ctx.industryLabel, ctx.jobRoleLabel].filter(Boolean).join(" · ") || "지원 직무";
 
-  if (strong.length) {
-    lines.push(
-      `잘 갖춘 축: ${strong.map((d) => `${d.label}(${d.score})`).join(", ")}. 해당 축의 강점을 문단 앞으로 끌어올리세요.`
+  const bestStrength =
+    results.find((r) => r.status === "pass" && r.strengthNote)?.strengthNote ||
+    strong[0]?.strengths[0] ||
+    "";
+  const topGaps = results
+    .filter((r) => r.status !== "pass" && r.gapNote && !GENERIC_GAP.test(r.gapNote))
+    .sort((a, b) => statusScore(a.status) - statusScore(b.status))
+    .slice(0, 2);
+
+  const parts: string[] = [];
+
+  if (strong.length && bestStrength) {
+    parts.push(
+      `읽히기 좋은 쪽은 ${strong.map((d) => d.label).join("·")}입니다. 특히 ${cleanNote(bestStrength)}`
     );
+  } else if (bestStrength) {
+    parts.push(`강점으로는 ${cleanNote(bestStrength)}`);
   } else {
-    lines.push(
-      "형식·논리 / 산업 역량 / STAR·BEI 세 축 모두에서 기준을 충분히 충족하지 못했습니다. 요약이 아니라 기준 대비 보완이 필요합니다."
+    parts.push(
+      `${role} 기준으로 볼 때, 경험의 뼈대는 있으나 기준별로는 손볼 곳이 분명합니다.`
     );
   }
 
-  for (const d of dimensions) {
-    const gapBit = d.gaps[0] ? ` 우선 보완: ${d.gaps[0]}` : "";
-    const strengthBit = d.strengths[0] ? ` 강점: ${d.strengths[0]}` : "";
-    lines.push(`· ${d.label} ${d.score}점(${d.band === "strong" ? "양호" : d.band === "adequate" ? "보통" : "약함"}).${strengthBit}${gapBit}`);
-  }
-
-  if (jdMatch.matchScore != null) {
-    lines.push(
-      `키워드 매칭 ${jdMatch.matchScore}% — 키워드 나열이 아니라 경험 근거와 연결해 보강하세요.`
+  if (topGaps.length) {
+    parts.push(
+      `아쉬운 부분은 ${topGaps.map((g) => g.title).join("과 ")}입니다. ${cleanNote(topGaps[0].gapNote)}`
     );
+    if (topGaps[1]) {
+      parts.push(cleanNote(topGaps[1].gapNote));
+    }
   }
 
   if (weak.length) {
-    lines.push(
-      `가장 먼저 손볼 축: ${weak.map((d) => d.label).join(", ")}. 아래 ‘우선 보완 액션’ 순서를 따라 문단을 고쳐 쓴 뒤 다시 첨삭하세요.`
+    parts.push(
+      `우선순위는 ${weak.map((d) => d.label).join(", ")} 축을 먼저 손보고, 문단별 제안처럼 원문을 고친 뒤 다시 첨삭받는 흐름이 좋습니다.`
+    );
+  } else {
+    parts.push(
+      `전체적으로는 쓸 만한 사례가 있으니, 아래 문단 제안만 반영해도 설득력이 한 단계 올라갑니다.`
     );
   }
 
-  return lines.join("\n");
+  return parts.map((p) => (p.endsWith(".") || p.endsWith("다") ? p : `${p}.`)).join(" ");
 }
 
-const REVIEW_SYSTEM = `당신은 한국 채용시장의 자기소개서 첨삭관입니다.
-역할은 자소서를 '요약'하는 것이 아니라, 제공된 평가 기준(criterion) 각각에 대해
-(1) 잘 갖춘 점(strengthNote) (2) 부족한 점(gapNote) (3) pass|partial|fail 을 판정하는 것입니다.
+const REVIEW_SYSTEM = `당신은 한국 대기업·중견기업 채용을 오래 본 자기소개서 첨삭관입니다.
+목표는 요악·점수 발표가 아니라, 지원자가 바로 고쳐 쓸 수 있는 "근거 있는 첨삭"입니다.
 
-절대 규칙:
-- 원문/요약에 없는 경험을 지어내지 마세요.
-- paragraphFeedback.quote는 원문(또는 experiences)에 실제 있는 구절만 쓰세요.
-- overallSummary는 자소서 줄거리가 아니라, 세 축(형식·논리 / 산업·직무 역량 / STAR·BEI) 대비 강점·약점·수정 우선순위를 말하세요.
-- improvementPlan은 fail/partial 기준에서만 만들고, 구체적인 수정 지시로 쓰세요.
-- suggestedCompetencies는 NCS 코드만: COMMUNICATION, PROBLEM_SOLVING, JOB_FIT, ORG_FIT, LEADERSHIP, GROWTH (최대 3).
+문체 규칙 (필수):
+- 자연스러운 구어체 한글. "~입니다/~하세요" 톤.
+- overallSummary·strengthNote·gapNote·issue·suggestion에 점수(73점), 퍼센트(0%, 100%), "매칭률" 숫자를 쓰지 마세요.
+- "원문 기준으로 추가 보완이 필요할 수 있습니다"처럼 근거 없는 템플릿 금지.
+- 각 판정은 원문의 구체 내용(도구명, 행동, 결과)을 짚어야 합니다.
 
-JSON만 출력:
+문단 피드백 규칙 (필수):
+- paragraphFeedback는 서로 다른 quote만 사용. 같은 문장을 2번 이상 인용 금지.
+- quote는 반드시 제공된 원문/후보 목록에 실제로 있는 구절.
+- 한 항목 = 한 문제점. issue에 왜 문제인지, suggestion에 어떻게 고칠지(가능하면 고쳐 쓴 방향 제시).
+- 최대 5개. 약한 기준만.
+
+criteriaResults:
+- 제공된 code를 모두 포함.
+- pass면 strengthNote만, fail/partial이면 gapNote에 구체 근거.
+
+improvementPlan: fail/partial만, gapLabel은 "[축이름] 기준제목", suggestion은 실행 지시.
+
+suggestedCompetencies: COMMUNICATION | PROBLEM_SOLVING | JOB_FIT | ORG_FIT | LEADERSHIP | GROWTH 중 최대 3.
+
+JSON만:
 {
-  "overallSummary": "4~7문장. 요약 금지. 축별 강점/약점/수정 우선순위.",
-  "criteriaResults": [
-    { "code": "STAR_ACTION", "status": "partial", "strengthNote": "...", "gapNote": "..." }
-  ],
-  "paragraphFeedback": [{ "quote": "...", "issue": "어떤 기준이 왜 부족한지", "suggestion": "어떻게 고쳐 쓸지" }],
-  "improvementPlan": [{ "gapLabel": "[축] 기준명", "suggestion": "구체 수정 지시" }],
+  "overallSummary": "문단 4~6개 분량의 자연스러운 총평. 점수/퍼센트 금지.",
+  "criteriaResults": [{ "code": "...", "status": "pass|partial|fail", "strengthNote": "...", "gapNote": "..." }],
+  "paragraphFeedback": [{ "quote": "...", "issue": "...", "suggestion": "..." }],
+  "improvementPlan": [{ "gapLabel": "[형식·논리] ...", "suggestion": "..." }],
   "suggestedCompetencies": ["PROBLEM_SOLVING"]
 }`;
 
@@ -450,6 +716,46 @@ function parseCompetencyCodes(raw: unknown): CompetencyCode[] {
   return raw
     .filter((c): c is CompetencyCode => typeof c === "string" && COMPETENCY_CODES.includes(c as CompetencyCode))
     .slice(0, 3);
+}
+
+function looksNumericDump(text: string): boolean {
+  const scoreHits = (text.match(/\d{1,3}\s*점/g) ?? []).length;
+  const pctHits = (text.match(/\d{1,3}\s*%/g) ?? []).length;
+  return scoreHits + pctHits >= 2 || /매칭률\s*\d/.test(text);
+}
+
+function dedupeParagraphFeedback(
+  items: ParagraphFeedbackItem[],
+  fallbackQuotes: string[]
+): ParagraphFeedbackItem[] {
+  const used = new Set<string>();
+  const out: ParagraphFeedbackItem[] = [];
+  let quoteIdx = 0;
+
+  for (const item of items) {
+    let quote = item.quote.trim();
+    let key = normalizeToken(quote).slice(0, 40);
+    if (!quote || used.has(key) || GENERIC_GAP.test(item.issue)) {
+      while (quoteIdx < fallbackQuotes.length) {
+        const alt = fallbackQuotes[quoteIdx++];
+        const altKey = normalizeToken(alt).slice(0, 40);
+        if (!used.has(altKey)) {
+          quote = alt.slice(0, 220);
+          key = altKey;
+          break;
+        }
+      }
+      if (!quote || used.has(key)) continue;
+    }
+    used.add(key);
+    out.push({
+      quote: quote.slice(0, 220),
+      issue: cleanNote(item.issue),
+      suggestion: cleanNote(item.suggestion),
+    });
+    if (out.length >= 5) break;
+  }
+  return out;
 }
 
 function mergeCriteriaResults(
@@ -464,20 +770,27 @@ function mergeCriteriaResults(
       const r = row as Record<string, unknown>;
       const code = typeof r.code === "string" ? r.code : "";
       if (!code || !byCode.has(code)) continue;
+      const base = byCode.get(code)!;
       const status =
         r.status === "pass" || r.status === "partial" || r.status === "fail"
           ? r.status
-          : byCode.get(code)!.status;
-      const strengthNote =
-        typeof r.strengthNote === "string" && r.strengthNote.trim()
-          ? r.strengthNote.trim()
-          : byCode.get(code)!.strengthNote;
-      const gapNote =
-        typeof r.gapNote === "string" && r.gapNote.trim()
-          ? r.gapNote.trim()
-          : byCode.get(code)!.gapNote;
-      const base = byCode.get(code)!;
-      byCode.set(code, { ...base, status, strengthNote, gapNote });
+          : base.status;
+      let strengthNote =
+        typeof r.strengthNote === "string" ? r.strengthNote.trim() : "";
+      let gapNote = typeof r.gapNote === "string" ? r.gapNote.trim() : "";
+      if (GENERIC_GAP.test(strengthNote) || looksNumericDump(strengthNote)) {
+        strengthNote = base.strengthNote;
+      }
+      if (!strengthNote) strengthNote = base.strengthNote;
+      if (GENERIC_GAP.test(gapNote) || looksNumericDump(gapNote) || !gapNote) {
+        gapNote = base.gapNote;
+      }
+      byCode.set(code, {
+        ...base,
+        status,
+        strengthNote: cleanNote(strengthNote),
+        gapNote: cleanNote(gapNote),
+      });
     }
   }
   return criteria.map((c) => byCode.get(c.code)!);
@@ -509,25 +822,36 @@ export async function generateResumeReviewNarrative(params: {
 
   const criteria = await loadActiveReviewCriteria();
   const signals = collectHeuristicSignals(resumeRawText, resumeSummary);
-  const heuristicResults = buildHeuristicResults(criteria, signals, jdMatch);
+  const quotes = extractQuoteCandidates(resumeRawText, resumeSummary);
+  const ctx: HeuristicCtx = {
+    signals,
+    jdMatch,
+    matchSource,
+    industryLabel,
+    jobRoleLabel,
+    requiredKeywords,
+    quotes,
+  };
+
+  const heuristicResults = buildHeuristicResults(criteria, ctx);
   const heuristicDimensions = buildDimensionScores(heuristicResults);
 
   const fallback: ResumeReviewNarrative = {
-    overallSummary: overallFromDimensions(heuristicDimensions, jdMatch),
-    paragraphFeedback: paragraphFromWeakResults(resumeSummary, heuristicResults),
+    overallSummary: buildNaturalOverallSummary(heuristicDimensions, heuristicResults, ctx),
+    paragraphFeedback: buildEvidenceParagraphFeedback(heuristicResults, quotes, ctx),
     improvementPlan: improvementFromResults(heuristicResults),
     suggestedCompetencies:
       params.suggestedFromEvidence?.length
         ? params.suggestedFromEvidence.slice(0, 3)
-        : ["COMMUNICATION"],
+        : ["PROBLEM_SOLVING"],
     dimensionScores: heuristicDimensions,
     criteriaResults: heuristicResults,
   };
 
   const matchContext =
     matchSource === "jd"
-      ? `채용공고(JD) 기준 키워드: ${requiredKeywords.join(", ") || "(없음)"}`
-      : `산업군·직무 일반 기준: ${industryLabel ?? ""} · ${jobRoleLabel ?? ""} — 기대 역량: ${requiredKeywords.join(", ")}`;
+      ? `기준: 채용공고. 공고에서 강조하는 말: ${requiredKeywords.join(", ") || "(없음)"}. 이미 드러난 말: ${jdMatch.matched.join(", ") || "(없음)"}. 덜 드러난 말: ${jdMatch.missing.join(", ") || "(없음)"}.`
+      : `기준: ${industryLabel ?? ""} · ${jobRoleLabel ?? ""} 일반 기대. 기대 표현: ${requiredKeywords.join(", ")}. 이미 닿아 보이는 표현: ${jdMatch.matched.join(", ") || "(없음)"}.`;
 
   const criteriaBlock = criteria
     .map(
@@ -536,31 +860,30 @@ export async function generateResumeReviewNarrative(params: {
     )
     .join("\n");
 
+  const quoteBlock = quotes
+    .slice(0, 14)
+    .map((q, i) => `${i + 1}. ${q}`)
+    .join("\n");
+
   const userPrompt = `
 ${matchContext}
-키워드 매칭률: ${jdMatch.matchScore ?? "N/A"}%
-매칭됨: ${jdMatch.matched.join(", ") || "(없음)"}
-부족: ${jdMatch.missing.join(", ") || "(없음)"}
+(참고용 내부 단서 — 답변에 점수/%로 쓰지 말 것: 수치단서=${signals.hasMetrics}, S/T/A/R=${signals.hasSituationCues}/${signals.hasTaskCues}/${signals.hasActionCues}/${signals.hasResultCues})
 
-휴리스틱 단서:
-- 수치: ${signals.hasMetrics ? signals.metricHits.join(", ") : "없음"}
-- 추상 노력어: ${signals.hasVagueEffort ? "있음" : "없음"}
-- S/T/A/R 단서: S=${signals.hasSituationCues} T=${signals.hasTaskCues} A=${signals.hasActionCues} R=${signals.hasResultCues}
-- 1인칭 행동: ${signals.hasFirstPersonAction}
-
-평가 기준 (반드시 criteriaResults에 아래 code를 모두 포함):
+평가 기준 (criteriaResults에 code 전부):
 ${criteriaBlock}
+
+인용 후보 (paragraphFeedback.quote는 여기서만 고르고, 서로 다른 번호 사용):
+${quoteBlock || "(후보 부족 — 원문에서 직접 짧게 인용)"}
 
 자소서 요약:
 - summary: ${resumeSummary.summary}
 - skills: ${resumeSummary.skills.join(", ")}
 - experiences: ${resumeSummary.experiences.join(" | ")}
-- keywords: ${resumeSummary.keywords.join(", ")}
-${evidenceContext ? `\n온톨로지 claim↔역량:\n${evidenceContext}` : ""}
-${performanceContext ? `\n면접 답변 수준(역량별):\n${performanceContext}` : ""}
+${evidenceContext ? `\nclaim↔역량:\n${evidenceContext}` : ""}
+${performanceContext ? `\n면접 역량 수준:\n${performanceContext}` : ""}
 
-자소서 원문(인용·판정용):
-${sanitizeResumeForLlm(resumeRawText).slice(0, 4500)}
+원문:
+${sanitizeResumeForLlm(resumeRawText).slice(0, 5000)}
 `.trim();
 
   if (!process.env.GEMINI_API_KEY) {
@@ -570,9 +893,9 @@ ${sanitizeResumeForLlm(resumeRawText).slice(0, 4500)}
   const content = await generateGeminiText({
     systemInstruction: REVIEW_SYSTEM,
     userPrompt,
-    temperature: 0.25,
-    maxOutputTokens: 3600,
-    timeoutMs: 28000,
+    temperature: 0.4,
+    maxOutputTokens: 4200,
+    timeoutMs: 32000,
   });
 
   if (!content) return fallback;
@@ -596,12 +919,17 @@ ${sanitizeResumeForLlm(resumeRawText).slice(0, 4500)}
     );
     const dimensionScores = buildDimensionScores(criteriaResults);
 
-    const overallSummary =
+    let overallSummary =
       typeof parsed.overallSummary === "string" && parsed.overallSummary.trim()
         ? parsed.overallSummary.trim()
-        : overallFromDimensions(dimensionScores, jdMatch);
+        : "";
+    if (!overallSummary || looksNumericDump(overallSummary) || GENERIC_GAP.test(overallSummary)) {
+      overallSummary = buildNaturalOverallSummary(dimensionScores, criteriaResults, ctx);
+    } else {
+      overallSummary = cleanNote(overallSummary);
+    }
 
-    const paragraphFeedback = Array.isArray(parsed.paragraphFeedback)
+    const llmParagraphs = Array.isArray(parsed.paragraphFeedback)
       ? parsed.paragraphFeedback
           .filter((p): p is ParagraphFeedbackItem => {
             if (!p || typeof p !== "object") return false;
@@ -612,8 +940,19 @@ ${sanitizeResumeForLlm(resumeRawText).slice(0, 4500)}
               typeof row.suggestion === "string"
             );
           })
-          .slice(0, 8)
+          .map((p) => ({
+            quote: p.quote.trim(),
+            issue: p.issue.trim(),
+            suggestion: p.suggestion.trim(),
+          }))
       : [];
+
+    const paragraphFeedback = dedupeParagraphFeedback(
+      llmParagraphs.length > 0
+        ? llmParagraphs
+        : buildEvidenceParagraphFeedback(criteriaResults, quotes, ctx),
+      quotes
+    );
 
     const improvementPlan = Array.isArray(parsed.improvementPlan)
       ? parsed.improvementPlan
@@ -622,7 +961,12 @@ ${sanitizeResumeForLlm(resumeRawText).slice(0, 4500)}
             const row = p as Record<string, unknown>;
             return typeof row.gapLabel === "string" && typeof row.suggestion === "string";
           })
-          .slice(0, 8)
+          .map((p) => ({
+            gapLabel: p.gapLabel.trim(),
+            suggestion: cleanNote(p.suggestion),
+          }))
+          .filter((p) => !GENERIC_GAP.test(p.suggestion))
+          .slice(0, 6)
       : [];
 
     const suggestedCompetencies = parseCompetencyCodes(parsed.suggestedCompetencies);
@@ -632,7 +976,7 @@ ${sanitizeResumeForLlm(resumeRawText).slice(0, 4500)}
       paragraphFeedback:
         paragraphFeedback.length > 0
           ? paragraphFeedback
-          : paragraphFromWeakResults(resumeSummary, criteriaResults),
+          : buildEvidenceParagraphFeedback(criteriaResults, quotes, ctx),
       improvementPlan:
         improvementPlan.length > 0
           ? improvementPlan
