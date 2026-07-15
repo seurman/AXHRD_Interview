@@ -235,6 +235,39 @@ async function seedProbesFromIrt() {
   return probes;
 }
 
+/** ARC DiagnosticSubscale → NCS Competency (SIGNALS) */
+async function seedDiagnosticSignals() {
+  const path = join(__dirname, "../../seed/meaning-diagnostic-signals.json");
+  const file = JSON.parse(readFileSync(path, "utf-8")) as MapsFile;
+
+  const ncs = await prisma.competency.findMany({
+    where: { ownerScope: "PLATFORM", organizationId: null },
+    select: { id: true, code: true },
+  });
+  const ncsByCode = new Map(ncs.map((c) => [c.code, c.id]));
+
+  let count = 0;
+  for (const mapping of file.mappings) {
+    for (const t of mapping.targets) {
+      const toId = ncsByCode.get(t.toKey) ?? null;
+      await upsertEdge({
+        edgeType: file.edgeType,
+        fromKind: file.fromKind,
+        fromKey: mapping.fromKey,
+        toKind: file.toKind,
+        toKey: t.toKey,
+        toId,
+        weight: t.weight ?? 1,
+        note: t.note ?? null,
+        source: "seed",
+        meta: { domain: "diagnostic_gap_to_hire" },
+      });
+      count += 1;
+    }
+  }
+  return count;
+}
+
 async function main() {
   console.log("Seeding Meaning Layer (ConceptRelation)…");
 
@@ -251,6 +284,9 @@ async function main() {
 
   const irtProbes = await seedProbesFromIrt();
   console.log(`  IRT PROBES: ${irtProbes}`);
+
+  const diagnosticSignals = await seedDiagnosticSignals();
+  console.log(`  SIGNALS (DIAGNOSTIC_SUBSCALE→NCS): ${diagnosticSignals}`);
 
   const total = await prisma.conceptRelation.count();
   console.log(`Done. ConceptRelation total rows: ${total}`);

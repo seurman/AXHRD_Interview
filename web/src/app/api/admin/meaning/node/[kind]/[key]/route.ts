@@ -12,6 +12,7 @@ const NODE_KINDS: ConceptNodeKind[] = [
   "GLOBAL_QUESTION",
   "BENCHMARK_REF",
   "ROLE_CONTEXT",
+  "DIAGNOSTIC_SUBSCALE",
 ];
 
 type Ctx = { params: Promise<{ kind: string; key: string }> };

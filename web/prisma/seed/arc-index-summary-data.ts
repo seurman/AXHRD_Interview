@@ -1,43 +1,34 @@
 /**
- * ARC Index diagnostic instrument seed data.
- * v260715p — 문항 문장: 타 조직진단(Denison급) 중간 길이 · 의도·관찰가능성 명확
+ * ARC Index Summary — 지표 커버리지 유지 · 문항 최소화 버전.
+ *
+ * 목적: Full(~82 Likert + 이중축 + OE23)이 부담인 조직을 위해
+ *       보고서 지표(4축·Risk·QCI·IPA 드라이버·Opp·Velocity·OAI·Gap)는
+ *       동일 산식으로 나오되, 문항은 Full과 같은 코드의 부분집합만 사용.
+ *
+ * 원칙:
+ * - 신규 문항코드 = Full과 동일 → arc-scoring / Org BI 그대로 동작
+ * - 중요도: OHI 드라이버(기대 vs 현재 갭·IPA)에만 이중응답.
+ *   SE·BO·TL·ORI·OVI·OAI는 현재수준만 (결과/준비/속도/정렬은 “갭”보다 수준 측정).
+ * - 하위척도당 1~2문항 → 신뢰도는 Full보다 낮음(보고서 각주에 명시)
+ *
+ * 규모: DM 5 + Likert 45(+드라이버 중요도 ~10) + OE 3 ≈ 14–16분
  */
 
-export type SeedItem = {
-  itemCode: string;
-  textKo: string;
-  scaleType: "AGREEMENT_5" | "RETRO_CHANGE_5" | "SPEED_5" | "OPEN_TEXT";
-  hasImportanceAxis?: boolean;
-  isReversed?: boolean;
-  isDemographic?: boolean;
-  choiceOptions?: string[];
-  order: number;
-};
+import type { SeedItem, SeedSection } from "./arc-index-data";
 
-export type SeedSubscale = {
-  code: string;
-  nameKo: string;
-  weight?: number;
-  isDriver?: boolean;
-  order: number;
-  items: SeedItem[];
-};
-
-export type SeedSection = {
-  code: string;
-  nameKo: string;
-  order: number;
-  subscales: SeedSubscale[];
-  directItems?: SeedItem[];
-};
-
-export const ARC_INDEX_SEED = {
+export const ARC_INDEX_SUMMARY_SEED = {
   instrument: {
-    code: "ARC_INDEX",
-    nameKo: "ARC Index — 통합 조직진단",
-    version: "260715p",
-    estimatedMinutes: 16,
+    code: "ARC_INDEX_SUMMARY",
+    nameKo: "ARC Index Summary — 핵심 조직진단",
+    version: "260715",
+    estimatedMinutes: 12,
+    parentInstrumentCode: "ARC_INDEX",
   },
+  /** 보고서에 붙일 신뢰도·해석 주의 */
+  reliabilityNoteKo:
+    "Summary는 하위척도당 1~2문항의 축약판입니다. 축·드라이버 점수와 랭킹은 Full과 동일한 산식을 쓰지만, 점수 안정성·벤치마크 비교는 Full보다 보수적으로 해석하세요. 중요도(기대)는 OHI 드라이버에만 물어 기대−현재 갭·IPA에 사용합니다.",
+  /** 중요도 이중응답이 켜진 영역 — 기대(중요도) vs 현재 수행 갭 */
+  importanceGapAreas: ["SL", "SV", "PS", "C", "EM", "PM", "LG", "CI", "WE"] as const,
   sections: [
     {
       code: "DM",
@@ -94,7 +85,7 @@ export const ARC_INDEX_SEED = {
       subscales: [
         {
           code: "SE.E",
-          nameKo: "활력 (Energy / Vigor)",
+          nameKo: "활력",
           order: 1,
           items: [
             {
@@ -113,7 +104,7 @@ export const ARC_INDEX_SEED = {
         },
         {
           code: "SE.C",
-          nameKo: "헌신·연결 (Commitment)",
+          nameKo: "헌신·연결",
           order: 2,
           items: [
             {
@@ -132,7 +123,7 @@ export const ARC_INDEX_SEED = {
         },
         {
           code: "SE.F",
-          nameKo: "몰두 (Focus / Absorption)",
+          nameKo: "몰두",
           order: 3,
           items: [
             {
@@ -142,22 +133,16 @@ export const ARC_INDEX_SEED = {
               order: 1,
             },
             {
-              itemCode: "F02",
-              textKo: "업무를 할 때 나는 다른 모든 것을 잊고 완전히 몰두하는 경우가 있다",
-              scaleType: "AGREEMENT_5",
-              order: 2,
-            },
-            {
               itemCode: "SE_OE",
               textKo: "이 조직에서 일하면서 가장 의미 있는 것과 가장 힘든 것은 무엇입니까?",
               scaleType: "OPEN_TEXT",
-              order: 3,
+              order: 2,
             },
           ],
         },
         {
           code: "BO",
-          nameKo: "행동 결과변인 — Behavioral Outcomes",
+          nameKo: "행동 결과",
           order: 4,
           items: [
             {
@@ -176,7 +161,7 @@ export const ARC_INDEX_SEED = {
         },
         {
           code: "TL.TR",
-          nameKo: "팀 리더십 — 신뢰·존중",
+          nameKo: "팀 리더십 — 신뢰",
           order: 5,
           items: [
             {
@@ -185,17 +170,11 @@ export const ARC_INDEX_SEED = {
               scaleType: "AGREEMENT_5",
               order: 1,
             },
-            {
-              itemCode: "TL02",
-              textKo: "우리 팀 리더는 팀원 각자의 역량과 판단을 진심으로 존중한다",
-              scaleType: "AGREEMENT_5",
-              order: 2,
-            },
           ],
         },
         {
           code: "TL.GF",
-          nameKo: "팀 리더십 — 성장지원·피드백",
+          nameKo: "팀 리더십 — 성장·피드백",
           order: 6,
           items: [
             {
@@ -203,12 +182,6 @@ export const ARC_INDEX_SEED = {
               textKo: "우리 팀 리더는 내 강점과 성장 가능성에 관심을 갖고 구체적으로 지원한다",
               scaleType: "AGREEMENT_5",
               order: 1,
-            },
-            {
-              itemCode: "TL04",
-              textKo: "우리 팀 리더는 내 성과에 대해 도움이 되는 피드백을 적시에 준다",
-              scaleType: "AGREEMENT_5",
-              order: 2,
             },
           ],
         },
@@ -222,18 +195,6 @@ export const ARC_INDEX_SEED = {
               textKo: "우리 팀 리더 앞에서 나는 모르는 것을 모른다고 편하게 말할 수 있다",
               scaleType: "AGREEMENT_5",
               order: 1,
-            },
-            {
-              itemCode: "TL06",
-              textKo: "우리 팀에서 새로운 시도가 잘 안 되더라도 그것이 불이익으로 돌아오지 않는다",
-              scaleType: "AGREEMENT_5",
-              order: 2,
-            },
-            {
-              itemCode: "TL_OE",
-              textKo: "우리 팀 리더십에서 가장 힘이 되는 것과 아쉬운 것은 무엇입니까?",
-              scaleType: "OPEN_TEXT",
-              order: 3,
             },
           ],
         },
@@ -250,13 +211,6 @@ export const ARC_INDEX_SEED = {
               hasImportanceAxis: true,
               order: 1,
             },
-            {
-              itemCode: "SL02",
-              textKo: "경영진의 말과 실제 의사결정·자원 배분이 일치한다고 느낀다",
-              scaleType: "AGREEMENT_5",
-              hasImportanceAxis: true,
-              order: 2,
-            },
           ],
         },
         {
@@ -271,13 +225,6 @@ export const ARC_INDEX_SEED = {
               scaleType: "AGREEMENT_5",
               hasImportanceAxis: true,
               order: 1,
-            },
-            {
-              itemCode: "SV03",
-              textKo: "직속 상사는 내 성과 향상에 도움이 되는 피드백을 준다",
-              scaleType: "AGREEMENT_5",
-              hasImportanceAxis: true,
-              order: 2,
             },
           ],
         },
@@ -294,13 +241,6 @@ export const ARC_INDEX_SEED = {
               hasImportanceAxis: true,
               order: 1,
             },
-            {
-              itemCode: "PS02",
-              textKo: "이 조직에서 위험을 감수하는 새로운 시도를 해도 안전하다고 느낀다",
-              scaleType: "AGREEMENT_5",
-              hasImportanceAxis: true,
-              order: 2,
-            },
           ],
         },
         {
@@ -316,13 +256,6 @@ export const ARC_INDEX_SEED = {
               hasImportanceAxis: true,
               order: 1,
             },
-            {
-              itemCode: "C02",
-              textKo: "나는 내 의견을 조직 윗선에 솔직하게 전달할 수 있다",
-              scaleType: "AGREEMENT_5",
-              hasImportanceAxis: true,
-              order: 2,
-            },
           ],
         },
         {
@@ -337,13 +270,6 @@ export const ARC_INDEX_SEED = {
               scaleType: "AGREEMENT_5",
               hasImportanceAxis: true,
               order: 1,
-            },
-            {
-              itemCode: "EM02",
-              textKo: "부서가 달라도 공동 목표를 위해 협업이 실제로 원활하게 이루어진다",
-              scaleType: "AGREEMENT_5",
-              hasImportanceAxis: true,
-              order: 2,
             },
           ],
         },
@@ -362,7 +288,8 @@ export const ARC_INDEX_SEED = {
             },
             {
               itemCode: "PM04",
-              textKo: "AI 결과물을 그대로 쓰지 않고 검토·검증하는 태도가 이 조직에서 성과로 인정받는다",
+              textKo:
+                "AI 결과물을 그대로 쓰지 않고 검토·검증하는 태도가 이 조직에서 성과로 인정받는다",
               scaleType: "AGREEMENT_5",
               hasImportanceAxis: true,
               order: 2,
@@ -382,13 +309,6 @@ export const ARC_INDEX_SEED = {
               hasImportanceAxis: true,
               order: 1,
             },
-            {
-              itemCode: "LG02",
-              textKo: "업무 중 새로운 것을 배울 기회가 충분히 주어진다",
-              scaleType: "AGREEMENT_5",
-              hasImportanceAxis: true,
-              order: 2,
-            },
           ],
         },
         {
@@ -404,13 +324,6 @@ export const ARC_INDEX_SEED = {
               hasImportanceAxis: true,
               order: 1,
             },
-            {
-              itemCode: "CI02",
-              textKo: "이 조직은 배경이나 출신에 상관없이 모든 구성원을 공정하게 대한다",
-              scaleType: "AGREEMENT_5",
-              hasImportanceAxis: true,
-              order: 2,
-            },
           ],
         },
         {
@@ -420,18 +333,11 @@ export const ARC_INDEX_SEED = {
           order: 17,
           items: [
             {
-              itemCode: "WE01",
-              textKo: "업무에 필요한 도구·장비·자원이 충분히 갖춰져 있다",
-              scaleType: "AGREEMENT_5",
-              hasImportanceAxis: true,
-              order: 1,
-            },
-            {
               itemCode: "WE02",
               textKo: "나는 과도한 업무량으로 인해 지속적으로 지쳐있지 않다",
               scaleType: "AGREEMENT_5",
               hasImportanceAxis: true,
-              order: 2,
+              order: 1,
             },
           ],
         },
@@ -444,7 +350,7 @@ export const ARC_INDEX_SEED = {
       subscales: [
         {
           code: "CD",
-          nameKo: "변화 준비 방향 — Change Direction",
+          nameKo: "변화 준비 방향",
           order: 1,
           items: [
             {
@@ -455,7 +361,8 @@ export const ARC_INDEX_SEED = {
             },
             {
               itemCode: "CD02",
-              textKo: "우리 조직의 구성원들은 변화하지 않으면 뒤처진다는 긴장감을 공유하고 있다",
+              textKo:
+                "우리 조직의 구성원들은 변화하지 않으면 뒤처진다는 긴장감을 공유하고 있다",
               scaleType: "AGREEMENT_5",
               order: 2,
             },
@@ -467,22 +374,16 @@ export const ARC_INDEX_SEED = {
               order: 3,
             },
             {
-              itemCode: "CD05",
-              textKo: "조직의 경영진은 변화를 성공적으로 이끌어갈 능력이 있다고 신뢰한다",
-              scaleType: "AGREEMENT_5",
-              order: 4,
-            },
-            {
               itemCode: "CD_OE",
               textKo: "변화 준비에서 가장 잘 되는 것과 가장 시급한 것은 무엇입니까?",
               scaleType: "OPEN_TEXT",
-              order: 5,
+              order: 4,
             },
           ],
         },
         {
           code: "LA",
-          nameKo: "학습 & 적응 역량 — Learning Agility",
+          nameKo: "학습 & 적응",
           order: 2,
           items: [
             {
@@ -492,22 +393,16 @@ export const ARC_INDEX_SEED = {
               order: 1,
             },
             {
-              itemCode: "LA02",
-              textKo: "우리 조직은 다가오는 변화에 필요한 역량을 미리 개발하고 있다",
-              scaleType: "AGREEMENT_5",
-              order: 2,
-            },
-            {
               itemCode: "LA03",
               textKo: "구성원들이 새로운 업무 방식을 시도할 심리적·제도적 여건이 있다",
               scaleType: "AGREEMENT_5",
-              order: 3,
+              order: 2,
             },
           ],
         },
         {
           code: "AXS",
-          nameKo: "AX 전략 준비 — AX Strategy",
+          nameKo: "AX 전략 준비",
           order: 3,
           items: [
             {
@@ -522,17 +417,11 @@ export const ARC_INDEX_SEED = {
               scaleType: "AGREEMENT_5",
               order: 2,
             },
-            {
-              itemCode: "AXS04",
-              textKo: "내 역할에서 AI가 맡아야 할 일과 내가 반드시 해야 할 일의 경계가 명확하다",
-              scaleType: "AGREEMENT_5",
-              order: 3,
-            },
           ],
         },
         {
           code: "AXC",
-          nameKo: "AX 역량 준비 — AX Capability",
+          nameKo: "AX 역량 준비",
           order: 4,
           items: [
             {
@@ -547,17 +436,11 @@ export const ARC_INDEX_SEED = {
               scaleType: "AGREEMENT_5",
               order: 2,
             },
-            {
-              itemCode: "AXC04",
-              textKo: "우리 팀에서 AI를 잘 모른다고 말해도 부끄럽거나 불이익이 없다",
-              scaleType: "AGREEMENT_5",
-              order: 3,
-            },
           ],
         },
         {
           code: "AXA",
-          nameKo: "AXA 수용 의지 — People Ready",
+          nameKo: "AX 수용 의지",
           order: 5,
           items: [
             {
@@ -576,7 +459,7 @@ export const ARC_INDEX_SEED = {
         },
         {
           code: "AXG",
-          nameKo: "AXG 거버넌스 공포 — System Not Ready",
+          nameKo: "AX 거버넌스 부담",
           order: 6,
           items: [
             {
@@ -591,12 +474,6 @@ export const ARC_INDEX_SEED = {
               scaleType: "AGREEMENT_5",
               order: 2,
             },
-            {
-              itemCode: "OPP_OE",
-              textKo: "AI를 더 잘 활용하기 위해 조직이 가장 먼저 해야 할 것은 무엇입니까?",
-              scaleType: "OPEN_TEXT",
-              order: 3,
-            },
           ],
         },
       ],
@@ -608,7 +485,7 @@ export const ARC_INDEX_SEED = {
       subscales: [
         {
           code: "HV",
-          nameKo: "조직 건강 변화 속도 — Health Velocity",
+          nameKo: "조직 건강 속도",
           order: 1,
           items: [
             {
@@ -633,7 +510,7 @@ export const ARC_INDEX_SEED = {
         },
         {
           code: "CV",
-          nameKo: "변화 실행 속도 — Change Velocity",
+          nameKo: "변화 실행 속도",
           order: 2,
           items: [
             {
@@ -652,7 +529,7 @@ export const ARC_INDEX_SEED = {
         },
         {
           code: "AV",
-          nameKo: "AX 전환 속도 — AX Velocity",
+          nameKo: "AX 전환 속도",
           order: 3,
           items: [
             {
@@ -678,7 +555,7 @@ export const ARC_INDEX_SEED = {
       subscales: [
         {
           code: "SA",
-          nameKo: "전략 정렬 — Strategic Alignment",
+          nameKo: "전략 정렬",
           weight: 0.4,
           order: 1,
           items: [
@@ -698,7 +575,7 @@ export const ARC_INDEX_SEED = {
         },
         {
           code: "EA",
-          nameKo: "에너지 정렬 — Energy Alignment",
+          nameKo: "에너지 정렬",
           weight: 0.35,
           order: 2,
           items: [
@@ -718,13 +595,14 @@ export const ARC_INDEX_SEED = {
         },
         {
           code: "OA",
-          nameKo: "결과 정렬 — Outcome Alignment",
+          nameKo: "결과 정렬",
           weight: 0.25,
           order: 3,
           items: [
             {
               itemCode: "OA01",
-              textKo: "지난 6개월 우리 조직의 변화 노력이 처음 의도한 방향의 결과를 실제로 만들고 있다",
+              textKo:
+                "지난 6개월 우리 조직의 변화 노력이 처음 의도한 방향의 결과를 실제로 만들고 있다",
               scaleType: "AGREEMENT_5",
               order: 1,
             },
@@ -734,15 +612,45 @@ export const ARC_INDEX_SEED = {
               scaleType: "AGREEMENT_5",
               order: 2,
             },
-            {
-              itemCode: "OA_OE",
-              textKo: "우리 조직에서 의도한 대로 잘 작동하고 있는 변화와, 노력했는데 결과가 기대와 달리 나타나는 변화는 각각 무엇입니까?",
-              scaleType: "OPEN_TEXT",
-              order: 3,
-            },
           ],
         },
       ],
     },
   ] satisfies SeedSection[],
 };
+
+/** Summary Likert 문항코드 (DM·OE 제외) — 검증·문서용 */
+export function listSummaryLikertCodes(): string[] {
+  const codes: string[] = [];
+  for (const section of ARC_INDEX_SUMMARY_SEED.sections) {
+    const pools: SeedItem[][] = [];
+    if (section.directItems) pools.push(section.directItems);
+    for (const sub of section.subscales) pools.push(sub.items);
+    for (const items of pools) {
+      for (const it of items) {
+        if (it.isDemographic || it.scaleType === "OPEN_TEXT") continue;
+        codes.push(it.itemCode);
+      }
+    }
+  }
+  return codes;
+}
+
+/** 지표 → 사용 문항 (Summary에서 “다 나옴” 보장용 체크리스트) */
+export const SUMMARY_METRIC_COVERAGE = {
+  OHI: ["E01", "E02", "SEC01", "SEC03", "F01", "SL01", "SV02", "PS01", "C01", "EM01", "PM01", "LG01", "CI01", "WE02"],
+  SE_E_C_F: { E: ["E01", "E02"], C: ["SEC01", "SEC03"], F: ["F01"] },
+  BO: ["BO01", "BO03"],
+  TL: { trust: ["TL01"], growth: ["TL03"], safety: ["TL05"] },
+  Risk_QCI: ["SEC03", "E01", "E02", "BO01", "BO03", "HV01", "HV02"],
+  IPA_drivers: ["SL01", "SV02", "PS01", "C01", "EM01", "PM01", "LG01", "CI01", "WE02"],
+  JudgmentRecognition: ["PM04", "AXC02"],
+  ORI: ["CD01", "CD02", "CD04", "LA01", "LA03", "AXS01", "AXS02", "AXC01", "AXC02"],
+  Opportunity: ["AXA01", "AXA02", "AXG01", "AXG02"],
+  ChangeTension: ["CD02", "CD04"],
+  OVI: ["HV01", "HV02", "CV01", "CV03", "AV01", "AV02"],
+  DynamicCongruence: ["HV01", "HV02", "AV01", "AV02"],
+  OAI: ["SA01", "SA02", "EA01", "EA02", "OA01", "OA06"],
+  StrategyTimeGap: ["SA02"],
+  OrgBI_4axis: ["OHI", "ORI", "OVI", "OAI"],
+} as const;

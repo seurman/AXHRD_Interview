@@ -3,6 +3,10 @@
 import { useMemo } from "react";
 import { MetricTile, NarrativeBlock, SubscoreBar } from "@/components/admin/diagnostic/ArcReportUi";
 import { AnalysisTable, IpaQuadrantChart } from "@/components/admin/diagnostic/ArcAnalysisUi";
+import { ArcRadar } from "@/components/admin/diagnostic/ArcRadar";
+import { AxisNarrativeBlock } from "@/components/admin/diagnostic/ReportGuideUi";
+import { AXIS_DEFINITIONS, ohiBandMessage } from "@/lib/diagnostic/report-guide";
+import { formatScore } from "@/lib/diagnostic/format-score";
 import {
   buildDriverAnalysisRows,
   buildItemAnalysisRows,
@@ -10,17 +14,12 @@ import {
   buildTlAnalysisRows,
   scoreStatus,
 } from "@/lib/diagnostic/analysis-tables";
-import { healthBand } from "@/lib/diagnostic/arc-scoring";
 import { DRIVER_LABELS } from "@/lib/diagnostic/report-narratives";
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Legend,
-  PolarAngleAxis,
-  PolarGrid,
-  Radar,
-  RadarChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -55,14 +54,6 @@ type DriverImportance = {
   n: number;
   insufficientData: boolean;
 };
-
-function ohiBandMessage(overall: number | null, band: string | null): string {
-  const b = band ?? (overall != null ? healthBand(overall) : null);
-  if (b === "탁월") return "조직 건강이 매우 양호합니다. SE 유지와 드라이버 과투자 영역을 점검하세요.";
-  if (b === "양호") return "전반적 건강은 양호합니다. IPA 집중개선(Focus) 드라이버에 자원을 배분하세요.";
-  if (b === "보통") return "강점과 약점이 혼재합니다. 중요도-현재 격차가 큰 드라이버부터 개선하세요.";
-  return "조직 건강에 주의가 필요합니다. Risk Index·SE 3요인·심리적안전(PS)을 우선 점검하세요.";
-}
 
 function RiskBreakdownTable({
   riskIndex,
@@ -99,7 +90,7 @@ function RiskBreakdownTable({
           {rows.map((r) => (
             <tr key={r.signal} className="border-b border-black/5 dark:border-white/5">
               <td className="py-2 pr-3 text-foreground">{r.signal}</td>
-              <td className="py-2 pr-3 tabular-nums">{r.score?.toFixed(2) ?? "—"}</td>
+              <td className="py-2 pr-3 tabular-nums">{formatScore(r.score)}</td>
               <td className="py-2 pr-3 text-muted">{r.threshold}</td>
               <td className="py-2 text-muted">{r.weight}</td>
             </tr>
@@ -144,7 +135,7 @@ export function OhiReportSection({
         { axis: "활력 E", value: ohi.E },
         { axis: "헌신 C", value: ohi.C },
         { axis: "몰두 F", value: ohi.F },
-      ].filter((d) => d.value != null),
+      ].filter((d): d is { axis: string; value: number } => d.value != null),
     [ohi],
   );
 
@@ -192,7 +183,11 @@ export function OhiReportSection({
 
   return (
     <>
-      <NarrativeBlock label="OHI 해석" text={ohiBandMessage(ohi.overall, ohi.band)} />
+      <AxisNarrativeBlock
+        axisLabel="OHI — Organization Health"
+        definition={AXIS_DEFINITIONS.OHI.oneLiner}
+        interpretation={ohiBandMessage(ohi.overall, ohi.band)}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricTile label="OHI 종합" value={ohi.overall} band={ohi.band} />
@@ -210,15 +205,7 @@ export function OhiReportSection({
       {seRadar.length >= 2 && (
         <div className="card-luxe p-4">
           <h3 className="mb-3 text-sm font-semibold">SE 3요인 레이더</h3>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={seRadar}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey="axis" tick={{ fontSize: 11 }} />
-                <Radar dataKey="value" stroke="#c9a227" fill="#c9a227" fillOpacity={0.35} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
+          <ArcRadar data={seRadar} heightClass="h-56" />
         </div>
       )}
 
@@ -273,7 +260,7 @@ export function OhiReportSection({
       {driverImportance && !driverImportance.insufficientData && (
         <NarrativeBlock
           label="IPA 회귀 요약"
-          text={`Y=SE · 9개 드라이버 β회귀 · R²=${driverImportance.rSquared?.toFixed(2) ?? "—"} · N=${driverImportance.n} · FOCUS=${driverImportance.entries.filter((e) => e.priority === "FOCUS").map((e) => DRIVER_LABELS[e.code] ?? e.code).join(", ") || "없음"}`}
+          text={`Y=SE · 9개 드라이버 β회귀 · R²=${formatScore(driverImportance.rSquared)} · N=${driverImportance.n} · FOCUS=${driverImportance.entries.filter((e) => e.priority === "FOCUS").map((e) => DRIVER_LABELS[e.code] ?? e.code).join(", ") || "없음"}`}
         />
       )}
 

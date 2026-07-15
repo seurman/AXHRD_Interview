@@ -50,6 +50,7 @@ const NODE_KINDS: ConceptNodeKind[] = [
   "GLOBAL_QUESTION",
   "BENCHMARK_REF",
   "ROLE_CONTEXT",
+  "DIAGNOSTIC_SUBSCALE",
 ];
 
 export async function POST(req: Request) {

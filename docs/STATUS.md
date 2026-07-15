@@ -1,6 +1,38 @@
-# 현재 상태 (2026-07-13 기준)
+# 현재 상태 (2026-07-15 기준)
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
+
+## 최근 작업 — 역량 폐루프 Phase 1·2 (공통 온톨로지 + Gap-to-Hire) (2026-07-15)
+
+조직진단(DiagnosticSubscale)과 면접(NCS Competency)을 L3 Meaning `ConceptRelation`으로 연결하고, IPA FOCUS 드라이버 → 인터뷰 킷 역량 추천 UI까지 구현.
+
+### Phase 1 — 온톨로지 (additive only)
+- **스키마**: `ConceptNodeKind.DIAGNOSTIC_SUBSCALE` 추가. 엣지는 기존 `SIGNALS` 재사용(조직 기후 신호 → 면접에서 검증할 역량; ProfileSignal→Competency와 동일 의미). 신규 `ConceptEdgeType` 없음.
+- **마이그레이션**: `web/prisma/migrations/20260715090000_add_diagnostic_subscale_concept_node/migration.sql`
+- **시드**: `seed/meaning-diagnostic-signals.json` + `seed-meaning-layer.ts`의 `seedDiagnosticSignals()` (멱등 upsert).
+- **매핑한 것**: PS, SL, SV, C, EM, PM, LG, CI, SE.C, LA, TL.TR/GF/PS, SA → COMMUNICATION / LEADERSHIP / ORG_FIT / GROWTH / JOB_FIT / PROBLEM_SOLVING (확실한 것만).
+- **의도적으로 매핑하지 않음**: SE.E, SE.F, BO, CD, AX*, HV/CV/AV, EA, OA, WE 등 (NCS 6코드와 1:1이 약함).
+- **Admin UI**: `/admin/content` Meaning 패널에 「진단 서브스케일」 필터·SIGNALS 목록.
+- **문서**: `docs/AX-PLATFORM-LAYERS.md` 개념 노드·SIGNALS·구현 우선순위 5b/5c 갱신.
+
+### Phase 2 — Gap-to-Hire (추천만, 자동 반영 없음)
+- **lib**: `getCompetencyGapRecommendations(organizationId)` — 최근 CLOSED 웨이브 IPA `priority===FOCUS` → SIGNALS 엣지 → 역량별 최고 weight 추천. `insufficientData`·미매핑·CLOSED 웨이브 없음 시 빈 배열 + `reason`/`message`.
+- **API**: `GET /api/org/interview-kit/gap-recommendations` — 인터뷰킷 편집과 동일 `resolveInterviewKitAccess`. `diagnosticEnabled && interviewEnabled` 아니면 **404**(UI 미노출).
+- **UI**: `InterviewKitBuilder`/`InterviewKitWorkspace` — 배너 + 역량 카드 배지. 클릭 시 해당 역량으로 포커스만( selectedQuestionIds 자동 변경 금지).
+- **빈 추천 처리**: 표본 부족 / FOCUS 없음 / FOCUS는 있으나 WE 등 미매핑만 남은 경우 각각 안내 문구.
+
+**로컬 검증 필요:**
+
+```powershell
+cd D:\HR_IN_Solution\web
+npx prisma migrate deploy
+npx prisma generate
+npm run db:seed:meaning
+npx tsc --noEmit
+npm test
+```
+
+수동 확인: (1) `/admin/content` 온톨로지 패널에서 DIAGNOSTIC_SUBSCALE·SIGNALS, (2) `diagnosticEnabled`+`interviewEnabled` 기관으로 `/org/settings/interview-kit` Gap-to-Hire 배너, (3) 둘 중 하나 off인 기관에서는 배너/API 404.
 
 ## 최근 작업 — ARC Index 통계 4종(LPA·HLM-lite·주관식 테마·처방) 실제 구현 + 리포트 UI 연결 (2026-07-13, Cowork 세션)
 

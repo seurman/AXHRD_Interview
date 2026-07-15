@@ -25,6 +25,10 @@ import {
 } from "@/components/org/kit-workspace-types";
 import { platformRubricForLevel } from "@/lib/org/kit-rubric";
 import { rubricForCompetencyLevel } from "@/lib/competency/rubric";
+import type {
+  CompetencyGapRecommendation,
+  CompetencyGapRecommendationResult,
+} from "@/lib/diagnostic/gap-recommendations";
 
 const COMP_STYLES: Record<string, { bar: string; glow: string }> = {
   COMMUNICATION: { bar: "bg-sky-500", glow: "ring-sky-300/50" },
@@ -68,7 +72,73 @@ type WorkspaceProps = {
   onReorderQuestions: (code: string, questionIds: string[]) => void;
   onPatchDraft: (code: string, patch: Partial<CompetencyDraft>) => void;
   onSave: (code: string) => void;
+  /** null = 기능 미노출 또는 아직 미로드 */
+  gapRecommendations?: CompetencyGapRecommendationResult | null;
 };
+
+function GapHireBanner({
+  gap,
+  onFocusCompetency,
+}: {
+  gap: CompetencyGapRecommendationResult;
+  onFocusCompetency: (code: string) => void;
+}) {
+  if (gap.reason === "insufficient_data") {
+    return (
+      <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-950">
+        <p className="font-semibold">Gap-to-Hire · 표본 부족</p>
+        <p className="mt-1 text-xs text-amber-900/80">{gap.message}</p>
+      </div>
+    );
+  }
+  if (gap.recommendations.length === 0 && gap.message) {
+    return (
+      <div className="rounded-2xl border border-card-border bg-card px-4 py-3 text-sm text-muted">
+        <p className="font-semibold text-foreground">Gap-to-Hire</p>
+        <p className="mt-1 text-xs">{gap.message}</p>
+      </div>
+    );
+  }
+  if (gap.recommendations.length === 0) return null;
+
+  return (
+    <div className="rounded-2xl border border-accent/25 bg-accent/[0.06] px-4 py-3">
+      <p className="text-sm font-semibold text-foreground">
+        Gap-to-Hire · 조직진단 FOCUS 기반 역량 추천
+        {gap.waveLabel ? (
+          <span className="ml-2 text-xs font-normal text-muted">({gap.waveLabel})</span>
+        ) : null}
+      </p>
+      <p className="mt-1 text-xs text-muted">
+        자동으로 문항을 바꾸지 않습니다. 배지를 눌러 해당 역량으로 이동한 뒤, 문항 비중을 직접 조정하세요.
+      </p>
+      <ul className="mt-2 flex flex-wrap gap-2">
+        {gap.recommendations.map((r) => (
+          <li key={r.competencyCode}>
+            <button
+              type="button"
+              onClick={() => onFocusCompetency(r.competencyCode)}
+              className="rounded-lg border border-accent/30 bg-white px-2.5 py-1.5 text-left text-xs shadow-sm hover:border-accent"
+              title={r.rationale}
+            >
+              <span className="font-medium text-accent">{competencyLabel(r.competencyCode)}</span>
+              <span className="mt-0.5 block text-[10px] text-muted">
+                {r.driverLabel} · β={r.beta?.toFixed(2) ?? "—"} · 현재 {r.current?.toFixed(2) ?? "—"}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function gapForCompetency(
+  gap: CompetencyGapRecommendationResult | null | undefined,
+  code: string,
+): CompetencyGapRecommendation | undefined {
+  return gap?.recommendations.find((r) => r.competencyCode === code);
+}
 
 function PaletteCompetencyCard({
   comp,
@@ -77,6 +147,7 @@ function PaletteCompetencyCard({
   selected,
   onSelect,
   onAdd,
+  gapHint,
 }: {
   comp: ApiCompetency;
   questionCount: number;
@@ -84,6 +155,7 @@ function PaletteCompetencyCard({
   selected: boolean;
   onSelect: () => void;
   onAdd: () => void;
+  gapHint?: CompetencyGapRecommendation | null;
 }) {
   const style = compStyle(comp.code);
 
@@ -100,6 +172,11 @@ function PaletteCompetencyCard({
         <p className="text-[11px] text-white/50">
           {competencyLabel(comp.code)} · {questionCount}문항
         </p>
+        {gapHint ? (
+          <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-amber-200/90" title={gapHint.rationale}>
+            진단 추천 · {gapHint.driverLabel}
+          </p>
+        ) : null}
       </button>
       {inKit ? (
         <span className="flex items-center px-3 text-[10px] font-bold text-gold">IN KIT</span>
@@ -195,6 +272,7 @@ function CompetencyKitPanel({
   onRemove,
   onRemoveQuestion,
   onReorderQuestions,
+  gapHint,
 }: {
   comp: ApiCompetency;
   draft: CompetencyDraft;
@@ -205,6 +283,7 @@ function CompetencyKitPanel({
   onRemove: () => void;
   onRemoveQuestion: (questionId: string) => void;
   onReorderQuestions: (questionIds: string[]) => void;
+  gapHint?: CompetencyGapRecommendation | null;
 }) {
   const style = compStyle(comp.code);
   const levelCounts = [0, 0, 0, 0, 0, 0];
@@ -227,6 +306,11 @@ function CompetencyKitPanel({
             {draft.selectedIds.length}문항
             {draft.selectedIds.length >= limits.min ? " · IRT 준비됨" : ` · ${limits.min}개 이상 권장`}
           </p>
+          {gapHint ? (
+            <p className="mt-1 text-[11px] leading-snug text-accent" title={gapHint.rationale}>
+              {gapHint.rationale}
+            </p>
+          ) : null}
         </button>
         <div className="flex gap-0.5">
           {[1, 2, 3, 4, 5].map((lv) => (
@@ -293,6 +377,7 @@ export function InterviewKitWorkspace(props: WorkspaceProps) {
     onReorderQuestions,
     onPatchDraft,
     onSave,
+    gapRecommendations,
   } = props;
 
   const bankQuestions = useMemo(() => {
@@ -324,6 +409,17 @@ export function InterviewKitWorkspace(props: WorkspaceProps) {
 
   return (
     <div className="space-y-4">
+      {gapRecommendations ? (
+        <GapHireBanner
+          gap={gapRecommendations}
+          onFocusCompetency={(code) => {
+            onPaletteCode(code);
+            onActiveCode(code);
+            if (!kitCompetencies.includes(code)) onAddCompetency(code);
+          }}
+        />
+      ) : null}
+
       {/* 모바일: 마스터 역량 목록 + 풀스크린 문항 시트 */}
       <div className="xl:hidden space-y-3">
         <div className="rounded-2xl border border-card-border bg-card p-4">
@@ -332,6 +428,7 @@ export function InterviewKitWorkspace(props: WorkspaceProps) {
           <ul className="mt-3 space-y-2">
             {data.competencies.map((c) => {
               const inKit = kitCompetencies.includes(c.code);
+              const hint = gapForCompetency(gapRecommendations, c.code);
               return (
                 <li
                   key={c.code}
@@ -353,10 +450,18 @@ export function InterviewKitWorkspace(props: WorkspaceProps) {
                     <div className="flex items-center gap-2">
                       <Lock className="h-3.5 w-3.5 text-muted" />
                       <span className="text-sm font-semibold">{c.nameKo}</span>
+                      {hint ? (
+                        <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[10px] font-medium text-accent">
+                          진단 추천
+                        </span>
+                      ) : null}
                     </div>
                     <p className="mt-0.5 text-[11px] text-muted">
                       {inKit ? "킷에 담김" : "탭하여 킷에 추가"}
                     </p>
+                    {hint ? (
+                      <p className="mt-1 text-[10px] text-accent/90">{hint.rationale}</p>
+                    ) : null}
                   </button>
                   <button
                     type="button"
@@ -508,6 +613,7 @@ export function InterviewKitWorkspace(props: WorkspaceProps) {
                 selected={paletteCode === c.code}
                 onSelect={() => onPaletteCode(c.code)}
                 onAdd={() => onAddCompetency(c.code)}
+                gapHint={gapForCompetency(gapRecommendations, c.code)}
               />
             ))}
           </div>
@@ -605,6 +711,7 @@ export function InterviewKitWorkspace(props: WorkspaceProps) {
                       onRemove={() => onRemoveCompetency(code)}
                       onRemoveQuestion={(qid) => onRemoveQuestion(code, qid)}
                       onReorderQuestions={(ids) => onReorderQuestions(code, ids)}
+                      gapHint={gapForCompetency(gapRecommendations, code)}
                     />
                   );
                 })}

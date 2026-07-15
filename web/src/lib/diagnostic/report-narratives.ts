@@ -40,25 +40,70 @@ type ScoresInput = {
   oaiPattern: { pattern: string; message: string } | null;
 };
 
+export type ExecutiveSummaryParts = {
+  /** 한 문단 스토리 */
+  story: string;
+  /** 표본·익명·용도 주의 */
+  caution: string;
+};
+
 export function buildExecutiveSummary(input: {
   scores: ScoresInput;
   sampleSize: number;
   collectionRate: number | null;
   waveLabel: string | null;
   waveNumber: number;
+  enabledAxes?: Array<"OHI" | "ORI" | "OVI" | "OAI">;
 }): string {
+  return buildExecutiveSummaryParts(input).story;
+}
+
+export function buildExecutiveSummaryParts(input: {
+  scores: ScoresInput;
+  sampleSize: number;
+  collectionRate: number | null;
+  waveLabel: string | null;
+  waveNumber: number;
+  enabledAxes?: Array<"OHI" | "ORI" | "OVI" | "OAI">;
+}): ExecutiveSummaryParts {
   const { scores: s, sampleSize, collectionRate, waveLabel, waveNumber } = input;
-  const parts: string[] = [];
-  parts.push(
-    `Wave ${waveNumber}${waveLabel ? `(${waveLabel})` : ""} 진단 결과, 유효 응답 ${sampleSize}명`,
-  );
-  if (collectionRate != null) parts.push(`수집률 약 ${collectionRate}%`);
-  if (s.ohi.overall != null) parts.push(`OHI ${s.ohi.overall.toFixed(2)}(${s.ohi.band ?? "—"})`);
-  if (s.ori.ORI != null) parts.push(`ORI ${s.ori.ORI.toFixed(2)}`);
-  if (s.ovi.OVI != null) parts.push(`OVI ${s.ovi.OVI.toFixed(2)}`);
-  if (s.oai.OAI != null) parts.push(`OAI ${s.oai.OAI.toFixed(2)}`);
-  if (s.oaiPattern) parts.push(`조직 패턴은 「${s.oaiPattern.pattern}」`);
-  return parts.join(" · ") + "입니다.";
+  const enabled = new Set(input.enabledAxes ?? ["OHI", "ORI", "OVI", "OAI"]);
+
+  const axes: string[] = [];
+  if (enabled.has("OHI") && s.ohi.overall != null) {
+    axes.push(`조직 건강(OHI) ${s.ohi.overall.toFixed(2)}${s.ohi.band ? `(${s.ohi.band})` : ""}`);
+  }
+  if (enabled.has("ORI") && s.ori.ORI != null) {
+    axes.push(`변화 준비(ORI) ${s.ori.ORI.toFixed(2)}${s.ori.band ? `(${s.ori.band})` : ""}`);
+  }
+  if (enabled.has("OVI") && s.ovi.OVI != null) {
+    axes.push(`변화 속도(OVI) ${s.ovi.OVI.toFixed(2)}${s.ovi.band ? `(${s.ovi.band})` : ""}`);
+  }
+  if (enabled.has("OAI") && s.oai.OAI != null) {
+    axes.push(`방향 정렬(OAI) ${s.oai.OAI.toFixed(2)}${s.oai.band ? `(${s.oai.band})` : ""}`);
+  }
+
+  const waveBit = `Wave ${waveNumber}${waveLabel ? ` 「${waveLabel}」` : ""}`;
+  const rateBit =
+    collectionRate != null ? `수집률은 약 ${collectionRate}%입니다.` : "수집률 정보는 아직 없습니다.";
+
+  let story: string;
+  if (axes.length === 0) {
+    story = `${waveBit} 결과를 정리했습니다. 유효 응답은 ${sampleSize}명이며, ${rateBit} 표시할 4축 점수가 아직 충분하지 않습니다. 아래 입문과 표본 조건을 먼저 확인해 주세요.`;
+  } else {
+    const patternBit = s.oaiPattern
+      ? ` 4축을 겹쳐 보면 「${s.oaiPattern.pattern}」 패턴으로 읽힙니다.`
+      : "";
+    const riskBit =
+      s.ohi.riskIndex != null && s.ohi.riskIndex >= 0.35
+        ? ` 이탈·번아웃 위험 신호는 약 ${Math.round(s.ohi.riskIndex * 100)}%로, 우선 살펴볼 신호입니다.`
+        : "";
+    story = `${waveBit} 익명 응답 ${sampleSize}명을 기준으로 보면, ${axes.join(", ")}입니다.${patternBit}${riskBit} 아래에서는 점수의 의미 → 핵심 발견 → 처방 순으로 읽으면 됩니다.`;
+  }
+
+  const caution = `이 수치는 조직개발용 집계입니다. 개인 인사·평가에 쓰지 않으며, 5명 미만 단위는 공개하지 않습니다. ${rateBit} 해석이 어려우면 ‘이 리포트를 읽는 법’과 각 축의 한 줄 정의를 먼저 보세요.`;
+
+  return { story, caution };
 }
 
 export function buildKeyFindings(input: {

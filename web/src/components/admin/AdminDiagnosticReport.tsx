@@ -7,12 +7,11 @@ import { Logo } from "@/components/brand/Logo";
 import { DiagnosticLongitudinalPanel } from "@/components/diagnostic/DiagnosticLongitudinalPanel";
 import {
   FindingCard,
-  MetricTile,
-  NarrativeBlock,
   PrescriptionCard,
   QuadrantLegend,
   QUADRANT_FILL,
   ReportSection,
+  ScoreHero,
   WaveGoalCard,
 } from "@/components/admin/diagnostic/ArcReportUi";
 import {
@@ -33,13 +32,15 @@ import {
 } from "@/lib/diagnostic/report-profile";
 import { buildPrescriptions, type PrescriptionItem } from "@/lib/diagnostic/prescription";
 import {
-  buildExecutiveSummary,
+  buildExecutiveSummaryParts,
   buildKeyFindings,
   buildWaveGoals,
   DRIVER_LABELS,
   highRiskSegmentPercent,
   quadrantLabel,
 } from "@/lib/diagnostic/report-narratives";
+import { buildAxisMeaningLine, type AxisCode } from "@/lib/diagnostic/report-guide";
+import { ReportGuideCard, ExecutiveSummaryCard } from "@/components/admin/diagnostic/ReportGuideUi";
 import type { OpenTextThemeReport } from "@/lib/diagnostic/theme-mining";
 import {
   Bar,
@@ -55,11 +56,9 @@ import {
   XAxis,
   YAxis,
   ZAxis,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  Radar,
 } from "recharts";
+import { ArcRadar } from "@/components/admin/diagnostic/ArcRadar";
+import { formatScore } from "@/lib/diagnostic/format-score";
 
 const LPA_COLOR: Record<string, string> = {
   "고몰입형": "bg-emerald-500",
@@ -318,14 +317,16 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
 
   const executiveSummary = useMemo(() => {
     if (!aggregate?.scores || aggregate.hidden || !wave) return null;
-    return buildExecutiveSummary({
+    const enabledAxes = (["OHI", "ORI", "OVI", "OAI"] as AxisCode[]).filter((c) => isEnabled(c));
+    return buildExecutiveSummaryParts({
       scores: aggregate.scores,
       sampleSize: aggregate.sampleSize ?? 0,
       collectionRate,
       waveLabel: wave.label,
       waveNumber: wave.waveNumber,
+      enabledAxes,
     });
-  }, [aggregate, wave, collectionRate]);
+  }, [aggregate, wave, collectionRate, reportConfig, enabled]);
 
   const keyFindings = useMemo(() => {
     if (!aggregate?.scores || aggregate.hidden) return [];
@@ -407,15 +408,15 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
         </Link>
       </div>
 
-      <header className="card-luxe border border-gold/20 p-5">
+      <header className="arc-score-hero print:border print:border-gold/30">
         <div className="print-hide flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-gold">ARC Index Diagnostic</p>
-            <h1 className="mt-1 text-2xl font-bold text-foreground">
+            <p className="arc-score-hero__eyebrow">ARC Index Diagnostic</p>
+            <h1 className="arc-score-hero__title">
               조직 진단 보고서 — Wave {wave.waveNumber}
               {wave.label ? ` · ${wave.label}` : ""}
             </h1>
-            <p className="mt-2 text-sm text-muted">
+            <p className="arc-score-hero__meta">
               {wave.organizationName ? `${wave.organizationName} · ` : ""}
               활성 섹션 {wave.sectionBadge} · 응답 {wave.responseCount}건
               {collectionRate != null ? ` · 수집률 ${collectionRate}%` : ""}
@@ -424,11 +425,14 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                 : ""}
             </p>
           </div>
-          <PrintButton label="PDF 저장" />
+          <PrintButton
+            label="PDF 저장"
+            className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-white/20"
+          />
         </div>
         <div className="hidden print:block">
-          <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-gold">ARC Index Diagnostic</p>
-          <h1 className="mt-1 text-xl font-bold">
+          <p className="arc-score-hero__eyebrow">ARC Index Diagnostic</p>
+          <h1 className="arc-score-hero__title">
             조직 진단 보고서 — Wave {wave.waveNumber}
             {wave.label ? ` · ${wave.label}` : ""}
           </h1>
@@ -461,35 +465,86 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
               subtitle="4축 핵심 지표와 우선 개입 포인트"
               active={tab === "summary"}
             >
+              <ReportGuideCard defaultOpen />
+
               {showNarratives && executiveSummary && (
-                <NarrativeBlock label="Executive Summary" text={executiveSummary} />
+                <ExecutiveSummaryCard parts={executiveSummary} />
               )}
 
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {isEnabled("OHI") && (
-                  <MetricTile
-                    label="OHI"
-                    value={aggregate?.scores?.ohi.overall}
-                    band={aggregate?.scores?.ohi.band}
-                    hint={aggregate?.scores?.ohi.riskIndex != null ? `Risk ${Math.round(aggregate.scores.ohi.riskIndex * 100)}%` : undefined}
-                  />
-                )}
-                {isEnabled("ORI") && (
-                  <MetricTile label="ORI" value={aggregate?.scores?.ori.ORI} band={aggregate?.scores?.ori.band} />
-                )}
-                {isEnabled("OVI") && (
-                  <MetricTile label="OVI" value={aggregate?.scores?.ovi.OVI} band={aggregate?.scores?.ovi.band} />
-                )}
-                {isEnabled("OAI") && (
-                  <MetricTile label="OAI" value={aggregate?.scores?.oai.OAI} band={aggregate?.scores?.oai.band} />
-                )}
-              </div>
+              <ScoreHero
+                title="4축 조직 펄스"
+                meta={`N=${aggregate?.sampleSize ?? 0}${collectionRate != null ? ` · 수집률 ${collectionRate}%` : ""}`}
+                axes={[
+                  ...(isEnabled("OHI")
+                    ? [
+                        {
+                          code: "OHI",
+                          value: aggregate?.scores?.ohi.overall,
+                          band: aggregate?.scores?.ohi.band,
+                          hint:
+                            aggregate?.scores?.ohi.riskIndex != null
+                              ? `Risk ${Math.round(aggregate.scores.ohi.riskIndex * 100)}%`
+                              : undefined,
+                          meaning: buildAxisMeaningLine(
+                            "OHI",
+                            aggregate?.scores?.ohi.overall,
+                            aggregate?.scores?.ohi.band,
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(isEnabled("ORI")
+                    ? [
+                        {
+                          code: "ORI",
+                          value: aggregate?.scores?.ori.ORI,
+                          band: aggregate?.scores?.ori.band,
+                          meaning: buildAxisMeaningLine(
+                            "ORI",
+                            aggregate?.scores?.ori.ORI,
+                            aggregate?.scores?.ori.band,
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(isEnabled("OVI")
+                    ? [
+                        {
+                          code: "OVI",
+                          value: aggregate?.scores?.ovi.OVI,
+                          band: aggregate?.scores?.ovi.band,
+                          meaning: buildAxisMeaningLine(
+                            "OVI",
+                            aggregate?.scores?.ovi.OVI,
+                            aggregate?.scores?.ovi.band,
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(isEnabled("OAI")
+                    ? [
+                        {
+                          code: "OAI",
+                          value: aggregate?.scores?.oai.OAI,
+                          band: aggregate?.scores?.oai.band,
+                          meaning: buildAxisMeaningLine(
+                            "OAI",
+                            aggregate?.scores?.oai.OAI,
+                            aggregate?.scores?.oai.band,
+                          ),
+                        },
+                      ]
+                    : []),
+                ]}
+              />
 
               {riskyPct != null && (
                 <div className="card-luxe flex flex-wrap items-center justify-between gap-3 p-4">
                   <div>
                     <p className="text-xs font-semibold text-foreground">고위험 세그먼트</p>
-                    <p className="text-[11px] text-muted">번아웃위험형 + 이탈예고형 (LPA)</p>
+                    <p className="text-[11px] text-muted">
+                      번아웃위험형 + 이탈예고형 (LPA) — 개인 인사 자료가 아닌 지원 신호입니다
+                    </p>
                   </div>
                   <p className="text-3xl font-bold tabular-nums text-red-600 dark:text-red-400">{riskyPct}%</p>
                 </div>
@@ -497,7 +552,10 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
 
               {keyFindings.length > 0 && showNarratives && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-foreground">핵심 발견 3건</h3>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">핵심 발견 · 다음에 할 일</h3>
+                    <p className="mt-0.5 text-xs text-muted">숫자 요약이 아니라, 우선 손댈 포인트를 골라 둔 목록입니다.</p>
+                  </div>
                   {keyFindings.map((f) => (
                     <FindingCard key={f.rank} finding={f} />
                   ))}
@@ -515,15 +573,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
               {radarData.length >= 2 && (
                 <div className="card-luxe p-4">
                   <h3 className="mb-3 text-sm font-semibold">4축 레이더</h3>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart data={radarData}>
-                        <PolarGrid />
-                        <PolarAngleAxis dataKey="axis" tick={{ fontSize: 12 }} />
-                        <Radar dataKey="value" stroke="#c9a227" fill="#c9a227" fillOpacity={0.35} />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  <ArcRadar data={radarData} />
                 </div>
               )}
 
@@ -769,7 +819,7 @@ function TeamsOverview({
                 )}
                 <Tooltip
                   cursor={{ strokeDasharray: "3 3" }}
-                  formatter={(v: number) => v.toFixed(2)}
+                  formatter={(v: number) => formatScore(v)}
                   labelFormatter={(_, payload) => {
                     const p = payload?.[0]?.payload as { teamName?: string; quadrant?: string };
                     return p?.teamName ? `${p.teamName} (${quadrantLabel(p.quadrant ?? null)})` : "";
@@ -891,7 +941,7 @@ function IccCard({ reliability }: { reliability?: Scores["teamReliability"] }) {
   return (
     <div className="card-luxe p-4">
       <h3 className="text-sm font-semibold">ICC(1) — 팀간 신뢰도</h3>
-      <p className="mt-2 text-2xl font-bold">{reliability.icc.toFixed(2)}</p>
+      <p className="mt-2 text-2xl font-bold">{formatScore(reliability.icc)}</p>
       <p className="mt-1 text-xs text-muted">팀 {reliability.k}개 · N={reliability.n}</p>
       {reliability.interpretation && <p className="mt-2 text-xs text-muted">{reliability.interpretation}</p>}
     </div>

@@ -81,6 +81,7 @@ AXHRD가 Salesforce식 일반 CRM보다 **깊게** 갈 수 있는 층.
 | `BenchmarkRef` | 외부 프레임 교차 | `GlobalCompetencyBenchmarkRef` (UK CS 등) |
 | `Evidence` | 답변·STAR·스냅샷 조각 | `ResponseRecord`, `UserTextRecord`, snapshots |
 | `ProfileSignal` | 강점·가치·역량 신호 | `SelfDiscoveryProfile` |
+| `DiagnosticSubscale` | ARC 드라이버·서브스케일 | `DiagnosticSubscale.code` (`ConceptNodeKind.DIAGNOSTIC_SUBSCALE`) |
 | `RoleContext` | 직무·산업·규모 | `JobRole`, 산업 enum, company size |
 
 ### 관계 (엣지) — 논리 그래프 먼저
@@ -94,7 +95,7 @@ AXHRD가 Salesforce식 일반 CRM보다 **깊게** 갈 수 있는 층.
 | `ALIGNS_WITH` | Competency → BenchmarkRef | 외부 프레임 정렬 (복제 ≠ 동일시) |
 | `MAPS_TO` | GlobalCompetency ↔ NCS Competency | **명시적·선택적** 브릿지 (자동 병합 금지) |
 | `SUPPORTED_BY` | RubricLevel → Evidence | 채점/피드백 근거 |
-| `SIGNALS` | ProfileSignal → Competency | 자기발견 → 면접 브릿지 |
+| `SIGNALS` | ProfileSignal → Competency **\|** DiagnosticSubscale → NCS Competency | 자기발견→면접 **·** 조직기후 갭→면접 역량 (Gap-to-Hire). 신규 타입은 동일 의미(신호→검증 역량)라 **재사용**; 신규 엣지 없음 |
 | `CONTEXTUALIZES` | RoleContext → Competency/Question | 직무·산업 가중 |
 
 ### 저장 전략 (무거워지지 않게)
@@ -160,6 +161,8 @@ AXHRD가 Salesforce식 일반 CRM보다 **깊게** 갈 수 있는 층.
 | 3 | `ConceptRelation` 테이블 + migrate | L3 | ✅ `20260709020000_add_meaning_concept_relation` |
 | 4 | 시드 스크립트 `npm run db:seed:meaning` | L3 | ✅ MAPS_TO + MEMBER_OF/HAS_LEVEL/PROBES/ALIGNS_WITH |
 | 5 | Admin API + UI (`/admin/content` Meaning 패널) | L3 | ✅ `/api/admin/meaning*` |
+| 5b | `DIAGNOSTIC_SUBSCALE` + SIGNALS 시드 (`seed/meaning-diagnostic-signals.json`) | L3 | ✅ migrate `20260715090000_…` · Meaning 패널 필터 |
+| 5c | Gap-to-Hire (FOCUS 드라이버 → 인터뷰킷 역량 추천 UI) | L3↔L2 | ✅ `getCompetencyGapRecommendations` + org 인터뷰킷 배지 |
 | 6 | 채점/피드백에 Evidence→Rubric 인용 강화 | L3↔L4 | 다음 |
 | 7 | 그래프 DB PoC | L3 | 조인 대비 벤치 후 결정 |
 

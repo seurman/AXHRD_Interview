@@ -17,12 +17,20 @@ import {
   platformRubricForLevel,
 } from "@/lib/org/kit-rubric";
 import type { RubricByLevel } from "@/lib/competency/rubric";
+import type { CompetencyGapRecommendationResult } from "@/lib/diagnostic/gap-recommendations";
 
 function kitApiBase(organizationId?: string) {
   const base = "/api/org/interview-kit";
   if (!organizationId) return base;
   return `${base}?organizationId=${encodeURIComponent(organizationId)}`;
 }
+
+function gapRecommendationsUrl(organizationId?: string) {
+  const base = "/api/org/interview-kit/gap-recommendations";
+  if (!organizationId) return base;
+  return `${base}?organizationId=${encodeURIComponent(organizationId)}`;
+}
+
 
 function platformLinesForLevel(comp: ApiCompetency, level: number): string[] {
   return platformRubricForLevel(comp.code, comp.rubricByLevel, level);
@@ -134,12 +142,17 @@ export function InterviewKitBuilder({
   const [drafts, setDrafts] = useState<Record<string, CompetencyDraft>>({});
   const [search, setSearch] = useState("");
   const [levelFilter, setLevelFilter] = useState<number | null>(null);
+  const [gapRecs, setGapRecs] = useState<CompetencyGapRecommendationResult | null>(null);
+  const [gapUnavailable, setGapUnavailable] = useState(false);
 
   const apiBase = kitApiBase(organizationId);
+  const gapUrl = gapRecommendationsUrl(organizationId);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setGapRecs(null);
+    setGapUnavailable(false);
     try {
       const res = await fetch(apiBase);
       const json = await res.json();
@@ -160,12 +173,23 @@ export function InterviewKitBuilder({
       const first = payload.competencies[0]?.code ?? "";
       setPaletteCode(first);
       setActiveCode(inKit[0] ?? first);
+
+      try {
+        const gapRes = await fetch(gapUrl);
+        if (gapRes.status === 404) {
+          setGapUnavailable(true);
+        } else if (gapRes.ok) {
+          setGapRecs((await gapRes.json()) as CompetencyGapRecommendationResult);
+        }
+      } catch {
+        /* Gap-to-Hire는 선택 기능 — 킷 편집 자체는 유지 */
+      }
     } catch {
       setError("네트워크 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
-  }, [apiBase]);
+  }, [apiBase, gapUrl]);
 
   useEffect(() => {
     void load();
@@ -348,6 +372,7 @@ export function InterviewKitBuilder({
       onReorderQuestions={reorderQuestionsInKit}
       onPatchDraft={patchDraft}
       onSave={(code) => void saveCompetency(code)}
+      gapRecommendations={gapUnavailable ? null : gapRecs}
     />
   );
 }

@@ -1,5 +1,12 @@
-import { bandOai, bandOvi, bandOpportunityScore, healthBand } from "@/lib/diagnostic/arc-scoring";
+import { bandOpportunityScore } from "@/lib/diagnostic/arc-scoring";
 import type { OpenTextThemeReport, SubscaleThemeResult } from "@/lib/diagnostic/theme-mining";
+
+export {
+  oaiBandMessage,
+  oriBandMessage,
+  oviBandMessage,
+  ohiBandMessage,
+} from "@/lib/diagnostic/report-guide";
 
 export type AxisInsight = {
   title: string;
@@ -40,35 +47,6 @@ export type OaiScores = {
   OA: number | null;
   band: string | null;
 };
-
-export function oviBandMessage(ovi: number | null, band: string | null): string {
-  if (ovi == null) return "—";
-  const b = band ?? bandOvi(ovi);
-  if (b === "빠른 개선") return "올바른 방향으로 가속 중입니다. 모멘텀을 유지하고 병목 영역을 집중 관리하세요.";
-  if (b === "개선 중") return "변화가 진행 중입니다. 속도를 더 내려면 의사결정 병목(CV01)을 확인하세요.";
-  if (b === "정체") return "변화가 멈췄습니다. CV01(실행속도)과 AV05(환경 대비 AX속도)를 즉시 점검하세요.";
-  if (b === "악화 중") return "조직이 뒤로 가고 있습니다. Risk Index와 함께 긴급 개입이 필요합니다.";
-  return "즉각적 위기 대응이 필요합니다. OHI와 ORI를 함께 긴급 점검하세요.";
-}
-
-export function oaiBandMessage(oai: number | null, band: string | null): string {
-  if (oai == null) return "—";
-  const b = band ?? bandOai(oai);
-  if (b === "방향 정렬 탁월") return "전략·에너지·결과가 모두 일치합니다. 모멘텀 유지와 번아웃 예방에 집중하세요.";
-  if (b === "방향 정렬 양호") return "대체로 올바른 방향입니다. SA·EA·OA 중 가장 낮은 축을 집중 개선하세요.";
-  if (b === "부분 정렬") return "전략과 실행 사이에 간격이 있습니다. SA04(사일로)와 EA06(우선순위 혼란)을 점검하세요.";
-  if (b === "방향 이탈") return "OHI·OVI가 높아도 '빠른 오류'일 수 있습니다. 즉각 전략 재정렬이 필요합니다.";
-  return "전략·에너지·결과가 분리됐습니다. 경영진 직접 개입 없이는 회복이 어렵습니다.";
-}
-
-export function oriBandMessage(ori: number | null, band: string | null): string {
-  if (ori == null) return "—";
-  const b = band ?? healthBand(ori);
-  if (b === "탁월") return "변화 준비도가 높습니다. AX 성숙도 단계에 맞는 확산·최적화에 집중하세요.";
-  if (b === "양호") return "변화 역량이 형성 중입니다. Opportunity Score로 구조적 장애물을 확인하세요.";
-  if (b === "보통") return "준비와 저항이 공존합니다. CD(방향)와 LA(학습) 중 낮은 축부터 개선하세요.";
-  return "변화 준비가 부족합니다. 인식·해빙(CD)과 거버넌스(AXG)부터 점검하세요.";
-}
 
 export function buildCdReadinessInsight(cd02: number | null, cd04: number | null): AxisInsight | null {
   if (cd02 == null || cd04 == null) return null;
@@ -227,9 +205,9 @@ export const OAI_DIM_LABELS: Record<string, string> = {
   OA: "결과정렬",
 };
 
-export const ORI_OPEN_TEXT_CODES = ["CD", "LA", "AXS", "AXC", "OPP"];
-export const OVI_OPEN_TEXT_CODES = ["HV", "CV", "AV"];
-export const OAI_OPEN_TEXT_CODES = ["SA", "EA", "OA"];
+export const ORI_OPEN_TEXT_CODES = ["CD", "OPP"];
+export const OVI_OPEN_TEXT_CODES = ["HV"];
+export const OAI_OPEN_TEXT_CODES = ["OA"];
 
 export function filterThemesByCodes(
   report: OpenTextThemeReport | null,

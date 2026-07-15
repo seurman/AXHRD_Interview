@@ -1,50 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ANONYMITY_BANNER, DIAGNOSTIC_CONSENT_TEXT } from "@/lib/diagnostic/constants";
-
-type ScaleType = "AGREEMENT_5" | "RETRO_CHANGE_5" | "SPEED_5" | "OPEN_TEXT";
-
-type SurveyItem = {
-  id: string;
-  itemCode: string;
-  textKo: string;
-  scaleType: ScaleType;
-  scaleLabels: string[] | null;
-  hasImportanceAxis: boolean;
-  isDemographic: boolean;
-  choiceOptions: unknown;
-};
-
-type SurveySection = {
-  code: string;
-  nameKo: string;
-  subscales: Array<{ code: string; nameKo: string; items: SurveyItem[] }>;
-  directItems: SurveyItem[];
-};
-
-type SurveyPayload = {
-  wave: { id: string; label: string | null; status: string; estimatedMinutes: number | null };
-  team: { id: string; name: string } | null;
-  instrument: { nameKo: string; version: string };
-  sections: SurveySection[];
-  response: {
-    demographics: Record<string, string> | null;
-    consentAt: string | null;
-    submittedAt: string | null;
-    answers: Record<string, { current?: number; importance?: number; text?: string }>;
-  } | null;
-};
-
-type FlowStep =
-  | { kind: "demographics" }
-  | { kind: "section"; section: SurveySection }
-  | { kind: "done" };
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { DIAGNOSTIC_CONSENT_TEXT } from "@/lib/diagnostic/constants";
+import { QuestionFocus } from "./survey/QuestionFocus";
+import { SurveyCard, SurveyStage } from "./survey/SurveyStage";
+import {
+  choiceList,
+  flattenSurveyQuestions,
+  isQuestionComplete,
+  SECTION_BLURB,
+  type AnswerMap,
+  type FlatQuestion,
+  type SurveyItem,
+  type SurveyPayload,
+} from "./survey/types";
 
 type Props = {
   waveSlug: string;
   teamSlug?: string;
 };
+
+type Phase =
+  | { kind: "welcome" }
+  | { kind: "demographics" }
+  | { kind: "sectionIntro"; sectionCode: string; sectionName: string }
+  | { kind: "question"; qIndex: number }
+  | { kind: "consent" }
+  | { kind: "done" };
 
 const fetchOpts: RequestInit = { credentials: "same-origin" };
 
@@ -52,14 +35,16 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
   const surveyBase = teamSlug
     ? `/api/diagnosis/w/${waveSlug}/t/${teamSlug}`
     : `/api/diagnosis/w/${waveSlug}`;
+
   const [data, setData] = useState<SurveyPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [stepIndex, setStepIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, { current?: number; importance?: number; text?: string }>>({});
+  const [phase, setPhase] = useState<Phase>({ kind: "welcome" });
+  const [answers, setAnswers] = useState<AnswerMap>({});
   const [demographics, setDemographics] = useState<Record<string, string>>({});
   const [consent, setConsent] = useState(false);
   const [saving, setSaving] = useState(false);
+  const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const demographicItems = useMemo(() => {
     if (!data) return [];
@@ -71,32 +56,44 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
     return data.sections.filter((s) => s.code !== "DM");
   }, [data]);
 
-  const flowSteps = useMemo((): FlowStep[] => {
-    if (!data) return [];
-    if (data.response?.submittedAt) return [{ kind: "done" }];
+  const questions = useMemo(
+    () => flattenSurveyQuestions(data?.sections ?? []),
+    [data?.sections],
+  );
 
-    const steps: FlowStep[] = [];
-    const needsDemographics =
-      demographicItems.length > 0 &&
-      (!data.response?.demographics || Object.keys(data.response.demographics).length === 0);
-    if (needsDemographics) steps.push({ kind: "demographics" });
-    for (const section of surveySections) {
-      steps.push({ kind: "section", section });
+  const needsDemographics = useMemo(() => {
+    if (!data || demographicItems.length === 0) return false;
+    return !data.response?.demographics || Object.keys(data.response.demographics).length === 0;
+  }, [data, demographicItems.length]);
+
+  const progressPct = useMemo(() => {
+    if (phase.kind === "done") return 100;
+    if (phase.kind === "welcome") return 0;
+    if (phase.kind === "demographics") return 4;
+    if (phase.kind === "consent") return 98;
+    if (questions.length === 0) return 10;
+    if (phase.kind === "sectionIntro") {
+      const first = questions.findIndex((q) => q.sectionCode === phase.sectionCode);
+      return 6 + (Math.max(0, first) / questions.length) * 90;
     }
-    return steps;
-  }, [data, demographicItems.length, surveySections]);
+    if (phase.kind === "question") {
+      return 6 + ((phase.qIndex + 0.5) / questions.length) * 90;
+    }
+    return 0;
+  }, [phase, questions]);
 
-  const lastSectionStepIndex = useMemo(() => {
-    let last = -1;
-    flowSteps.forEach((step, i) => {
-      if (step.kind === "section") last = i;
-    });
-    return last;
-  }, [flowSteps]);
-
-  const currentStep = flowSteps[stepIndex];
-  const isLastSection =
-    currentStep?.kind === "section" && stepIndex === lastSectionStepIndex;
+  const stepLabel = useMemo(() => {
+    if (phase.kind === "welcome") return "시작";
+    if (phase.kind === "demographics") return "기본 정보";
+    if (phase.kind === "sectionIntro") return phase.sectionName;
+    if (phase.kind === "consent") return "동의 · 제출";
+    if (phase.kind === "done") return "완료";
+    if (phase.kind === "question") {
+      const q = questions[phase.qIndex];
+      return q ? `${q.sectionName} · ${phase.qIndex + 1}/${questions.length}` : "문항";
+    }
+    return "";
+  }, [phase, questions]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -104,17 +101,20 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
     try {
       const postRes = await fetch(surveyBase, { method: "POST", ...fetchOpts });
       const postJson = (await postRes.json().catch(() => ({}))) as { error?: string };
-      if (!postRes.ok) {
-        throw new Error(postJson.error ?? "응답 세션을 시작하지 못했습니다.");
-      }
+      if (!postRes.ok) throw new Error(postJson.error ?? "응답 세션을 시작하지 못했습니다.");
 
       const res = await fetch(surveyBase, fetchOpts);
-      const json = await res.json();
+      const json = (await res.json()) as SurveyPayload & { error?: string };
       if (!res.ok) throw new Error(json.error ?? "불러오기 실패");
       setData(json);
       setAnswers(json.response?.answers ?? {});
       setDemographics((json.response?.demographics as Record<string, string>) ?? {});
-      setStepIndex(0);
+
+      if (json.response?.submittedAt) {
+        setPhase({ kind: "done" });
+      } else {
+        setPhase({ kind: "welcome" });
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "오류가 발생했습니다.");
     } finally {
@@ -126,6 +126,12 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    return () => {
+      if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+    };
+  }, []);
+
   const setNumeric = (itemId: string, axis: "current" | "importance", value: number) => {
     setAnswers((prev) => ({
       ...prev,
@@ -133,49 +139,36 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
     }));
   };
 
-  const itemsForSection = (section: SurveySection) => {
-    const fromSub = section.subscales.flatMap((sub) => sub.items);
-    const direct = section.directItems.filter((i) => !i.isDemographic);
-    return [...fromSub, ...direct];
-  };
+  const buildAnswerPayload = (items: SurveyItem[]) =>
+    items.flatMap((item) => {
+      const a = answers[item.id];
+      if (!a) return [];
+      const rows: Array<{
+        itemId: string;
+        axis: "CURRENT" | "IMPORTANCE";
+        numericValue?: number;
+        textValue?: string;
+      }> = [];
+      if (item.scaleType === "OPEN_TEXT" && a.text) {
+        rows.push({ itemId: item.id, axis: "CURRENT", textValue: a.text });
+      } else if (a.current != null && a.current >= 1) {
+        rows.push({ itemId: item.id, axis: "CURRENT", numericValue: a.current });
+      }
+      if (a.importance != null && a.importance >= 1) {
+        rows.push({ itemId: item.id, axis: "IMPORTANCE", numericValue: a.importance });
+      }
+      return rows;
+    });
 
-  const saveProgress = async (opts: { submit?: boolean; advance?: boolean } = {}) => {
-    const { submit = false, advance = false } = opts;
+  const persist = async (opts: {
+    items?: SurveyItem[];
+    submit?: boolean;
+    includeDemographics?: boolean;
+  } = {}) => {
+    const { items = [], submit = false, includeDemographics = false } = opts;
     setSaving(true);
     setError(null);
     try {
-      if (currentStep?.kind === "demographics" && advance) {
-        const missing = demographicItems.filter((item) => !demographics[item.itemCode]?.trim());
-        if (missing.length > 0) {
-          throw new Error("기본 정보 항목을 모두 선택해 주세요.");
-        }
-      }
-
-      const itemsToSave =
-        currentStep?.kind === "section"
-          ? itemsForSection(currentStep.section)
-          : surveySections.flatMap(itemsForSection);
-
-      const answerPayload = itemsToSave.flatMap((item) => {
-        const a = answers[item.id];
-        if (!a) return [];
-        const rows: Array<{
-          itemId: string;
-          axis: "CURRENT" | "IMPORTANCE";
-          numericValue?: number;
-          textValue?: string;
-        }> = [];
-        if (item.scaleType === "OPEN_TEXT" && a.text) {
-          rows.push({ itemId: item.id, axis: "CURRENT", textValue: a.text });
-        } else if (a.current != null && a.current >= 1) {
-          rows.push({ itemId: item.id, axis: "CURRENT", numericValue: a.current });
-        }
-        if (a.importance != null && a.importance >= 1) {
-          rows.push({ itemId: item.id, axis: "IMPORTANCE", numericValue: a.importance });
-        }
-        return rows;
-      });
-
       const res = await fetch("/api/diagnosis/respond", {
         method: "POST",
         credentials: "same-origin",
@@ -183,226 +176,381 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
         body: JSON.stringify({
           waveSlug,
           ...(teamSlug ? { teamSlug } : {}),
-          answers: answerPayload,
-          demographics:
-            currentStep?.kind === "demographics" || submit ? demographics : undefined,
+          answers: buildAnswerPayload(items),
+          demographics: includeDemographics || submit ? demographics : undefined,
           consent: submit ? consent : undefined,
           submit,
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "저장 실패");
-
-      if (submit) {
-        setData((prev) =>
-          prev
-            ? {
-                ...prev,
-                response: {
-                  ...(prev.response ?? {
-                    demographics: null,
-                    consentAt: null,
-                    answers: {},
-                  }),
-                  demographics: prev.response?.demographics ?? demographics,
-                  consentAt: new Date().toISOString(),
-                  submittedAt: json.submittedAt ?? new Date().toISOString(),
-                  answers: prev.response?.answers ?? answers,
-                },
-              }
-            : prev,
-        );
-        setStepIndex(flowSteps.length);
-      } else if (advance) {
-        if (stepIndex >= flowSteps.length - 1) {
-          throw new Error("다음 설문 영역이 없습니다. 관리자에게 문의해 주세요.");
-        }
-        setStepIndex((i) => i + 1);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "저장 중 오류");
+      return json as { submittedAt?: string };
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <p className="text-sm text-muted">설문을 불러오는 중…</p>;
-  if (error && !data) return <p className="text-sm text-rose-600">{error}</p>;
+  const enterSurveyFlow = () => {
+    if (needsDemographics) setPhase({ kind: "demographics" });
+    else if (surveySections[0]) {
+      setPhase({
+        kind: "sectionIntro",
+        sectionCode: surveySections[0].code,
+        sectionName: surveySections[0].nameKo,
+      });
+    } else setError("활성화된 진단 영역이 없습니다.");
+  };
+
+  const startSectionQuestions = (sectionCode: string) => {
+    const idx = questions.findIndex((q) => q.sectionCode === sectionCode);
+    if (idx < 0) {
+      setPhase({ kind: "consent" });
+      return;
+    }
+    setPhase({ kind: "question", qIndex: idx });
+  };
+
+  const goToQuestion = (qIndex: number) => {
+    if (qIndex < 0) return;
+    if (qIndex >= questions.length) {
+      setPhase({ kind: "consent" });
+      return;
+    }
+    const curr = questions[qIndex];
+    const prev = qIndex > 0 ? questions[qIndex - 1] : null;
+    if (!prev || prev.sectionCode === curr.sectionCode) {
+      setPhase({ kind: "question", qIndex });
+      return;
+    }
+    setPhase({
+      kind: "sectionIntro",
+      sectionCode: curr.sectionCode,
+      sectionName: curr.sectionName,
+    });
+  };
+
+  const advanceFromQuestion = async (q: FlatQuestion, qIndex: number) => {
+    if (!isQuestionComplete(q.item, answers[q.item.id])) {
+      setError(
+        q.item.hasImportanceAxis
+          ? "현재 수준과 중요도를 모두 선택해 주세요."
+          : "응답을 선택해 주세요.",
+      );
+      return;
+    }
+    setError(null);
+    try {
+      await persist({ items: [q.item] });
+      goToQuestion(qIndex + 1);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "저장 중 오류");
+    }
+  };
+
+  const tryAutoAdvance = (item: SurveyItem, qIndex: number, nextAnswers: AnswerMap) => {
+    if (item.scaleType === "OPEN_TEXT") return;
+    if (!isQuestionComplete(item, nextAnswers[item.id])) return;
+    if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+    autoAdvanceTimer.current = setTimeout(() => {
+      void (async () => {
+        try {
+          await persist({ items: [item] });
+          goToQuestion(qIndex + 1);
+        } catch (e) {
+          setError(e instanceof Error ? e.message : "저장 중 오류");
+        }
+      })();
+    }, 380);
+  };
+
+  const onScaleChange = (
+    itemId: string,
+    axis: "current" | "importance",
+    value: number,
+    item: SurveyItem,
+    qIndex: number,
+  ) => {
+    setAnswers((prev) => {
+      const next = { ...prev, [itemId]: { ...prev[itemId], [axis]: value } };
+      tryAutoAdvance(item, qIndex, next);
+      return next;
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="dx-stage dx-stage--solo">
+        <div className="dx-stage__aurora" aria-hidden />
+        <p className="dx-loading">설문을 준비하는 중…</p>
+      </div>
+    );
+  }
+
+  if (error && !data) {
+    return (
+      <div className="dx-stage dx-stage--solo">
+        <p className="text-center text-sm text-rose-600">{error}</p>
+      </div>
+    );
+  }
+
   if (!data) return null;
 
-  if (
-    currentStep?.kind === "done" ||
-    data.response?.submittedAt ||
-    stepIndex >= flowSteps.length
-  ) {
+  if (phase.kind === "done" || data.response?.submittedAt) {
     return (
-      <div className="card-luxe space-y-4 p-8 text-center">
-        <h1 className="text-xl font-bold text-foreground">응답이 제출되었습니다</h1>
-        <p className="text-sm text-muted">소중한 의견 감사합니다. 결과는 팀 단위로만 집계됩니다.</p>
+      <div className="dx-stage">
+        <div className="dx-stage__aurora" aria-hidden />
+        <div className="dx-stage__inner">
+          <SurveyCard cardKey="done">
+            <div className="dx-done">
+              <motion.div
+                className="dx-done__mark"
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 260, damping: 18 }}
+              >
+                ✓
+              </motion.div>
+              <p className="dx-eyebrow">Thank you</p>
+              <h1 className="dx-done__title">응답이 안전하게 제출되었습니다</h1>
+              <p className="dx-done__body">
+                소중한 시간을 내어 주셔서 감사합니다. 결과는 익명·집계 형태로만 활용되며,
+                개인을 식별할 수 있는 보고는 이루어지지 않습니다.
+              </p>
+            </div>
+          </SurveyCard>
+        </div>
       </div>
     );
   }
 
-  if (!currentStep) {
-    return (
-      <div className="card-luxe space-y-3 p-8 text-center">
-        <h1 className="text-lg font-bold text-foreground">설문 구성을 불러올 수 없습니다</h1>
-        <p className="text-sm text-muted">
-          활성화된 진단 영역이 없습니다. 링크를 확인하거나 관리자에게 문의해 주세요.
-        </p>
-        {error && <p className="text-sm text-rose-600">{error}</p>}
-      </div>
-    );
-  }
-
-  const progressLabel =
-    currentStep.kind === "demographics"
-      ? "기본 정보"
-      : `영역 ${surveySections.findIndex((s) => s.code === currentStep.section.code) + 1} / ${surveySections.length}: ${currentStep.section.nameKo}`;
+  const meta = [
+    data.team?.name ?? "조직 전체",
+    data.wave.label,
+    data.wave.estimatedMinutes ? `약 ${data.wave.estimatedMinutes}분` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-foreground">
-        {ANONYMITY_BANNER}
-      </div>
-
-      <header className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-widest text-gold">ARC Index</p>
-        <h1 className="text-2xl font-bold text-foreground">{data.instrument.nameKo}</h1>
-        <p className="text-sm text-muted">
-          {data.team?.name ?? "조직 전체"}
-          {data.wave.label ? ` · ${data.wave.label}` : ""}
-          {data.wave.estimatedMinutes ? ` · 약 ${data.wave.estimatedMinutes}분` : ""}
+    <SurveyStage
+      progress={progressPct}
+      stepLabel={stepLabel}
+      brandTitle={phase.kind === "welcome" ? data.instrument.nameKo : undefined}
+      meta={phase.kind === "welcome" ? meta : undefined}
+    >
+      {error && (
+        <p className="mb-3 text-center text-sm text-rose-600" role="alert">
+          {error}
         </p>
-        <p className="text-xs font-medium text-gold">{progressLabel}</p>
-      </header>
+      )}
 
-      {error && <p className="text-sm text-rose-600">{error}</p>}
+      {phase.kind === "welcome" && (
+        <SurveyCard cardKey="welcome" className="dx-card--hero">
+          <p className="dx-eyebrow">Focus Assessment</p>
+          <h1 className="dx-hero__title">{data.instrument.nameKo}</h1>
+          <p className="dx-hero__lead">
+            한 문항씩, 집중해서 답해 주세요. 맞고 틀린 답은 없습니다 — 조직의 발전을 위한
+            솔직한 경험이 가장 가치 있습니다.
+          </p>
+          <ul className="dx-hero__bullets">
+            <li>완전 익명 · N&lt;5 비공개</li>
+            <li>개인 인사 평가에 사용하지 않음</li>
+            <li>중요도 문항은 개선 우선순위 파악에만 사용</li>
+          </ul>
+          <button type="button" className="dx-btn-primary" onClick={enterSurveyFlow}>
+            시작하기
+          </button>
+        </SurveyCard>
+      )}
 
-      {currentStep.kind === "demographics" && (
-        <div className="card-luxe space-y-6 p-6">
-          <h2 className="font-semibold text-foreground">인구통계 (익명)</h2>
-          {demographicItems.map((item) => (
-            <DemographicField
-              key={item.id}
-              item={item}
-              value={demographics[item.itemCode] ?? ""}
-              onChange={(v) => setDemographics((d) => ({ ...d, [item.itemCode]: v }))}
-            />
-          ))}
+      {phase.kind === "demographics" && (
+        <SurveyCard cardKey="dm">
+          <p className="dx-eyebrow">About you</p>
+          <h2 className="dx-card__title">기본 정보</h2>
+          <p className="dx-card__lead">분석 단위를 나눌 때만 사용되며, 개인을 특정하지 않습니다.</p>
+          <div className="dx-dm-list">
+            {demographicItems.map((item) => (
+              <DemographicChips
+                key={item.id}
+                item={item}
+                value={demographics[item.itemCode] ?? ""}
+                onChange={(v) => setDemographics((d) => ({ ...d, [item.itemCode]: v }))}
+              />
+            ))}
+          </div>
           <button
             type="button"
-            className="btn-primary"
+            className="dx-btn-primary"
             disabled={saving}
-            onClick={() => void saveProgress({ advance: true })}
+            onClick={() => {
+              void (async () => {
+                const missing = demographicItems.filter((item) => !demographics[item.itemCode]?.trim());
+                if (missing.length > 0) {
+                  setError("기본 정보 항목을 모두 선택해 주세요.");
+                  return;
+                }
+                try {
+                  await persist({ includeDemographics: true });
+                  if (surveySections[0]) {
+                    setPhase({
+                      kind: "sectionIntro",
+                      sectionCode: surveySections[0].code,
+                      sectionName: surveySections[0].nameKo,
+                    });
+                  } else setPhase({ kind: "consent" });
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : "저장 중 오류");
+                }
+              })();
+            }}
           >
-            {saving ? "저장 중…" : "다음 — 본 설문"}
+            {saving ? "저장 중…" : "본 설문으로"}
           </button>
-        </div>
+        </SurveyCard>
       )}
 
-      {currentStep.kind === "section" && (
-        <div className="space-y-6">
-          <section className="card-luxe space-y-6 p-6">
-            <h2 className="text-lg font-semibold text-foreground">{currentStep.section.nameKo}</h2>
-            {currentStep.section.subscales.map((sub) => (
-              <div key={sub.code} className="space-y-4">
-                {currentStep.section.subscales.length > 1 && (
-                  <h3 className="text-sm font-medium text-muted">{sub.nameKo}</h3>
-                )}
-                {sub.items.map((item) => (
-                  <ScaleQuestion
-                    key={item.id}
-                    item={item}
-                    value={answers[item.id]}
-                    onChange={setNumeric}
-                    onText={(text) =>
-                      setAnswers((prev) => ({ ...prev, [item.id]: { ...prev[item.id], text } }))
-                    }
-                  />
-                ))}
-              </div>
-            ))}
-            {currentStep.section.directItems
-              .filter((i) => !i.isDemographic)
-              .map((item) => (
-                <ScaleQuestion
-                  key={item.id}
-                  item={item}
-                  value={answers[item.id]}
-                  onChange={setNumeric}
-                  onText={(text) =>
-                    setAnswers((prev) => ({ ...prev, [item.id]: { ...prev[item.id], text } }))
+      {phase.kind === "sectionIntro" && (
+        <SurveyCard cardKey={`intro-${phase.sectionCode}`} className="dx-card--chapter">
+          <p className="dx-eyebrow">{phase.sectionCode}</p>
+          <h2 className="dx-chapter__title">{phase.sectionName}</h2>
+          <p className="dx-chapter__body">
+            {SECTION_BLURB[phase.sectionCode] ?? "이 영역의 문항에 응답해 주세요."}
+          </p>
+          <button
+            type="button"
+            className="dx-btn-primary"
+            onClick={() => startSectionQuestions(phase.sectionCode)}
+          >
+            문항 시작
+          </button>
+        </SurveyCard>
+      )}
+
+      {phase.kind === "question" && questions[phase.qIndex] && (
+        <SurveyCard cardKey={`q-${questions[phase.qIndex].item.id}`}>
+          <QuestionFocus
+            item={questions[phase.qIndex].item}
+            value={answers[questions[phase.qIndex].item.id]}
+            subscaleName={questions[phase.qIndex].subscaleName}
+            onChange={(id, axis, v) =>
+              onScaleChange(id, axis, v, questions[phase.qIndex].item, phase.qIndex)
+            }
+            onText={(text) =>
+              setAnswers((prev) => ({
+                ...prev,
+                [questions[phase.qIndex].item.id]: {
+                  ...prev[questions[phase.qIndex].item.id],
+                  text,
+                },
+              }))
+            }
+          />
+          <div className="dx-nav">
+            <button
+              type="button"
+              className="dx-btn-ghost"
+              disabled={phase.qIndex === 0 && !needsDemographics}
+              onClick={() => {
+                if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+                if (phase.qIndex === 0) {
+                  setPhase(
+                    needsDemographics
+                      ? { kind: "demographics" }
+                      : { kind: "welcome" },
+                  );
+                  return;
+                }
+                const prevQ = questions[phase.qIndex - 1];
+                const curr = questions[phase.qIndex];
+                if (prevQ.sectionCode !== curr.sectionCode) {
+                  setPhase({
+                    kind: "sectionIntro",
+                    sectionCode: curr.sectionCode,
+                    sectionName: curr.sectionName,
+                  });
+                } else {
+                  setPhase({ kind: "question", qIndex: phase.qIndex - 1 });
+                }
+              }}
+            >
+              이전
+            </button>
+            <button
+              type="button"
+              className="dx-btn-primary"
+              disabled={saving}
+              onClick={() => void advanceFromQuestion(questions[phase.qIndex], phase.qIndex)}
+            >
+              {saving ? "저장 중…" : phase.qIndex >= questions.length - 1 ? "제출 준비" : "다음"}
+            </button>
+          </div>
+        </SurveyCard>
+      )}
+
+      {phase.kind === "consent" && (
+        <SurveyCard cardKey="consent">
+          <p className="dx-eyebrow">Almost done</p>
+          <h2 className="dx-card__title">동의 후 제출</h2>
+          <label className="dx-consent">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+            />
+            <span>{DIAGNOSTIC_CONSENT_TEXT}</span>
+          </label>
+          <div className="dx-nav">
+            <button
+              type="button"
+              className="dx-btn-ghost"
+              onClick={() => setPhase({ kind: "question", qIndex: Math.max(0, questions.length - 1) })}
+            >
+              이전
+            </button>
+            <button
+              type="button"
+              className="dx-btn-primary"
+              disabled={saving || !consent}
+              onClick={() => {
+                void (async () => {
+                  try {
+                    const allItems = questions.map((q) => q.item);
+                    const json = await persist({
+                      items: allItems,
+                      submit: true,
+                      includeDemographics: true,
+                    });
+                    setData((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            response: {
+                              demographics,
+                              consentAt: new Date().toISOString(),
+                              submittedAt: json.submittedAt ?? new Date().toISOString(),
+                              answers,
+                            },
+                          }
+                        : prev,
+                    );
+                    setPhase({ kind: "done" });
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : "제출 중 오류");
                   }
-                />
-              ))}
-          </section>
-
-          {isLastSection ? (
-            <div className="card-luxe space-y-4 p-6">
-              <label className="flex cursor-pointer items-start gap-3 text-sm">
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={consent}
-                  onChange={(e) => setConsent(e.target.checked)}
-                />
-                <span className="text-muted">{DIAGNOSTIC_CONSENT_TEXT}</span>
-              </label>
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  disabled={saving}
-                  onClick={() => void saveProgress()}
-                >
-                  임시 저장
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  disabled={saving || !consent}
-                  onClick={() => void saveProgress({ submit: true })}
-                >
-                  {saving ? "제출 중…" : "제출하기"}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                className="btn-secondary"
-                disabled={saving || stepIndex === 0}
-                onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
-              >
-                이전 영역
-              </button>
-              <button
-                type="button"
-                className="btn-secondary"
-                disabled={saving}
-                onClick={() => void saveProgress()}
-              >
-                임시 저장
-              </button>
-              <button
-                type="button"
-                className="btn-primary"
-                disabled={saving}
-                onClick={() => void saveProgress({ advance: true })}
-              >
-                {saving ? "저장 중…" : "다음 영역"}
-              </button>
-            </div>
-          )}
-        </div>
+                })();
+              }}
+            >
+              {saving ? "제출 중…" : "제출하기"}
+            </button>
+          </div>
+        </SurveyCard>
       )}
-    </div>
+    </SurveyStage>
   );
 }
 
-function DemographicField({
+function DemographicChips({
   item,
   value,
   onChange,
@@ -411,120 +559,32 @@ function DemographicField({
   value: string;
   onChange: (v: string) => void;
 }) {
-  const options = Array.isArray(item.choiceOptions)
-    ? (item.choiceOptions as string[])
-    : typeof item.choiceOptions === "object" && item.choiceOptions !== null
-      ? Object.values(item.choiceOptions as Record<string, string>)
-      : [];
-
+  const options = choiceList(item);
   return (
-    <div>
-      <p className="mb-2 text-sm font-medium text-foreground">{item.textKo}</p>
+    <div className="dx-dm">
+      <p className="dx-dm__label">{item.textKo}</p>
       {options.length > 0 ? (
-        <select
-          className="w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        >
-          <option value="">선택</option>
+        <div className="dx-chips" role="listbox" aria-label={item.textKo}>
           {options.map((o) => (
-            <option key={o} value={o}>
+            <button
+              key={o}
+              type="button"
+              role="option"
+              aria-selected={value === o}
+              className={`dx-chip ${value === o ? "dx-chip--on" : ""}`}
+              onClick={() => onChange(o)}
+            >
               {o}
-            </option>
+            </button>
           ))}
-        </select>
+        </div>
       ) : (
         <input
-          className="w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm"
+          className="dx-textarea"
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />
       )}
-    </div>
-  );
-}
-
-function ScaleQuestion({
-  item,
-  value,
-  onChange,
-  onText,
-}: {
-  item: SurveyItem;
-  value?: { current?: number; importance?: number; text?: string };
-  onChange: (itemId: string, axis: "current" | "importance", v: number) => void;
-  onText: (text: string) => void;
-}) {
-  if (item.scaleType === "OPEN_TEXT") {
-    return (
-      <div>
-        <p className="mb-2 text-sm text-foreground">{item.textKo}</p>
-        <textarea
-          className="min-h-[80px] w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm"
-          value={value?.text ?? ""}
-          onChange={(e) => onText(e.target.value)}
-        />
-      </div>
-    );
-  }
-
-  const labels = item.scaleLabels ?? ["1", "2", "3", "4", "5"];
-
-  return (
-    <div className="space-y-3 border-b border-card-border pb-4 last:border-0">
-      <p className="text-sm text-foreground">{item.textKo}</p>
-      <RadioRow
-        label="현재 수준"
-        labels={labels}
-        selected={value?.current}
-        onSelect={(v) => onChange(item.id, "current", v)}
-      />
-      {item.hasImportanceAxis && (
-        <RadioRow
-          label="중요도"
-          labels={labels}
-          selected={value?.importance}
-          onSelect={(v) => onChange(item.id, "importance", v)}
-        />
-      )}
-    </div>
-  );
-}
-
-function RadioRow({
-  label,
-  labels,
-  selected,
-  onSelect,
-}: {
-  label: string;
-  labels: string[];
-  selected?: number;
-  onSelect: (v: number) => void;
-}) {
-  return (
-    <div>
-      <p className="mb-1 text-xs font-medium text-muted">{label}</p>
-      <div className="flex flex-wrap gap-2">
-        {labels.map((lbl, idx) => {
-          const v = idx + 1;
-          return (
-            <button
-              key={lbl}
-              type="button"
-              title={lbl}
-              className={`rounded-lg border px-2 py-1 text-xs ${
-                selected === v
-                  ? "border-gold bg-gold/20 text-foreground"
-                  : "border-card-border text-muted hover:border-gold/50"
-              }`}
-              onClick={() => onSelect(v)}
-            >
-              {v}
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 }

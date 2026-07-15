@@ -123,17 +123,17 @@ export type HierarchyNode = {
 };
 
 const KEY_ITEM_CODES = [
-  "CD01", "CD02", "CD03", "CD04", "CD05",
+  "CD01", "CD02", "CD04", "CD05",
   "LA01", "LA02", "LA03",
-  "AXS01", "AXS02", "AXS03", "AXS04",
-  "AXC01", "AXC02", "AXC03", "AXC04",
+  "AXS01", "AXS02", "AXS04",
+  "AXC01", "AXC02", "AXC04",
   "AXA01", "AXA02", "AXG01", "AXG02",
-  "HV01", "HV02", "HV03", "HV05",
-  "CV01", "CV02", "CV03", "CV04", "CV05",
-  "AV01", "AV02", "AV03", "AV04", "AV05",
-  "SA01", "SA02", "SA03", "SA05", "SA06",
-  "EA01", "EA02", "EA05",
-  "OA01", "OA03", "OA04", "OA06",
+  "HV01", "HV02",
+  "CV01", "CV03",
+  "AV01", "AV02",
+  "SA01", "SA02",
+  "EA01", "EA02",
+  "OA01", "OA06",
   "E01", "SEC03", "BO01",
 ] as const;
 

@@ -7,6 +7,8 @@ import {
   NarrativeBlock,
   SubscoreBar,
 } from "@/components/admin/diagnostic/ArcReportUi";
+import { AxisNarrativeBlock } from "@/components/admin/diagnostic/ReportGuideUi";
+import { AXIS_DEFINITIONS } from "@/lib/diagnostic/report-guide";
 import type { OpenTextThemeReport } from "@/lib/diagnostic/theme-mining";
 import {
   buildCdReadinessInsight,
@@ -35,15 +37,13 @@ import {
   buildOviSubscaleRows,
 } from "@/lib/diagnostic/analysis-tables";
 import { pickItemRows } from "@/components/admin/diagnostic/OhiReportSection";
+import { ArcRadar } from "@/components/admin/diagnostic/ArcRadar";
+import { formatScore } from "@/lib/diagnostic/format-score";
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Legend,
-  PolarAngleAxis,
-  PolarGrid,
-  Radar,
-  RadarChart,
   ReferenceLine,
   ResponsiveContainer,
   Scatter,
@@ -52,6 +52,7 @@ import {
   XAxis,
   YAxis,
   ZAxis,
+  Cell,
 } from "recharts";
 
 function InsightList({ insights }: { insights: Array<{ title: string; body: string; severity: "critical" | "warning" | "info" }> }) {
@@ -171,7 +172,11 @@ export function OriReportSection({
 
   return (
     <>
-      <NarrativeBlock label="ORI 해석" text={oriBandMessage(ori.ORI, ori.band)} />
+      <AxisNarrativeBlock
+        axisLabel="ORI — Organization Readiness"
+        definition={AXIS_DEFINITIONS.ORI.oneLiner}
+        interpretation={oriBandMessage(ori.ORI, ori.band)}
+      />
 
       <AnalysisTable
         title="ORI 4요인 분석표"
@@ -195,15 +200,7 @@ export function OriReportSection({
       {radarData.length >= 3 && (
         <div className="card-luxe p-4">
           <h3 className="mb-3 text-sm font-semibold">변화준비 레이더</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radarData}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey="axis" tick={{ fontSize: 11 }} />
-                <Radar dataKey="value" stroke="#c9a227" fill="#c9a227" fillOpacity={0.35} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
+          <ArcRadar data={radarData} heightClass="h-64" />
         </div>
       )}
 
@@ -255,7 +252,7 @@ export function OriReportSection({
           [
             { code: "CD01", label: "변화 방향 명확" },
             { code: "CD02", label: "변화 긴장감 공유" },
-            { code: "CD03", label: "필요성 설명" },
+            { code: "CD04", label: "관행 변경 난이도(역)" },
             { code: "CD05", label: "지도부 신뢰" },
           ],
           itemAverages,
@@ -318,7 +315,11 @@ export function OviReportSection({
 
   return (
     <>
-      <NarrativeBlock label="OVI 해석" text={oviBandMessage(ovi.OVI, ovi.band)} />
+      <AxisNarrativeBlock
+        axisLabel="OVI — Organization Velocity"
+        definition={AXIS_DEFINITIONS.OVI.oneLiner}
+        interpretation={oviBandMessage(ovi.OVI, ovi.band)}
+      />
 
       <AnalysisTable title="OVI 3요소 분석표" subtitle="HV · CV · AV" rows={buildOviSubscaleRows(ovi)} />
 
@@ -341,9 +342,9 @@ export function OviReportSection({
           hint="결정→현장 적용 (핵심)"
         />
         <MetricTile
-          label="AV05 환경 대비 속도"
-          value={itemAverages?.AV05 ?? null}
-          hint="외부 변화 대비 상대 속도"
+          label="AV02 업무방식 변화"
+          value={itemAverages?.AV02 ?? null}
+          hint="AI로 실제 일하는 방식이 달라지는지"
         />
       </div>
 
@@ -353,10 +354,7 @@ export function OviReportSection({
         rows={pickItemRows(
           [
             { code: "CV01", label: "결정→현장 속도", note: "핵심 병목 지표" },
-            { code: "CV02", label: "외부변화 대응" },
             { code: "CV03", label: "관행 축소" },
-            { code: "CV04", label: "학습 사이클" },
-            { code: "CV05", label: "의사결정 속도" },
           ],
           itemAverages,
         )}
@@ -367,9 +365,7 @@ export function OviReportSection({
         rows={pickItemRows(
           [
             { code: "HV01", label: "리더십 개선" },
-            { code: "HV02", label: "심리적 안전" },
-            { code: "HV03", label: "협업·소통" },
-            { code: "HV05", label: "성과 공정성" },
+            { code: "HV02", label: "의견 말하기" },
           ],
           itemAverages,
         )}
@@ -381,9 +377,6 @@ export function OviReportSection({
           [
             { code: "AV01", label: "AI 확산" },
             { code: "AV02", label: "업무방식 변화" },
-            { code: "AV03", label: "AI 불안 감소" },
-            { code: "AV04", label: "성과 인정" },
-            { code: "AV05", label: "환경 대비 속도", note: "상대 속도" },
           ],
           itemAverages,
         )}
@@ -451,7 +444,7 @@ export function OviReportSection({
             {[
               ["4.5~5.0", "빠른 개선", "가속 중 — 모멘텀 유지"],
               ["3.5~4.4", "개선 중", "CV01 병목 점검"],
-              ["2.5~3.4", "정체", "CV01·AV05 즉시 확인"],
+              ["2.5~3.4", "정체", "CV01·AV02 즉시 확인"],
               ["1.5~2.4", "악화 중", "Risk Index 연계 긴급 개입"],
               ["1.0~1.4", "급속 악화", "OHI·ORI 긴급 점검"],
             ].map(([range, band, msg]) => (
@@ -510,7 +503,11 @@ export function OaiReportSection({
 
   return (
     <>
-      <NarrativeBlock label="OAI 해석" text={oaiBandMessage(oai.OAI, oai.band)} />
+      <AxisNarrativeBlock
+        axisLabel="OAI — Organization Alignment"
+        definition={AXIS_DEFINITIONS.OAI.oneLiner}
+        interpretation={oaiBandMessage(oai.OAI, oai.band)}
+      />
 
       <AnalysisTable
         title="OAI 3축 분석표"
@@ -529,7 +526,7 @@ export function OaiReportSection({
       {breakdown && (
         <NarrativeBlock
           label="OAI 산출"
-          text={`OAI = SA(${breakdown.SA.score?.toFixed(2)})×0.40 + EA(${breakdown.EA.score?.toFixed(2)})×0.35 + OA(${breakdown.OA.score?.toFixed(2)})×0.25 = ${breakdown.total.toFixed(2)}`}
+          text={`OAI = SA(${formatScore(breakdown.SA.score)})×0.40 + EA(${formatScore(breakdown.EA.score)})×0.35 + OA(${formatScore(breakdown.OA.score)})×0.25 = ${formatScore(breakdown.total)}`}
         />
       )}
 
@@ -538,15 +535,7 @@ export function OaiReportSection({
       {radarData.length === 3 && (
         <div className="card-luxe p-4">
           <h3 className="mb-3 text-sm font-semibold">정렬 3축 레이더</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radarData}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey="axis" tick={{ fontSize: 11 }} />
-                <Radar dataKey="value" stroke="#c9a227" fill="#64748b" fillOpacity={0.3} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
+          <ArcRadar data={radarData} fill="#64748b" stroke="#c9a227" />
         </div>
       )}
 
@@ -565,7 +554,7 @@ export function OaiReportSection({
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="dim" tick={{ fontSize: 11 }} />
                 <YAxis domain={[0, 5]} />
-                <Tooltip formatter={(v: number, name: string) => [v.toFixed(2), name === "value" ? "기여" : name]} />
+                <Tooltip formatter={(v: number, name: string) => [formatScore(v), name === "value" ? "기여" : name]} />
                 <Legend />
                 <Bar dataKey="value" name="가중 기여" fill="#c9a227" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="raw" name="원점수" fill="#64748b" radius={[4, 4, 0, 0]} />
@@ -581,9 +570,6 @@ export function OaiReportSection({
           [
             { code: "SA01", label: "전략-업무 연결" },
             { code: "SA02", label: "우선순위 일치" },
-            { code: "SA03", label: "회의·결재 방향성" },
-            { code: "SA05", label: "변화 그림" },
-            { code: "SA06", label: "성과평가 방향" },
           ],
           itemAverages,
         )}
@@ -595,7 +581,6 @@ export function OaiReportSection({
           [
             { code: "EA01", label: "에너지 투입 일치" },
             { code: "EA02", label: "노력→결과 연결" },
-            { code: "EA05", label: "공공가치 기여" },
           ],
           itemAverages,
         )}
@@ -606,8 +591,6 @@ export function OaiReportSection({
         rows={pickItemRows(
           [
             { code: "OA01", label: "의도한 결과" },
-            { code: "OA03", label: "개선 체감" },
-            { code: "OA04", label: "반복학습 방지" },
             { code: "OA06", label: "KPI 방향성" },
           ],
           itemAverages,

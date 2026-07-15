@@ -99,6 +99,7 @@ export function bandOpportunityScore(score: number | null): {
 
 export function computeSE(answers: ScoredAnswers, reversed: Set<string>) {
   // SEC* = SE.C 헌신·연결 (산식표 C01~C03 — 드라이버 C01~C02와 코드 충돌 방지)
+  // v260715: E03·SEC02·F02 제외(중복) — 남은 문항만으로 평균
   const E = average(pickRaw(answers, ["E01", "E02", "E03"], reversed));
   const C = average(pickRaw(answers, ["SEC01", "SEC02", "SEC03"], reversed));
   const F = average(pickRaw(answers, ["F01", "F02"], reversed));
@@ -114,16 +115,19 @@ export function computeTL(answers: ScoredAnswers, reversed: Set<string>) {
   const trust = average(pickRaw(answers, ["TL01", "TL02"], reversed));
   const growth = average(pickRaw(answers, ["TL03", "TL04"], reversed));
   const safety = average(pickRaw(answers, ["TL05", "TL06"], reversed));
-  const TL = average(pickRaw(answers, ["TL01", "TL02", "TL03", "TL04", "TL05", "TL06"], reversed));
+  const TL = average(
+    pickRaw(answers, ["TL01", "TL02", "TL03", "TL04", "TL05", "TL06"], reversed),
+  );
   return { trust, growth, safety, TL };
 }
 
+/** v260715 경량 시드 기준 — 없는 코드는 pick 시 자동 제외 */
 const DRIVER_CODES: Record<string, string[]> = {
   SL: ["SL01", "SL02", "SL03"],
   SV: ["SV01", "SV02", "SV03"],
   PS: ["PS01", "PS02"],
   EM: ["EM01", "EM02"],
-  PM: ["PM01", "PM02"],
+  PM: ["PM01", "PM02", "PM04"],
   LG: ["LG01", "LG02"],
   CI: ["CI01", "CI02"],
   WE: ["WE01", "WE02"],
@@ -164,7 +168,7 @@ export function computeRiskIndex(
 }
 
 export function computeOri(answers: ScoredAnswers, reversed: Set<string>) {
-  const CD = average(pickRaw(answers, ["CD01", "CD02", "CD03", "CD05"], reversed));
+  const CD = average(pickRaw(answers, ["CD01", "CD02", "CD03", "CD04", "CD05"], reversed));
   const LA = average(pickRaw(answers, ["LA01", "LA02", "LA03"], reversed));
   const AXS = average(pickRaw(answers, ["AXS01", "AXS02", "AXS03", "AXS04"], reversed));
   const AXC = average(pickRaw(answers, ["AXC01", "AXC02", "AXC03", "AXC04"], reversed));

@@ -2,6 +2,7 @@
 
 import type { AnalysisRow } from "@/lib/diagnostic/analysis-tables";
 import { STATUS_CLASS } from "@/lib/diagnostic/analysis-tables";
+import { formatScore, formatScoreDelta } from "@/lib/diagnostic/format-score";
 
 export function AnalysisTable({
   title,
@@ -37,24 +38,19 @@ export function AnalysisTable({
           {rows.map((row) => (
             <tr key={row.id} className="border-b border-black/5 dark:border-white/5">
               <td className="py-2 pr-3 font-medium text-foreground">{row.label}</td>
-              <td className="py-2 pr-3 tabular-nums">{row.score?.toFixed(2) ?? "—"}</td>
+              <td className="py-2 pr-3 tabular-nums">{formatScore(row.score)}</td>
               <td className="py-2 pr-3 tabular-nums text-muted">
-                {row.benchmark?.toFixed(2) ?? "—"}
+                {formatScore(row.benchmark)}
               </td>
               {columns !== "default" && (
                 <td className="py-2 pr-3 tabular-nums text-muted">
-                  {row.secondary != null
-                    ? columns === "weighted"
-                      ? row.secondary.toFixed(2)
-                      : row.secondary.toFixed(2)
-                    : "—"}
+                  {formatScore(row.secondary)}
                 </td>
               )}
               <td className="py-2 pr-3 tabular-nums">
                 {row.gap != null ? (
                   <span className={row.gap > 0.3 ? "font-medium text-amber-600 dark:text-amber-400" : ""}>
-                    {row.gap > 0 ? "+" : ""}
-                    {row.gap.toFixed(2)}
+                    {formatScoreDelta(row.gap)}
                   </span>
                 ) : (
                   "—"
@@ -145,7 +141,7 @@ export function IpaQuadrantChart({
           .map((d) => (
             <li key={d.code} className="text-muted">
               <span className="font-medium text-red-600 dark:text-red-400">{d.label}</span>
-              {d.beta != null ? ` · β=${d.beta.toFixed(2)}` : ""}
+              {d.beta != null ? ` · β=${formatScore(d.beta)}` : ""}
             </li>
           ))}
       </ul>

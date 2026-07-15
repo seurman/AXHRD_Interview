@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatScore, formatScoreDelta } from "@/lib/diagnostic/format-score";
 
 type Delta = {
   axis: string;
@@ -62,21 +63,18 @@ export function DiagnosticLongitudinalPanel({ waveId, apiBase }: Props) {
               <div key={d.axis} className="rounded-lg border border-card-border px-3 py-2 text-sm">
                 <p className="text-xs text-muted">{d.axis}</p>
                 <p className="font-semibold text-foreground">
-                  {d.current != null ? d.current.toFixed(1) : "—"}
+                  {formatScore(d.current)}
                   {d.delta != null && (
                     <span
                       className={`ml-2 text-xs font-normal ${
                         d.delta > 0 ? "text-emerald-600" : d.delta < 0 ? "text-rose-600" : "text-muted"
                       }`}
                     >
-                      {d.delta > 0 ? "+" : ""}
-                      {d.delta.toFixed(1)}
+                      {formatScoreDelta(d.delta)}
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-muted">
-                  이전: {d.previous != null ? d.previous.toFixed(1) : "—"}
-                </p>
+                <p className="text-xs text-muted">이전: {formatScore(d.previous)}</p>
               </div>
             ))}
           </div>

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { KeyFinding } from "@/lib/diagnostic/report-narratives";
 import type { PrescriptionItem } from "@/lib/diagnostic/prescription";
 import type { WaveGoal } from "@/lib/diagnostic/report-narratives";
+import { formatScore, scoreBarPct } from "@/lib/diagnostic/format-score";
 
 export function ReportSection({
   id,
@@ -34,6 +35,58 @@ export function ReportSection({
   );
 }
 
+export type AxisScore = {
+  code: string;
+  label?: string;
+  value: number | null | undefined;
+  band?: string | null;
+  hint?: string;
+  /** 한 줄 의미 (정의 + 점수 해석) */
+  meaning?: string;
+};
+
+/** Denison-style dark score board for 4 axes */
+export function ScoreHero({
+  title,
+  meta,
+  axes,
+  children,
+}: {
+  title: string;
+  meta?: string;
+  axes: AxisScore[];
+  children?: ReactNode;
+}) {
+  return (
+    <div className="arc-score-hero">
+      <p className="arc-score-hero__eyebrow">Organization Pulse</p>
+      <h3 className="arc-score-hero__title">{title}</h3>
+      {meta && <p className="arc-score-hero__meta">{meta}</p>}
+      <div className="arc-axis-grid">
+        {axes.map((a) => {
+          const pct = scoreBarPct(a.value);
+          return (
+            <div key={a.code} className="arc-axis-card">
+              <p className="arc-axis-card__code">{a.code}</p>
+              <p className="arc-axis-card__value">{formatScore(a.value)}</p>
+              {(a.band || a.label) && (
+                <p className="arc-axis-card__band">{a.band ?? a.label}</p>
+              )}
+              {a.hint && <p className="arc-axis-card__band">{a.hint}</p>}
+              <div className="arc-axis-card__bar" aria-hidden>
+                <div className="arc-axis-card__fill" style={{ width: `${pct}%` }} />
+              </div>
+              <p className="arc-axis-card__scale">1.00 — 5.00</p>
+              {a.meaning && <p className="arc-axis-card__meaning">{a.meaning}</p>}
+            </div>
+          );
+        })}
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export function MetricTile({
   label,
   value,
@@ -53,9 +106,10 @@ export function MetricTile({
         : "text-gold";
   return (
     <div className="arc-metric-tile">
+      <div className="arc-metric-tile__ring" aria-hidden />
       <p className="text-[11px] font-medium uppercase tracking-wider text-muted">{label}</p>
-      <p className="mt-1 text-3xl font-bold tabular-nums text-foreground">
-        {value != null ? value.toFixed(2) : "—"}
+      <p className="mt-1 font-[family-name:var(--font-outfit)] text-3xl font-bold tabular-nums text-foreground">
+        {formatScore(value)}
       </p>
       {band && <p className={`mt-1 text-xs font-semibold ${bandTone}`}>{band}</p>}
       {hint && <p className="mt-1 text-[11px] text-muted">{hint}</p>}
@@ -71,9 +125,9 @@ export function FindingCard({ finding }: { finding: KeyFinding }) {
         ? "border-l-amber-500"
         : "border-l-emerald-500";
   return (
-    <div className={`card-luxe border-l-4 ${border} p-4`}>
+    <div className={`card-luxe border-l-4 ${border} p-5 transition-shadow hover:shadow-luxe`}>
       <div className="flex items-start gap-3">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gold/15 text-xs font-bold text-gold">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold/15 font-[family-name:var(--font-outfit)] text-sm font-bold text-gold">
           {finding.rank}
         </span>
         <div>
@@ -87,9 +141,9 @@ export function FindingCard({ finding }: { finding: KeyFinding }) {
 
 export function NarrativeBlock({ label, text }: { label: string; text: string }) {
   return (
-    <div className="card-luxe border border-gold/25 bg-gold/[0.04] p-5">
+    <div className="card-luxe relative overflow-hidden border border-gold/25 bg-gradient-to-br from-gold/[0.07] to-transparent p-6">
       <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gold">{label}</p>
-      <p className="mt-2 text-sm leading-relaxed text-foreground report-prose">{text}</p>
+      <p className="mt-3 text-[0.95rem] leading-relaxed text-foreground report-prose">{text}</p>
     </div>
   );
 }
@@ -103,20 +157,23 @@ export function SubscoreBar({
   value: number | null;
   benchmark?: number;
 }) {
-  const pct = value != null ? Math.min(100, Math.max(0, ((value - 1) / 4) * 100)) : 0;
-  const benchPct = ((benchmark - 1) / 4) * 100;
+  const pct = scoreBarPct(value);
+  const benchPct = scoreBarPct(benchmark);
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-xs">
         <span className="font-medium text-foreground">{label}</span>
-        <span className="tabular-nums text-muted">{value?.toFixed(2) ?? "—"}</span>
+        <span className="tabular-nums text-muted">{formatScore(value)}</span>
       </div>
       <div className="relative h-2.5 rounded-full bg-black/5 dark:bg-white/10">
-        <div className="h-2.5 rounded-full bg-gold/80" style={{ width: `${pct}%` }} />
+        <div
+          className="h-2.5 rounded-full bg-gradient-to-r from-gold to-primary/80"
+          style={{ width: `${pct}%` }}
+        />
         <div
           className="absolute top-0 h-2.5 w-0.5 bg-foreground/40"
           style={{ left: `${benchPct}%` }}
-          title={`기준 ${benchmark}`}
+          title={`기준 ${formatScore(benchmark)}`}
         />
       </div>
     </div>
@@ -125,7 +182,7 @@ export function SubscoreBar({
 
 export function PrescriptionCard({ item, showWave }: { item: PrescriptionItem; showWave?: boolean }) {
   return (
-    <div className="card-luxe p-4">
+    <div className="card-luxe p-4 transition-shadow hover:shadow-luxe">
       <div className="flex items-center gap-2">
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-white">
           {item.priority}

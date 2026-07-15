@@ -25,7 +25,10 @@ type Snapshot = {
     competencies: Array<{ id: string; code: string; nameKo: string }>;
   }>;
   mapsTo: MapsRow[];
+  diagnosticSignals?: MapsRow[];
+  diagnosticSubscaleKeys?: string[];
   edgeTypeLabels: Record<string, string>;
+  kindLabels?: Record<string, string>;
 };
 
 type Neighbor = {
@@ -56,6 +59,10 @@ export function MeaningLayerPanel({ embedded = false }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedNcs, setSelectedNcs] = useState<string | null>(null);
+  const [browseKind, setBrowseKind] = useState<"NCS_COMPETENCY" | "DIAGNOSTIC_SUBSCALE">(
+    "NCS_COMPETENCY",
+  );
+  const [selectedDiagnostic, setSelectedDiagnostic] = useState<string | null>(null);
   const [neighbors, setNeighbors] = useState<Neighbor[] | null>(null);
   const [neighborLabel, setNeighborLabel] = useState<string | null>(null);
   const [jdPreviewText, setJdPreviewText] = useState("");
@@ -91,11 +98,13 @@ export function MeaningLayerPanel({ embedded = false }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!selectedNcs) return;
+    const kind = browseKind;
+    const key = browseKind === "NCS_COMPETENCY" ? selectedNcs : selectedDiagnostic;
+    if (!key) return;
     let cancelled = false;
     (async () => {
       const res = await fetch(
-        `/api/admin/meaning/node/${encodeURIComponent("NCS_COMPETENCY")}/${encodeURIComponent(selectedNcs)}`,
+        `/api/admin/meaning/node/${encodeURIComponent(kind)}/${encodeURIComponent(key)}`,
       );
       const json = await res.json();
       if (cancelled) return;
@@ -104,13 +113,13 @@ export function MeaningLayerPanel({ embedded = false }: Props) {
         setNeighborLabel(null);
         return;
       }
-      setNeighborLabel(json.label ?? selectedNcs);
+      setNeighborLabel(json.label ?? key);
       setNeighbors(json.neighbors ?? []);
     })();
     return () => {
       cancelled = true;
     };
-  }, [selectedNcs]);
+  }, [browseKind, selectedNcs, selectedDiagnostic]);
 
   const mapsByNcs = useMemo(() => {
     if (!data) return new Map<string, MapsRow[]>();
@@ -313,26 +322,84 @@ export function MeaningLayerPanel({ embedded = false }: Props) {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
-            <aside className="space-y-1">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">NCS 6</p>
-              {data.ncsCompetencies.map((c) => (
+            <aside className="space-y-3">
+              <div className="flex gap-1 rounded-lg border border-card-border p-0.5">
                 <button
-                  key={c.code}
                   type="button"
-                  onClick={() => setSelectedNcs(c.code)}
-                  className={`block w-full rounded-lg px-3 py-2 text-left text-sm transition ${
-                    selectedNcs === c.code
+                  onClick={() => setBrowseKind("NCS_COMPETENCY")}
+                  className={`flex-1 rounded-md px-2 py-1.5 text-[11px] transition ${
+                    browseKind === "NCS_COMPETENCY"
                       ? "bg-accent/15 font-medium text-accent"
-                      : "text-foreground hover:bg-card"
+                      : "text-muted hover:text-foreground"
                   }`}
                 >
-                  {c.nameKo}
-                  <span className="mt-0.5 block text-[11px] text-muted">{c.code}</span>
+                  NCS 역량
                 </button>
-              ))}
+                <button
+                  type="button"
+                  onClick={() => setBrowseKind("DIAGNOSTIC_SUBSCALE")}
+                  className={`flex-1 rounded-md px-2 py-1.5 text-[11px] transition ${
+                    browseKind === "DIAGNOSTIC_SUBSCALE"
+                      ? "bg-accent/15 font-medium text-accent"
+                      : "text-muted hover:text-foreground"
+                  }`}
+                >
+                  진단 서브스케일
+                </button>
+              </div>
+              {browseKind === "NCS_COMPETENCY" ? (
+                <div className="space-y-1">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">NCS 6</p>
+                  {data.ncsCompetencies.map((c) => (
+                    <button
+                      key={c.code}
+                      type="button"
+                      onClick={() => setSelectedNcs(c.code)}
+                      className={`block w-full rounded-lg px-3 py-2 text-left text-sm transition ${
+                        selectedNcs === c.code
+                          ? "bg-accent/15 font-medium text-accent"
+                          : "text-foreground hover:bg-card"
+                      }`}
+                    >
+                      {c.nameKo}
+                      <span className="mt-0.5 block text-[11px] text-muted">{c.code}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
+                    SIGNALS 매핑
+                  </p>
+                  {(data.diagnosticSubscaleKeys ?? []).map((code) => {
+                    const label =
+                      (data.diagnosticSignals ?? []).find((r) => r.fromKey === code)?.fromLabel ??
+                      code;
+                    return (
+                      <button
+                        key={code}
+                        type="button"
+                        onClick={() => setSelectedDiagnostic(code)}
+                        className={`block w-full rounded-lg px-3 py-2 text-left text-sm transition ${
+                          selectedDiagnostic === code
+                            ? "bg-accent/15 font-medium text-accent"
+                            : "text-foreground hover:bg-card"
+                        }`}
+                      >
+                        {label}
+                        <span className="mt-0.5 block text-[11px] text-muted">{code}</span>
+                      </button>
+                    );
+                  })}
+                  {(data.diagnosticSubscaleKeys ?? []).length === 0 ? (
+                    <p className="px-2 text-xs text-muted">시드된 서브스케일 매핑 없음</p>
+                  ) : null}
+                </div>
+              )}
             </aside>
 
             <div className="space-y-6">
+              {browseKind === "NCS_COMPETENCY" ? (
               <div className="rounded-xl border border-card-border bg-card p-4">
                 <h3 className="text-sm font-semibold text-foreground">
                   MAPS_TO — {neighborLabel ?? selectedNcs}
@@ -383,10 +450,51 @@ export function MeaningLayerPanel({ embedded = false }: Props) {
                   ) : null}
                 </ul>
               </div>
+              ) : (
+              <div className="rounded-xl border border-card-border bg-card p-4">
+                <h3 className="text-sm font-semibold text-foreground">
+                  SIGNALS — {neighborLabel ?? selectedDiagnostic ?? "서브스케일 선택"}
+                </h3>
+                <p className="mt-1 text-xs text-muted">
+                  조직진단 드라이버(서브스케일)가 면접에서 어떤 NCS 역량을 신호하는지도 연결
+                </p>
+                <ul className="mt-3 space-y-2">
+                  {(data.diagnosticSignals ?? [])
+                    .filter((r) => r.fromKey === selectedDiagnostic)
+                    .map((row) => (
+                      <li
+                        key={row.id}
+                        className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-card-border/60 px-3 py-2 text-sm"
+                      >
+                        <div>
+                          <span className="font-medium text-foreground">{row.toLabel}</span>
+                          <span className="ml-2 text-xs text-muted">{row.toKey}</span>
+                          {row.note ? (
+                            <p className="mt-0.5 text-xs text-muted">{row.note}</p>
+                          ) : null}
+                        </div>
+                        <span className="text-xs tabular-nums text-muted">w={row.weight}</span>
+                      </li>
+                    ))}
+                  {selectedDiagnostic &&
+                  (data.diagnosticSignals ?? []).filter((r) => r.fromKey === selectedDiagnostic)
+                    .length === 0 ? (
+                    <li className="text-sm text-muted">이 서브스케일에 SIGNALS 매핑이 없습니다.</li>
+                  ) : null}
+                  {!selectedDiagnostic ? (
+                    <li className="text-sm text-muted">왼쪽에서 서브스케일을 선택하세요.</li>
+                  ) : null}
+                </ul>
+              </div>
+              )}
 
               <div className="rounded-xl border border-card-border bg-card p-4">
                 <h3 className="text-sm font-semibold text-foreground">이웃 노드 (1-hop)</h3>
-                <p className="mt-1 text-xs text-muted">선택 NCS 노드에서의 모든 활성 엣지</p>
+                <p className="mt-1 text-xs text-muted">
+                  {browseKind === "NCS_COMPETENCY"
+                    ? "선택 NCS 노드에서의 모든 활성 엣지"
+                    : "선택 진단 서브스케일 노드에서의 모든 활성 엣지"}
+                </p>
                 <ul className="mt-3 max-h-72 space-y-1.5 overflow-y-auto text-sm">
                   {(neighbors ?? []).map((n) => (
                     <li

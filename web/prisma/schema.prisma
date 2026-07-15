@@ -1252,6 +1252,8 @@ enum ConceptNodeKind {
   GLOBAL_QUESTION
   BENCHMARK_REF
   ROLE_CONTEXT
+  /** ARC Index DiagnosticSubscale.code (드라이버·소주제) */
+  DIAGNOSTIC_SUBSCALE
 }
 
 enum ConceptEdgeType {

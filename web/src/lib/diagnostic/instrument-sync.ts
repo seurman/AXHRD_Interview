@@ -9,15 +9,9 @@ export type InstrumentSyncResult = {
   stats: {
     sections: { created: number; updated: number };
     subscales: { created: number; updated: number };
-    items: { created: number; updated: number };
+    items: { created: number; updated: number; deleted: number };
   };
 };
-
-function bumpVersion(current: string): string {
-  const m = current.match(/^v(\d+)\.(\d+)$/i);
-  if (m) return `v${m[1]}.${Number(m[2]) + 1}`;
-  return `${current}+sync`;
-}
 
 function itemData(sectionId: string, subscaleId: string | null, item: SeedItem) {
   return {
@@ -111,6 +105,15 @@ async function upsertItemsForSection(
       stats.items.updated += 1;
       changed = true;
     }
+    byCode.delete(item.itemCode);
+  }
+
+  // Remove items no longer in seed (answers first — FK has no Cascade)
+  for (const orphan of byCode.values()) {
+    await prisma.diagnosticAnswer.deleteMany({ where: { itemId: orphan.id } });
+    await prisma.diagnosticItem.delete({ where: { id: orphan.id } });
+    stats.items.deleted += 1;
+    changed = true;
   }
 
   return changed;
@@ -121,7 +124,7 @@ export async function syncArcIndexFromSeed(prisma: PrismaClient): Promise<Instru
   const stats = {
     sections: { created: 0, updated: 0 },
     subscales: { created: 0, updated: 0 },
-    items: { created: 0, updated: 0 },
+    items: { created: 0, updated: 0, deleted: 0 },
   };
 
   const seed = ARC_INDEX_SEED;
@@ -241,12 +244,16 @@ export async function syncArcIndexFromSeed(prisma: PrismaClient): Promise<Instru
 
   let version = instrument.version;
   let versionBumped = false;
-  if (changed && !instrumentCreated) {
-    version = bumpVersion(instrument.version);
-    versionBumped = true;
+  if (changed || instrument.version !== seed.instrument.version) {
+    version = seed.instrument.version;
+    versionBumped = version !== instrument.version;
     await prisma.diagnosticInstrument.update({
       where: { id: instrument.id },
-      data: { version },
+      data: {
+        version,
+        nameKo: seed.instrument.nameKo,
+        estimatedMinutes: seed.instrument.estimatedMinutes,
+      },
     });
   }
 

@@ -10,8 +10,8 @@ export default async function DiagnosisResponsePage({ params }: Props) {
   if (!waveSlug || !teamSlug) notFound();
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <main className="dx-page">
       <DiagnosticSurveyClient waveSlug={waveSlug} teamSlug={teamSlug} />
-    </div>
+    </main>
   );
 }

@@ -21,6 +21,7 @@ export const MEANING_KIND_LABELS: Record<ConceptNodeKind, string> = {
   GLOBAL_QUESTION: "글로벌 문항",
   BENCHMARK_REF: "벤치마크",
   ROLE_CONTEXT: "직무·맥락",
+  DIAGNOSTIC_SUBSCALE: "진단 서브스케일",
 };
 
 export type MeaningNeighbor = {
@@ -67,6 +68,30 @@ async function resolveNodeLabel(kind: ConceptNodeKind, key: string): Promise<str
       return key;
     case "ROLE_CONTEXT":
       return key;
+    case "DIAGNOSTIC_SUBSCALE": {
+      const DRIVER: Record<string, string> = {
+        SL: "경영진 리더십",
+        SV: "직속 상사",
+        PS: "심리적 안전",
+        C: "소통·정보",
+        EM: "구조·자율권",
+        PM: "성과·보상",
+        LG: "학습·성장",
+        CI: "문화·포용",
+        WE: "업무 환경",
+        "SE.C": "헌신·연결",
+        "SE.E": "활력",
+        "SE.F": "몰두",
+        BO: "행동 결과",
+        "TL.TR": "팀리더십·신뢰",
+        "TL.GF": "팀리더십·성장",
+        "TL.PS": "팀리더십·안전",
+        LA: "학습·적응",
+        SA: "전략 정렬",
+        CD: "변화 방향",
+      };
+      return DRIVER[key] ?? key;
+    }
     default:
       return key;
   }
@@ -102,10 +127,18 @@ export async function loadMeaningLayerSnapshot() {
   ]);
 
   const mapsTo = relations.filter((r) => r.edgeType === "MAPS_TO");
+  const diagnosticSignals = relations.filter(
+    (r) =>
+      r.edgeType === "SIGNALS" &&
+      r.fromKind === "DIAGNOSTIC_SUBSCALE" &&
+      r.toKind === "NCS_COMPETENCY",
+  );
   const ncsLabel = new Map(ncs.map((c) => [c.code, c.nameKo]));
   const globalLabel = new Map(
     clusters.flatMap((cl) => cl.competencies.map((c) => [c.code, c.nameKo] as const)),
   );
+
+  const diagnosticKeys = [...new Set(diagnosticSignals.map((r) => r.fromKey))].sort();
 
   return {
     stats: {
@@ -130,10 +163,37 @@ export async function loadMeaningLayerSnapshot() {
       weight: r.weight,
       note: r.note,
     })),
+    diagnosticSignals: diagnosticSignals.map((r) => ({
+      id: r.id,
+      fromKey: r.fromKey,
+      fromLabel: DRIVER_LABEL_FALLBACK[r.fromKey] ?? r.fromKey,
+      toKey: r.toKey,
+      toLabel: ncsLabel.get(r.toKey) ?? r.toKey,
+      weight: r.weight,
+      note: r.note,
+    })),
+    diagnosticSubscaleKeys: diagnosticKeys,
     edgeTypeLabels: MEANING_EDGE_LABELS,
     kindLabels: MEANING_KIND_LABELS,
   };
 }
+
+const DRIVER_LABEL_FALLBACK: Record<string, string> = {
+  SL: "경영진 리더십",
+  SV: "직속 상사",
+  PS: "심리적 안전",
+  C: "소통·정보",
+  EM: "구조·자율권",
+  PM: "성과·보상",
+  LG: "학습·성장",
+  CI: "문화·포용",
+  "SE.C": "헌신·연결",
+  LA: "학습·적응",
+  SA: "전략 정렬",
+  "TL.TR": "팀리더십·신뢰",
+  "TL.GF": "팀리더십·성장",
+  "TL.PS": "팀리더십·안전",
+};
 
 export async function loadConceptNeighborhood(
   kind: ConceptNodeKind,

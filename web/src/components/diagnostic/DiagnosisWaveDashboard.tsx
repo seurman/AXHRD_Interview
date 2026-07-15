@@ -1,14 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { DiagnosticLongitudinalPanel } from "@/components/diagnostic/DiagnosticLongitudinalPanel";
+import { ScoreHero } from "@/components/admin/diagnostic/ArcReportUi";
+import { ArcRadar } from "@/components/admin/diagnostic/ArcRadar";
+import { ReportGuideCard, ExecutiveSummaryCard } from "@/components/admin/diagnostic/ReportGuideUi";
+import { buildAxisMeaningLine, type AxisCode } from "@/lib/diagnostic/report-guide";
+import { buildExecutiveSummaryParts } from "@/lib/diagnostic/report-narratives";
+import { formatScore } from "@/lib/diagnostic/format-score";
 import type { ResolvedReportConfig } from "@/lib/diagnostic/report-profile";
 import { isSectionEnabledInReport, isTabEnabledInReport } from "@/lib/diagnostic/report-profile";
 import {
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  Radar,
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -147,13 +149,50 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
   const activeScores =
     selectedTeam === "all" ? aggregate : teamScores[selectedTeam] ?? aggregate;
 
+  const executiveSummary = useMemo(() => {
+    if (loading || !wave || !activeScores?.scores || activeScores.hidden) return null;
+    const cfg = wave.reportConfig ?? null;
+    const enabledAxes = (["OHI", "ORI", "OVI", "OAI"] as AxisCode[]).filter((c) =>
+      sectionEnabled(c, cfg, wave.enabledSectionCodes),
+    );
+    return buildExecutiveSummaryParts({
+      scores: {
+        ohi: {
+          overall: activeScores.scores.ohi.overall,
+          riskIndex: activeScores.scores.ohi.riskIndex,
+          band: activeScores.scores.ohi.band,
+          drivers: activeScores.scores.ohi.drivers,
+        },
+        ori: {
+          ORI: activeScores.scores.ori.ORI,
+          band: activeScores.scores.ori.band,
+        },
+        ovi: {
+          OVI: activeScores.scores.ovi.OVI,
+          band: activeScores.scores.ovi.band,
+          dynamicCongruenceGap: activeScores.scores.ovi.dynamicCongruenceGap,
+        },
+        oai: {
+          OAI: activeScores.scores.oai.OAI,
+          band: activeScores.scores.oai.band,
+        },
+        oaiPattern: activeScores.scores.oaiPattern,
+      },
+      sampleSize: activeScores.sampleSize ?? 0,
+      collectionRate: null,
+      waveLabel: wave.label,
+      waveNumber: wave.waveNumber,
+      enabledAxes,
+    });
+  }, [activeScores, wave, loading]);
+
   if (loading) return <p className="text-sm text-muted">집계 중…</p>;
   if (!wave) return <p className="text-sm text-muted">웨이브를 찾을 수 없습니다.</p>;
 
   const reportConfig = wave.reportConfig ?? null;
-  const enabled = reportConfig?.activeSectionCodes ?? wave.enabledSectionCodes;
   const isEnabled = (code: string) => sectionEnabled(code, reportConfig, wave.enabledSectionCodes);
   const showTeamsTab = !reportConfig || isTabEnabledInReport("summary", reportConfig);
+  const showNarratives = reportConfig?.showNarratives !== false;
 
   const radarData =
     activeScores?.scores && !activeScores.hidden
@@ -277,33 +316,77 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
             </div>
           ) : (
             <>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {isEnabled("OHI") && (
-                  <MetricCard label="OHI" value={activeScores?.scores?.ohi.overall} band={activeScores?.scores?.ohi.band} />
-                )}
-                {isEnabled("ORI") && (
-                  <MetricCard label="ORI" value={activeScores?.scores?.ori.ORI} band={activeScores?.scores?.ori.band} />
-                )}
-                {isEnabled("OVI") && (
-                  <MetricCard label="OVI" value={activeScores?.scores?.ovi.OVI} band={activeScores?.scores?.ovi.band} />
-                )}
-                {isEnabled("OAI") && (
-                  <MetricCard label="OAI" value={activeScores?.scores?.oai.OAI} band={activeScores?.scores?.oai.band} />
-                )}
-              </div>
+              <ReportGuideCard />
+              {showNarratives && executiveSummary && (
+                <ExecutiveSummaryCard parts={executiveSummary} />
+              )}
+              <ScoreHero
+                title={selectedTeam === "all" ? "전사 조직 펄스" : "선택 조직 펄스"}
+                meta={wave.label ? `Wave ${wave.waveNumber} · ${wave.label}` : `Wave ${wave.waveNumber}`}
+                axes={[
+                  ...(isEnabled("OHI")
+                    ? [
+                        {
+                          code: "OHI",
+                          value: activeScores?.scores?.ohi.overall,
+                          band: activeScores?.scores?.ohi.band,
+                          meaning: buildAxisMeaningLine(
+                            "OHI",
+                            activeScores?.scores?.ohi.overall,
+                            activeScores?.scores?.ohi.band,
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(isEnabled("ORI")
+                    ? [
+                        {
+                          code: "ORI",
+                          value: activeScores?.scores?.ori.ORI,
+                          band: activeScores?.scores?.ori.band,
+                          meaning: buildAxisMeaningLine(
+                            "ORI",
+                            activeScores?.scores?.ori.ORI,
+                            activeScores?.scores?.ori.band,
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(isEnabled("OVI")
+                    ? [
+                        {
+                          code: "OVI",
+                          value: activeScores?.scores?.ovi.OVI,
+                          band: activeScores?.scores?.ovi.band,
+                          meaning: buildAxisMeaningLine(
+                            "OVI",
+                            activeScores?.scores?.ovi.OVI,
+                            activeScores?.scores?.ovi.band,
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(isEnabled("OAI")
+                    ? [
+                        {
+                          code: "OAI",
+                          value: activeScores?.scores?.oai.OAI,
+                          band: activeScores?.scores?.oai.band,
+                          meaning: buildAxisMeaningLine(
+                            "OAI",
+                            activeScores?.scores?.oai.OAI,
+                            activeScores?.scores?.oai.band,
+                          ),
+                        },
+                      ]
+                    : []),
+                ]}
+              />
 
               {radarData.length > 0 && (
                 <div className="card-luxe p-4">
                   <h3 className="mb-2 text-sm font-semibold">4축 레이더</h3>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart data={radarData}>
-                        <PolarGrid />
-                        <PolarAngleAxis dataKey="axis" tick={{ fontSize: 12 }} />
-                        <Radar dataKey="value" stroke="#c9a227" fill="#c9a227" fillOpacity={0.35} />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  <ArcRadar data={radarData} />
                 </div>
               )}
 
@@ -417,10 +500,10 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
                     <span className="text-xs text-muted">N={self.sampleSize ?? "—"}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {isEnabled("OHI") && <MetricCard label="OHI(SE)" value={self.OHI_SE} band={null} />}
-                    {isEnabled("ORI") && <MetricCard label="ORI" value={self.ORI} band={null} />}
-                    {isEnabled("OVI") && <MetricCard label="OVI" value={self.OVI} band={null} />}
-                    {isEnabled("OAI") && <MetricCard label="OAI" value={self.OAI} band={null} />}
+                    {isEnabled("OHI") && <MiniMetric label="OHI(SE)" value={self.OHI_SE} />}
+                    {isEnabled("ORI") && <MiniMetric label="ORI" value={self.ORI} />}
+                    {isEnabled("OVI") && <MiniMetric label="OVI" value={self.OVI} />}
+                    {isEnabled("OAI") && <MiniMetric label="OAI" value={self.OAI} />}
                   </div>
                 </div>
               );
@@ -510,22 +593,13 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
   );
 }
 
-function MetricCard({
-  label,
-  value,
-  band,
-}: {
-  label: string;
-  value: number | null | undefined;
-  band: string | null | undefined;
-}) {
+function MiniMetric({ label, value }: { label: string; value: number | null | undefined }) {
   return (
-    <div className="card-luxe p-4 text-center">
-      <p className="text-xs text-muted">{label}</p>
-      <p className="text-2xl font-bold text-foreground">
-        {value != null ? value.toFixed(2) : "—"}
+    <div className="rounded-xl border border-card-border bg-background/60 px-3 py-2 text-center">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{label}</p>
+      <p className="mt-0.5 font-[family-name:var(--font-outfit)] text-lg font-bold tabular-nums text-foreground">
+        {formatScore(value)}
       </p>
-      {band && <p className="mt-1 text-xs text-gold">{band}</p>}
     </div>
   );
 }

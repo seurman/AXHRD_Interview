@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "description": "ARC DiagnosticSubscale (IPA 드라이버 등) → NCS Competency SIGNALS. ProfileSignal→Competency와 같이 '조직 기후 신호가 면접에서 검증할 역량'을 가리키므로 SIGNALS를 재사용(신규 엣지 타입 없음). 억지 매핑 없이 개념이 분명한 것만.",
+  "edgeType": "SIGNALS",
+  "fromKind": "DIAGNOSTIC_SUBSCALE",
+  "toKind": "NCS_COMPETENCY",
+  "intentionallyUnmapped": [
+    "SE.E",
+    "SE.F",
+    "BO",
+    "CD",
+    "AXS",
+    "AXC",
+    "AXA",
+    "AXG",
+    "HV",
+    "CV",
+    "AV",
+    "EA",
+    "OA",
+    "WE"
+  ],
+  "intentionallyUnmappedNotes": "에너지/몰두·행동결과·AX세부·속도축·환경은 면접 NCS 6코드와 1:1 대응이 약함. WE는 업무환경 문항 중심으로 생략.",
+  "mappings": [
+    {
+      "fromKey": "PS",
+      "targets": [
+        { "toKey": "ORG_FIT", "weight": 1.0, "note": "말하기 안전한 조직 기후 ↔ 조직적합·규범 이해" },
+        { "toKey": "COMMUNICATION", "weight": 0.85, "note": "불편한 진실·의견 표명 ↔ 의사소통" }
+      ]
+    },
+    {
+      "fromKey": "SL",
+      "targets": [
+        { "toKey": "LEADERSHIP", "weight": 1.0, "note": "경영진 말-행동 일치·방향 제시 ↔ 리더십" }
+      ]
+    },
+    {
+      "fromKey": "SV",
+      "targets": [
+        { "toKey": "LEADERSHIP", "weight": 0.9, "note": "직속 상사 지원·피드백 ↔ 리더십 행동" },
+        { "toKey": "COMMUNICATION", "weight": 0.7, "note": "성과 피드백 품질 ↔ 의사소통" }
+      ]
+    },
+    {
+      "fromKey": "C",
+      "targets": [
+        { "toKey": "COMMUNICATION", "weight": 1.0, "note": "정보 공유·상향 소통 ↔ 의사소통" }
+      ]
+    },
+    {
+      "fromKey": "EM",
+      "targets": [
+        { "toKey": "PROBLEM_SOLVING", "weight": 0.85, "note": "결정권·자율 ↔ 문제해결 판단" },
+        { "toKey": "ORG_FIT", "weight": 0.75, "note": "교차 협업 ↔ 조직적합" }
+      ]
+    },
+    {
+      "fromKey": "PM",
+      "targets": [
+        { "toKey": "JOB_FIT", "weight": 0.9, "note": "성과·기여 인정 ↔ 직무전문성/성과 기준" }
+      ]
+    },
+    {
+      "fromKey": "LG",
+      "targets": [
+        { "toKey": "GROWTH", "weight": 1.0, "note": "학습·성장 기회 ↔ 성장·학습" }
+      ]
+    },
+    {
+      "fromKey": "CI",
+      "targets": [
+        { "toKey": "ORG_FIT", "weight": 0.85, "note": "존중·포용 문화 ↔ 조직적합" }
+      ]
+    },
+    {
+      "fromKey": "SE.C",
+      "targets": [
+        { "toKey": "ORG_FIT", "weight": 0.8, "note": "헌신·미래 연결감 ↔ 조직적합" }
+      ]
+    },
+    {
+      "fromKey": "LA",
+      "targets": [
+        { "toKey": "GROWTH", "weight": 0.9, "note": "학습·적응 역량 ↔ 성장·학습" }
+      ]
+    },
+    {
+      "fromKey": "TL.TR",
+      "targets": [
+        { "toKey": "LEADERSHIP", "weight": 0.95, "note": "팀 리더 신뢰·존중 ↔ 리더십" }
+      ]
+    },
+    {
+      "fromKey": "TL.GF",
+      "targets": [
+        { "toKey": "LEADERSHIP", "weight": 0.95, "note": "성장지원·피드백 ↔ 리더십/육성" },
+        { "toKey": "GROWTH", "weight": 0.7, "note": "구성원 성장 지원 ↔ 성장" }
+      ]
+    },
+    {
+      "fromKey": "TL.PS",
+      "targets": [
+        { "toKey": "LEADERSHIP", "weight": 0.85, "note": "팀 심리안전 리더십 ↔ 리더십" },
+        { "toKey": "ORG_FIT", "weight": 0.7, "note": "실패 허용 문화 ↔ 조직적합" }
+      ]
+    },
+    {
+      "fromKey": "SA",
+      "targets": [
+        { "toKey": "ORG_FIT", "weight": 0.75, "note": "전략-현장 정렬 ↔ 조직 맥락 이해" },
+        { "toKey": "JOB_FIT", "weight": 0.65, "note": "우선순위·시간 배분 ↔ 직무 성과 기준" }
+      ]
+    }
+  ]
+}
