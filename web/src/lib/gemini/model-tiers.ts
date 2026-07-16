@@ -14,9 +14,9 @@
  * - 요약·대화형 중간 = Standard
  *
  * 예상 세션당 비율(대략):
- * - Lite: interpret 휴리스틱 외 테마·STT 교정·OCR 보조
+ * - Lite: interpret 휴리스틱 외 테마·STT 교정·OCR 보조, 답변 채점(evaluate_answer, N회 — 최고빈도라 비용 우선)
  * - Standard: 자소서 enrich, JD 매핑
- * - Pro: 첨삭 1회 + 문항 개인화 N회 + 답변 평가/트리플 피드백 N회
+ * - Pro: 첨삭 1회 + 문항 개인화 N회 + claim 검증/트리플 피드백/세션 리포트
  */
 
 export type GeminiModelTier = "lite" | "standard" | "pro";
@@ -29,12 +29,15 @@ export const GEMINI_TASK_TIER = {
   personalize_question: "pro",
   /** claim 검증 문항 */
   claim_question: "pro",
-  /** STAR/루브릭 채점·짧은 피드백 */
-  evaluate_answer: "pro",
+  /** STAR/루브릭 채점·짧은 피드백 — 세션당 최대 18회 호출되는 최고빈도 콜.
+   *  채점 기준이 정형화돼 있어 Lite로도 품질 유지 가능 — 비용 절감 우선 (2026-07-15) */
+  evaluate_answer: "lite",
   /** 세 렌즈 피드백 */
   triple_feedback: "pro",
   /** 자소서↔답변 claim 검증 */
   claim_verification: "pro",
+  /** 세션 종료 리포트 (구 DeepSeek) */
+  session_report: "pro",
   /** 자소서 LLM enrich */
   resume_enrich: "standard",
   /** JD → 스타일/키워드 */

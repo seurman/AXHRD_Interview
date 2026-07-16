@@ -43,9 +43,13 @@ export function ArcRadar({
             <PolarGrid stroke="currentColor" className="text-foreground/10" />
             <PolarAngleAxis dataKey="axis" tick={{ fontSize: 12, fill: "currentColor" }} className="text-muted" />
             <PolarRadiusAxis
+              type="number"
               domain={ARC_RADAR_DOMAIN}
+              ticks={[0, 1, 2, 3, 4, 5]}
               tickCount={6}
+              allowDataOverflow
               tick={{ fontSize: 10, fill: "currentColor" }}
+              tickFormatter={(v: number) => formatScore(v)}
               className="text-muted"
               axisLine={false}
             />

@@ -21,3 +21,13 @@ export function scoreBarPct(value: number | null | undefined): number {
   if (value == null || !Number.isFinite(value)) return 0;
   return Math.min(100, Math.max(0, ((value - ARC_SCALE_MIN) / (ARC_SCALE_MAX - ARC_SCALE_MIN)) * 100));
 }
+
+/** Recharts axis tick / LabelList / Tooltip helpers — always 2 decimal places. */
+export function scoreAxisTick(value: number): string {
+  return formatScore(value);
+}
+
+export function scoreTooltipValue(value: number | string): [string, string] {
+  const n = typeof value === "number" ? value : Number(value);
+  return [formatScore(Number.isFinite(n) ? n : null), "점수"];
+}

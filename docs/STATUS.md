@@ -2,6 +2,13 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 수집률·레이더·바차트 표시 수정 (2026-07-15)
+
+- **수집률**: 분모를 기관 멤버 수 → **초대 링크 발급 수**(조직 전체 링크 1 + TEAM 리프 링크). 공유 링크로 100% 초과 시 메타/주의문에 링크당 평균 응답 문구.
+- **레이더**: ArcRadar에 type=number · domain=[0,5] · allowDataOverflow · 눈금 0~5 · 2자리 tick.
+- **바차트**: 1–5/0–5 축 tickFormatter로 소수점 2자리.
+
+
 ## 최근 작업 — 역량 폐루프 Phase 1·2 (공통 온톨로지 + Gap-to-Hire) (2026-07-15)
 
 조직진단(DiagnosticSubscale)과 면접(NCS Competency)을 L3 Meaning `ConceptRelation`으로 연결하고, IPA FOCUS 드라이버 → 인터뷰 킷 역량 추천 UI까지 구현.

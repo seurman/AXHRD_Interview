@@ -45,6 +45,7 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
+import { formatScore, scoreAxisTick } from "@/lib/diagnostic/format-score";
 
 const BENCHMARK_MODES: Array<{ id: BenchmarkMode; label: string }> = [
   { id: "org", label: "전사 평균" },
@@ -317,7 +318,7 @@ export function OrgReportSection({
                   <BarChart data={barData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                    <YAxis domain={[1, 5]} />
+                    <YAxis domain={[1, 5]} tickFormatter={scoreAxisTick} />
                     <Tooltip labelFormatter={(_, p) => (p?.[0]?.payload as { fullName?: string })?.fullName ?? ""} />
                     <Legend />
                     <ReferenceLine y={3.5} stroke="#94a3b8" strokeDasharray="4 4" />

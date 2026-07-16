@@ -1,15 +1,13 @@
 /**
- * DeepSeek — 세션 리포트 생성 (가성비, 세션당 1회)
- * 폴더명(claude)은 레거시입니다 — Claude에서 DeepSeek로 교체했습니다.
- * @see https://api-docs.deepseek.com
+ * Gemini Pro — 세션 리포트 생성 (세션당 1회)
+ * 폴더명(claude)은 레거시입니다 — Claude → DeepSeek → Gemini Pro로 교체했습니다.
+ * (DeepSeek는 결제/크레딧 미설정으로 매 호출이 실패해 mock으로만 폴백되던 것을 정리)
  */
 
-import { fetchWithTimeout } from "@/lib/http/fetch-with-timeout";
+import { generateGeminiText } from "@/lib/gemini/client";
 import { competencyLabel } from "@/lib/labels";
 import { extractQuote } from "@/lib/interview/feedback-helpers";
 import type { CompetencySummary, SessionReportData } from "@/types";
-
-const DEEPSEEK_BASE = "https://api.deepseek.com";
 
 const REPORT_SYSTEM = `당신은 한국 취업 코치입니다.
 면접 세션 결과를 바탕으로 격려와 구체적 개선안이 담긴 리포트 JSON을 작성하세요.
@@ -40,14 +38,6 @@ export async function generateSessionReport(params: {
     hadFollowUp?: boolean;
   }>;
 }): Promise<SessionReportData> {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-
-  if (!apiKey) {
-    return mockReport(params.competencies, params.responses);
-  }
-
-  const model = process.env.DEEPSEEK_REPORT_MODEL ?? "deepseek-chat";
-
   const userContent = JSON.stringify(
     {
       company: params.companyName,
@@ -60,39 +50,25 @@ export async function generateSessionReport(params: {
   );
 
   try {
-    const res = await fetchWithTimeout(`${DEEPSEEK_BASE}/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: REPORT_SYSTEM },
-          { role: "user", content: userContent },
-        ],
-        temperature: 0.4,
-        max_tokens: 2048,
-      }),
-      // 리포트는 세션 종료 시 사용자가 기다리는 동기 호출이라 20초로 제한
-      timeoutMs: 20000,
-      retries: 1,
+    const text = await generateGeminiText({
+      systemInstruction: REPORT_SYSTEM,
+      userPrompt: userContent,
+      temperature: 0.4,
+      maxOutputTokens: 3072,
+      // 리포트는 세션 종료 시 사용자가 기다리는 동기 호출이라 타임아웃을 둔다
+      timeoutMs: 45_000,
+      task: "session_report",
+      responseMimeType: "application/json",
     });
 
-    if (!res.ok) {
-      console.error("[DeepSeek report] HTTP", res.status, await res.text());
-      return mockReport(params.competencies, params.responses);
-    }
-
-    const data = await res.json();
-    const text = data?.choices?.[0]?.message?.content ?? "";
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]) as SessionReportData;
+    if (text) {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]) as SessionReportData;
+      }
     }
   } catch (e) {
-    console.error("[DeepSeek report]", e);
+    console.error("[Gemini session report]", e);
   }
 
   return mockReport(params.competencies, params.responses);

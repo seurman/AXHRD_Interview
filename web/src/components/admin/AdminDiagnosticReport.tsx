@@ -58,7 +58,11 @@ import {
   ZAxis,
 } from "recharts";
 import { ArcRadar } from "@/components/admin/diagnostic/ArcRadar";
-import { formatScore } from "@/lib/diagnostic/format-score";
+import { formatScore, scoreAxisTick } from "@/lib/diagnostic/format-score";
+import {
+  computeCollectionRatePercent,
+  formatCollectionRateMeta,
+} from "@/lib/diagnostic/collection-rate";
 
 const LPA_COLOR: Record<string, string> = {
   "고몰입형": "bg-emerald-500",
@@ -193,7 +197,7 @@ type WaveMeta = {
   label: string | null;
   waveNumber: number;
   responseCount: number;
-  memberCount: number | null;
+  inviteLinkCount: number | null;
   enabledSectionCodes: string[] | null;
   sectionBadge: string;
   reportConfig: ResolvedReportConfig | null;
@@ -251,7 +255,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
         label: w.label,
         waveNumber: w.waveNumber,
         responseCount: w.responseCount,
-        memberCount: w.memberCount ?? null,
+        inviteLinkCount: w.inviteLinkCount ?? null,
         enabledSectionCodes: w.enabledSectionCodes,
         sectionBadge: w.sectionBadge,
         reportConfig: w.reportConfig ?? null,
@@ -298,10 +302,12 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
     return true;
   });
 
-  const collectionRate =
-    wave?.memberCount && wave.memberCount > 0
-      ? Math.round((wave.responseCount / wave.memberCount) * 100)
-      : null;
+  const collectionRate = wave
+    ? computeCollectionRatePercent(wave.responseCount, wave.inviteLinkCount ?? 0)
+    : null;
+  const collectionRateMeta = wave
+    ? formatCollectionRateMeta(wave.responseCount, wave.inviteLinkCount, collectionRate)
+    : null;
 
   const prescriptions: PrescriptionItem[] = useMemo(() => {
     if (!aggregate || aggregate.hidden) return [];
@@ -322,6 +328,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
       scores: aggregate.scores,
       sampleSize: aggregate.sampleSize ?? 0,
       collectionRate,
+      inviteLinkCount: wave.inviteLinkCount,
       waveLabel: wave.label,
       waveNumber: wave.waveNumber,
       enabledAxes,
@@ -419,7 +426,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
             <p className="arc-score-hero__meta">
               {wave.organizationName ? `${wave.organizationName} · ` : ""}
               활성 섹션 {wave.sectionBadge} · 응답 {wave.responseCount}건
-              {collectionRate != null ? ` · 수집률 ${collectionRate}%` : ""}
+              {collectionRateMeta ? ` · ${collectionRateMeta}` : ""}
               {reportConfig?.instrumentVersionSnapshot
                 ? ` · 설문 ${reportConfig.instrumentVersionSnapshot}`
                 : ""}
@@ -473,7 +480,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
 
               <ScoreHero
                 title="4축 조직 펄스"
-                meta={`N=${aggregate?.sampleSize ?? 0}${collectionRate != null ? ` · 수집률 ${collectionRate}%` : ""}`}
+                meta={`N=${aggregate?.sampleSize ?? 0}${collectionRateMeta ? ` · ${collectionRateMeta}` : ""}`}
                 axes={[
                   ...(isEnabled("OHI")
                     ? [
@@ -587,8 +594,8 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                     <ResponsiveContainer width="100%" height="100%">
                       <ScatterChart margin={{ top: 12, right: 12, bottom: 12, left: 12 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="ORI" domain={[1, 5]} tick={{ fontSize: 10 }} />
-                        <YAxis type="number" dataKey="OVI" domain={[1, 5]} tick={{ fontSize: 10 }} />
+                        <XAxis type="number" dataKey="ORI" domain={[1, 5]} tick={{ fontSize: 10 }} tickFormatter={scoreAxisTick} />
+                        <YAxis type="number" dataKey="OVI" domain={[1, 5]} tick={{ fontSize: 10 }} tickFormatter={scoreAxisTick} />
                         <ZAxis range={[20, 20]} />
                         <ReferenceLine x={3.5} stroke="#e2e8f0" />
                         <ReferenceLine y={3.5} stroke="#e2e8f0" />
@@ -808,8 +815,8 @@ function TeamsOverview({
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" dataKey="ORI" name="ORI" domain={[1, 5]} />
-                <YAxis type="number" dataKey="OVI" name="OVI" domain={[1, 5]} />
+                <XAxis type="number" dataKey="ORI" name="ORI" domain={[1, 5]} tickFormatter={scoreAxisTick} />
+                <YAxis type="number" dataKey="OVI" name="OVI" domain={[1, 5]} tickFormatter={scoreAxisTick} />
                 <ZAxis range={[100, 400]} />
                 {aggregate.gapMatrix?.xBase != null && (
                   <ReferenceLine x={aggregate.gapMatrix.xBase} stroke="#94a3b8" strokeDasharray="4 4" />
@@ -859,8 +866,8 @@ function TeamsOverview({
               <BarChart data={childBarData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                <YAxis domain={[1, 5]} />
-                <Tooltip />
+                <YAxis domain={[1, 5]} tickFormatter={scoreAxisTick} />
+                <Tooltip formatter={(v: number) => formatScore(v)} />
                 <Legend />
                 {isEnabled("OHI") && <Bar dataKey="OHI" name="OHI(SE)" fill="#c9a227" />}
                 {isEnabled("ORI") && <Bar dataKey="ORI" fill="#64748b" />}

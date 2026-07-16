@@ -9,6 +9,7 @@ import {
 import { parseEnabledSectionCodes, sectionBadgeLabel } from "@/lib/diagnostic/section-filter";
 import { waveStatusLabel } from "@/lib/diagnostic/wave-status";
 import { resolveReportConfigForWave } from "@/lib/diagnostic/report-profile";
+import { countInviteLinks } from "@/lib/diagnostic/collection-rate";
 import { prisma } from "@/lib/prisma";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -27,7 +28,6 @@ export async function GET(req: Request, ctx: Ctx) {
         select: {
           id: true,
           name: true,
-          _count: { select: { members: true } },
         },
       },
       instrument: { select: { id: true, nameKo: true, code: true, minGroupSize: true } },
@@ -40,6 +40,7 @@ export async function GET(req: Request, ctx: Ctx) {
   const enabled = parseEnabledSectionCodes(wave.enabledSectionCodes);
   const reportConfig = await resolveReportConfigForWave(wave.id);
   const leafTeams = wave.teams.filter((t) => t.level === "TEAM");
+  const inviteLinkCount = countInviteLinks(leafTeams.length);
 
   return NextResponse.json({
     wave: {
@@ -56,10 +57,10 @@ export async function GET(req: Request, ctx: Ctx) {
       instrumentVersionSnapshot: wave.instrumentVersionSnapshot,
       reportConfig,
       responseCount: wave._count.responses,
+      inviteLinkCount,
       minGroupSize: reportConfig?.minGroupSize ?? wave.instrument.minGroupSize,
       orgWideLink: `${baseUrl}/diagnosis/w/${wave.slug}`,
       organization: { id: wave.organization.id, name: wave.organization.name },
-      memberCount: wave.organization._count.members,
       instrument: wave.instrument,
       teams: teamLinksFromWave(wave, leafTeams, baseUrl),
       // 사업본부·사업부·팀 전체 트리 — 하이어라키 드릴다운 UI용

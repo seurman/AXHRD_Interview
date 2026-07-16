@@ -240,7 +240,7 @@ export function OhiReportSection({
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" domain={[-2, 2]} />
                 <YAxis type="category" dataKey="label" width={88} tick={{ fontSize: 10 }} />
-                <Tooltip />
+                <Tooltip formatter={(v: number) => formatScore(v)} />
                 <ReferenceLine x={0} stroke="#94a3b8" />
                 <Bar dataKey="gap" name="중요도−현재" fill="#c9a227" radius={[0, 4, 4, 0]} />
               </BarChart>

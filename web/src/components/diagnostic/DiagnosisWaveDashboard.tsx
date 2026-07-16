@@ -7,7 +7,8 @@ import { ArcRadar } from "@/components/admin/diagnostic/ArcRadar";
 import { ReportGuideCard, ExecutiveSummaryCard } from "@/components/admin/diagnostic/ReportGuideUi";
 import { buildAxisMeaningLine, type AxisCode } from "@/lib/diagnostic/report-guide";
 import { buildExecutiveSummaryParts } from "@/lib/diagnostic/report-narratives";
-import { formatScore } from "@/lib/diagnostic/format-score";
+import { formatScore, scoreAxisTick } from "@/lib/diagnostic/format-score";
+import { computeCollectionRatePercent } from "@/lib/diagnostic/collection-rate";
 import type { ResolvedReportConfig } from "@/lib/diagnostic/report-profile";
 import { isSectionEnabledInReport, isTabEnabledInReport } from "@/lib/diagnostic/report-profile";
 import {
@@ -78,6 +79,8 @@ type WaveMeta = {
   waveNumber: number;
   sectionBadge?: string;
   orgWideLink?: string;
+  responseCount?: number;
+  inviteLinkCount?: number | null;
   enabledSectionCodes: string[] | null;
   reportConfig?: ResolvedReportConfig | null;
   teams: Array<{ id: string; name: string }>;
@@ -179,7 +182,11 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
         oaiPattern: activeScores.scores.oaiPattern,
       },
       sampleSize: activeScores.sampleSize ?? 0,
-      collectionRate: null,
+      collectionRate: computeCollectionRatePercent(
+        wave.responseCount ?? activeScores.sampleSize ?? 0,
+        wave.inviteLinkCount ?? 0,
+      ),
+      inviteLinkCount: wave.inviteLinkCount ?? null,
       waveLabel: wave.label,
       waveNumber: wave.waveNumber,
       enabledAxes,
@@ -397,9 +404,9 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={driverEntries} layout="vertical" margin={{ left: 24 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" domain={[0, 5]} />
+                        <XAxis type="number" domain={[0, 5]} tickFormatter={scoreAxisTick} />
                         <YAxis type="category" dataKey="code" width={40} tick={{ fontSize: 11 }} />
-                        <Tooltip />
+                        <Tooltip formatter={(v: number) => formatScore(v)} />
                         <Bar dataKey="current" name="현재" fill="#c9a227" />
                         <Bar dataKey="importance" name="중요도" fill="#64748b" />
                       </BarChart>
@@ -544,8 +551,8 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
                   <BarChart data={drillBarData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                    <YAxis domain={[1, 5]} />
-                    <Tooltip />
+                    <YAxis domain={[1, 5]} tickFormatter={scoreAxisTick} />
+                    <Tooltip formatter={(v: number) => formatScore(v)} />
                     {isEnabled("OHI") && <Bar dataKey="OHI" name="OHI(SE)" fill="#c9a227" />}
                     {isEnabled("ORI") && <Bar dataKey="ORI" fill="#64748b" />}
                     {isEnabled("OVI") && <Bar dataKey="OVI" fill="#94a3b8" />}

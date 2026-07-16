@@ -51,6 +51,7 @@ export function buildExecutiveSummary(input: {
   scores: ScoresInput;
   sampleSize: number;
   collectionRate: number | null;
+  inviteLinkCount?: number | null;
   waveLabel: string | null;
   waveNumber: number;
   enabledAxes?: Array<"OHI" | "ORI" | "OVI" | "OAI">;
@@ -62,11 +63,12 @@ export function buildExecutiveSummaryParts(input: {
   scores: ScoresInput;
   sampleSize: number;
   collectionRate: number | null;
+  inviteLinkCount?: number | null;
   waveLabel: string | null;
   waveNumber: number;
   enabledAxes?: Array<"OHI" | "ORI" | "OVI" | "OAI">;
 }): ExecutiveSummaryParts {
-  const { scores: s, sampleSize, collectionRate, waveLabel, waveNumber } = input;
+  const { scores: s, sampleSize, collectionRate, inviteLinkCount, waveLabel, waveNumber } = input;
   const enabled = new Set(input.enabledAxes ?? ["OHI", "ORI", "OVI", "OAI"]);
 
   const axes: string[] = [];
@@ -84,8 +86,17 @@ export function buildExecutiveSummaryParts(input: {
   }
 
   const waveBit = `Wave ${waveNumber}${waveLabel ? ` 「${waveLabel}」` : ""}`;
-  const rateBit =
-    collectionRate != null ? `수집률은 약 ${collectionRate}%입니다.` : "수집률 정보는 아직 없습니다.";
+  let rateBit = "수집률 정보는 아직 없습니다.";
+  if (collectionRate != null && inviteLinkCount != null && inviteLinkCount > 0) {
+    if (collectionRate <= 100) {
+      rateBit = `초대 링크 ${inviteLinkCount}개 대비 수집률은 약 ${collectionRate}%입니다.`;
+    } else {
+      const per = (sampleSize / inviteLinkCount).toFixed(1);
+      rateBit = `초대 링크 ${inviteLinkCount}개로 ${sampleSize}명 응답을 모았습니다(링크당 평균 ${per}명 · 공유 링크는 100%를 넘을 수 있음).`;
+    }
+  } else if (collectionRate != null) {
+    rateBit = `수집률은 약 ${collectionRate}%입니다.`;
+  }
 
   let story: string;
   if (axes.length === 0) {

@@ -38,7 +38,7 @@ import {
 } from "@/lib/diagnostic/analysis-tables";
 import { pickItemRows } from "@/components/admin/diagnostic/OhiReportSection";
 import { ArcRadar } from "@/components/admin/diagnostic/ArcRadar";
-import { formatScore } from "@/lib/diagnostic/format-score";
+import { formatScore, scoreAxisTick } from "@/lib/diagnostic/format-score";
 import {
   Bar,
   BarChart,
@@ -220,7 +220,7 @@ export function OriReportSection({
               <BarChart data={oppChart}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="dim" tick={{ fontSize: 10 }} />
-                <YAxis domain={[1, 5]} />
+                <YAxis domain={[1, 5]} tickFormatter={scoreAxisTick} />
                 <Tooltip />
                 <ReferenceLine y={3.5} stroke="#94a3b8" strokeDasharray="4 4" />
                 <Bar dataKey="value" name="점수" fill="#c9a227" radius={[4, 4, 0, 0]} />
@@ -393,7 +393,7 @@ export function OviReportSection({
               <BarChart data={dimChart}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="dim" tick={{ fontSize: 11 }} />
-                <YAxis domain={[1, 5]} />
+                <YAxis domain={[1, 5]} tickFormatter={scoreAxisTick} />
                 <Tooltip />
                 <ReferenceLine y={3.5} stroke="#94a3b8" strokeDasharray="4 4" />
                 <Bar dataKey="value" name="점수" fill="#c9a227" radius={[4, 4, 0, 0]} />
@@ -417,8 +417,8 @@ export function OviReportSection({
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 12, right: 12, bottom: 12, left: 12 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" dataKey="HV" name="HV" domain={[1, 5]} label={{ value: "HV 건강속도", position: "bottom", fontSize: 10 }} />
-                <YAxis type="number" dataKey="AV" name="AV" domain={[1, 5]} label={{ value: "AV 실제속도", angle: -90, position: "left", fontSize: 10 }} />
+                <XAxis type="number" dataKey="HV" name="HV" domain={[1, 5]} tickFormatter={scoreAxisTick} label={{ value: "HV 건강속도", position: "bottom", fontSize: 10 }} />
+                <YAxis type="number" dataKey="AV" name="AV" domain={[1, 5]} tickFormatter={scoreAxisTick} label={{ value: "AV 실제속도", angle: -90, position: "left", fontSize: 10 }} />
                 <ZAxis range={[24, 24]} />
                 <ReferenceLine x={3.5} stroke="#e2e8f0" strokeDasharray="4 4" />
                 <ReferenceLine y={3.5} stroke="#e2e8f0" strokeDasharray="4 4" />
@@ -553,7 +553,7 @@ export function OaiReportSection({
               <BarChart data={weightChart}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="dim" tick={{ fontSize: 11 }} />
-                <YAxis domain={[0, 5]} />
+                <YAxis domain={[0, 5]} tickFormatter={scoreAxisTick} />
                 <Tooltip formatter={(v: number, name: string) => [formatScore(v), name === "value" ? "기여" : name]} />
                 <Legend />
                 <Bar dataKey="value" name="가중 기여" fill="#c9a227" radius={[4, 4, 0, 0]} />

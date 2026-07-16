@@ -14,6 +14,7 @@ import {
 import { parseEnabledSectionCodes, sectionBadgeLabel } from "@/lib/diagnostic/section-filter";
 import { waveStatusLabel } from "@/lib/diagnostic/wave-status";
 import { resolveReportConfigForWave } from "@/lib/diagnostic/report-profile";
+import { countInviteLinks } from "@/lib/diagnostic/collection-rate";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -43,6 +44,7 @@ export async function GET(req: Request, ctx: Ctx) {
   const enabled = parseEnabledSectionCodes(wave.enabledSectionCodes);
   const reportConfig = await resolveReportConfigForWave(wave.id);
   const leafTeams = wave.teams.filter((t) => t.level === "TEAM");
+  const inviteLinkCount = countInviteLinks(leafTeams.length);
   return NextResponse.json({
     wave: {
       id: wave.id,
@@ -57,6 +59,7 @@ export async function GET(req: Request, ctx: Ctx) {
       sectionBadge: sectionBadgeLabel(reportConfig?.activeSectionCodes ?? enabled),
       reportConfig,
       responseCount: wave._count.responses,
+      inviteLinkCount,
       minGroupSize: reportConfig?.minGroupSize ?? wave.instrument.minGroupSize,
       orgWideLink: `${baseUrl}/diagnosis/w/${wave.slug}`,
       teams: teamLinksFromWave(wave, leafTeams, baseUrl),
