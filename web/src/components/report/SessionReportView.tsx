@@ -12,6 +12,8 @@ import { SessionIntegrityNotice } from "@/components/interview/SessionIntegrityN
 import { NarrativeLead } from "@/components/dashboard/NarrativeLead";
 import { buildSessionReportNarrative } from "@/lib/dashboard/career-narrative";
 import { computeDeliveryStats } from "@/lib/interview/feedback-helpers";
+import { parseEvidenceAssessmentReport } from "@/lib/assessment/evidence-report";
+import { EvidenceReportView } from "@/components/assessment/EvidenceReportView";
 import type { SessionReportData } from "@/types";
 import type { Prisma } from "@prisma/client";
 
@@ -44,6 +46,7 @@ export function SessionReportView({
   afterTimeline?: ReactNode;
 }) {
   const report = session.report?.summaryJson as SessionReportData | undefined;
+  const evidence = parseEvidenceAssessmentReport(session.report?.evidenceJson);
   const avgScore = report
     ? Math.round(
         report.sections.reduce((s, sec) => s + (sec.score ?? 0), 0) /
@@ -157,6 +160,8 @@ export function SessionReportView({
           )}
 
           <ReportCompetencyAnalysis sections={report.sections} />
+
+          {evidence ? <EvidenceReportView report={evidence} /> : null}
 
           <BonusQuestionSection response={bonusResponse} />
 

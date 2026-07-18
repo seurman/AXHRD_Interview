@@ -11,6 +11,7 @@ const PRODUCT_HREFS: Record<OrgProductKey, string> = {
   interview: "/org/dashboard/cohort",
   competency: "/org/candidates",
   diagnostic: "/org/diagnosis",
+  assessment: "/org/settings/assessment",
 };
 
 export function OrgOverview({

@@ -10,7 +10,7 @@ import {
   type OrgProductKey,
 } from "@/lib/org/entitlements";
 
-const PRODUCT_KEYS: OrgProductKey[] = ["interview", "competency", "diagnostic"];
+const PRODUCT_KEYS: OrgProductKey[] = ["interview", "competency", "diagnostic", "assessment"];
 
 function isProductKey(value: unknown): value is OrgProductKey {
   return typeof value === "string" && PRODUCT_KEYS.includes(value as OrgProductKey);
@@ -33,6 +33,7 @@ export async function GET() {
       saasPersonalizationEnabled: true,
       saasPersonalizationEnabledAt: true,
       diagnosticEnabled: true,
+      assessmentEnabled: true,
     },
   });
 
@@ -65,7 +66,7 @@ export async function PATCH(req: Request) {
   }
   if (!isProductKey(body.product)) {
     return NextResponse.json(
-      { error: "product는 interview | competency | diagnostic 중 하나여야 합니다." },
+      { error: "product는 interview | competency | diagnostic | assessment 중 하나여야 합니다." },
       { status: 400 },
     );
   }
@@ -82,6 +83,7 @@ export async function PATCH(req: Request) {
       saasPersonalizationEnabled: true,
       saasPersonalizationEnabledAt: true,
       diagnosticEnabled: true,
+      assessmentEnabled: true,
     },
   });
   if (!before) {
@@ -99,6 +101,7 @@ export async function PATCH(req: Request) {
       saasPersonalizationEnabled: true,
       saasPersonalizationEnabledAt: true,
       diagnosticEnabled: true,
+      assessmentEnabled: true,
     },
   });
   const afterEntitlements = readOrgEntitlements(org);

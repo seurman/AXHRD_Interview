@@ -38,6 +38,14 @@ export const GEMINI_TASK_TIER = {
   claim_verification: "pro",
   /** 세션 종료 리포트 (구 DeepSeek) */
   session_report: "pro",
+  /** 역량별 개별 피드백 (구 DeepSeek) */
+  competency_feedback: "pro",
+  /** 증거형 평가 리포트 (하위역량·+/- 행동·평정 근거) */
+  evidence_report: "pro",
+  /** 역량평가 역할연기 — 상대역 페르소나 대화 턴 (채점 아님, 캐릭터 연기 전용) */
+  role_play_persona: "standard",
+  /** 업로드 과제 문서 → 역할연기/서류함 구조화 초안 */
+  assessment_scenario_draft: "pro",
   /** 자소서 LLM enrich */
   resume_enrich: "standard",
   /** JD → 스타일/키워드 */

@@ -12,13 +12,19 @@ import type { CompetencySummary, SessionReportData } from "@/types";
 const REPORT_SYSTEM = `당신은 한국 취업 코치입니다.
 면접 세션 결과를 바탕으로 격려와 구체적 개선안이 담긴 리포트 JSON을 작성하세요.
 
-중요: 각 section의 "highlight"는 해당 역량 답변 중 지원자가 실제로 한 말을 그대로 인용해야 합니다(지어내지 마세요).
-꼬리질문이 있었던 문항(hadFollowUp=true)은 원 답변과 꼬리질문 답변을 함께 보고, 꼬리질문에 얼마나 잘 대응했는지도 해당 section의 content나 suggestions에 자연스럽게 반영하세요.
+중요(근거 기반 평가 원칙):
+- 각 section의 "content"는 반드시 (1) 관찰된 구체적 답변 내용을 근거로 제시하고 (2) 그 근거가 왜 이 점수/수준에
+  해당하는지 설명하는 순서로 쓰세요. 답변에 없는 행동·역량을 추정해서 있다고 쓰지 마세요 — 관찰되지 않았으면
+  "이번 세션에서는 확인되지 않았다"고 솔직히 쓰세요.
+- 각 section의 "highlight"는 해당 역량 답변 중 지원자가 실제로 한 말을 그대로 인용해야 합니다(지어내지 마세요).
+  "highlightType"에는 그 인용이 강점 근거("strength")인지 개선이 필요한 근거("growth")인지 표시하세요 — 그
+  section에서 더 인상적이거나 코칭 가치가 큰 쪽 하나만 고르세요.
+- 꼬리질문이 있었던 문항(hadFollowUp=true)은 원 답변과 꼬리질문 답변을 함께 보고, 꼬리질문에 얼마나 잘 대응했는지도 해당 section의 content나 suggestions에 자연스럽게 반영하세요.
 
 반드시 JSON만 출력:
 {
   "summary": "2-3문장 총평",
-  "sections": [{"title": "역량명", "content": "분석", "score": 0-100, "suggestions": ["..."], "highlight": "실제 답변 인용"}],
+  "sections": [{"title": "역량명", "content": "근거→판단 순으로 쓴 분석", "score": 0-100, "suggestions": ["..."], "highlight": "실제 답변 인용", "highlightType": "strength|growth"}],
   "strengths": ["..."],
   "improvements": ["..."],
   "nextSteps": ["..."]
@@ -161,6 +167,7 @@ function mockReport(
         score: percentile,
         suggestions: suggestionsForCompetency(c.competency, percentile),
         highlight: bestAnswer ? extractQuote(bestAnswer.answer) : undefined,
+        highlightType: percentile >= 50 ? "strength" : "growth",
       };
     }),
     strengths: top ? [`${competencyLabel(top.competency)} 역량 (상위 ${Math.round(top.percentile)}%)`] : [],

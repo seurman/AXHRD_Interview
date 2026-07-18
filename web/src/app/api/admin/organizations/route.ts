@@ -135,6 +135,11 @@ export async function POST(req: Request) {
         ? body.competencyEnabled
         : productDefaults.competency;
 
+  const assessmentEnabled =
+    typeof body.assessmentEnabled === "boolean"
+      ? body.assessmentEnabled
+      : productDefaults.assessment;
+
   let planTier: PlanTier | null = null;
   if (body.planTier === null || body.planTier === "" || body.planTier === "NONE") {
     planTier = null;
@@ -170,6 +175,7 @@ export async function POST(req: Request) {
         adminNotes: adminNotes || null,
         interviewEnabled,
         diagnosticEnabled,
+        assessmentEnabled,
         saasPersonalizationEnabled,
         saasPersonalizationEnabledAt: saasPersonalizationEnabled ? now : null,
       },

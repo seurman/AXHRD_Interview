@@ -194,6 +194,25 @@ export interface CompanyContext {
   };
 }
 
+// ── Evidence assessment (v1) ──
+
+export type {
+  RatingLevelLabel,
+  BehaviorPolarity,
+  EvidenceAssessmentDomain,
+  ObservedBehavior,
+  SubCompetencyAssessment,
+  CompetencyAssessmentBlock,
+  RatingScaleRow,
+  DevelopmentTask,
+  EvidenceAssessmentReport,
+  SubskillContent,
+} from "./evidence-assessment";
+
+export { scoreToLevelLabel, percentileToFiveScale } from "./evidence-assessment";
+
+import type { EvidenceAssessmentReport } from "./evidence-assessment";
+
 // ── Report ──
 
 export interface ReportSection {
@@ -203,6 +222,8 @@ export interface ReportSection {
   suggestions?: string[];
   /** 해당 역량 답변 중 실제로 인용한 문장 (지어내지 않음) */
   highlight?: string;
+  /** highlight가 강점 근거인지 개선 필요 근거인지 — UI에서 색상 구분용 */
+  highlightType?: "strength" | "growth";
 }
 
 export interface SessionReportData {
@@ -211,4 +232,6 @@ export interface SessionReportData {
   strengths: string[];
   improvements: string[];
   nextSteps: string[];
+  /** EvidenceAssessmentReport v1 — 면접·역할수행·진단 공통 증거형 리포트 */
+  evidence?: EvidenceAssessmentReport;
 }

@@ -13,6 +13,15 @@ interface VoiceRecorderProps {
   allowTextFallback?: boolean;
   /** 텍스트 붙여넣기 감지(채점 차단 없음) */
   onPasteDetected?: () => void;
+  /**
+   * submit: 정지 시 즉시 onTranscript (면접 기본)
+   * draft: 정지 후 텍스트로 편집 가능, 확인 버튼으로 onTranscript (서류함·역할연기)
+   */
+  submitMode?: "submit" | "draft";
+  /** draft 모드 확인 버튼 라벨 */
+  confirmLabel?: string;
+  /** 마이크 안내 문구 */
+  idleHint?: string;
 }
 
 const SPEECH_ERROR_MESSAGES: Record<string, string> = {
@@ -34,6 +43,9 @@ export function VoiceRecorder({
   voiceInputEnabled = true,
   allowTextFallback = true,
   onPasteDetected,
+  submitMode = "submit",
+  confirmLabel = "답변 제출",
+  idleHint = "마이크를 눌러 답변을 시작하세요",
 }: VoiceRecorderProps) {
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -46,6 +58,7 @@ export function VoiceRecorder({
   const startedAtRef = useRef<number | null>(null);
   const finalTranscriptRef = useRef("");
   const manualStopRef = useRef(false);
+  const lastDurationRef = useRef<number | undefined>(undefined);
 
   const getFullTranscript = useCallback(() => {
     return finalTranscriptRef.current.trim() || transcript.trim();
@@ -159,17 +172,24 @@ export function VoiceRecorder({
       ? Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000))
       : undefined;
     startedAtRef.current = null;
+    lastDurationRef.current = durationSec;
 
     if (fullText) {
-      submitText(fullText, durationSec);
+      if (submitMode === "draft") {
+        setTextDraft(fullText);
+        setShowTextInput(true);
+        setError(null);
+      } else {
+        submitText(fullText, durationSec);
+      }
     } else {
       setError("음성이 인식되지 않았습니다. 조금 더 길게 말씀하시거나 아래에 직접 입력해 주세요.");
       if (allowTextFallback) setShowTextInput(true);
     }
-  }, [allowTextFallback, getFullTranscript, submitText]);
+  }, [allowTextFallback, getFullTranscript, submitMode, submitText]);
 
   const submitDraft = () => {
-    submitText(textDraft);
+    submitText(textDraft, lastDurationRef.current);
   };
 
   if (!voiceInputEnabled) {
@@ -182,6 +202,7 @@ export function VoiceRecorder({
           onSubmit={submitDraft}
           disabled={disabled}
           onPasteDetected={onPasteDetected}
+          confirmLabel={confirmLabel}
         />
       </div>
     );
@@ -201,6 +222,7 @@ export function VoiceRecorder({
             onSubmit={submitDraft}
             disabled={disabled}
             onPasteDetected={onPasteDetected}
+            confirmLabel={confirmLabel}
           />
         )}
       </div>
@@ -240,7 +262,7 @@ export function VoiceRecorder({
             녹음 중… 답변 후 정지 버튼
           </span>
         ) : (
-          "마이크를 눌러 답변을 시작하세요"
+          idleHint
         )}
       </p>
 
@@ -274,6 +296,7 @@ export function VoiceRecorder({
               onSubmit={submitDraft}
               disabled={disabled}
               onPasteDetected={onPasteDetected}
+              confirmLabel={confirmLabel}
             />
           )}
         </div>
@@ -288,12 +311,14 @@ function TextFallback({
   onSubmit,
   disabled,
   onPasteDetected,
+  confirmLabel = "답변 제출",
 }: {
   value: string;
   onChange: (v: string) => void;
   onSubmit: () => void;
   disabled?: boolean;
   onPasteDetected?: () => void;
+  confirmLabel?: string;
 }) {
   return (
     <div className="space-y-2">
@@ -312,7 +337,7 @@ function TextFallback({
         disabled={disabled || !value.trim()}
         className="btn-primary w-full py-3 text-sm disabled:opacity-50"
       >
-        답변 제출
+        {confirmLabel}
       </button>
     </div>
   );

@@ -16,6 +16,7 @@ export default async function OrgCohortDashboardPage() {
       interviewEnabled: true,
       saasPersonalizationEnabled: true,
       diagnosticEnabled: true,
+      assessmentEnabled: true,
       status: true,
     },
   });

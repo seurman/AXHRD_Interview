@@ -14,11 +14,11 @@ datasource db {
 // ── Enums ──
 
 enum CompanySize {
-  LARGE       // 대기업
-  MID         // 중견
-  SMALL       // 중소
-  STARTUP     // 스타트업
-  PUBLIC      // 공기업/공사
+  LARGE // 대기업
+  MID // 중견
+  SMALL // 중소
+  STARTUP // 스타트업
+  PUBLIC // 공기업/공사
 }
 
 enum SessionStatus {
@@ -62,8 +62,10 @@ enum JobRole {
   OTHER
 }
 
-/** 특정 기업명 대신 선택하는 산업군 — 회사명 추측(휴리스틱)보다 신뢰도 높은
- *  질문 톤/실제 기출 질문 매칭의 기준이 된다. 소규모로 시작, 추후 마이그레이션으로 확장 가능. */
+/**
+ * 특정 기업명 대신 선택하는 산업군 — 회사명 추측(휴리스틱)보다 신뢰도 높은
+ * 질문 톤/실제 기출 질문 매칭의 기준이 된다. 소규모로 시작, 추후 마이그레이션으로 확장 가능.
+ */
 enum Industry {
   IT_SW
   FINANCE
@@ -80,22 +82,26 @@ enum OAuthProvider {
 // ── Organization (대학 취업센터 등 B2B2C 코호트) ──
 
 enum OrgRole {
-  MEMBER  // 구성원 — 학생·직장인·지원자 (개인 제품 이용)
+  MEMBER // 구성원 — 학생·직장인·지원자 (개인 제품 이용)
   STUDENT // @deprecated — MEMBER와 동일, 마이그레이션 호환
-  STAFF   // 기관 담당자 — 코호트 집계 조회
-  ADMIN   // 기관 관리자 — 설정·킷·진단
+  STAFF // 기관 담당자 — 코호트 집계 조회
+  ADMIN // 기관 관리자 — 설정·킷·진단
 }
 
-/** 기관 생성 승인 절차. 아무나 로그인해서 기관을 만들고 ADMIN이 되는 것을
- *  막기 위해, 신규 생성 기관은 PENDING 상태로 시작해 슈퍼어드민 승인 전까지
- *  가입 코드로 학생을 받을 수 없고 대시보드도 열리지 않는다. */
+/**
+ * 기관 생성 승인 절차. 아무나 로그인해서 기관을 만들고 ADMIN이 되는 것을
+ * 막기 위해, 신규 생성 기관은 PENDING 상태로 시작해 슈퍼어드민 승인 전까지
+ * 가입 코드로 학생을 받을 수 없고 대시보드도 열리지 않는다.
+ */
 enum OrgStatus {
   PENDING
   APPROVED
   REJECTED
 }
 
-/** 기관 유형 — 취업센터 vs 기업 인사팀 등 온보딩·상품 프리셋 구분 */
+/**
+ * 기관 유형 — 취업센터 vs 기업 인사팀 등 온보딩·상품 프리셋 구분
+ */
 enum OrgKind {
   CAREER_CENTER
   HR_ENTERPRISE
@@ -106,12 +112,14 @@ enum SignupFlag {
   REVIEW
 }
 
-/** 플랫폼(콘텐츠·운영) 권한 — OrgRole(기관 소속)과 별개.
- *  SUPERADMIN_EMAILS 환경변수도 슈퍼어드민으로 인정(부트스트랩용).
- *  BUSINESS_ADMIN — 솔루션 매뉴얼·고객 시연(전 모듈 조회·체험, 설정/권한 변경 불가)
- *  DEMO_ADMIN — 영업·데모 샌드박스·Presenter 시연
- *  CONTENT_ADMIN — CMS 운영
- *  ADMIN — @deprecated DEMO_ADMIN으로 마이그레이션 */
+/**
+ * 플랫폼(콘텐츠·운영) 권한 — OrgRole(기관 소속)과 별개.
+ * SUPERADMIN_EMAILS 환경변수도 슈퍼어드민으로 인정(부트스트랩용).
+ * BUSINESS_ADMIN — 솔루션 매뉴얼·고객 시연(전 모듈 조회·체험, 설정/권한 변경 불가)
+ * DEMO_ADMIN — 영업·데모 샌드박스·Presenter 시연
+ * CONTENT_ADMIN — CMS 운영
+ * ADMIN — @deprecated DEMO_ADMIN으로 마이그레이션
+ */
 enum PlatformRole {
   NONE
   ADMIN
@@ -121,7 +129,9 @@ enum PlatformRole {
   SUPERADMIN
 }
 
-/** 플랫폼 관리자(ADMIN) 변경 감사 — SUPERADMIN 롤백용 */
+/**
+ * 플랫폼 관리자(ADMIN) 변경 감사 — SUPERADMIN 롤백용
+ */
 enum AdminAuditAction {
   CREATE
   UPDATE
@@ -136,46 +146,66 @@ enum AdminAuditAction {
   ORG_DELETE
 }
 
-/** 자기발견 인터뷰 세션 상태 — 채점 없는 성찰형 대화 */
+/**
+ * 자기발견 인터뷰 세션 상태 — 채점 없는 성찰형 대화
+ */
 enum SelfDiscoveryStatus {
   IN_PROGRESS
   COMPLETED
 }
 
 model Organization {
-  id         String    @id @default(cuid())
-  name       String
-  kind       OrgKind   @default(CAREER_CENTER)
-  /** 학생/직원이 소속을 연결할 때 입력하는 코드. 재발급 가능하도록 unique만 보장 */
-  joinCode   String    @unique
-  status     OrgStatus @default(PENDING)
-  approvedAt DateTime?
-  rejectedAt DateTime?
-  /** 슈퍼어드민이 부여 시 기관 ADMIN이 인터뷰 킷·루브릭 개인화 가능 */
-  saasPersonalizationEnabled Boolean @default(false)
+  id                           String    @id @default(cuid())
+  name                         String
+  kind                         OrgKind   @default(CAREER_CENTER)
+  /**
+   * 학생/직원이 소속을 연결할 때 입력하는 코드. 재발급 가능하도록 unique만 보장
+   */
+  joinCode                     String    @unique
+  status                       OrgStatus @default(PENDING)
+  approvedAt                   DateTime?
+  rejectedAt                   DateTime?
+  /**
+   * 슈퍼어드민이 부여 시 기관 ADMIN이 인터뷰 킷·루브릭 개인화 가능
+   */
+  saasPersonalizationEnabled   Boolean   @default(false)
   saasPersonalizationEnabledAt DateTime?
-  /** 계약·서비스 이용 기간 (슈퍼어드민 설정). null이면 기간 제한 없음 */
-  validFrom  DateTime?
-  validUntil DateTime?
-  /** 최대 소속 인원(학생·담당자 포함). null이면 구독 플랜 기본값 또는 무제한 */
-  maxSeats   Int?
-  /** 슈퍼어드민 메모 */
-  adminNotes String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  /**
+   * 계약·서비스 이용 기간 (슈퍼어드민 설정). null이면 기간 제한 없음
+   */
+  validFrom                    DateTime?
+  validUntil                   DateTime?
+  /**
+   * 최대 소속 인원(학생·담당자 포함). null이면 구독 플랜 기본값 또는 무제한
+   */
+  maxSeats                     Int?
+  /**
+   * 슈퍼어드민 메모
+   */
+  adminNotes                   String?
+  createdAt                    DateTime  @default(now())
+  updatedAt                    DateTime  @updatedAt
 
-  members       User[]
-  subscriptions Subscription[]
-  interviewKits OrgInterviewKit[]
-  interviewKitShares OrgInterviewKitShare[]
-  competencies Competency[]
-  questions    Question[]
-  surveys      Survey[]
-  rubricSets   RubricSet[]
-  diagnosticWaves DiagnosticWave[]
-  diagnosticEnabled Boolean @default(false)
-  /** 면접·코호트·세션 (기본 ON) */
-  interviewEnabled Boolean @default(true)
+  members             User[]
+  subscriptions       Subscription[]
+  interviewKits       OrgInterviewKit[]
+  interviewKitShares  OrgInterviewKitShare[]
+  competencies        Competency[]
+  questions           Question[]
+  surveys             Survey[]
+  rubricSets          RubricSet[]
+  diagnosticWaves     DiagnosticWave[]
+  diagnosticEnabled   Boolean                @default(false)
+  /**
+   * 면접·코호트·세션 (기본 ON)
+   */
+  interviewEnabled    Boolean                @default(true)
+  /**
+   * 역량평가(역할연기·서류함) 과제 배포 (슈퍼어드민 부여)
+   */
+  assessmentEnabled   Boolean                @default(false)
+  assessmentScenarios AssessmentScenario[]
+  assessmentShares    OrgAssessmentShare[]
 
   @@index([status])
   @@index([status, name(sort: Asc)])
@@ -185,50 +215,63 @@ model Organization {
 // ── User ──
 
 model User {
-  id              String   @id @default(cuid())
-  email           String   @unique
-  name            String
-  phone           String?
-  passwordHash    String?
-  /** 역량 인증서 공개 공유 링크용 토큰 (/c/[slug]). 요청 시 생성되는 opaque 토큰 */
-  certificateSlug String?  @unique
-  organizationId  String?
-  organization    Organization? @relation(fields: [organizationId], references: [id])
-  orgRole         OrgRole  @default(MEMBER)
-  /** 문항·역량·루브릭 CMS 및 플랫폼 권한 관리 */
-  platformRole    PlatformRole @default(NONE)
-  /** 데이터 활용 동의 시각 (회원가입 시 필수 동의) */
-  dataUseConsentAt DateTime?
-  /** 소속 기관 담당자가 내 상세 역량 리포트(대시보드)를 볼 수 있도록 허용 — 기본 false,
-   *  학생이 프로필에서 직접 켜야 함. 코호트 집계 통계에는 영향 없음. */
-  orgCoachingConsent   Boolean   @default(false)
+  id                   String        @id @default(cuid())
+  email                String        @unique
+  name                 String
+  phone                String?
+  passwordHash         String?
+  /**
+   * 역량 인증서 공개 공유 링크용 토큰 (/c/[slug]). 요청 시 생성되는 opaque 토큰
+   */
+  certificateSlug      String?       @unique
+  organizationId       String?
+  organization         Organization? @relation(fields: [organizationId], references: [id])
+  orgRole              OrgRole       @default(MEMBER)
+  /**
+   * 문항·역량·루브릭 CMS 및 플랫폼 권한 관리
+   */
+  platformRole         PlatformRole  @default(NONE)
+  /**
+   * 데이터 활용 동의 시각 (회원가입 시 필수 동의)
+   */
+  dataUseConsentAt     DateTime?
+  /**
+   * 소속 기관 담당자가 내 상세 역량 리포트(대시보드)를 볼 수 있도록 허용 — 기본 false,
+   * 학생이 프로필에서 직접 켜야 함. 코호트 집계 통계에는 영향 없음.
+   */
+  orgCoachingConsent   Boolean       @default(false)
   orgCoachingConsentAt DateTime?
-  /** 대량 가입·체험 패턴 의심 시 관리자 검토 플래그 */
-  signupFlag      SignupFlag @default(NONE)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  /**
+   * 대량 가입·체험 패턴 의심 시 관리자 검토 플래그
+   */
+  signupFlag           SignupFlag    @default(NONE)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 
-  profile         UserProfile?
-  targetCompanies TargetCompany[]
-  resumes         Resume[]
-  resumeReviews   ResumeReview[]
-  sessions        InterviewSession[]
-  competencyLogs  CompetencySnapshot[]
-  interviewPlans  InterviewPlan[]
-  competencyProgress CompetencyProgress[]
-  oauthAccounts   OAuthAccount[]
-  swipeActions    SwipeAction[]
-  selfDiscoverySessions SelfDiscoverySession[]
-  adminAuditLogs  AdminAuditLog[] @relation("AdminAuditActor")
-  auditRollbacks  AdminAuditLog[] @relation("AdminAuditRollback")
-  subscriptions   Subscription[]
-  orgInterviewKitUpdates OrgInterviewKit[] @relation("OrgInterviewKitUpdatedBy")
+  profile                      UserProfile?
+  targetCompanies              TargetCompany[]
+  resumes                      Resume[]
+  resumeReviews                ResumeReview[]
+  sessions                     InterviewSession[]
+  competencyLogs               CompetencySnapshot[]
+  interviewPlans               InterviewPlan[]
+  competencyProgress           CompetencyProgress[]
+  oauthAccounts                OAuthAccount[]
+  swipeActions                 SwipeAction[]
+  selfDiscoverySessions        SelfDiscoverySession[]
+  adminAuditLogs               AdminAuditLog[]        @relation("AdminAuditActor")
+  auditRollbacks               AdminAuditLog[]        @relation("AdminAuditRollback")
+  subscriptions                Subscription[]
+  orgInterviewKitUpdates       OrgInterviewKit[]      @relation("OrgInterviewKitUpdatedBy")
   orgInterviewKitSharesCreated OrgInterviewKitShare[] @relation("OrgInterviewKitShareCreatedBy")
-  textRecords     UserTextRecord[]
-  competenciesCreated Competency[] @relation("CompetencyCreatedBy")
-  questionsCreated    Question[]   @relation("QuestionCreatedBy")
-  surveysCreated      Survey[]     @relation("SurveyCreatedBy")
-  surveyResponses     SurveyResponse[]
+  textRecords                  UserTextRecord[]
+  competenciesCreated          Competency[]           @relation("CompetencyCreatedBy")
+  questionsCreated             Question[]             @relation("QuestionCreatedBy")
+  surveysCreated               Survey[]               @relation("SurveyCreatedBy")
+  assessmentAttempts           AssessmentAttempt[]
+  orgAssessmentSharesCreated   OrgAssessmentShare[]   @relation("OrgAssessmentShareCreatedBy")
+  assessmentTaskSourcesCreated AssessmentTaskSource[] @relation("AssessmentTaskSourceCreatedBy")
+  surveyResponses              SurveyResponse[]
 
   @@index([organizationId])
   @@index([platformRole])
@@ -239,7 +282,9 @@ model User {
   @@index([signupFlag, createdAt(sort: Desc)])
 }
 
-/** 회원 답변·선택 정보 — 분석·축적용 평문 아카이브 (append-only) */
+/**
+ * 회원 답변·선택 정보 — 분석·축적용 평문 아카이브 (append-only)
+ */
 enum UserTextRecordKind {
   INTERVIEW_SETUP
   INTERVIEW_ANSWER
@@ -288,7 +333,9 @@ model AdminAuditLog {
 
 model PlatformFeatureFlag {
   id          String   @id @default(cuid())
-  /** "resume_claim_verification" | "jd_bonus_question" | "triple_feedback_mode" */
+  /**
+   * "resume_claim_verification" | "jd_bonus_question" | "triple_feedback_mode"
+   */
   key         String   @unique
   label       String
   description String?  @db.Text
@@ -320,8 +367,10 @@ model UserProfile {
   careerYears     Int       @default(0)
   education       String?
   desiredJobRole  JobRole   @default(OTHER)
-  /** 질문 카드(스와이프)에서 보여줄 기본 산업군 — 사용자가 명시적으로 고른 값.
-   *  null이면 아직 한 번도 고르지 않은 상태(랜덤 대신 선택을 요구한다) */
+  /**
+   * 질문 카드(스와이프)에서 보여줄 기본 산업군 — 사용자가 명시적으로 고른 값.
+   * null이면 아직 한 번도 고르지 않은 상태(랜덤 대신 선택을 요구한다)
+   */
   desiredIndustry Industry?
   bio             String?
   createdAt       DateTime  @default(now())
@@ -331,26 +380,32 @@ model UserProfile {
 // ── Company context ──
 
 model TargetCompany {
-  id           String      @id @default(cuid())
-  userId       String
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name         String
-  industry     String?
-  /** 사용자가 직접 선택한 산업군 — industry(문자열 라벨)는 이 값을 기반으로 채워짐 */
-  industryCode Industry?
-  size         CompanySize @default(LARGE)
-  interviewStyle Json?     // { tone, rounds, focus[] }
-  /** 산업군+직무를 합쳐 결정한 지원자 페르소나 { id, name, description, toneHint, focusCompetencies }
-   *  — 채점에는 영향 없음, 화면 뱃지·리포트 코칭 문구 전용 (lib/interview/persona-archetype.ts) */
-  persona      Json?
-  /** JD 원문에서 뽑은 요구 스킬/키워드 — deriveInterviewStyleFromJD 1회 호출 결과 */
-  jdRequirements Json?     // { skills: string[], keywords: string[] }
-  enrichedAt   DateTime?
-  createdAt    DateTime    @default(now())
+  id             String      @id @default(cuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  industry       String?
+  /**
+   * 사용자가 직접 선택한 산업군 — industry(문자열 라벨)는 이 값을 기반으로 채워짐
+   */
+  industryCode   Industry?
+  size           CompanySize @default(LARGE)
+  interviewStyle Json? // { tone, rounds, focus[] }
+  /**
+   * 산업군+직무를 합쳐 결정한 지원자 페르소나 { id, name, description, toneHint, focusCompetencies }
+   * — 채점에는 영향 없음, 화면 뱃지·리포트 코칭 문구 전용 (lib/interview/persona-archetype.ts)
+   */
+  persona        Json?
+  /**
+   * JD 원문에서 뽑은 요구 스킬/키워드 — deriveInterviewStyleFromJD 1회 호출 결과
+   */
+  jdRequirements Json? // { skills: string[], keywords: string[] }
+  enrichedAt     DateTime?
+  createdAt      DateTime    @default(now())
 
-  sessions       InterviewSession[]
-  plans          InterviewPlan[]
-  resumeReviews  ResumeReview[]
+  sessions      InterviewSession[]
+  plans         InterviewPlan[]
+  resumeReviews ResumeReview[]
 
   @@index([userId])
 }
@@ -358,14 +413,14 @@ model TargetCompany {
 // ── Resume ──
 
 model Resume {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  fileName    String
-  fileUrl     String?
-  rawText     String   @db.Text
-  parsedTags  Json?    // { skills[], experiences[], keywords[] }
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName   String
+  fileUrl    String?
+  rawText    String   @db.Text
+  parsedTags Json? // { skills[], experiences[], keywords[] }
+  createdAt  DateTime @default(now())
 
   sessions InterviewSession[]
   plans    InterviewPlan[]
@@ -380,18 +435,26 @@ model Resume {
  */
 model ResumeReviewCriterion {
   id          String   @id @default(cuid())
-  /** 안정적 식별자 — 시드/코드에서 참조 (예: STAR_RESULT_METRICS) */
+  /**
+   * 안정적 식별자 — 시드/코드에서 참조 (예: STAR_RESULT_METRICS)
+   */
   code        String   @unique
-  /** FORMAT_LOGIC | INDUSTRY_FIT | STAR_BEI */
+  /**
+   * FORMAT_LOGIC | INDUSTRY_FIT | STAR_BEI
+   */
   category    String
   title       String
   description String   @db.Text
-  /** LLM·휴리스틱이 확인할 체크 포인트 */
+  /**
+   * LLM·휴리스틱이 확인할 체크 포인트
+   */
   howToCheck  String   @db.Text
   weight      Float    @default(1)
   sortOrder   Int      @default(0)
   isActive    Boolean  @default(true)
-  /** 근거 출처·연구 메모 (관리자 참고용) */
+  /**
+   * 근거 출처·연구 메모 (관리자 참고용)
+   */
   sourceNote  String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -400,38 +463,56 @@ model ResumeReviewCriterion {
   @@index([isActive, sortOrder])
 }
 
-/** 자소서 첨삭 리포트 — 공고 대사(있으면) 또는 산업군/직무 프리셋(없으면) 기준 */
+/**
+ * 자소서 첨삭 리포트 — 공고 대사(있으면) 또는 산업군/직무 프리셋(없으면) 기준
+ */
 model ResumeReview {
-  id                String         @id @default(cuid())
-  userId            String
-  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resumeId          String
-  resume            Resume         @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-  targetCompanyId   String?
-  targetCompany     TargetCompany? @relation(fields: [targetCompanyId], references: [id], onDelete: SetNull)
-  /** "jd" | "industry_preset" */
-  matchSource       String
-  overallSummary    String         @db.Text
-  /** [{ quote, issue, suggestion }] */
-  paragraphFeedback Json
-  /** { matchScore, matched: string[], missing: string[] } */
-  jdMatch           Json
-  /** [{ gapLabel, suggestion }] */
-  improvementPlan   Json
-  /** NCS 역량 코드 — 다음 모의면접 추천에 사용 */
-  suggestedCompetencies Json       @default("[]")
+  id                    String         @id @default(cuid())
+  userId                String
+  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeId              String
+  resume                Resume         @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  targetCompanyId       String?
+  targetCompany         TargetCompany? @relation(fields: [targetCompanyId], references: [id], onDelete: SetNull)
+  /**
+   * "jd" | "industry_preset"
+   */
+  matchSource           String
+  overallSummary        String         @db.Text
+  /**
+   * [{ quote, issue, suggestion }]
+   */
+  paragraphFeedback     Json
+  /**
+   * { matchScore, matched: string[], missing: string[] }
+   */
+  jdMatch               Json
+  /**
+   * [{ gapLabel, suggestion }]
+   */
+  improvementPlan       Json
+  /**
+   * NCS 역량 코드 — 다음 모의면접 추천에 사용
+   */
+  suggestedCompetencies Json           @default("[]")
   /**
    * [{ category, label, score, band, strengths[], gaps[] }]
    * FORMAT_LOGIC / INDUSTRY_FIT / STAR_BEI 축 점수
    */
-  dimensionScores   Json?
-  /** [{ code, category, title, status, strengthNote, gapNote }] 기준별 판정 */
-  criteriaResults   Json?
-  /** "llm" | "heuristic" — 서술 생성 경로 */
-  narrativeSource   String?
-  /** 실제 사용한 Gemini 모델 id (llm일 때) */
-  narrativeModel    String?
-  createdAt         DateTime       @default(now())
+  dimensionScores       Json?
+  /**
+   * [{ code, category, title, status, strengthNote, gapNote }] 기준별 판정
+   */
+  criteriaResults       Json?
+  /**
+   * "llm" | "heuristic" — 서술 생성 경로
+   */
+  narrativeSource       String?
+  /**
+   * 실제 사용한 Gemini 모델 id (llm일 때)
+   */
+  narrativeModel        String?
+  createdAt             DateTime       @default(now())
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([resumeId])
@@ -440,27 +521,37 @@ model ResumeReview {
 // ── Interview plan (역량별 진행 트랙) ──
 
 model InterviewPlan {
-  id              String     @id @default(cuid())
-  userId          String
-  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  targetCompanyId String?
-  targetCompany   TargetCompany? @relation(fields: [targetCompanyId], references: [id])
-  resumeId        String?
-  resume          Resume?    @relation(fields: [resumeId], references: [id])
-  jobRole         JobRole    @default(OTHER)
-  status          PlanStatus @default(IN_PROGRESS)
-  /** 이번 차수에서 순차 진행할 전체 역량 코드 목록 — 차수 시작 시 스냅샷 */
-  roundCompetencyCodes Json?
-  /** 아직 진행하지 않은 역량 큐(첫 역량 제외) — 세션 완료마다 갱신 */
+  id                    String         @id @default(cuid())
+  userId                String
+  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetCompanyId       String?
+  targetCompany         TargetCompany? @relation(fields: [targetCompanyId], references: [id])
+  resumeId              String?
+  resume                Resume?        @relation(fields: [resumeId], references: [id])
+  jobRole               JobRole        @default(OTHER)
+  status                PlanStatus     @default(IN_PROGRESS)
+  /**
+   * 이번 차수에서 순차 진행할 전체 역량 코드 목록 — 차수 시작 시 스냅샷
+   */
+  roundCompetencyCodes  Json?
+  /**
+   * 아직 진행하지 않은 역량 큐(첫 역량 제외) — 세션 완료마다 갱신
+   */
   queuedCompetencyCodes Json?
-  /** 면접 전 사용자가 선택한 총 시간 예산(분) — 10/20/30 */
+  /**
+   * 면접 전 사용자가 선택한 총 시간 예산(분) — 10/20/30
+   */
   timeBudgetMinutes     Int?
-  /** COMPETENCY_SET | COMPANY_TARGET */
+  /**
+   * COMPETENCY_SET | COMPANY_TARGET
+   */
   prepMode              String?
-  /** 차수 완료 후 강점·보완점 텍스트 요약 */
+  /**
+   * 차수 완료 후 강점·보완점 텍스트 요약
+   */
   roundBrief            Json?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 
   competencyProgress CompetencyProgress[]
   sessions           InterviewSession[]
@@ -490,20 +581,22 @@ model CompetencyProgress {
 }
 
 model CompetencyFeedback {
-  id           String             @id @default(cuid())
-  progressId   String             @unique
-  progress     CompetencyProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
-  sessionId    String
-  summary      String             @db.Text
-  strengths    Json
-  improvements Json
-  dimensions     Json?
-  suggestions    Json
-  highlights     Json?
-  rewriteExample String?  @db.Text
-  /** "이 페르소나답게 답변했는가" 1문장 코칭 — TargetCompany.persona가 있을 때만 채워짐 */
-  personaAlignmentNote String? @db.Text
-  generatedAt    DateTime @default(now())
+  id                   String             @id @default(cuid())
+  progressId           String             @unique
+  progress             CompetencyProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
+  sessionId            String
+  summary              String             @db.Text
+  strengths            Json
+  improvements         Json
+  dimensions           Json?
+  suggestions          Json
+  highlights           Json?
+  rewriteExample       String?            @db.Text
+  /**
+   * "이 페르소나답게 답변했는가" 1문장 코칭 — TargetCompany.persona가 있을 때만 채워짐
+   */
+  personaAlignmentNote String?            @db.Text
+  generatedAt          DateTime           @default(now())
 }
 
 // ── Question bank (unified pool: NCS · Global · custom — source is metadata only) ──
@@ -520,7 +613,9 @@ enum CompetencySource {
   CUSTOM
 }
 
-/** 역량 리포지토리 라이프사이클 — isActive와 동기화 */
+/**
+ * 역량 리포지토리 라이프사이클 — isActive와 동기화
+ */
 enum CompetencyLifecycleStatus {
   DRAFT
   ACTIVE
@@ -546,30 +641,35 @@ model CompetencyCluster {
 }
 
 model Competency {
-  id          String   @id @default(cuid())
-  code        String
-  nameKo      String
-  nameEn      String?
-  description String?
-  clusterId   String?
-  cluster     CompetencyCluster? @relation(fields: [clusterId], references: [id], onDelete: SetNull)
-  source      CompetencySource @default(NCS)
-  sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
+  id              String                    @id @default(cuid())
+  code            String
+  nameKo          String
+  nameEn          String?
+  description     String?
+  clusterId       String?
+  cluster         CompetencyCluster?        @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+  source          CompetencySource          @default(NCS)
+  sortOrder       Int                       @default(0)
+  isActive        Boolean                   @default(true)
   lifecycleStatus CompetencyLifecycleStatus @default(DRAFT)
-  /** 역량·레벨별 기본 채점 루브릭 — { "1": ["기준",...], "2": [...], "default": [...] } */
-  rubricByLevel Json?
-  ownerScope      ContentOwnerScope @default(PLATFORM)
+  /**
+   * 역량·레벨별 기본 채점 루브릭 — { "1": ["기준",...], "2": [...], "default": [...] }
+   */
+  rubricByLevel   Json?
+  ownerScope      ContentOwnerScope         @default(PLATFORM)
   organizationId  String?
-  organization    Organization?     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization    Organization?             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   forkedFromId    String?
-  forkedFrom      Competency?       @relation("CompetencyFork", fields: [forkedFromId], references: [id], onDelete: SetNull)
-  forks           Competency[]      @relation("CompetencyFork")
+  forkedFrom      Competency?               @relation("CompetencyFork", fields: [forkedFromId], references: [id], onDelete: SetNull)
+  forks           Competency[]              @relation("CompetencyFork")
   createdByUserId String?
-  createdBy       User?             @relation("CompetencyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  questions   Question[]
-  benchmarks  CompetencyBenchmarkRef[]
-  rubricSets  RubricSet[]
+  createdBy       User?                     @relation("CompetencyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  questions                    Question[]
+  benchmarks                   CompetencyBenchmarkRef[]
+  rubricSets                   RubricSet[]
+  subskills                    CompetencySubskill[]
+  assessmentScenarioLinks      AssessmentScenarioCompetency[]
+  assessmentInBasketTargets    AssessmentInBasketItem[]
 
   @@unique([organizationId, code])
   @@index([clusterId])
@@ -594,21 +694,25 @@ model CompetencyBenchmarkRef {
 }
 
 model Question {
-  id             String     @id @default(cuid())
-  externalId     String     @unique
-  competencyId   String
-  competency     Competency @relation(fields: [competencyId], references: [id])
-  level          Int        // 1-5 UX level
-  difficulty     Float      // IRT b parameter
-  discrimination Float      @default(1.0)
-  template       String     @db.Text
-  followUpHints  Json?
-  /** 관리자가 미리 정의한 채점 루브릭(문자열 배열). 없으면 세션 시 일반/LLM 루브릭 사용 */
-  rubricCriteria Json?
-  sortOrder      Int        @default(0)
-  isActive       Boolean    @default(true)
-  /** 비로그인 티저·FREE 티어 노출 허용 — 전체 뱅크는 유료 이상만 */
-  isShowcase     Boolean    @default(false)
+  id              String            @id @default(cuid())
+  externalId      String            @unique
+  competencyId    String
+  competency      Competency        @relation(fields: [competencyId], references: [id])
+  level           Int // 1-5 UX level
+  difficulty      Float // IRT b parameter
+  discrimination  Float             @default(1.0)
+  template        String            @db.Text
+  followUpHints   Json?
+  /**
+   * 관리자가 미리 정의한 채점 루브릭(문자열 배열). 없으면 세션 시 일반/LLM 루브릭 사용
+   */
+  rubricCriteria  Json?
+  sortOrder       Int               @default(0)
+  isActive        Boolean           @default(true)
+  /**
+   * 비로그인 티저·FREE 티어 노출 허용 — 전체 뱅크는 유료 이상만
+   */
+  isShowcase      Boolean           @default(false)
   ownerScope      ContentOwnerScope @default(PLATFORM)
   organizationId  String?
   organization    Organization?     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -618,7 +722,7 @@ model Question {
   createdByUserId String?
   createdBy       User?             @relation("QuestionCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
-  responses ResponseRecord[]
+  responses      ResponseRecord[]
   rubricMappings QuestionRubricMapping[]
 
   @@index([competencyId, level])
@@ -641,8 +745,9 @@ model RubricSet {
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
 
-  details          RubricDetail[]
-  questionMappings QuestionRubricMapping[]
+  details                       RubricDetail[]
+  questionMappings              QuestionRubricMapping[]
+  assessmentScenarioCompetencies AssessmentScenarioCompetency[]
 
   @@index([competencyId])
   @@index([organizationId])
@@ -686,21 +791,21 @@ enum SurveyAudience {
 }
 
 model Survey {
-  id                   String         @id @default(cuid())
+  id                   String            @id @default(cuid())
   title                String
-  description          String?        @db.Text
-  audience             SurveyAudience @default(CANDIDATE)
+  description          String?           @db.Text
+  audience             SurveyAudience    @default(CANDIDATE)
   linkedCompetencyCode String?
   ownerScope           ContentOwnerScope @default(PLATFORM)
   organizationId       String?
-  organization         Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization         Organization?     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   forkedFromId         String?
-  forkedFrom           Survey?        @relation("SurveyFork", fields: [forkedFromId], references: [id], onDelete: SetNull)
-  forks                Survey[]       @relation("SurveyFork")
-  isActive             Boolean        @default(true)
+  forkedFrom           Survey?           @relation("SurveyFork", fields: [forkedFromId], references: [id], onDelete: SetNull)
+  forks                Survey[]          @relation("SurveyFork")
+  isActive             Boolean           @default(true)
   createdByUserId      String?
-  createdBy            User?          @relation("SurveyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  createdAt            DateTime       @default(now())
+  createdBy            User?             @relation("SurveyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt            DateTime          @default(now())
 
   questions SurveyQuestion[]
   responses SurveyResponse[]
@@ -727,12 +832,12 @@ model SurveyQuestion {
 }
 
 model SurveyResponse {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   surveyId    String
-  survey      Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  survey      Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   userId      String?
-  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  submittedAt DateTime  @default(now())
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  submittedAt DateTime @default(now())
 
   answers SurveyAnswer[]
 
@@ -754,59 +859,83 @@ model SurveyAnswer {
 // ── Interview session ──
 
 model InterviewSession {
-  id              String        @id @default(cuid())
-  userId          String
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  planId          String?
-  plan            InterviewPlan? @relation(fields: [planId], references: [id])
-  targetCompanyId String?
-  targetCompany   TargetCompany? @relation(fields: [targetCompanyId], references: [id])
-  resumeId        String?
-  resume          Resume?       @relation(fields: [resumeId], references: [id])
-  jobRole         JobRole       @default(OTHER)
-  focusCompetency String?
-  mode            SessionMode   @default(COMPETENCY)
-  status          SessionStatus @default(SETUP)
-  sessionNumber   Int
-  /** 면접 시작 시 사용자 선택(산업·직무·역량 등) 평문 스냅샷 */
-  setupSelectionText String?   @db.Text
-  /** 이 세션의 문항 필터·루브릭 커스터마이즈에 사용된 기관 — 세션을 시작한
-   *  사용자 본인 소속 기관(user.organizationId)일 수도, 공유 링크(OrgInterviewKitShare)로
-   *  들어온 비가입자의 경우 그 킷이 속한 기관일 수도 있다. 채점 시점(respond,
-   *  세션 페이지)에 "그 시점 사용자의 소속"이 아니라 "세션 시작 시점에 적용된 킷"을
-   *  그대로 참조하기 위해 세션에 스냅샷으로 남겨둔다. */
-  kitOrganizationId String?
-  /** 공유 링크로 시작된 세션이면 그 OrgInterviewKitShare — 코호트/캠페인 집계용 */
-  orgKitShareId   String?
-  orgKitShare     OrgInterviewKitShare? @relation(fields: [orgKitShareId], references: [id], onDelete: SetNull)
-  startedAt       DateTime?
-  completedAt     DateTime?
-  overallTheta    Float?
-  irtState        Json?
-  /** 답변 입력 시 붙여넣기 감지(채점 무관, 신호만) */
-  pasteDetected   Boolean       @default(false)
-  /** 면접 중 탭 이탈 횟수(채점 무관) */
-  tabSwitchCount  Int           @default(0)
-  /** 고객 시연(presenter) 모드로 시작된 데모 세션 */
-  isPresenterDemo Boolean       @default(false)
-  demoWorkspaceId String?
-  /** 트리플 피드백(대기업·공공·스타트업 3관점) — 옵션, 기본 OFF */
-  tripleFeedbackMode Boolean    @default(false)
-  /** 공고 맞춤 보너스 질문 — JD가 있을 때만, 기본 OFF */
-  jdBonusEnabled  Boolean       @default(false)
-  /** 자소서 경험 확인 질문 — 자소서 experiences가 있을 때만, 기본 OFF */
-  resumeClaimEnabled Boolean    @default(false)
-  /** 차수 시작 시 선택한 총 시간 예산(분) 스냅샷 */
-  timeBudgetMinutes  Int?
-  /** 차수 시작 시 남은 역량 큐 스냅샷 */
+  id                    String                @id @default(cuid())
+  userId                String
+  user                  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId                String?
+  plan                  InterviewPlan?        @relation(fields: [planId], references: [id])
+  targetCompanyId       String?
+  targetCompany         TargetCompany?        @relation(fields: [targetCompanyId], references: [id])
+  resumeId              String?
+  resume                Resume?               @relation(fields: [resumeId], references: [id])
+  jobRole               JobRole               @default(OTHER)
+  focusCompetency       String?
+  mode                  SessionMode           @default(COMPETENCY)
+  status                SessionStatus         @default(SETUP)
+  sessionNumber         Int
+  /**
+   * 면접 시작 시 사용자 선택(산업·직무·역량 등) 평문 스냅샷
+   */
+  setupSelectionText    String?               @db.Text
+  /**
+   * 이 세션의 문항 필터·루브릭 커스터마이즈에 사용된 기관 — 세션을 시작한
+   * 사용자 본인 소속 기관(user.organizationId)일 수도, 공유 링크(OrgInterviewKitShare)로
+   * 들어온 비가입자의 경우 그 킷이 속한 기관일 수도 있다. 채점 시점(respond,
+   * 세션 페이지)에 "그 시점 사용자의 소속"이 아니라 "세션 시작 시점에 적용된 킷"을
+   * 그대로 참조하기 위해 세션에 스냅샷으로 남겨둔다.
+   */
+  kitOrganizationId     String?
+  /**
+   * 공유 링크로 시작된 세션이면 그 OrgInterviewKitShare — 코호트/캠페인 집계용
+   */
+  orgKitShareId         String?
+  orgKitShare           OrgInterviewKitShare? @relation(fields: [orgKitShareId], references: [id], onDelete: SetNull)
+  startedAt             DateTime?
+  completedAt           DateTime?
+  overallTheta          Float?
+  irtState              Json?
+  /**
+   * 답변 입력 시 붙여넣기 감지(채점 무관, 신호만)
+   */
+  pasteDetected         Boolean               @default(false)
+  /**
+   * 면접 중 탭 이탈 횟수(채점 무관)
+   */
+  tabSwitchCount        Int                   @default(0)
+  /**
+   * 고객 시연(presenter) 모드로 시작된 데모 세션
+   */
+  isPresenterDemo       Boolean               @default(false)
+  demoWorkspaceId       String?
+  /**
+   * 트리플 피드백(대기업·공공·스타트업 3관점) — 옵션, 기본 OFF
+   */
+  tripleFeedbackMode    Boolean               @default(false)
+  /**
+   * 공고 맞춤 보너스 질문 — JD가 있을 때만, 기본 OFF
+   */
+  jdBonusEnabled        Boolean               @default(false)
+  /**
+   * 자소서 경험 확인 질문 — 자소서 experiences가 있을 때만, 기본 OFF
+   */
+  resumeClaimEnabled    Boolean               @default(false)
+  /**
+   * 차수 시작 시 선택한 총 시간 예산(분) 스냅샷
+   */
+  timeBudgetMinutes     Int?
+  /**
+   * 차수 시작 시 남은 역량 큐 스냅샷
+   */
   queuedCompetencyCodes Json?
-  /** 차수 내 몇 번째 역량 세션인지 (1-based) */
-  roundIndex         Int?
-  createdAt       DateTime      @default(now())
+  /**
+   * 차수 내 몇 번째 역량 세션인지 (1-based)
+   */
+  roundIndex            Int?
+  createdAt             DateTime              @default(now())
 
-  responses ResponseRecord[]
+  responses  ResponseRecord[]
   chipEvents ChipEvent[]
-  report    SessionReport?
+  report     SessionReport?
 
   @@index([userId, sessionNumber])
   @@index([planId])
@@ -819,41 +948,57 @@ model InterviewSession {
 }
 
 model ResponseRecord {
-  id          String           @id @default(cuid())
-  sessionId   String
-  session     InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  questionId  String?
-  question    Question?        @relation(fields: [questionId], references: [id])
-  /** true면 IRT theta 계산에서 제외 — JD 전용 보너스 질문 */
-  isBonusQuestion Boolean      @default(false)
-  /** 보너스 질문 문구(은행 FK 없음) */
-  bonusQuestionText String?    @db.Text
-  bonusGroundedRequirement String?
-  bonusBriefFeedback String?   @db.Text
-  /** 자소서 진위 검증 질문이었는지 — IRT 미반영 */
-  isClaimVerification      Boolean @default(false)
-  /** 검증 대상이 된 자소서 원문 문장 */
-  claimVerificationClaim   String? @db.Text
-  /** "검증됨" | "부분검증" | "설명부족" — 숫자/퍼센트 아님 */
-  claimVerificationLabel   String?
-  /** 판정 근거 1~2문장 */
-  claimVerificationReasoning String? @db.Text
-  competency  String
-  level       Int
-  transcript  String           @db.Text
-  correctedTranscript String?  @db.Text
-  /** AnswerDimensions 스냅샷(0.0~1.0) — correctAndEvaluateAnswer 결과 */
-  dimensions  Json?
-  audioUrl    String?
-  rubricScore Float            // 0.0 - 1.0 (꼬리질문이 있었다면 최종 결합 평가 점수)
-  durationSec Int?
-  createdAt   DateTime         @default(now())
+  id                         String           @id @default(cuid())
+  sessionId                  String
+  session                    InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionId                 String?
+  question                   Question?        @relation(fields: [questionId], references: [id])
+  /**
+   * true면 IRT theta 계산에서 제외 — JD 전용 보너스 질문
+   */
+  isBonusQuestion            Boolean          @default(false)
+  /**
+   * 보너스 질문 문구(은행 FK 없음)
+   */
+  bonusQuestionText          String?          @db.Text
+  bonusGroundedRequirement   String?
+  bonusBriefFeedback         String?          @db.Text
+  /**
+   * 자소서 진위 검증 질문이었는지 — IRT 미반영
+   */
+  isClaimVerification        Boolean          @default(false)
+  /**
+   * 검증 대상이 된 자소서 원문 문장
+   */
+  claimVerificationClaim     String?          @db.Text
+  /**
+   * "검증됨" | "부분검증" | "설명부족" — 숫자/퍼센트 아님
+   */
+  claimVerificationLabel     String?
+  /**
+   * 판정 근거 1~2문장
+   */
+  claimVerificationReasoning String?          @db.Text
+  competency                 String
+  level                      Int
+  transcript                 String           @db.Text
+  correctedTranscript        String?          @db.Text
+  /**
+   * AnswerDimensions 스냅샷(0.0~1.0) — correctAndEvaluateAnswer 결과
+   */
+  dimensions                 Json?
+  audioUrl                   String?
+  rubricScore                Float // 0.0 - 1.0 (꼬리질문이 있었다면 최종 결합 평가 점수)
+  durationSec                Int?
+  createdAt                  DateTime         @default(now())
 
   // ── AI 꼬리질문(follow-up) — 답변이 추상적/모호할 때 같은 문항 안에서 한 번 더 파고든 기록 ──
-  /** 꼬리질문이 없었다면 null. 있었다면 rubricScore는 원 답변+꼬리질문 답변을 함께 본 최종 점수 */
-  initialRubricScore   Float?
-  followUpQuestion     String? @db.Text
-  followUpTranscript   String? @db.Text
+  /**
+   * /** 꼬리질문이 없었다면 null. 있었다면 rubricScore는 원 답변+꼬리질문 답변을 함께 본 최종 점수
+   */
+  initialRubricScore          Float?
+  followUpQuestion            String? @db.Text
+  followUpTranscript          String? @db.Text
   followUpCorrectedTranscript String? @db.Text
 
   @@index([sessionId])
@@ -861,20 +1006,24 @@ model ResponseRecord {
 }
 
 model ChipEvent {
-  id            String           @id @default(cuid())
-  sessionId     String
-  session       InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  competency    String
-  level         Int
-  chipType      ChipType
-  rubricScore   Float
-  briefFeedback String?
-  /** 이 문항에 꼬리질문이 있었는지 — 리포트/투명성 표시용 */
-  hadFollowUp   Boolean          @default(false)
-  /** 트리플 피드백 3카드 캐시 (tripleFeedbackMode 세션만) */
+  id             String           @id @default(cuid())
+  sessionId      String
+  session        InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  competency     String
+  level          Int
+  chipType       ChipType
+  rubricScore    Float
+  briefFeedback  String?
+  /**
+   * 이 문항에 꼬리질문이 있었는지 — 리포트/투명성 표시용
+   */
+  hadFollowUp    Boolean          @default(false)
+  /**
+   * 트리플 피드백 3카드 캐시 (tripleFeedbackMode 세션만)
+   */
   tripleFeedback Json?
-  sequence      Int
-  createdAt     DateTime         @default(now())
+  sequence       Int
+  createdAt      DateTime         @default(now())
 
   @@index([sessionId])
 }
@@ -882,16 +1031,16 @@ model ChipEvent {
 // ── Longitudinal tracking ──
 
 model CompetencySnapshot {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionId   String
-  competency  String
-  theta       Float
-  se          Float
-  levelEst    Int
-  percentile  Float
-  recordedAt  DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId  String
+  competency String
+  theta      Float
+  se         Float
+  levelEst   Int
+  percentile Float
+  recordedAt DateTime @default(now())
 
   @@index([userId, competency])
   @@index([userId, recordedAt])
@@ -900,31 +1049,42 @@ model CompetencySnapshot {
 // ── Report (Claude-generated) ──
 
 model SessionReport {
-  id          String           @id @default(cuid())
-  sessionId   String           @unique
-  session     InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  summaryHtml String           @db.Text
-  summaryJson Json             // structured sections for charts
-  generatedAt DateTime         @default(now())
+  id            String           @id @default(cuid())
+  sessionId     String           @unique
+  session       InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  summaryHtml   String           @db.Text
+  summaryJson   Json // legacy SessionReportData (0-100 sections)
+  /**
+   * EvidenceAssessmentReport v1
+   */
+  evidenceJson  Json?
+  schemaVersion Int              @default(1)
+  generatedAt   DateTime         @default(now())
 }
 
 // ── 실제 기출 질문 참고 (IRT 채점 문항 뱅크와는 별개 — 난이도/판별력 파라미터 없음) ──
 // 공개 검색으로 수집한 실제 인터뷰 후기·커뮤니티 글에서 정리한 질문 + 근거가 부족한
 // 산업군/직무 조합은 isAiExample=true로 표시해 AI가 만든 예시임을 투명하게 구분한다.
 model RealInterviewQuestion {
-  id           String   @id @default(cuid())
+  id           String       @id @default(cuid())
   industry     Industry
   jobRole      JobRole
-  /** 역량 코드(느슨한 태그, COMPETENCY_CODES와 매칭 시도 — 필수 아님) */
+  /**
+   * 역량 코드(느슨한 태그, COMPETENCY_CODES와 매칭 시도 — 필수 아님)
+   */
   competency   String?
-  questionText String   @db.Text
-  /** 실제 출처 사이트명(예: "링커리어 커뮤니티"). AI 생성 예시면 null */
+  questionText String       @db.Text
+  /**
+   * 실제 출처 사이트명(예: "링커리어 커뮤니티"). AI 생성 예시면 null
+   */
   sourceName   String?
   sourceUrl    String?
-  isAiExample  Boolean  @default(false)
-  /** 기업 규모 태그(선택) — 질문 카드 필터·향후 규모별 문항 확장용 */
+  isAiExample  Boolean      @default(false)
+  /**
+   * 기업 규모 태그(선택) — 질문 카드 필터·향후 규모별 문항 확장용
+   */
   companySize  CompanySize?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime     @default(now())
 
   swipeActions SwipeAction[]
 
@@ -941,18 +1101,20 @@ enum SwipeActionType {
 }
 
 model SwipeAction {
-  id         String                @id @default(cuid())
-  userId     String
-  user       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  questionId String
-  question   RealInterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  action     SwipeActionType
-  /** Save한 질문에 실제로 음성 답변을 녹음해본 기록(자체 STT 텍스트만, 채점 없음).
-   *  "저장"이 단순 북마크로 끝나지 않고 그 자리에서 답변 연습까지 이어지도록 함 */
-  answerTranscript String?  @db.Text
+  id               String                @id @default(cuid())
+  userId           String
+  user             User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId       String
+  question         RealInterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  action           SwipeActionType
+  /**
+   * Save한 질문에 실제로 음성 답변을 녹음해본 기록(자체 STT 텍스트만, 채점 없음).
+   * "저장"이 단순 북마크로 끝나지 않고 그 자리에서 답변 연습까지 이어지도록 함
+   */
+  answerTranscript String?               @db.Text
   answeredAt       DateTime?
-  createdAt  DateTime              @default(now())
-  updatedAt  DateTime              @updatedAt
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
 
   @@unique([userId, questionId])
   @@index([userId, action])
@@ -961,11 +1123,11 @@ model SwipeAction {
 // ── 자기발견 인터뷰 (IRT/채점과 완전 분리된 성찰형 대화) ──
 
 model SelfDiscoverySession {
-  id          String              @id @default(cuid())
+  id          String                  @id @default(cuid())
   userId      String
-  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status      SelfDiscoveryStatus @default(IN_PROGRESS)
-  startedAt   DateTime            @default(now())
+  user        User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      SelfDiscoveryStatus     @default(IN_PROGRESS)
+  startedAt   DateTime                @default(now())
   completedAt DateTime?
   responses   SelfDiscoveryResponse[]
   profile     SelfDiscoveryProfile?
@@ -990,24 +1152,38 @@ model SelfDiscoveryProfile {
   id                String               @id @default(cuid())
   sessionId         String               @unique
   session           SelfDiscoverySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  /** VIA 강점 상위 5 + 근거 인용 */
+  /**
+   * VIA 강점 상위 5 + 근거 인용
+   */
   strengths         Json
-  /** 개선 여지 2~3개 */
+  /**
+   * 개선 여지 2~3개
+   */
   weaknesses        Json
-  /** Schwartz 가치관 상위 3 + 근거 */
+  /**
+   * Schwartz 가치관 상위 3 + 근거
+   */
   values            Json
-  /** NCS 6역량 연결 신호 */
+  /**
+   * NCS 6역량 연결 신호
+   */
   competencySignals Json
-  /** 강점→역량→면접 활용 조언 (직무 맥락) */
+  /**
+   * 강점→역량→면접 활용 조언 (직무 맥락)
+   */
   interviewAdvice   Json?
-  /** McAdams 스타일 서사 주제 요약 */
+  /**
+   * McAdams 스타일 서사 주제 요약
+   */
   narrativeSummary  String               @db.Text
   generatedAt       DateTime             @default(now())
 }
 
 // ── Billing (토스페이먼츠 정기결제) ──
 
-/** 요금제 등급 — FREE는 Subscription 레코드 없이 기본 적용 */
+/**
+ * 요금제 등급 — FREE는 Subscription 레코드 없이 기본 적용
+ */
 enum PlanTier {
   FREE
   INDIVIDUAL_PRO
@@ -1030,15 +1206,21 @@ enum PaymentTransactionStatus {
 model Subscription {
   id                 String             @id @default(cuid())
   planTier           PlanTier
-  /** 개인 플랜(INDIVIDUAL_PRO) — userId 또는 organizationId 중 정확히 하나 */
+  /**
+   * 개인 플랜(INDIVIDUAL_PRO) — userId 또는 organizationId 중 정확히 하나
+   */
   userId             String?
   user               User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
   organizationId     String?
   organization       Organization?      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   status             SubscriptionStatus @default(TRIALING)
-  /** 토스페이먼츠 빌링키 — 카드번호 등은 저장하지 않음. ORG_ENTERPRISE 수동 계약은 null 가능 */
+  /**
+   * 토스페이먼츠 빌링키 — 카드번호 등은 저장하지 않음. ORG_ENTERPRISE 수동 계약은 null 가능
+   */
   billingKey         String?
-  /** 토스 customerKey — 구매자 식별자(유니크) */
+  /**
+   * 토스 customerKey — 구매자 식별자(유니크)
+   */
   customerKey        String             @unique
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
@@ -1070,16 +1252,24 @@ model PaymentTransaction {
   @@index([subscriptionId])
 }
 
-/** B2B 기관 인터뷰 킷 — 플랫폼 문항 뱅크에서 선택·순서·루브릭 강조점만 커스터마이즈 */
+/**
+ * B2B 기관 인터뷰 킷 — 플랫폼 문항 뱅크에서 선택·순서·루브릭 강조점만 커스터마이즈
+ */
 model OrgInterviewKit {
   id                   String       @id @default(cuid())
   organizationId       String
   organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  /** Competency.code (COMMUNICATION 등) */
+  /**
+   * Competency.code (COMMUNICATION 등)
+   */
   competency           String
-  /** 드래그 순서대로 저장되는 Question.id 배열 */
+  /**
+   * 드래그 순서대로 저장되는 Question.id 배열
+   */
   selectedQuestionIds  Json         @default("[]")
-  /** 체크된 플랫폼 기준 + 기관 추가 문구 */
+  /**
+   * 체크된 플랫폼 기준 + 기관 추가 문구
+   */
   customRubricCriteria Json         @default("[]")
   updatedByUserId      String?
   updatedBy            User?        @relation("OrgInterviewKitUpdatedBy", fields: [updatedByUserId], references: [id], onDelete: SetNull)
@@ -1090,42 +1280,56 @@ model OrgInterviewKit {
   @@index([organizationId])
 }
 
-/** B2B 인터뷰 킷 공개 배포 — 기관 ADMIN이 킷(OrgInterviewKit)을 코호트(캠페인) 라벨과
- *  함께 "게시"하면 생기는 공유 슬러그. 문항·루브릭 데이터 자체를 복제하지 않고
- *  OrgInterviewKit을 그대로 참조하는 접근 게이트 역할만 한다 — 관리자가 킷을 이후
- *  수정하면 이미 발급된 공유 링크에도 최신 내용이 그대로 반영된다(스냅샷 아님).
- *  이 슬러그로 들어온 사용자는 기관 가입(joinCode) 없이, 로그인만 되어 있으면
- *  (ADMIN 권한 불필요) 이 기관의 킷 설정으로 면접 세션을 시작할 수 있다. */
+/**
+ * B2B 인터뷰 킷 공개 배포 — 기관 ADMIN이 킷(OrgInterviewKit)을 코호트(캠페인) 라벨과
+ * 함께 "게시"하면 생기는 공유 슬러그. 문항·루브릭 데이터 자체를 복제하지 않고
+ * OrgInterviewKit을 그대로 참조하는 접근 게이트 역할만 한다 — 관리자가 킷을 이후
+ * 수정하면 이미 발급된 공유 링크에도 최신 내용이 그대로 반영된다(스냅샷 아님).
+ * 이 슬러그로 들어온 사용자는 기관 가입(joinCode) 없이, 로그인만 되어 있으면
+ * (ADMIN 권한 불필요) 이 기관의 킷 설정으로 면접 세션을 시작할 수 있다.
+ */
 model OrgInterviewKitShare {
-  id             String       @id @default(cuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  /** 공개 URL에 쓰이는 opaque 토큰 (/kit/[slug]) */
-  slug           String       @unique
-  /** 코호트/캠페인 이름 — 예: "2026 상반기 신입 공채" (리포트·집계용 표시 라벨) */
-  label          String
-  /** 허용할 Competency.code[] — 빈 배열이면 이 기관에 설정된 킷 전체 역량 허용 */
-  competencies   Json         @default("[]")
-  /** 관리자가 잠깐 내리고 싶을 때(삭제 없이) 끄는 스위치 */
-  isActive       Boolean      @default(true)
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /**
+   * 공개 URL에 쓰이는 opaque 토큰 (/kit/[slug])
+   */
+  slug            String       @unique
+  /**
+   * 코호트/캠페인 이름 — 예: "2026 상반기 신입 공채" (리포트·집계용 표시 라벨)
+   */
+  label           String
+  /**
+   * 허용할 Competency.code[] — 빈 배열이면 이 기관에 설정된 킷 전체 역량 허용
+   */
+  competencies    Json         @default("[]")
+  /**
+   * 관리자가 잠깐 내리고 싶을 때(삭제 없이) 끄는 스위치
+   */
+  isActive        Boolean      @default(true)
   createdByUserId String?
-  createdBy      User?        @relation("OrgInterviewKitShareCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  expiresAt      DateTime?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdBy       User?        @relation("OrgInterviewKitShareCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  expiresAt       DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   sessions InterviewSession[]
 
   @@index([organizationId])
 }
 
-/** 고객사 데모용 샌드박스 — 운영 문항 뱅크와 분리 */
+/**
+ * 고객사 데모용 샌드박스 — 운영 문항 뱅크와 분리
+ */
 model DemoWorkspace {
   id              String           @id @default(cuid())
   name            String
   slug            String           @unique
   description     String?
-  /** 시연 URL(?pk=) 인증 — 관리자만 공유 */
+  /**
+   * 시연 URL(?pk=) 인증 — 관리자만 공유
+   */
   presenterKey    String?          @unique
   createdByUserId String?
   createdAt       DateTime         @default(now())
@@ -1174,26 +1378,26 @@ model DemoQuestion {
 // Used by future self/360 assessment modules — NOT wired into IRT scoring.
 
 model GlobalCompetencyCluster {
-  id          String             @id @default(cuid())
-  code        String             @unique
-  nameKo      String
-  nameEn      String
-  description String?
-  sortOrder   Int                @default(0)
-  isActive    Boolean            @default(true)
+  id           String             @id @default(cuid())
+  code         String             @unique
+  nameKo       String
+  nameEn       String
+  description  String?
+  sortOrder    Int                @default(0)
+  isActive     Boolean            @default(true)
   competencies GlobalCompetency[]
 }
 
 model GlobalCompetency {
-  id         String   @id @default(cuid())
+  id         String                  @id @default(cuid())
   clusterId  String
   cluster    GlobalCompetencyCluster @relation(fields: [clusterId], references: [id], onDelete: Cascade)
-  code       String   @unique
+  code       String                  @unique
   nameKo     String
   nameEn     String
-  definition String   @db.Text
-  sortOrder  Int      @default(0)
-  isActive   Boolean  @default(true)
+  definition String                  @db.Text
+  sortOrder  Int                     @default(0)
+  isActive   Boolean                 @default(true)
 
   rubricLevels GlobalCompetencyRubricLevel[]
   questions    GlobalCompetencyQuestion[]
@@ -1226,15 +1430,15 @@ model GlobalCompetencyQuestion {
 }
 
 model GlobalCompetencyBenchmarkRef {
-  id             String           @id @default(cuid())
-  competencyId   String
-  competency     GlobalCompetency @relation(fields: [competencyId], references: [id], onDelete: Cascade)
-  frameworkName  String
-  refLabel       String
-  refDefinition  String           @db.Text
-  sourceUrl      String
-  licenseNote    String           @db.Text
-  sortOrder      Int              @default(0)
+  id            String           @id @default(cuid())
+  competencyId  String
+  competency    GlobalCompetency @relation(fields: [competencyId], references: [id], onDelete: Cascade)
+  frameworkName String
+  refLabel      String
+  refDefinition String           @db.Text
+  sourceUrl     String
+  licenseNote   String           @db.Text
+  sortOrder     Int              @default(0)
 
   @@index([competencyId])
 }
@@ -1252,7 +1456,9 @@ enum ConceptNodeKind {
   GLOBAL_QUESTION
   BENCHMARK_REF
   ROLE_CONTEXT
-  /** ARC Index DiagnosticSubscale.code (드라이버·소주제) */
+  /**
+   * ARC Index DiagnosticSubscale.code (드라이버·소주제)
+   */
   DIAGNOSTIC_SUBSCALE
 }
 
@@ -1267,7 +1473,9 @@ enum ConceptEdgeType {
   SUPPORTED_BY
 }
 
-/** Typed edge between Meaning concepts. Keys (codes) are stable; ids are optional resolved refs. */
+/**
+ * Typed edge between Meaning concepts. Keys (codes) are stable; ids are optional resolved refs.
+ */
 model ConceptRelation {
   id        String          @id @default(cuid())
   edgeType  ConceptEdgeType
@@ -1312,40 +1520,40 @@ enum DiagnosticWaveStatus {
 }
 
 model DiagnosticInstrument {
-  id               String   @id @default(cuid())
-  code             String   @unique
+  id               String                    @id @default(cuid())
+  code             String                    @unique
   nameKo           String
   version          String
   estimatedMinutes Int?
-  minGroupSize     Int      @default(5)
+  minGroupSize     Int                       @default(5)
   sections         DiagnosticSection[]
   waves            DiagnosticWave[]
   reportProfiles   DiagnosticReportProfile[]
-  createdAt        DateTime @default(now())
+  createdAt        DateTime                  @default(now())
 }
 
 model DiagnosticReportProfile {
-  id                  String   @id @default(cuid())
+  id                  String               @id @default(cuid())
   instrumentId        String
   instrument          DiagnosticInstrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
-  waveId              String?  @unique
-  wave                DiagnosticWave? @relation(fields: [waveId], references: [id], onDelete: Cascade)
+  waveId              String?              @unique
+  wave                DiagnosticWave?      @relation(fields: [waveId], references: [id], onDelete: Cascade)
   name                String
-  isInstrumentDefault Boolean  @default(false)
+  isInstrumentDefault Boolean              @default(false)
   presetCode          String?
-  activeTabs          Json     @default("[\"basic\",\"detail\",\"teams\"]")
+  activeTabs          Json                 @default("[\"basic\",\"detail\",\"teams\"]")
   activeSectionCodes  Json?
   minGroupSize        Int?
-  showNarratives      Boolean  @default(true)
-  showGapMatrix       Boolean  @default(true)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  showNarratives      Boolean              @default(true)
+  showGapMatrix       Boolean              @default(true)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
   @@index([instrumentId])
 }
 
 model DiagnosticSection {
-  id           String   @id @default(cuid())
+  id           String               @id @default(cuid())
   instrumentId String
   instrument   DiagnosticInstrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
   code         String
@@ -1358,13 +1566,13 @@ model DiagnosticSection {
 }
 
 model DiagnosticSubscale {
-  id        String   @id @default(cuid())
+  id        String            @id @default(cuid())
   sectionId String
   section   DiagnosticSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   code      String
   nameKo    String
   weight    Float?
-  isDriver  Boolean  @default(false)
+  isDriver  Boolean           @default(false)
   order     Int
   items     DiagnosticItem[]
 
@@ -1372,18 +1580,18 @@ model DiagnosticSubscale {
 }
 
 model DiagnosticItem {
-  id                String   @id @default(cuid())
+  id                String                  @id @default(cuid())
   sectionId         String
-  section           DiagnosticSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  section           DiagnosticSection       @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   subscaleId        String?
-  subscale          DiagnosticSubscale? @relation(fields: [subscaleId], references: [id], onDelete: Cascade)
+  subscale          DiagnosticSubscale?     @relation(fields: [subscaleId], references: [id], onDelete: Cascade)
   itemCode          String
   textKo            String
   scaleType         DiagnosticItemScaleType @default(AGREEMENT_5)
   scaleLabels       Json?
-  hasImportanceAxis Boolean  @default(false)
-  isReversed        Boolean  @default(false)
-  isDemographic     Boolean  @default(false)
+  hasImportanceAxis Boolean                 @default(false)
+  isReversed        Boolean                 @default(false)
+  isDemographic     Boolean                 @default(false)
   choiceOptions     Json?
   order             Int
   answers           DiagnosticAnswer[]
@@ -1393,25 +1601,29 @@ model DiagnosticItem {
 }
 
 model DiagnosticWave {
-  id             String   @id @default(cuid())
-  instrumentId   String
-  instrument     DiagnosticInstrument @relation(fields: [instrumentId], references: [id])
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  slug           String   @unique
-  waveNumber     Int
-  label          String?
-  status         DiagnosticWaveStatus @default(DRAFT)
-  opensAt        DateTime?
-  closesAt       DateTime?
-  /** 이번 웨이브에서 활성화된 섹션 코드(["OHI","ORI","OVI"] 등). null이면 전체 활성화 */
-  enabledSectionCodes Json?
-  /** 캠페인 생성 시점 Instrument.version 스냅샷 */
+  id                        String                   @id @default(cuid())
+  instrumentId              String
+  instrument                DiagnosticInstrument     @relation(fields: [instrumentId], references: [id])
+  organizationId            String
+  organization              Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  slug                      String                   @unique
+  waveNumber                Int
+  label                     String?
+  status                    DiagnosticWaveStatus     @default(DRAFT)
+  opensAt                   DateTime?
+  closesAt                  DateTime?
+  /**
+   * 이번 웨이브에서 활성화된 섹션 코드(["OHI","ORI","OVI"] 등). null이면 전체 활성화
+   */
+  enabledSectionCodes       Json?
+  /**
+   * 캠페인 생성 시점 Instrument.version 스냅샷
+   */
   instrumentVersionSnapshot String?
-  reportProfile    DiagnosticReportProfile?
-  teams          DiagnosticTeam[]
-  responses      DiagnosticResponse[]
-  createdAt      DateTime @default(now())
+  reportProfile             DiagnosticReportProfile?
+  teams                     DiagnosticTeam[]
+  responses                 DiagnosticResponse[]
+  createdAt                 DateTime                 @default(now())
 
   @@unique([organizationId, instrumentId, waveNumber])
   @@index([organizationId])
@@ -1420,7 +1632,9 @@ model DiagnosticWave {
   @@index([organizationId, waveNumber(sort: Desc)])
 }
 
-/** 조직 하이어라키 레벨 — DIVISION(사업본부) > UNIT(사업부) > TEAM(팀, 응답이 실제로 붙는 리프) */
+/**
+ * 조직 하이어라키 레벨 — DIVISION(사업본부) > UNIT(사업부) > TEAM(팀, 응답이 실제로 붙는 리프)
+ */
 enum DiagnosticTeamLevel {
   DIVISION
   UNIT
@@ -1428,17 +1642,19 @@ enum DiagnosticTeamLevel {
 }
 
 model DiagnosticTeam {
-  id         String   @id @default(cuid())
+  id         String               @id @default(cuid())
   waveId     String
-  wave       DiagnosticWave @relation(fields: [waveId], references: [id], onDelete: Cascade)
+  wave       DiagnosticWave       @relation(fields: [waveId], references: [id], onDelete: Cascade)
   name       String
-  /** @deprecated 자유텍스트 부서 태그 — 하이어라키 도입 전 데이터 호환용, 신규 입력은 level/parentId 사용 */
+  /**
+   * @deprecated 자유텍스트 부서 태그 — 하이어라키 도입 전 데이터 호환용, 신규 입력은 level/parentId 사용
+   */
   department String?
   slug       String
-  level      DiagnosticTeamLevel @default(TEAM)
+  level      DiagnosticTeamLevel  @default(TEAM)
   parentId   String?
-  parent     DiagnosticTeam?  @relation("DiagnosticTeamHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children   DiagnosticTeam[] @relation("DiagnosticTeamHierarchy")
+  parent     DiagnosticTeam?      @relation("DiagnosticTeamHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children   DiagnosticTeam[]     @relation("DiagnosticTeamHierarchy")
   responses  DiagnosticResponse[]
 
   @@unique([waveId, slug])
@@ -1447,16 +1663,16 @@ model DiagnosticTeam {
 }
 
 model DiagnosticResponse {
-  id              String   @id @default(cuid())
+  id              String             @id @default(cuid())
   waveId          String
-  wave            DiagnosticWave @relation(fields: [waveId], references: [id], onDelete: Cascade)
+  wave            DiagnosticWave     @relation(fields: [waveId], references: [id], onDelete: Cascade)
   teamId          String?
-  team            DiagnosticTeam? @relation(fields: [teamId], references: [id])
-  respondentToken String   @unique
+  team            DiagnosticTeam?    @relation(fields: [teamId], references: [id])
+  respondentToken String             @unique
   demographics    Json?
   consentAt       DateTime?
   submittedAt     DateTime?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime           @default(now())
   answers         DiagnosticAnswer[]
 
   @@index([waveId])
@@ -1466,14 +1682,388 @@ model DiagnosticResponse {
 }
 
 model DiagnosticAnswer {
-  id           String   @id @default(cuid())
+  id           String                 @id @default(cuid())
   responseId   String
-  response     DiagnosticResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  response     DiagnosticResponse     @relation(fields: [responseId], references: [id], onDelete: Cascade)
   itemId       String
-  item         DiagnosticItem @relation(fields: [itemId], references: [id])
+  item         DiagnosticItem         @relation(fields: [itemId], references: [id])
   axis         DiagnosticResponseAxis @default(CURRENT)
   numericValue Int?
   textValue    String?
 
   @@unique([responseId, itemId, axis])
+}
+
+// ── Evidence-based assessment framework (역할수행·면접·진단 공통) ──
+
+enum BehaviorPolarity {
+  POSITIVE
+  NEGATIVE_OR_MISSING
+}
+
+enum EvidenceAssessmentDomain {
+  INTERVIEW
+  ROLE_PLAY
+  DIAGNOSTIC
+  IN_BASKET
+}
+
+/**
+ * 역량평가 과제 유형 — 역할연기(멀티턴 대화) / 서류함(In-Basket)
+ */
+enum AssessmentScenarioKind {
+  ROLE_PLAY
+  IN_BASKET
+}
+
+/**
+ * 과제 게시 상태 — AI/관리자 초안은 DRAFT, 응시 가능은 PUBLISHED.
+ */
+enum AssessmentScenarioStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AssessmentAttemptStatus {
+  DRAFT
+  IN_PROGRESS
+  SUBMITTED
+  SCORED
+}
+
+/**
+ * 업로드된 과제 원문(텍스트만 보관). 바이너리는 저장하지 않는다.
+ */
+model AssessmentTaskSource {
+  id              String   @id @default(cuid())
+  fileName        String
+  mimeType        String?
+  byteSize        Int?
+  checksumSha256  String?
+  extractedText   String   @db.Text
+  createdByUserId String?
+  createdBy       User?    @relation("AssessmentTaskSourceCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  scenarios AssessmentScenario[]
+
+  @@index([createdAt(sort: Desc)])
+  @@index([checksumSha256])
+}
+
+/**
+ * 평정 1–5 행동분류 참조표 (도메인별)
+ */
+model RatingScaleAnchor {
+  id         String                   @id @default(cuid())
+  domain     EvidenceAssessmentDomain
+  score      Int
+  levelLabel String
+  criteria   String                   @db.Text
+  sortOrder  Int                      @default(0)
+  createdAt  DateTime                 @default(now())
+
+  @@unique([domain, score])
+  @@index([domain])
+}
+
+/**
+ * 역량 하위스킬 (예: 경청·공감 → 적극적 경청)
+ */
+model CompetencySubskill {
+  id           String                @id @default(cuid())
+  competencyId String
+  competency   Competency            @relation(fields: [competencyId], references: [id], onDelete: Cascade)
+  code         String
+  nameKo       String
+  definition   String                @db.Text
+  sortOrder    Int                   @default(0)
+  isActive     Boolean               @default(true)
+  indicators   BehavioralIndicator[]
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@unique([competencyId, code])
+  @@index([competencyId])
+}
+
+/**
+ * 관찰 look-for / 미관찰 기준
+ */
+model BehavioralIndicator {
+  id         String             @id @default(cuid())
+  subskillId String
+  subskill   CompetencySubskill @relation(fields: [subskillId], references: [id], onDelete: Cascade)
+  code       String
+  polarity   BehaviorPolarity
+  textKo     String             @db.Text
+  sortOrder  Int                @default(0)
+  isActive   Boolean            @default(true)
+
+  @@unique([subskillId, code])
+  @@index([subskillId])
+}
+
+/**
+ * 역량평가 과제 시나리오 — 역할연기(저성과 팀원 면담 등)·서류함(In-Basket) 공용.
+ * organizationId가 null이면 플랫폼 공용 라이브러리, 있으면 그 기관 전용.
+ */
+model AssessmentScenario {
+  id                  String                   @id @default(cuid())
+  code                String                   @unique
+  kind                AssessmentScenarioKind   @default(ROLE_PLAY)
+  status              AssessmentScenarioStatus @default(DRAFT)
+  version             Int                      @default(1)
+  titleKo             String
+  reportKindLabel     String                   @default("ASSESSMENT REPORT · 역할수행 과제")
+  roleContext         String?
+  taskBrief           String                   @db.Text
+  durationMinutes     Int                      @default(15)
+  recommendedSequence String?                  @db.Text
+  isActive            Boolean                  @default(true)
+  sortOrder           Int                      @default(0)
+  organizationId      String?
+  organization        Organization?            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /**
+   * 업로드 원문 — 역할연기/서류함 초안이 같은 원문에서 생성되면 동일 sourceId로 묶인다.
+   */
+  sourceId            String?
+  source              AssessmentTaskSource?    @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  publishedAt         DateTime?
+
+  // ── 역할연기(ROLE_PLAY) 전용 — 상대역 페르소나 정의 ──
+  /**
+   * 상대역 이름 (예: "김대리")
+   */
+  personaName    String?
+  /**
+   * 상대역 역할/직급 (예: "입사 3년차 팀원")
+   */
+  personaRole    String?
+  /**
+   * 상대역 성격·상황·연기 지침 — 캐릭터 LLM 시스템 프롬프트에 주입.
+   * 응시자 화면에는 노출하지 않는다(채점 기준·연기 전략이 보이면 안 됨).
+   */
+  personaProfile String? @db.Text
+  /**
+   * 상대역의 첫 발화 — LLM 호출 없이 고정 문구로 대화 시작(비용·일관성)
+   */
+  openingLine    String? @db.Text
+  /**
+   * 응시자 발화 기준 최대 턴 수 — 초과 시 대화 종료 유도
+   */
+  maxTurns       Int     @default(6)
+
+  competencies  AssessmentScenarioCompetency[]
+  attempts      AssessmentAttempt[]
+  inBasketItems AssessmentInBasketItem[]
+  shares        OrgAssessmentShare[]
+  createdAt     DateTime                       @default(now())
+  updatedAt     DateTime                       @updatedAt
+
+  @@index([organizationId])
+  @@index([kind, isActive, sortOrder])
+  @@index([status, isActive, sortOrder])
+  @@index([sourceId])
+}
+
+/**
+ * 서류함(In-Basket) 개별 아이템 — 이메일/메모 1건.
+ * urgency/importance/isDistractor/targetCompetencyCode는 채점용 내부 힌트 —
+ * 응시자 API 응답에서 반드시 제외한다.
+ */
+model AssessmentInBasketItem {
+  id                   String             @id @default(cuid())
+  scenarioId           String
+  scenario             AssessmentScenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  sortOrder            Int                @default(0)
+  fromLabel            String
+  subject              String
+  body                 String             @db.Text
+  /**
+   * LOW | MEDIUM | HIGH
+   */
+  urgency              String             @default("MEDIUM")
+  /**
+   * LOW | MEDIUM | HIGH
+   */
+  importance           String             @default("MEDIUM")
+  /**
+   * 미끼 항목(사소한데 과잉대응하는지 관찰)
+   */
+  isDistractor         Boolean            @default(false)
+  targetCompetencyCode String?
+  /**
+   * 플랫폼 Competency FK — targetCompetencyCode는 표시/호환용 스냅샷.
+   */
+  targetCompetencyId   String?
+  targetCompetency     Competency?        @relation(fields: [targetCompetencyId], references: [id], onDelete: SetNull)
+
+  responses AssessmentItemResponse[]
+
+  @@index([scenarioId, sortOrder])
+  @@index([targetCompetencyId])
+}
+
+model AssessmentScenarioCompetency {
+  id             String                       @id @default(cuid())
+  scenarioId     String
+  scenario       AssessmentScenario           @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  /**
+   * 플랫폼 Competency FK — 신규 과제의 SSOT. 레거시 행은 null일 수 있다.
+   */
+  competencyId   String?
+  competency     Competency?                  @relation(fields: [competencyId], references: [id], onDelete: SetNull)
+  /**
+   * 1~5점 RubricSet — 채점 시 점수 기준. 없으면 역량의 기본 RubricSet/legacy 사용.
+   */
+  rubricSetId    String?
+  rubricSet      RubricSet?                   @relation(fields: [rubricSetId], references: [id], onDelete: SetNull)
+  competencyCode String
+  nameKo         String
+  definition     String                       @db.Text
+  sortOrder      Int                          @default(0)
+  subskills      AssessmentScenarioSubskill[]
+
+  @@unique([scenarioId, competencyCode])
+  @@index([scenarioId])
+  @@index([competencyId])
+  @@index([rubricSetId])
+}
+
+model AssessmentScenarioSubskill {
+  id                   String                        @id @default(cuid())
+  scenarioCompetencyId String
+  scenarioCompetency   AssessmentScenarioCompetency  @relation(fields: [scenarioCompetencyId], references: [id], onDelete: Cascade)
+  code                 String
+  nameKo               String
+  definition           String                        @db.Text
+  sortOrder            Int                           @default(0)
+  indicators           AssessmentScenarioIndicator[]
+
+  @@unique([scenarioCompetencyId, code])
+  @@index([scenarioCompetencyId])
+}
+
+model AssessmentScenarioIndicator {
+  id         String                     @id @default(cuid())
+  subskillId String
+  subskill   AssessmentScenarioSubskill @relation(fields: [subskillId], references: [id], onDelete: Cascade)
+  code       String
+  polarity   BehaviorPolarity
+  textKo     String                     @db.Text
+  sortOrder  Int                        @default(0)
+
+  @@unique([subskillId, code])
+  @@index([subskillId])
+}
+
+/**
+ * 역량평가 시도 (역할연기·서류함 공용)
+ */
+model AssessmentAttempt {
+  id            String                      @id @default(cuid())
+  userId        String
+  user          User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scenarioId    String
+  scenario      AssessmentScenario          @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  status        AssessmentAttemptStatus     @default(DRAFT)
+  transcript    String?                     @db.Text
+  dialogueJson  Json?
+  /**
+   * 시도 시작 시 고정한 역량·루브릭·행동지표 스냅샷.
+   * 게시 후 루브릭이 바뀌어도 진행 중/과거 평가의 재현성을 보장한다.
+   */
+  frameworkSnapshot Json?
+  startedAt     DateTime?
+  submittedAt   DateTime?
+  /**
+   * 기관 배포 링크로 시작된 시도면 그 OrgAssessmentShare — 코호트/채용 집계용
+   */
+  orgShareId    String?
+  orgShare      OrgAssessmentShare?         @relation(fields: [orgShareId], references: [id], onDelete: SetNull)
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+  report        BehavioralAssessmentReport?
+  itemResponses AssessmentItemResponse[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([scenarioId])
+  @@index([orgShareId])
+}
+
+/**
+ * 서류함 아이템별 응시자 응답
+ */
+model AssessmentItemResponse {
+  id           String                 @id @default(cuid())
+  attemptId    String
+  attempt      AssessmentAttempt      @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  itemId       String
+  item         AssessmentInBasketItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  /**
+   * REPLY | DELEGATE | ESCALATE | FILE | DEFER — 구조화 처리방식(선택)
+   */
+  actionType   String?
+  responseText String                 @db.Text
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@unique([attemptId, itemId])
+  @@index([itemId])
+}
+
+/**
+ * 기관의 역량평가 과제 배포 링크 — OrgInterviewKitShare와 동일 패턴.
+ * /a/[slug] 로 지원자(비소속 로그인 사용자 포함)가 응시.
+ */
+model OrgAssessmentShare {
+  id              String             @id @default(cuid())
+  organizationId  String
+  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  scenarioId      String
+  scenario        AssessmentScenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  /**
+   * 공개 URL에 쓰이는 opaque 토큰 (/a/[slug])
+   */
+  slug            String             @unique
+  /**
+   * 코호트/캠페인 이름 — 예: "2026 하반기 경력 공채 팀장 후보"
+   */
+  label           String
+  isActive        Boolean            @default(true)
+  createdByUserId String?
+  createdBy       User?              @relation("OrgAssessmentShareCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  expiresAt       DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  attempts AssessmentAttempt[]
+
+  @@index([organizationId])
+  @@index([scenarioId])
+}
+
+/**
+ * 통합 증거형 리포트 저장소.
+ * sourceType+sourceId 로 InterviewSession / AssessmentAttempt / DiagnosticWave 에 연결.
+ */
+model BehavioralAssessmentReport {
+  id            String                   @id @default(cuid())
+  domain        EvidenceAssessmentDomain
+  sourceType    String
+  sourceId      String
+  schemaVersion Int                      @default(1)
+  overallScore  Float?
+  title         String?
+  roleContext   String?
+  reportJson    Json
+  attemptId     String?                  @unique
+  attempt       AssessmentAttempt?       @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  generatedAt   DateTime                 @default(now())
+
+  @@unique([sourceType, sourceId])
+  @@index([domain, generatedAt(sort: Desc)])
 }

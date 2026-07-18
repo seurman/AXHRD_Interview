@@ -1,13 +1,15 @@
 import Link from "next/link";
-import { ChevronRight, ClipboardList, BarChart3, Layers } from "lucide-react";
+import { ChevronRight, ClipboardList, BarChart3, Layers, Briefcase } from "lucide-react";
 import { requirePageUser } from "@/lib/auth/guards";
 import { resolveInterviewKitAccess } from "@/lib/org/interview-kit";
+import { resolveAssessmentShareAccess } from "@/lib/org/assessment-share";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrgSettingsPage() {
   const user = await requirePageUser("/org/settings");
   const access = await resolveInterviewKitAccess(user);
+  const assessmentAccess = await resolveAssessmentShareAccess(user);
 
   const items = access.allowed
     ? [
@@ -23,6 +25,17 @@ export default async function OrgSettingsPage() {
           description: "기본 역량 복제·기관 맞춤 역량·문항 작성.",
           icon: Layers,
         },
+        ...(assessmentAccess.allowed
+          ? [
+              {
+                href: "/org/settings/assessment",
+                title: "역량평가 과제 배포",
+                description:
+                  "서류함·역할연기 과제를 지원자에게 링크로 배포하고 리포트를 확인합니다.",
+                icon: Briefcase,
+              },
+            ]
+          : []),
       ]
     : [];
 

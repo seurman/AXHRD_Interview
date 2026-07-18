@@ -44,6 +44,11 @@ web/prisma/*.db-journal
 # Logs
 *.log
 npm-debug.log*
+/build-log.txt
+
+# Doc extraction artifacts (임시 DOCX/ZIP 추출물 — 원본 docx/pdf/source md만 유지)
+docs/arc-index/_*_extract/
+docs/arc-index/*.extracted.txt
 
 # TypeScript
 *.tsbuildinfo

@@ -1,6 +1,128 @@
-# 현재 상태 (2026-07-15 기준)
+# 현재 상태 (2026-07-18 기준)
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
+
+## 최근 작업 — 음성 중심 역량평가 + 과제 CMS (2026-07-18)
+
+- 역할연기·서류함 응시 UX를 **음성 우선 + 텍스트 대체**로 전환.
+  - `VoiceRecorder`에 `submitMode: draft|submit` 추가.
+  - `RolePlayRunner`: STT 입력 + 상대역 TTS(`/api/assessment/attempts/[id]/tts`).
+  - `InBasketRunner`: 음성 받아쓰기 → 텍스트 영역 반영 후 자동저장.
+  - 공통 `axhrd_voice_mode` 설정 공유.
+- 플랫폼 관리자 **평가 과제 스튜디오** (`/admin/content/assessment`):
+  - 문서 업로드(PDF/DOC/DOCX/TXT/MD) → AI 초안(역할연기/서류함/둘 다) → 검토·게시.
+  - API: `/api/admin/assessment-scenarios` (+ parse/generate/publish/duplicate).
+- 기존 플랫폼 `Competency` + `RubricSet`(1~5점) FK 연결 + 과제별 행동지표 보조 채점.
+- 시도 시작 시 `frameworkSnapshot` 고정으로 루브릭 변경에도 재현성 유지.
+- 마이그레이션: `20260718120000_assessment_task_cms_voice`
+  (`AssessmentTaskSource`, `AssessmentScenarioStatus`, FK, snapshot).
+
+검증:
+
+```powershell
+cd D:\HR_IN_Solution\web
+npx prisma generate
+npx prisma migrate deploy
+npm run db:seed:evidence
+npx tsc --noEmit
+npm test
+npx next build
+```
+
+## 최근 작업 — 역량평가(서류함·역할연기) 실행·채점·배포·UI 전체 구현 (2026-07-18, Cowork 세션)
+
+증거형 평가 프레임(아래 섹션) 위에 실제 실행 가능한 역량평가 제품을 얹었습니다.
+스키마·마이그레이션(`20260717130000_expand_assessment_scenarios`)·시드는 기존 것을 그대로 사용하고,
+이번 세션에서는 **엔진·API·UI·기관 배포·면접 연계**를 구현했습니다.
+
+### 엔진 (`lib/assessment/`)
+- `role-play-engine.ts` — 역할연기 상대역 페르소나 대화. 캐릭터 LLM(`role_play_persona`, standard 티어)과
+  채점 LLM을 **분리**(편향 방지). 턴 캡 도달 시 LLM 호출 없이 고정 종료 문구. 인젝션 방어
+  (응시자 발화는 데이터, 지시 아님). LLM 실패 시 중립 폴백 문구로 대화 유지(가짜 판단 없음).
+- `grade-attempt.ts` — 제출 시 **1회만** 채점(아이템/턴별 실시간 채점 금지). 시나리오의
+  하위역량·행동지표(look-for) + 도메인 평정척도를 프롬프트에 주입 → `EvidenceAssessmentReport` 생성 →
+  `BehavioralAssessmentReport` upsert. 채점 실패 시 SCORED로 전이하지 않고(SUBMITTED 유지)
+  "임시값" 명시 리포트 저장 + 리포트 화면에서 재채점 버튼 제공 — 추정치를 실제 값처럼 안 보이게.
+- `load-scenario-context.ts` — 시나리오+프레임 로더. `toCandidateScenarioPayload()`가
+  personaProfile/urgency/importance/isDistractor/targetCompetencyCode를 **응시자 응답에서 제외**.
+
+### API
+- `POST /api/assessment/attempts` — 시작(진행 중 시도 재사용, 배포 링크 `shareSlug` 검증 포함).
+- `GET /api/assessment/attempts/[id]` — 재개용 상태. `POST .../turn` — 역할연기 1턴(레이트리밋 30/10분).
+- `POST .../respond` — 서류함 아이템 응답 upsert. `POST .../submit` — 완결성 검사 → 채점 1회(멱등).
+- `GET/POST /api/org/assessment-shares`, `PATCH /api/org/assessment-shares/[id]` — 기관 배포 링크 CRUD.
+- `GET /api/assessment/scenarios` — 응시 가능 목록(플랫폼 공용 + 소속 기관 전용).
+
+### UI
+- `/assessment` — 과제 카탈로그 + 내 응시 기록 (`product.assessment` capability, 전 역할 기본 부여).
+- `/assessment/attempt/[id]` — 역할연기 채팅 러너 / 서류함 좌우분할 러너(1.5초 디바운스 자동저장,
+  처리 방식 칩 REPLY/DELEGATE/ESCALATE/DEFER/FILE). 제출 후엔 리포트로 리다이렉트.
+- `/assessment/attempt/[id]/report` — `EvidenceReportView`(공용 컴포넌트로 추출, `SessionReportView`도
+  이걸 재사용하도록 리팩터) + 대화 기록/처리 내용 원문 + 재채점 버튼.
+- 내비: `PrepareLabelKey`에 `assessment` 추가(GROWTH_HREFS), ko/en 사전 갱신.
+
+### 기관 배포·면접 활용
+- `Organization.assessmentEnabled`를 entitlements 체계(`OrgProductKey`)에 4번째 SKU `assessment`로 통합 —
+  슈퍼어드민 기관 패널 토글·기관 생성 프리셋·뱃지·수량 카운트 모두 반영.
+- `/org/settings/assessment` — 배포 링크 생성/복사/중지, 링크별 응시자·점수 현황(기관 ADMIN + SKU 필요).
+- `/a/[slug]` — 지원자 공개 랜딩(kit 공유와 동일 패턴: 비활성/만료/미승인/SKU off면 404로 은닉).
+  응시 시 결과가 기관에 공유됨을 랜딩에 명시. 시도에 `orgShareId` 기록(코호트 집계용).
+- `/org/assessment/attempts/[id]` — 기관 담당자용 지원자 리포트(자기 기관 배포 시도만, "참고 자료" 문구).
+- 면접 리포트(`/interview/[sessionId]/report`) 하단에 `AssessmentResultsSummary` — 같은 사용자의
+  완료된 역량평가 결과 카드(없으면 미표시).
+
+### 알려진 제약·로컬 검증 필요
+- 이 세션 환경에서 Prisma 엔진 다운로드(403)·장시간 tsc 실행 불가 — 신규 파일은 prettier 파서로
+  구문 검증만 완료. 아래를 로컬에서 실행해 주세요:
+
+```powershell
+cd D:\HR_IN_Solution\web
+npx prisma generate
+npx prisma migrate deploy   # 20260717130000_expand_assessment_scenarios
+npm run db:seed:evidence    # 앵커 + UNDERPERFORM_1ON1 + NEW_LEADER_INBOX(서류함 8아이템)
+npx tsc --noEmit
+npm test
+npx next build
+```
+
+- 참고: `web/package.json`이 손상(잘림)돼 있어 HEAD 기준으로 복구했습니다(`db:seed:evidence` 스크립트 유지).
+- 수동 확인: (1) `/assessment`에서 서류함·역할연기 응시→제출→리포트, (2) 슈퍼어드민 기관 패널에서
+  AC SKU 토글 → `/org/settings/assessment` 링크 생성 → 시크릿 창 `/a/[slug]` 응시 → 기관 리포트 열람,
+  (3) 면접 리포트 하단 역량평가 카드 노출.
+- 다음 배치 후보: 서류함 과제 LLM 자동 생성 CMS(관리자), 코호트 집계 뷰, PT/GD 기법.
+
+## 최근 작업 — 증거형 평가 프레임(구조·DB·면접 연결) (2026-07-18)
+
+- `EvidenceAssessmentReport` v1: INTERVIEW / ROLE_PLAY / DIAGNOSTIC / IN_BASKET 공통 계약.
+- `SessionReport.evidenceJson`(면접 SSOT), `BehavioralAssessmentReport`, `AssessmentScenario` 계층 구현.
+- `RatingScaleAnchor` 1–5, `CompetencySubskill`, `BehavioralIndicator` 및 In-Basket/기관 배포 확장 스키마.
+- 마이그레이션:
+  - `20260717120000_evidence_assessment_framework` — 공통 증거 프레임.
+  - `20260717130000_expand_assessment_scenarios` — 역할연기 페르소나·In-Basket·기관 배포.
+- 멱등 시드: 4개 도메인 평정척도 + `UNDERPERFORM_1ON1` 역할수행 시나리오/역량/행동지표.
+- 면접 종료 시 기존 리포트와 증거 리포트를 병렬 생성. 기존 `summaryJson`은 유지하고 `evidenceJson`에 별도 저장.
+- 지원자·기관 공용 `SessionReportView`에서 행동 증거, 인용, 평정 근거, 개발 제언을 선택적으로 표시.
+- 증거 리포트 실패는 기존 면접 리포트 완료를 막지 않음(레거시 호환).
+
+검증 완료:
+
+```powershell
+cd D:\HR_IN_Solution\web
+npx prisma generate
+npx tsc --noEmit
+npm test
+npx next build
+```
+
+검증 결과: Prisma schema valid, TypeScript 오류 0, 테스트 117개 통과
+(외부 사이트 실시간 테스트 4개는 `RUN_LIVE_TESTS=1`에서만 실행), Next 프로덕션 빌드 성공.
+
+로컬 PostgreSQL 실행 후 추가 확인 필요:
+
+```powershell
+npx prisma migrate deploy
+npm run db:seed:evidence
+```
 
 ## 최근 작업 — 수집률·레이더·바차트 표시 수정 (2026-07-15)
 

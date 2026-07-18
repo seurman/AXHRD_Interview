@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { ARC_INDEX_SEED } from "../../../prisma/seed/arc-index-data";
+import {
+  ARC_INDEX_SEED,
+  type SeedItem,
+  type SeedSection,
+} from "../../../prisma/seed/arc-index-data";
 import {
   buildReversedSet,
   computeArcScoresFromAnswers,
@@ -9,8 +13,8 @@ import {
 function answersFromSeed(value = 4): { answers: ScoredAnswers; reversed: Set<string> } {
   const answers: ScoredAnswers = {};
   const revFlags: Array<{ itemCode: string; isReversed: boolean }> = [];
-  for (const sec of ARC_INDEX_SEED.sections) {
-    for (const it of sec.directItems ?? []) {
+  for (const sec of ARC_INDEX_SEED.sections as SeedSection[]) {
+    for (const it of (sec.directItems ?? []) as SeedItem[]) {
       if (it.isDemographic || it.scaleType === "OPEN_TEXT") continue;
       answers[it.itemCode] = {
         current: value,
@@ -19,7 +23,7 @@ function answersFromSeed(value = 4): { answers: ScoredAnswers; reversed: Set<str
       if (it.isReversed) revFlags.push({ itemCode: it.itemCode, isReversed: true });
     }
     for (const sub of sec.subscales) {
-      for (const it of sub.items) {
+      for (const it of sub.items as SeedItem[]) {
         if (it.scaleType === "OPEN_TEXT") continue;
         answers[it.itemCode] = {
           current: value,

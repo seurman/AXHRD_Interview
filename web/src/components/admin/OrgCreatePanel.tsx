@@ -78,6 +78,7 @@ export function OrgCreatePanel() {
           interviewEnabled: entitlements.interview,
           saasPersonalizationEnabled: entitlements.competency,
           diagnosticEnabled: entitlements.diagnostic,
+          assessmentEnabled: entitlements.assessment,
         }),
       });
       const data = await res.json().catch(() => ({}));
