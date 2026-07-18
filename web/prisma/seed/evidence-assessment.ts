@@ -2,8 +2,20 @@
  * 증거형 평가 프레임 시드
  * Usage: cd web && npm run db:seed:evidence
  */
-import type { BehaviorPolarity, EvidenceAssessmentDomain } from "@prisma/client";
-import { prisma } from "../../src/lib/prisma";
+import {
+  PrismaClient,
+  type BehaviorPolarity,
+  type EvidenceAssessmentDomain,
+} from "@prisma/client";
+
+/** CLI/배포 시드: DIRECT_URL(세션) 우선 — pooler(6543) 회피 */
+const defaultPrisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DIRECT_URL?.trim() || process.env.DATABASE_URL,
+    },
+  },
+});
 
 const ANCHOR_DOMAINS: EvidenceAssessmentDomain[] = [
   "INTERVIEW",
@@ -20,11 +32,11 @@ const RATING_ANCHORS: Array<{ score: number; levelLabel: string; criteria: strin
   { score: 1, levelLabel: "매우 미흡", criteria: "거의 전부 부정/미관찰, 긍정 없거나 극히 미미" },
 ];
 
-async function seedRatingScaleAnchors(): Promise<number> {
+async function seedRatingScaleAnchors(client: PrismaClient): Promise<number> {
   let count = 0;
   for (const domain of ANCHOR_DOMAINS) {
     for (const a of RATING_ANCHORS) {
-      await prisma.ratingScaleAnchor.upsert({
+      await client.ratingScaleAnchor.upsert({
         where: { domain_score: { domain, score: a.score } },
         create: { domain, score: a.score, levelLabel: a.levelLabel, criteria: a.criteria, sortOrder: 5 - a.score },
         update: { levelLabel: a.levelLabel, criteria: a.criteria, sortOrder: 5 - a.score },
@@ -154,8 +166,8 @@ const UNDERPERFORM_COMPETENCIES: CompetencySeed[] = [
   },
 ];
 
-async function resolvePlatformCompetency(code: string) {
-  const bank = await prisma.competency.findFirst({
+async function resolvePlatformCompetency(client: PrismaClient, code: string) {
+  const bank = await client.competency.findFirst({
     where: { code, organizationId: null, ownerScope: "PLATFORM" },
     include: {
       rubricSets: {
@@ -167,8 +179,8 @@ async function resolvePlatformCompetency(code: string) {
   return bank;
 }
 
-async function seedUnderperformScenario(): Promise<void> {
-  const scenario = await prisma.assessmentScenario.upsert({
+async function seedUnderperformScenario(client: PrismaClient): Promise<void> {
+  const scenario = await client.assessmentScenario.upsert({
     where: { code: UNDERPERFORM_SCENARIO.code },
     create: {
       ...UNDERPERFORM_SCENARIO,
@@ -185,7 +197,7 @@ async function seedUnderperformScenario(): Promise<void> {
     },
   });
 
-  await seedScenarioCompetencies(scenario.id, UNDERPERFORM_COMPETENCIES);
+  await seedScenarioCompetencies(client, scenario.id, UNDERPERFORM_COMPETENCIES);
 }
 
 // ── 서류함(In-Basket): 신임 팀장의 월요일 아침 ──
@@ -366,12 +378,13 @@ const INBASKET_COMPETENCIES: CompetencySeed[] = [
 ];
 
 async function seedScenarioCompetencies(
+  client: PrismaClient,
   scenarioId: string,
   competencies: CompetencySeed[],
 ): Promise<void> {
   for (const [competencyIndex, competency] of competencies.entries()) {
-    const bank = await resolvePlatformCompetency(competency.competencyCode);
-    const scenarioCompetency = await prisma.assessmentScenarioCompetency.upsert({
+    const bank = await resolvePlatformCompetency(client, competency.competencyCode);
+    const scenarioCompetency = await client.assessmentScenarioCompetency.upsert({
       where: {
         scenarioId_competencyCode: {
           scenarioId,
@@ -397,7 +410,7 @@ async function seedScenarioCompetencies(
     });
 
     for (const [subskillIndex, subskill] of competency.subskills.entries()) {
-      const scenarioSubskill = await prisma.assessmentScenarioSubskill.upsert({
+      const scenarioSubskill = await client.assessmentScenarioSubskill.upsert({
         where: {
           scenarioCompetencyId_code: {
             scenarioCompetencyId: scenarioCompetency.id,
@@ -419,7 +432,7 @@ async function seedScenarioCompetencies(
       });
 
       for (const [indicatorIndex, indicator] of subskill.indicators.entries()) {
-        await prisma.assessmentScenarioIndicator.upsert({
+        await client.assessmentScenarioIndicator.upsert({
           where: {
             subskillId_code: {
               subskillId: scenarioSubskill.id,
@@ -444,8 +457,8 @@ async function seedScenarioCompetencies(
   }
 }
 
-async function seedInBasketScenario(): Promise<void> {
-  const scenario = await prisma.assessmentScenario.upsert({
+async function seedInBasketScenario(client: PrismaClient): Promise<void> {
+  const scenario = await client.assessmentScenario.upsert({
     where: { code: INBASKET_SCENARIO.code },
     create: {
       ...INBASKET_SCENARIO,
@@ -462,19 +475,19 @@ async function seedInBasketScenario(): Promise<void> {
     },
   });
 
-  await seedScenarioCompetencies(scenario.id, INBASKET_COMPETENCIES);
+  await seedScenarioCompetencies(client, scenario.id, INBASKET_COMPETENCIES);
 
   // (scenarioId, sortOrder) 유니크 제약이 없으므로 sortOrder 기준 수동 upsert —
   // 기존 응답이 연결된 아이템을 삭제하지 않기 위해 delete+recreate 대신 갱신한다.
   for (const item of INBASKET_ITEMS) {
     const bank = item.targetCompetencyCode
-      ? await resolvePlatformCompetency(item.targetCompetencyCode)
+      ? await resolvePlatformCompetency(client, item.targetCompetencyCode)
       : null;
-    const existing = await prisma.assessmentInBasketItem.findFirst({
+    const existing = await client.assessmentInBasketItem.findFirst({
       where: { scenarioId: scenario.id, sortOrder: item.sortOrder },
     });
     if (existing) {
-      await prisma.assessmentInBasketItem.update({
+      await client.assessmentInBasketItem.update({
         where: { id: existing.id },
         data: {
           fromLabel: item.fromLabel,
@@ -488,7 +501,7 @@ async function seedInBasketScenario(): Promise<void> {
         },
       });
     } else {
-      await prisma.assessmentInBasketItem.create({
+      await client.assessmentInBasketItem.create({
         data: {
           scenarioId: scenario.id,
           ...item,
@@ -499,13 +512,18 @@ async function seedInBasketScenario(): Promise<void> {
   }
 }
 
-export async function seedEvidenceAssessment(): Promise<void> {
-  const anchorCount = await seedRatingScaleAnchors();
-  await seedUnderperformScenario();
-  await seedInBasketScenario();
+export async function seedEvidenceAssessment(client: PrismaClient = defaultPrisma): Promise<{
+  anchors: number;
+  scenarios: string[];
+}> {
+  const anchorCount = await seedRatingScaleAnchors(client);
+  await seedUnderperformScenario(client);
+  await seedInBasketScenario(client);
+  const scenarios = [UNDERPERFORM_SCENARIO.code, INBASKET_SCENARIO.code];
   console.log(
-    `[evidence-assessment] 평정척도 ${anchorCount}행, ${UNDERPERFORM_SCENARIO.code}·${INBASKET_SCENARIO.code} 시나리오를 동기화했습니다.`,
+    `[evidence-assessment] 평정척도 ${anchorCount}행, ${scenarios.join("·")} 시나리오를 동기화했습니다.`,
   );
+  return { anchors: anchorCount, scenarios };
 }
 
 const invokedDirectly = process.argv[1]
@@ -519,6 +537,6 @@ if (invokedDirectly) {
       process.exitCode = 1;
     })
     .finally(async () => {
-      await prisma.$disconnect();
+      await defaultPrisma.$disconnect();
     });
 }

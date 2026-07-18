@@ -73,6 +73,16 @@ export function AssessmentCatalog({
         </p>
       ) : null}
 
+      {scenarios.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-card-border bg-card/30 px-5 py-8 text-sm text-muted">
+          <p className="font-medium text-foreground">게시된 과제가 아직 없습니다.</p>
+          <p className="mt-2 leading-relaxed">
+            플랫폼 관리자가 데모 과제(저성과 팀원 면담 · 신임 팀장 서류함)를 시드하거나
+            과제를 업로드·게시한 뒤 이 목록에 표시됩니다.
+          </p>
+        </div>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2">
         {scenarios.map((s) => {
           const inProgress = attempts.find(

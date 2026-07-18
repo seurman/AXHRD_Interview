@@ -11,6 +11,7 @@ export default async function AssessmentPage() {
     prisma.assessmentScenario.findMany({
       where: {
         isActive: true,
+        status: "PUBLISHED",
         OR: [
           { organizationId: null },
           ...(user.organizationId ? [{ organizationId: user.organizationId }] : []),
