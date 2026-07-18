@@ -17,6 +17,7 @@ import { ensureDemoAccountPasswords } from "../../src/lib/demo/seed-demo-passwor
 import { seedShowcaseDemoData } from "../../src/lib/platform/showcase-seed";
 import { seedArcIndex } from "./arc-index";
 import { seedDemoArcIndex } from "./demo-arc-index";
+import { seedEvidenceAssessment } from "./evidence-assessment";
 import access from "../../src/data/demo/demo-access.json";
 
 const prisma = new PrismaClient();
@@ -64,6 +65,9 @@ export async function runDemoSuite(client: PrismaClient = prisma, options?: Demo
   console.log("[demo-suite] 데모 계정 비밀번호…");
   const passwords = await ensureDemoAccountPasswords(client);
 
+  console.log("[demo-suite] 역량평가 데모 과제(역할연기·서류함)…");
+  const evidenceAssessment = await seedEvidenceAssessment(client);
+
   const summary = {
     showcase,
     dashboard,
@@ -72,6 +76,7 @@ export async function runDemoSuite(client: PrismaClient = prisma, options?: Demo
     showcaseArc,
     arcAdmin,
     passwords,
+    evidenceAssessment,
     credentialsFile: "src/data/demo/demo-access.json",
     defaultPassword: access.defaultPassword,
   };

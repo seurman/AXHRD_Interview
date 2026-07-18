@@ -300,8 +300,55 @@ export function AssessmentScenarioStudio() {
     await saveSelected({ competencyLinks: links });
   }
 
+  async function seedDemoScenarios() {
+    setBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/assessment-scenarios/seed-demo", {
+        method: "POST",
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        message?: string;
+        error?: string;
+        scenarios?: string[];
+      };
+      if (!res.ok) throw new Error(data.error ?? "데모 시드 실패");
+      setMessage(
+        data.message ??
+          `데모 과제 시드 완료${data.scenarios?.length ? `: ${data.scenarios.join(", ")}` : ""}`,
+      );
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "데모 시드 실패");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
+      <section className="rounded-xl border border-dashed border-amber-300/60 bg-amber-50/40 p-5 dark:bg-amber-950/20">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">데모 과제 시드</h2>
+            <p className="mt-1 text-xs text-muted">
+              기존 샘플 2종을 게시 상태로 동기화합니다. 역할연기「저성과 팀원과의 면담」,
+              서류함「신임 팀장의 월요일 아침 서류함」.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void seedDemoScenarios()}
+            className="btn-secondary px-4 py-2 text-sm disabled:opacity-50"
+          >
+            {busy ? "시드 중…" : "데모 과제 넣기"}
+          </button>
+        </div>
+      </section>
+
       <section className="rounded-xl border border-card-border bg-card/40 p-5">
         <h2 className="text-sm font-semibold text-foreground">1. 과제 문서 업로드 → AI 초안</h2>
         <p className="mt-1 text-xs text-muted">
@@ -370,7 +417,9 @@ export function AssessmentScenarioStudio() {
           {loading ? (
             <p className="p-3 text-xs text-muted">불러오는 중…</p>
           ) : scenarios.length === 0 ? (
-            <p className="p-3 text-xs text-muted">등록된 과제가 없습니다.</p>
+            <p className="p-3 text-xs text-muted">
+              등록된 과제가 없습니다. 위의 「데모 과제 넣기」로 샘플을 시드하세요.
+            </p>
           ) : (
             <ul className="max-h-[36rem] space-y-1 overflow-y-auto">
               {scenarios.map((s) => (

@@ -45,4 +45,15 @@ if (status !== 0 && output.includes("P3009")) {
   }
 }
 
+// 역량평가 데모 과제(역할연기·서류함) — 멱등 upsert. 실패해도 빌드는 계속.
+if (status === 0) {
+  console.log("[migrate-deploy] Seeding evidence assessment demos…");
+  const seed = run("npx tsx prisma/seed/evidence-assessment.ts");
+  if (seed.status !== 0) {
+    console.warn(
+      "[migrate-deploy] evidence assessment seed failed (non-fatal). Use /admin/content/assessment → 「데모 과제 넣기」.",
+    );
+  }
+}
+
 process.exit(status);
