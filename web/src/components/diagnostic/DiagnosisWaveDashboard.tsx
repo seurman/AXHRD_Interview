@@ -120,6 +120,7 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
   const [selectedTeam, setSelectedTeam] = useState<string | "all">("all");
   const [loading, setLoading] = useState(true);
   const [drillId, setDrillId] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -251,52 +252,76 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
     }));
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
+    <div className="space-y-5 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <p className="text-xs text-muted">
             Wave {wave.waveNumber}
             {wave.label ? ` · ${wave.label}` : ""}
             {wave.sectionBadge ? ` · ${wave.sectionBadge}` : ""}
+            {typeof wave.responseCount === "number" ? ` · 제출 ${wave.responseCount}건` : ""}
           </p>
         </div>
-        {wave.orgWideLink && (
+        {wave.orgWideLink ? (
           <button
             type="button"
-            className="text-xs text-accent hover:underline"
-            onClick={() => void navigator.clipboard.writeText(wave.orgWideLink!)}
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-card-border bg-card px-3 py-2 text-xs font-medium text-accent hover:bg-background"
+            onClick={() => {
+              void navigator.clipboard.writeText(wave.orgWideLink!).then(() => {
+                setLinkCopied(true);
+                window.setTimeout(() => setLinkCopied(false), 1600);
+              });
+            }}
           >
-            조직 전체 링크 복사
+            {linkCopied ? "링크 복사됨" : "조직 전체 링크 복사"}
           </button>
-        )}
+        ) : null}
       </div>
 
-      <DiagnosticLongitudinalPanel waveId={waveId} apiBase="org" />
-
-      <div className="flex flex-wrap gap-2">
+      <div
+        className="flex gap-1 overflow-x-auto overscroll-x-contain rounded-xl border border-card-border bg-card/40 p-1 [-webkit-overflow-scrolling:touch]"
+        role="tablist"
+        aria-label="리포트 보기"
+      >
         <button
           type="button"
-          className={`nav-pill ${tab === "overview" ? "nav-pill-active" : ""}`}
+          role="tab"
+          aria-selected={tab === "overview"}
+          className={`min-h-10 flex-1 rounded-lg px-3 py-2 text-sm font-medium transition sm:flex-none sm:px-4 ${
+            tab === "overview"
+              ? "bg-foreground text-background"
+              : "text-muted hover:text-foreground"
+          }`}
           onClick={() => setTab("overview")}
         >
           종합
         </button>
-        {showTeamsTab && (
+        {showTeamsTab ? (
           <button
             type="button"
-            className={`nav-pill ${tab === "teams" ? "nav-pill-active" : ""}`}
+            role="tab"
+            aria-selected={tab === "teams"}
+            className={`min-h-10 flex-1 rounded-lg px-3 py-2 text-sm font-medium transition sm:flex-none sm:px-4 ${
+              tab === "teams"
+                ? "bg-foreground text-background"
+                : "text-muted hover:text-foreground"
+            }`}
             onClick={() => setTab("teams")}
           >
-            팀
+            조직별
           </button>
-        )}
+        ) : null}
       </div>
 
       {tab === "overview" && (
         <>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <label className="sr-only" htmlFor="diagnosis-scope">
+              집계 범위
+            </label>
             <select
-              className="rounded-lg border border-card-border bg-background px-3 py-2 text-sm"
+              id="diagnosis-scope"
+              className="min-h-11 w-full rounded-xl border border-card-border bg-background px-3 py-2.5 text-base sm:w-auto sm:min-w-[16rem] sm:text-sm"
               value={selectedTeam}
               onChange={(e) => setSelectedTeam(e.target.value)}
             >
@@ -318,18 +343,22 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
           </div>
 
           {activeScores?.hidden ? (
-            <div className="card-luxe p-6 text-center text-sm text-muted">
-              표본 부족 (N={activeScores.sampleSize ?? 0}, 최소 {activeScores.minGroupSize ?? 5}명 필요)
+            <div className="rounded-2xl border border-dashed border-card-border bg-card/30 px-5 py-10 text-center">
+              <p className="font-medium text-foreground">표본이 아직 부족합니다</p>
+              <p className="mt-2 text-sm text-muted">
+                N={activeScores.sampleSize ?? 0} · 최소 {activeScores.minGroupSize ?? 5}명 제출 후
+                점수가 공개됩니다.
+              </p>
             </div>
           ) : (
             <>
-              <ReportGuideCard />
-              {showNarratives && executiveSummary && (
-                <ExecutiveSummaryCard parts={executiveSummary} />
-              )}
               <ScoreHero
                 title={selectedTeam === "all" ? "전사 조직 펄스" : "선택 조직 펄스"}
-                meta={wave.label ? `Wave ${wave.waveNumber} · ${wave.label}` : `Wave ${wave.waveNumber}`}
+                meta={
+                  wave.label
+                    ? `Wave ${wave.waveNumber} · ${wave.label}`
+                    : `Wave ${wave.waveNumber}`
+                }
                 axes={[
                   ...(isEnabled("OHI")
                     ? [
@@ -390,22 +419,37 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
                 ]}
               />
 
-              {radarData.length > 0 && (
-                <div className="card-luxe p-4">
+              {showNarratives && executiveSummary ? (
+                <ExecutiveSummaryCard parts={executiveSummary} />
+              ) : null}
+
+              <details className="rounded-2xl border border-card-border bg-card/30 px-4 py-3">
+                <summary className="cursor-pointer text-sm font-medium text-foreground">
+                  리포트 읽는 법
+                </summary>
+                <div className="mt-3">
+                  <ReportGuideCard />
+                </div>
+              </details>
+
+              <DiagnosticLongitudinalPanel waveId={waveId} apiBase="org" />
+
+              {radarData.length > 0 ? (
+                <div className="rounded-2xl border border-card-border bg-card/40 p-4">
                   <h3 className="mb-2 text-sm font-semibold">4축 레이더</h3>
                   <ArcRadar data={radarData} />
                 </div>
-              )}
+              ) : null}
 
-              {driverEntries.length > 0 && (
-                <div className="card-luxe p-4">
-                  <h3 className="mb-2 text-sm font-semibold">드라이버 영역 — 현재 vs 중요도</h3>
-                  <div className="h-72">
+              {driverEntries.length > 0 ? (
+                <div className="rounded-2xl border border-card-border bg-card/40 p-4">
+                  <h3 className="mb-2 text-sm font-semibold">드라이버 — 현재 vs 중요도</h3>
+                  <div className="h-64 sm:h-72">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={driverEntries} layout="vertical" margin={{ left: 24 }}>
+                      <BarChart data={driverEntries} layout="vertical" margin={{ left: 8, right: 8 }}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" domain={[0, 5]} tickFormatter={scoreAxisTick} />
-                        <YAxis type="category" dataKey="code" width={40} tick={{ fontSize: 11 }} />
+                        <YAxis type="category" dataKey="code" width={36} tick={{ fontSize: 11 }} />
                         <Tooltip formatter={(v: number) => formatScore(v)} />
                         <Bar dataKey="current" name="현재" fill="#c9a227" />
                         <Bar dataKey="importance" name="중요도" fill="#64748b" />
@@ -413,9 +457,9 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
                     </ResponsiveContainer>
                   </div>
                 </div>
-              )}
+              ) : null}
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
                 {isEnabled("OHI") && (
                   <InsightCard
                     title="Risk Index"
@@ -464,21 +508,28 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
 
       {tab === "teams" && (
         <div className="space-y-4">
-          {/* 전사 → 사업본부 → 사업부 → 팀 브레드크럼 */}
-          <div className="flex flex-wrap items-center gap-1 text-sm">
+          <div className="-mx-1 flex gap-1 overflow-x-auto overscroll-x-contain px-1 pb-1 text-sm [-webkit-overflow-scrolling:touch]">
             <button
               type="button"
-              className={`nav-pill text-xs ${drillId === null ? "nav-pill-active" : ""}`}
+              className={`min-h-10 shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${
+                drillId === null
+                  ? "bg-foreground text-background"
+                  : "border border-card-border text-muted"
+              }`}
               onClick={() => setDrillId(null)}
             >
               전사 종합
             </button>
             {drillBreadcrumb.map((node) => (
-              <span key={node.teamId} className="flex items-center gap-1">
+              <span key={node.teamId} className="flex shrink-0 items-center gap-1">
                 <span className="text-muted">›</span>
                 <button
                   type="button"
-                  className={`nav-pill text-xs ${drillId === node.teamId ? "nav-pill-active" : ""}`}
+                  className={`min-h-10 rounded-full px-3 py-1.5 text-xs font-medium ${
+                    drillId === node.teamId
+                      ? "bg-foreground text-background"
+                      : "border border-card-border text-muted"
+                  }`}
                   onClick={() => setDrillId(node.teamId)}
                 >
                   {LEVEL_LABEL[node.level ?? "TEAM"]} · {node.teamName}
@@ -493,20 +544,20 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
               if (!self) return null;
               if (self.hidden) {
                 return (
-                  <div className="card-luxe p-4 text-sm text-muted">
+                  <div className="rounded-2xl border border-dashed border-card-border bg-card/30 p-4 text-sm text-muted">
                     표본 부족 — 최소 5명 필요 (현재 N={self.sampleSize ?? 0})
                   </div>
                 );
               }
               return (
-                <div className="card-luxe p-4">
-                  <div className="mb-3 flex items-center justify-between gap-2">
+                <div className="rounded-2xl border border-card-border bg-card/40 p-4">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <span className="text-sm font-semibold text-foreground">
                       {LEVEL_LABEL[self.level ?? "TEAM"]} · {self.teamName}
                     </span>
                     <span className="text-xs text-muted">N={self.sampleSize ?? "—"}</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
                     {isEnabled("OHI") && <MiniMetric label="OHI(SE)" value={self.OHI_SE} />}
                     {isEnabled("ORI") && <MiniMetric label="ORI" value={self.ORI} />}
                     {isEnabled("OVI") && <MiniMetric label="OVI" value={self.OVI} />}
@@ -517,12 +568,14 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
             })()}
 
           {drillId === null && aggregate?.gapMatrix?.mode === "OLS_REQUIRED" && (
-            <div className="card-luxe p-4 text-sm text-muted">{aggregate.gapMatrix.note}</div>
+            <div className="rounded-2xl border border-card-border bg-card/30 p-4 text-sm text-muted">
+              {aggregate.gapMatrix.note}
+            </div>
           )}
           {drillId === null && aggregate?.gapMatrix?.mode === "GAP_MATRIX" && aggregate.gapMatrix.teams && (
-            <div className="card-luxe p-4">
-              <h3 className="mb-2 text-sm font-semibold">팀 Gap 매트릭스 (ORI vs OVI) — 리프(팀) 전체</h3>
-              <div className="h-80">
+            <div className="rounded-2xl border border-card-border bg-card/40 p-4">
+              <h3 className="mb-2 text-sm font-semibold">팀 Gap 매트릭스 (ORI vs OVI)</h3>
+              <div className="h-64 sm:h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                     <CartesianGrid />
@@ -542,11 +595,11 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
           )}
 
           {drillBarData.length >= 2 && (
-            <div className="card-luxe p-4">
+            <div className="rounded-2xl border border-card-border bg-card/40 p-4">
               <h3 className="mb-2 text-sm font-semibold">
                 {LEVEL_LABEL[drillChildren[0]?.level ?? "TEAM"]} 간 비교
               </h3>
-              <div className="h-72">
+              <div className="h-64 sm:h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={drillBarData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -568,23 +621,30 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
               {drillChildren.map((t) => {
                 const hasChildren = childrenOf(t.teamId).length > 0;
                 return (
-                  <li key={t.teamId} className={`card-luxe p-4 text-sm ${t.hidden ? "opacity-50" : ""}`}>
+                  <li
+                    key={t.teamId}
+                    className={`rounded-2xl border border-card-border bg-card/40 text-sm ${
+                      t.hidden ? "opacity-50" : ""
+                    }`}
+                  >
                     <button
                       type="button"
-                      className="flex w-full items-center justify-between gap-2 text-left"
+                      className="flex min-h-14 w-full items-center justify-between gap-2 px-4 py-3 text-left"
                       onClick={() => setDrillId(t.teamId)}
                     >
-                      <span className="font-medium text-foreground">
-                        <span className="mr-2 rounded-full bg-black/5 px-2 py-0.5 text-[10px] text-muted dark:bg-white/10">
+                      <span className="min-w-0 font-medium text-foreground">
+                        <span className="mr-2 inline-block rounded-full bg-black/5 px-2 py-0.5 text-[10px] text-muted dark:bg-white/10">
                           {LEVEL_LABEL[t.level ?? "TEAM"]}
                         </span>
                         {t.teamName}
-                        {hasChildren && <span className="ml-1 text-muted">›</span>}
+                        {hasChildren ? <span className="ml-1 text-muted">›</span> : null}
                       </span>
                       {t.hidden ? (
-                        <span className="text-muted">표본 부족</span>
+                        <span className="shrink-0 text-xs text-muted">표본 부족</span>
                       ) : (
-                        <span className="text-muted">집계 가능 · N={t.sampleSize ?? "—"}</span>
+                        <span className="shrink-0 text-xs text-muted">
+                          N={t.sampleSize ?? "—"}
+                        </span>
                       )}
                     </button>
                   </li>
@@ -613,9 +673,9 @@ function MiniMetric({ label, value }: { label: string; value: number | null | un
 
 function InsightCard({ title, body }: { title: string; body: string }) {
   return (
-    <div className="card-luxe p-4">
+    <div className="rounded-2xl border border-card-border bg-card/40 p-4">
       <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-      <p className="mt-2 text-sm text-muted">{body}</p>
+      <p className="mt-2 text-sm leading-relaxed text-muted">{body}</p>
     </div>
   );
 }
