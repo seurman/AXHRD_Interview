@@ -5379,7 +5379,13 @@ html.dark .dx-textarea {
     radial-gradient(ellipse 60% 50% at 100% 20%, rgb(47 95 238 / 0.12), transparent 50%),
     linear-gradient(160deg, #0f1524 0%, #1a2238 55%, #121826 100%);
   color: #e8ecf7;
-  padding: 1.75rem 1.5rem;
+  padding: 1.25rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .arc-score-hero {
+    padding: 1.75rem 1.5rem;
+  }
 }
 
 .arc-score-hero__eyebrow {
