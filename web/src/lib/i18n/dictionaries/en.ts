@@ -53,6 +53,7 @@ export const dictionary: Dictionary = {
         settings: "Settings",
       },
       content: "IRT questions",
+      assessmentTasks: "Assessment tasks",
       repository: "Competencies & rubrics",
       demo: "Demo workspaces",
       users: "Users",

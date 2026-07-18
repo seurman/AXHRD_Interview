@@ -7,9 +7,12 @@ import {
 } from "@/lib/admin/auth";
 import { logAdminAudit } from "@/lib/admin/audit";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { parseTaskDocument } from "@/lib/assessment/parse-task-document";
+import {
+  parseTaskDocument,
+  parseTaskSampleText,
+} from "@/lib/assessment/parse-task-document";
 
-/** 과제 문서 업로드 → 텍스트 추출 + AssessmentTaskSource 저장 */
+/** 과제 문서 업로드 또는 샘플 텍스트 → AssessmentTaskSource 저장 */
 export async function POST(req: Request) {
   const auth = await requireProductionContentApi();
   if (isAdminResponse(auth)) return auth;
@@ -22,20 +25,43 @@ export async function POST(req: Request) {
     );
   }
 
-  let form: FormData;
-  try {
-    form = await req.formData();
-  } catch {
-    return NextResponse.json({ error: "multipart 형식이 필요합니다." }, { status: 400 });
-  }
-
-  const file = form.get("file");
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: "파일이 필요합니다." }, { status: 400 });
-  }
+  const contentType = req.headers.get("content-type") ?? "";
 
   try {
-    const parsed = await parseTaskDocument(file);
+    let parsed;
+    if (contentType.includes("application/json")) {
+      const body = (await req.json().catch(() => ({}))) as {
+        text?: string;
+        fileName?: string;
+      };
+      if (typeof body.text !== "string") {
+        return NextResponse.json({ error: "text가 필요합니다." }, { status: 400 });
+      }
+      parsed = parseTaskSampleText(
+        body.text,
+        typeof body.fileName === "string" ? body.fileName : "sample-task.txt",
+      );
+    } else {
+      let form: FormData;
+      try {
+        form = await req.formData();
+      } catch {
+        return NextResponse.json({ error: "multipart 또는 JSON이 필요합니다." }, { status: 400 });
+      }
+      const file = form.get("file");
+      const pasted = form.get("text");
+      if (typeof pasted === "string" && pasted.trim()) {
+        parsed = parseTaskSampleText(pasted);
+      } else if (file instanceof File) {
+        parsed = await parseTaskDocument(file);
+      } else {
+        return NextResponse.json(
+          { error: "샘플 텍스트 또는 파일이 필요합니다." },
+          { status: 400 },
+        );
+      }
+    }
+
     const source = await prisma.assessmentTaskSource.create({
       data: {
         fileName: parsed.fileName,
@@ -52,7 +78,7 @@ export async function POST(req: Request) {
       action: "CREATE",
       entityType: "assessment_task_source",
       entityId: source.id,
-      summary: `평가 과제 원문 업로드: ${source.fileName}`,
+      summary: `평가 과제 원문 등록: ${source.fileName}`,
       beforeState: null,
       afterState: {
         fileName: source.fileName,
@@ -75,7 +101,7 @@ export async function POST(req: Request) {
     });
   } catch (e) {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "문서 파싱 실패" },
+      { error: e instanceof Error ? e.message : "원문 등록 실패" },
       { status: 400 },
     );
   }

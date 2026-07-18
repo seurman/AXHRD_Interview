@@ -37,3 +37,25 @@ export async function parseTaskDocument(file: File): Promise<ParsedTaskDocument>
     extractedText,
   };
 }
+
+/** 관리자가 붙여넣은 샘플 과제 원문 → TaskSource용 메타 */
+export function parseTaskSampleText(
+  text: string,
+  fileName = "sample-task.txt",
+): ParsedTaskDocument {
+  const extractedText = text.replace(/\r\n/g, "\n").trim();
+  if (extractedText.length < 40) {
+    throw new Error("샘플 과제 내용을 40자 이상 입력해 주세요.");
+  }
+  if (extractedText.length > 40_000) {
+    throw new Error("샘플 원문이 너무 깁니다. 40,000자 이하로 줄여 주세요.");
+  }
+  const buffer = Buffer.from(extractedText, "utf8");
+  return {
+    fileName: fileName.trim() || "sample-task.txt",
+    mimeType: "text/plain",
+    byteSize: buffer.byteLength,
+    checksumSha256: createHash("sha256").update(buffer).digest("hex"),
+    extractedText,
+  };
+}

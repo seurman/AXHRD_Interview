@@ -160,6 +160,12 @@ export function PlatformHomeDashboard({ snapshot }: { snapshot: PlatformHomeSnap
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--platform-border)] px-5 py-3 text-xs text-[var(--platform-text-muted)]">
           <span>모든 수치는 DB 실시간 집계입니다.</span>
           <div className="flex flex-wrap gap-3">
+            <Link
+              href="/admin/content/assessment"
+              className="font-medium text-[var(--platform-accent)] hover:underline"
+            >
+              역량평가 과제 만들기 →
+            </Link>
             <Link href="/admin/audit" className="font-medium text-[var(--platform-accent)] hover:underline">
               감사 로그 →
             </Link>
