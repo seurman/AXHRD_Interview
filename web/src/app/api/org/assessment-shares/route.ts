@@ -77,6 +77,7 @@ export async function POST(req: Request) {
     where: {
       id: body.scenarioId,
       isActive: true,
+      status: "PUBLISHED",
       OR: [{ organizationId: null }, { organizationId: access.organizationId }],
     },
     select: { id: true },

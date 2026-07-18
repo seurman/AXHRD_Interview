@@ -15,6 +15,10 @@ import { competencyLabel } from "@/lib/labels";
 import { displayQuestionText } from "@/lib/interview/build-question";
 import { COMPETENCY_SESSION_MAX_ITEMS } from "@/lib/interview/session-limits";
 import { ttsCacheKeyForQuestion } from "@/lib/interview/tts-cache-key";
+import {
+  readVoiceModeEnabled,
+  writeVoiceModeEnabled,
+} from "@/lib/voice/voice-mode";
 import { cn } from "@/lib/cn";
 import {
   averageDimensions,
@@ -28,8 +32,6 @@ import type {
   InterviewSessionState,
 } from "@/types";
 
-const VOICE_MODE_STORAGE_KEY = "axhrd_voice_mode";
-
 interface InterviewSessionProps {
   sessionId: string;
   initialState: InterviewSessionState;
@@ -40,14 +42,6 @@ interface InterviewSessionProps {
    *  DB에 저장하지 않고 URL로만 들고 다니다가, 세션이 끝나면 리포트 페이지 URL에
    *  그대로 이어 붙여서 "다음 역량 이어서 시작" 버튼이 읽을 수 있게 한다. */
   queue?: string[];
-}
-
-function readVoiceModeEnabled(): boolean {
-  if (typeof window === "undefined") return true;
-  const stored = window.localStorage.getItem(VOICE_MODE_STORAGE_KEY);
-  if (stored === "off") return false;
-  if (stored === "on") return true;
-  return true;
 }
 
 export function InterviewSession({
@@ -86,7 +80,7 @@ export function InterviewSession({
   const toggleVoiceMode = useCallback(() => {
     setVoiceModeEnabled((prev) => {
       const next = !prev;
-      window.localStorage.setItem(VOICE_MODE_STORAGE_KEY, next ? "on" : "off");
+      writeVoiceModeEnabled(next);
       if (!next) {
         stopActiveAudio();
         setTtsStatus("idle");

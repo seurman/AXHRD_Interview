@@ -270,6 +270,7 @@ model User {
   surveysCreated               Survey[]               @relation("SurveyCreatedBy")
   assessmentAttempts           AssessmentAttempt[]
   orgAssessmentSharesCreated   OrgAssessmentShare[]   @relation("OrgAssessmentShareCreatedBy")
+  assessmentTaskSourcesCreated AssessmentTaskSource[] @relation("AssessmentTaskSourceCreatedBy")
   surveyResponses              SurveyResponse[]
 
   @@index([organizationId])
@@ -663,10 +664,12 @@ model Competency {
   forks           Competency[]              @relation("CompetencyFork")
   createdByUserId String?
   createdBy       User?                     @relation("CompetencyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  questions       Question[]
-  benchmarks      CompetencyBenchmarkRef[]
-  rubricSets      RubricSet[]
-  subskills       CompetencySubskill[]
+  questions                    Question[]
+  benchmarks                   CompetencyBenchmarkRef[]
+  rubricSets                   RubricSet[]
+  subskills                    CompetencySubskill[]
+  assessmentScenarioLinks      AssessmentScenarioCompetency[]
+  assessmentInBasketTargets    AssessmentInBasketItem[]
 
   @@unique([organizationId, code])
   @@index([clusterId])
@@ -742,8 +745,9 @@ model RubricSet {
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
 
-  details          RubricDetail[]
-  questionMappings QuestionRubricMapping[]
+  details                       RubricDetail[]
+  questionMappings              QuestionRubricMapping[]
+  assessmentScenarioCompetencies AssessmentScenarioCompetency[]
 
   @@index([competencyId])
   @@index([organizationId])
@@ -1712,11 +1716,41 @@ enum AssessmentScenarioKind {
   IN_BASKET
 }
 
+/**
+ * 과제 게시 상태 — AI/관리자 초안은 DRAFT, 응시 가능은 PUBLISHED.
+ */
+enum AssessmentScenarioStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 enum AssessmentAttemptStatus {
   DRAFT
   IN_PROGRESS
   SUBMITTED
   SCORED
+}
+
+/**
+ * 업로드된 과제 원문(텍스트만 보관). 바이너리는 저장하지 않는다.
+ */
+model AssessmentTaskSource {
+  id              String   @id @default(cuid())
+  fileName        String
+  mimeType        String?
+  byteSize        Int?
+  checksumSha256  String?
+  extractedText   String   @db.Text
+  createdByUserId String?
+  createdBy       User?    @relation("AssessmentTaskSourceCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  scenarios AssessmentScenario[]
+
+  @@index([createdAt(sort: Desc)])
+  @@index([checksumSha256])
 }
 
 /**
@@ -1777,19 +1811,27 @@ model BehavioralIndicator {
  * organizationId가 null이면 플랫폼 공용 라이브러리, 있으면 그 기관 전용.
  */
 model AssessmentScenario {
-  id                  String                 @id @default(cuid())
-  code                String                 @unique
-  kind                AssessmentScenarioKind @default(ROLE_PLAY)
+  id                  String                   @id @default(cuid())
+  code                String                   @unique
+  kind                AssessmentScenarioKind   @default(ROLE_PLAY)
+  status              AssessmentScenarioStatus @default(DRAFT)
+  version             Int                      @default(1)
   titleKo             String
-  reportKindLabel     String                 @default("ASSESSMENT REPORT · 역할수행 과제")
+  reportKindLabel     String                   @default("ASSESSMENT REPORT · 역할수행 과제")
   roleContext         String?
-  taskBrief           String                 @db.Text
-  durationMinutes     Int                    @default(15)
-  recommendedSequence String?                @db.Text
-  isActive            Boolean                @default(true)
-  sortOrder           Int                    @default(0)
+  taskBrief           String                   @db.Text
+  durationMinutes     Int                      @default(15)
+  recommendedSequence String?                  @db.Text
+  isActive            Boolean                  @default(true)
+  sortOrder           Int                      @default(0)
   organizationId      String?
-  organization        Organization?          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization        Organization?            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /**
+   * 업로드 원문 — 역할연기/서류함 초안이 같은 원문에서 생성되면 동일 sourceId로 묶인다.
+   */
+  sourceId            String?
+  source              AssessmentTaskSource?    @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  publishedAt         DateTime?
 
   // ── 역할연기(ROLE_PLAY) 전용 — 상대역 페르소나 정의 ──
   /**
@@ -1823,6 +1865,8 @@ model AssessmentScenario {
 
   @@index([organizationId])
   @@index([kind, isActive, sortOrder])
+  @@index([status, isActive, sortOrder])
+  @@index([sourceId])
 }
 
 /**
@@ -1851,16 +1895,32 @@ model AssessmentInBasketItem {
    */
   isDistractor         Boolean            @default(false)
   targetCompetencyCode String?
+  /**
+   * 플랫폼 Competency FK — targetCompetencyCode는 표시/호환용 스냅샷.
+   */
+  targetCompetencyId   String?
+  targetCompetency     Competency?        @relation(fields: [targetCompetencyId], references: [id], onDelete: SetNull)
 
   responses AssessmentItemResponse[]
 
   @@index([scenarioId, sortOrder])
+  @@index([targetCompetencyId])
 }
 
 model AssessmentScenarioCompetency {
   id             String                       @id @default(cuid())
   scenarioId     String
   scenario       AssessmentScenario           @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  /**
+   * 플랫폼 Competency FK — 신규 과제의 SSOT. 레거시 행은 null일 수 있다.
+   */
+  competencyId   String?
+  competency     Competency?                  @relation(fields: [competencyId], references: [id], onDelete: SetNull)
+  /**
+   * 1~5점 RubricSet — 채점 시 점수 기준. 없으면 역량의 기본 RubricSet/legacy 사용.
+   */
+  rubricSetId    String?
+  rubricSet      RubricSet?                   @relation(fields: [rubricSetId], references: [id], onDelete: SetNull)
   competencyCode String
   nameKo         String
   definition     String                       @db.Text
@@ -1869,6 +1929,8 @@ model AssessmentScenarioCompetency {
 
   @@unique([scenarioId, competencyCode])
   @@index([scenarioId])
+  @@index([competencyId])
+  @@index([rubricSetId])
 }
 
 model AssessmentScenarioSubskill {
@@ -1910,6 +1972,11 @@ model AssessmentAttempt {
   status        AssessmentAttemptStatus     @default(DRAFT)
   transcript    String?                     @db.Text
   dialogueJson  Json?
+  /**
+   * 시도 시작 시 고정한 역량·루브릭·행동지표 스냅샷.
+   * 게시 후 루브릭이 바뀌어도 진행 중/과거 평가의 재현성을 보장한다.
+   */
+  frameworkSnapshot Json?
   startedAt     DateTime?
   submittedAt   DateTime?
   /**

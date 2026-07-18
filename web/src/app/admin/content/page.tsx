@@ -76,6 +76,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
           </>
         }
         links={[
+          { href: "/admin/content/assessment", label: "평가 과제 스튜디오 →" },
           { href: "/admin/content/resume-review", label: "자소서 첨삭 기준 →" },
           { href: "/admin/irt-recalibration", label: "IRT 재보정 →" },
           { href: "/admin/organizations", label: "기관 관리 · 테넌트 허브 →" },

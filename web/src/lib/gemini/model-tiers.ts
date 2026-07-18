@@ -44,6 +44,8 @@ export const GEMINI_TASK_TIER = {
   evidence_report: "pro",
   /** 역량평가 역할연기 — 상대역 페르소나 대화 턴 (채점 아님, 캐릭터 연기 전용) */
   role_play_persona: "standard",
+  /** 업로드 과제 문서 → 역할연기/서류함 구조화 초안 */
+  assessment_scenario_draft: "pro",
   /** 자소서 LLM enrich */
   resume_enrich: "standard",
   /** JD → 스타일/키워드 */

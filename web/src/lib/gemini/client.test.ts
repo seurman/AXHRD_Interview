@@ -66,6 +66,7 @@ describe("gemini model tiers", () => {
     expect(GEMINI_TASK_TIER.triple_feedback).toBe("pro");
     expect(GEMINI_TASK_TIER.resume_review).toBe("pro");
     expect(GEMINI_TASK_TIER.evidence_report).toBe("pro");
+    expect(GEMINI_TASK_TIER.assessment_scenario_draft).toBe("pro");
   });
 
   it("keeps high-volume utility on lite/standard", () => {

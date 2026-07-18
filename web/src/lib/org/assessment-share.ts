@@ -96,6 +96,7 @@ export async function loadPublicAssessmentShare(
           durationMinutes: true,
           maxTurns: true,
           isActive: true,
+          status: true,
           competencies: {
             orderBy: { sortOrder: "asc" },
             select: { competencyCode: true, nameKo: true },
@@ -110,7 +111,7 @@ export async function loadPublicAssessmentShare(
   if (share.expiresAt && share.expiresAt.getTime() < Date.now()) return null;
   if (share.organization.status !== "APPROVED") return null;
   if (!share.organization.assessmentEnabled) return null;
-  if (!share.scenario.isActive) return null;
+  if (!share.scenario.isActive || share.scenario.status !== "PUBLISHED") return null;
 
   return {
     slug: share.slug,

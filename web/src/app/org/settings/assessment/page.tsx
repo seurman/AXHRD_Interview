@@ -15,6 +15,7 @@ export default async function OrgAssessmentSettingsPage() {
     prisma.assessmentScenario.findMany({
       where: {
         isActive: true,
+        status: "PUBLISHED",
         OR: [{ organizationId: null }, { organizationId: access.organizationId }],
       },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],

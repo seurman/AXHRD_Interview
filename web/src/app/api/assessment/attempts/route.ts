@@ -3,9 +3,11 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rate-limit";
 import {
+  buildFrameworkSnapshot,
   SCENARIO_WITH_FRAMEWORK_INCLUDE,
   toCandidateScenarioPayload,
 } from "@/lib/assessment/load-scenario-context";
+import type { Prisma } from "@prisma/client";
 
 type StartBody = {
   scenarioId?: string;
@@ -68,6 +70,7 @@ export async function POST(req: Request) {
   const scenario = await prisma.assessmentScenario.findFirst({
     where: {
       isActive: true,
+      status: "PUBLISHED",
       ...(shareScenarioId
         ? { id: shareScenarioId }
         : body.scenarioId
@@ -103,6 +106,8 @@ export async function POST(req: Request) {
     orderBy: { createdAt: "desc" },
   });
 
+  const frameworkSnapshot = buildFrameworkSnapshot(scenario) as unknown as Prisma.InputJsonValue;
+
   const attempt =
     existing ??
     (await prisma.assessmentAttempt.create({
@@ -112,6 +117,7 @@ export async function POST(req: Request) {
         status: "IN_PROGRESS",
         startedAt: new Date(),
         orgShareId,
+        frameworkSnapshot,
         // 역할연기는 상대역의 고정 첫 발화로 대화를 연다(LLM 호출 없음)
         dialogueJson:
           scenario.kind === "ROLE_PLAY" && scenario.openingLine
@@ -119,6 +125,14 @@ export async function POST(req: Request) {
             : [],
       },
     }));
+
+  // 재개 시 스냅샷이 비어 있으면 현재 프레임으로 1회 보정(레거시 시도)
+  if (existing && !existing.frameworkSnapshot) {
+    await prisma.assessmentAttempt.update({
+      where: { id: existing.id },
+      data: { frameworkSnapshot },
+    });
+  }
 
   return NextResponse.json({
     attemptId: attempt.id,

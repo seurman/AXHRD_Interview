@@ -2,6 +2,33 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 음성 중심 역량평가 + 과제 CMS (2026-07-18)
+
+- 역할연기·서류함 응시 UX를 **음성 우선 + 텍스트 대체**로 전환.
+  - `VoiceRecorder`에 `submitMode: draft|submit` 추가.
+  - `RolePlayRunner`: STT 입력 + 상대역 TTS(`/api/assessment/attempts/[id]/tts`).
+  - `InBasketRunner`: 음성 받아쓰기 → 텍스트 영역 반영 후 자동저장.
+  - 공통 `axhrd_voice_mode` 설정 공유.
+- 플랫폼 관리자 **평가 과제 스튜디오** (`/admin/content/assessment`):
+  - 문서 업로드(PDF/DOC/DOCX/TXT/MD) → AI 초안(역할연기/서류함/둘 다) → 검토·게시.
+  - API: `/api/admin/assessment-scenarios` (+ parse/generate/publish/duplicate).
+- 기존 플랫폼 `Competency` + `RubricSet`(1~5점) FK 연결 + 과제별 행동지표 보조 채점.
+- 시도 시작 시 `frameworkSnapshot` 고정으로 루브릭 변경에도 재현성 유지.
+- 마이그레이션: `20260718120000_assessment_task_cms_voice`
+  (`AssessmentTaskSource`, `AssessmentScenarioStatus`, FK, snapshot).
+
+검증:
+
+```powershell
+cd D:\HR_IN_Solution\web
+npx prisma generate
+npx prisma migrate deploy
+npm run db:seed:evidence
+npx tsc --noEmit
+npm test
+npx next build
+```
+
 ## 최근 작업 — 역량평가(서류함·역할연기) 실행·채점·배포·UI 전체 구현 (2026-07-18, Cowork 세션)
 
 증거형 평가 프레임(아래 섹션) 위에 실제 실행 가능한 역량평가 제품을 얹었습니다.

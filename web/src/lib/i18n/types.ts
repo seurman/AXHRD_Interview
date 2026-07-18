@@ -22,6 +22,7 @@ export type Dictionary = {
       pricing: string;
       discover: string;
       interview: string;
+      assessment: string;
       resumeReview: string;
       cards: string;
       trialInterview: string;
@@ -32,6 +33,7 @@ export type Dictionary = {
       prepare: string;
       discover: string;
       interview: string;
+      assessment: string;
       resumeReview: string;
       cards: string;
       trialInterview: string;

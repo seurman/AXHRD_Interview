@@ -154,81 +154,38 @@ const UNDERPERFORM_COMPETENCIES: CompetencySeed[] = [
   },
 ];
 
+async function resolvePlatformCompetency(code: string) {
+  const bank = await prisma.competency.findFirst({
+    where: { code, organizationId: null, ownerScope: "PLATFORM" },
+    include: {
+      rubricSets: {
+        where: { organizationId: null, isDefault: true },
+        take: 1,
+      },
+    },
+  });
+  return bank;
+}
+
 async function seedUnderperformScenario(): Promise<void> {
   const scenario = await prisma.assessmentScenario.upsert({
     where: { code: UNDERPERFORM_SCENARIO.code },
-    create: { ...UNDERPERFORM_SCENARIO, organizationId: null, isActive: true },
-    update: { ...UNDERPERFORM_SCENARIO, isActive: true },
+    create: {
+      ...UNDERPERFORM_SCENARIO,
+      organizationId: null,
+      isActive: true,
+      status: "PUBLISHED",
+      publishedAt: new Date(),
+    },
+    update: {
+      ...UNDERPERFORM_SCENARIO,
+      isActive: true,
+      status: "PUBLISHED",
+      publishedAt: new Date(),
+    },
   });
 
-  for (const [competencyIndex, competency] of UNDERPERFORM_COMPETENCIES.entries()) {
-    const scenarioCompetency = await prisma.assessmentScenarioCompetency.upsert({
-      where: {
-        scenarioId_competencyCode: {
-          scenarioId: scenario.id,
-          competencyCode: competency.competencyCode,
-        },
-      },
-      create: {
-        scenarioId: scenario.id,
-        competencyCode: competency.competencyCode,
-        nameKo: competency.nameKo,
-        definition: competency.definition,
-        sortOrder: competencyIndex,
-      },
-      update: {
-        nameKo: competency.nameKo,
-        definition: competency.definition,
-        sortOrder: competencyIndex,
-      },
-    });
-
-    for (const [subskillIndex, subskill] of competency.subskills.entries()) {
-      const scenarioSubskill = await prisma.assessmentScenarioSubskill.upsert({
-        where: {
-          scenarioCompetencyId_code: {
-            scenarioCompetencyId: scenarioCompetency.id,
-            code: subskill.code,
-          },
-        },
-        create: {
-          scenarioCompetencyId: scenarioCompetency.id,
-          code: subskill.code,
-          nameKo: subskill.nameKo,
-          definition: subskill.definition,
-          sortOrder: subskillIndex,
-        },
-        update: {
-          nameKo: subskill.nameKo,
-          definition: subskill.definition,
-          sortOrder: subskillIndex,
-        },
-      });
-
-      for (const [indicatorIndex, indicator] of subskill.indicators.entries()) {
-        await prisma.assessmentScenarioIndicator.upsert({
-          where: {
-            subskillId_code: {
-              subskillId: scenarioSubskill.id,
-              code: indicator.code,
-            },
-          },
-          create: {
-            subskillId: scenarioSubskill.id,
-            code: indicator.code,
-            polarity: indicator.polarity,
-            textKo: indicator.textKo,
-            sortOrder: indicatorIndex,
-          },
-          update: {
-            polarity: indicator.polarity,
-            textKo: indicator.textKo,
-            sortOrder: indicatorIndex,
-          },
-        });
-      }
-    }
-  }
+  await seedScenarioCompetencies(scenario.id, UNDERPERFORM_COMPETENCIES);
 }
 
 // ── 서류함(In-Basket): 신임 팀장의 월요일 아침 ──
@@ -413,6 +370,7 @@ async function seedScenarioCompetencies(
   competencies: CompetencySeed[],
 ): Promise<void> {
   for (const [competencyIndex, competency] of competencies.entries()) {
+    const bank = await resolvePlatformCompetency(competency.competencyCode);
     const scenarioCompetency = await prisma.assessmentScenarioCompetency.upsert({
       where: {
         scenarioId_competencyCode: {
@@ -422,12 +380,16 @@ async function seedScenarioCompetencies(
       },
       create: {
         scenarioId,
+        competencyId: bank?.id ?? null,
+        rubricSetId: bank?.rubricSets[0]?.id ?? null,
         competencyCode: competency.competencyCode,
         nameKo: competency.nameKo,
         definition: competency.definition,
         sortOrder: competencyIndex,
       },
       update: {
+        competencyId: bank?.id ?? null,
+        rubricSetId: bank?.rubricSets[0]?.id ?? null,
         nameKo: competency.nameKo,
         definition: competency.definition,
         sortOrder: competencyIndex,
@@ -485,8 +447,19 @@ async function seedScenarioCompetencies(
 async function seedInBasketScenario(): Promise<void> {
   const scenario = await prisma.assessmentScenario.upsert({
     where: { code: INBASKET_SCENARIO.code },
-    create: { ...INBASKET_SCENARIO, organizationId: null, isActive: true },
-    update: { ...INBASKET_SCENARIO, isActive: true },
+    create: {
+      ...INBASKET_SCENARIO,
+      organizationId: null,
+      isActive: true,
+      status: "PUBLISHED",
+      publishedAt: new Date(),
+    },
+    update: {
+      ...INBASKET_SCENARIO,
+      isActive: true,
+      status: "PUBLISHED",
+      publishedAt: new Date(),
+    },
   });
 
   await seedScenarioCompetencies(scenario.id, INBASKET_COMPETENCIES);
@@ -494,6 +467,9 @@ async function seedInBasketScenario(): Promise<void> {
   // (scenarioId, sortOrder) 유니크 제약이 없으므로 sortOrder 기준 수동 upsert —
   // 기존 응답이 연결된 아이템을 삭제하지 않기 위해 delete+recreate 대신 갱신한다.
   for (const item of INBASKET_ITEMS) {
+    const bank = item.targetCompetencyCode
+      ? await resolvePlatformCompetency(item.targetCompetencyCode)
+      : null;
     const existing = await prisma.assessmentInBasketItem.findFirst({
       where: { scenarioId: scenario.id, sortOrder: item.sortOrder },
     });
@@ -508,11 +484,16 @@ async function seedInBasketScenario(): Promise<void> {
           importance: item.importance,
           isDistractor: item.isDistractor,
           targetCompetencyCode: item.targetCompetencyCode,
+          targetCompetencyId: bank?.id ?? null,
         },
       });
     } else {
       await prisma.assessmentInBasketItem.create({
-        data: { scenarioId: scenario.id, ...item },
+        data: {
+          scenarioId: scenario.id,
+          ...item,
+          targetCompetencyId: bank?.id ?? null,
+        },
       });
     }
   }

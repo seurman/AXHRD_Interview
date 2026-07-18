@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CandidateScenarioPayload } from "@/lib/assessment/load-scenario-context";
 import type { DialogueTurn } from "@/lib/assessment/role-play-engine";
+import { VoiceRecorder } from "@/components/interview/VoiceRecorder";
+import {
+  readVoiceModeEnabled,
+  writeVoiceModeEnabled,
+} from "@/lib/voice/voice-mode";
+import { ttsCacheKey } from "@/lib/interview/tts-cache-key";
 
 /**
- * 역할연기 실행 화면 — 상대역과의 멀티턴 대화.
+ * 역할연기 실행 화면 — 음성 우선, 텍스트 대체.
  * 채점 기준·페르소나 지침은 서버가 내려주지 않으므로 이 화면에는 존재하지 않는다.
  */
 export function RolePlayRunner({
@@ -20,47 +26,133 @@ export function RolePlayRunner({
 }) {
   const router = useRouter();
   const [dialogue, setDialogue] = useState<DialogueTurn[]>(initialDialogue);
-  const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [briefOpen, setBriefOpen] = useState(dialogue.length <= 1);
+  const [voiceModeEnabled, setVoiceModeEnabled] = useState(true);
+  const [ttsStatus, setTtsStatus] = useState<"idle" | "synthesizing" | "playing">("idle");
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const ttsCacheRef = useRef<Map<string, string>>(new Map());
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const lastSpokenKeyRef = useRef<string | null>(null);
 
   const turnsUsed = dialogue.filter((t) => t.role === "CANDIDATE").length;
   const canContinue = turnsUsed < scenario.maxTurns;
   const personaName = scenario.personaName ?? "상대역";
 
   useEffect(() => {
+    setVoiceModeEnabled(readVoiceModeEnabled());
+  }, []);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [dialogue.length]);
 
-  async function sendMessage() {
-    const message = input.trim();
-    if (!message || sending || !canContinue) return;
+  const stopActiveAudio = useCallback(() => {
+    const audio = activeAudioRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+    activeAudioRef.current = null;
+  }, []);
+
+  const toggleVoiceMode = useCallback(() => {
+    setVoiceModeEnabled((prev) => {
+      const next = !prev;
+      writeVoiceModeEnabled(next);
+      if (!next) {
+        stopActiveAudio();
+        setTtsStatus("idle");
+      }
+      return next;
+    });
+  }, [stopActiveAudio]);
+
+  const playPersonaTts = useCallback(
+    async (text: string, turnKey: string) => {
+      if (!voiceModeEnabled || !text.trim()) return;
+      const cacheKey = ttsCacheKey(turnKey, text);
+      if (lastSpokenKeyRef.current === cacheKey && ttsStatus === "playing") return;
+
+      stopActiveAudio();
+      lastSpokenKeyRef.current = cacheKey;
+
+      let url = ttsCacheRef.current.get(cacheKey);
+      if (!url) {
+        setTtsStatus("synthesizing");
+        try {
+          const res = await fetch(`/api/assessment/attempts/${attemptId}/tts`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ text }),
+          });
+          if (!res.ok || res.status === 204) {
+            setTtsStatus("idle");
+            return;
+          }
+          const blob = await res.blob();
+          url = URL.createObjectURL(blob);
+          ttsCacheRef.current.set(cacheKey, url);
+        } catch {
+          setTtsStatus("idle");
+          return;
+        }
+      }
+
+      setTtsStatus("playing");
+      try {
+        const audio = new Audio(url);
+        activeAudioRef.current = audio;
+        await audio.play();
+        await new Promise<void>((resolve) => {
+          audio.onended = () => resolve();
+          audio.onerror = () => resolve();
+        });
+      } catch {
+        /* 재생 실패 — 텍스트로 계속 */
+      } finally {
+        activeAudioRef.current = null;
+        setTtsStatus("idle");
+      }
+    },
+    [attemptId, stopActiveAudio, ttsStatus, voiceModeEnabled],
+  );
+
+  // 최신 PERSONA 턴 자동 재생
+  useEffect(() => {
+    if (!voiceModeEnabled) return;
+    const last = dialogue[dialogue.length - 1];
+    if (!last || last.role !== "PERSONA") return;
+    const key = `persona-${dialogue.length - 1}`;
+    void playPersonaTts(last.text, key);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 새 PERSONA 턴에만 재생
+  }, [dialogue.length, voiceModeEnabled]);
+
+  async function sendMessage(message: string) {
+    const trimmed = message.trim();
+    if (!trimmed || sending || !canContinue) return;
     setSending(true);
     setError(null);
-    setDialogue((d) => [...d, { role: "CANDIDATE", text: message, at: Date.now() }]);
-    setInput("");
+    stopActiveAudio();
+    setDialogue((d) => [...d, { role: "CANDIDATE", text: trimmed, at: Date.now() }]);
     try {
       const res = await fetch(`/api/assessment/attempts/${attemptId}/turn`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message: trimmed }),
       });
       const data = (await res.json()) as { reply?: string; error?: string };
       if (!res.ok || !data.reply) {
         setError(data.error ?? "응답 생성에 실패했습니다. 다시 시도해 주세요.");
-        // 실패한 발화 롤백(서버에 저장 안 됨)
         setDialogue((d) => d.slice(0, -1));
-        setInput(message);
         return;
       }
       setDialogue((d) => [...d, { role: "PERSONA", text: data.reply!, at: Date.now() }]);
     } catch {
       setError("네트워크 오류가 발생했습니다.");
       setDialogue((d) => d.slice(0, -1));
-      setInput(message);
     } finally {
       setSending(false);
     }
@@ -80,6 +172,7 @@ export function RolePlayRunner({
     }
     setSubmitting(true);
     setError(null);
+    stopActiveAudio();
     try {
       const res = await fetch(`/api/assessment/attempts/${attemptId}/submit`, {
         method: "POST",
@@ -97,6 +190,8 @@ export function RolePlayRunner({
     }
   }
 
+  const lastPersona = [...dialogue].reverse().find((t) => t.role === "PERSONA");
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -107,9 +202,18 @@ export function RolePlayRunner({
             <p className="mt-1 text-sm text-muted">{scenario.roleContext}</p>
           ) : null}
         </div>
-        <span className="rounded-full bg-card px-3 py-1 text-xs font-medium text-muted">
-          발화 {turnsUsed} / {scenario.maxTurns}턴
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleVoiceMode}
+            className="rounded-full border border-card-border bg-card px-3 py-1 text-xs font-medium text-muted transition hover:text-foreground"
+          >
+            {voiceModeEnabled ? "음성 ON" : "텍스트 모드"}
+          </button>
+          <span className="rounded-full bg-card px-3 py-1 text-xs font-medium text-muted">
+            발화 {turnsUsed} / {scenario.maxTurns}턴
+          </span>
+        </div>
       </div>
 
       <section className="card-luxe p-4">
@@ -164,31 +268,36 @@ export function RolePlayRunner({
 
         <div className="mt-3 border-t border-card-border pt-3">
           {error ? <p className="mb-2 text-xs text-warning">{error}</p> : null}
+          {ttsStatus !== "idle" && voiceModeEnabled ? (
+            <p className="mb-2 text-center text-xs text-muted">
+              {ttsStatus === "synthesizing"
+                ? `${personaName} 음성 준비 중…`
+                : `${personaName} 말하는 중…`}
+            </p>
+          ) : null}
           {canContinue ? (
-            <div className="flex items-end gap-2">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-                    e.preventDefault();
-                    void sendMessage();
+            <div className="space-y-2">
+              {lastPersona && voiceModeEnabled ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    void playPersonaTts(lastPersona.text, `replay-${dialogue.length}`)
                   }
-                }}
-                rows={2}
-                maxLength={2000}
-                placeholder={`${personaName}에게 말하기… (Enter 전송, Shift+Enter 줄바꿈)`}
-                className="min-h-[3rem] flex-1 resize-none rounded-xl border border-card-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+                  className="w-full text-center text-xs text-primary hover:underline"
+                  disabled={sending || submitting}
+                >
+                  상대역 다시 듣기
+                </button>
+              ) : null}
+              <VoiceRecorder
+                voiceInputEnabled={voiceModeEnabled}
+                allowTextFallback
+                submitMode="draft"
+                confirmLabel="전송"
+                idleHint={`${personaName}에게 말하기 — 마이크를 누르세요`}
                 disabled={sending || submitting}
+                onTranscript={(text) => void sendMessage(text)}
               />
-              <button
-                type="button"
-                onClick={() => void sendMessage()}
-                disabled={sending || submitting || !input.trim()}
-                className="rounded-xl bg-foreground px-4 py-2.5 text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-50"
-              >
-                전송
-              </button>
             </div>
           ) : (
             <p className="text-sm text-muted">

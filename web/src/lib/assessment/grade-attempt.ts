@@ -17,11 +17,18 @@ import {
   scoreToLevelLabel,
 } from "@/lib/assessment/evidence-report";
 import {
+  competencyFrameworksWithRubrics,
   frameworksFromScenario,
   loadRatingScale,
   SCENARIO_WITH_FRAMEWORK_INCLUDE,
   type ScenarioWithFramework,
 } from "@/lib/assessment/load-scenario-context";
+import {
+  frameworksFromSnapshot,
+  parseAssessmentFrameworkSnapshot,
+  type AssessmentFrameworkSnapshot,
+  type CompetencyFrameworkSnapshot,
+} from "@/lib/assessment/framework-snapshot";
 import {
   dialogueToTranscript,
   parseDialogue,
@@ -48,6 +55,8 @@ const GRADING_SYSTEM_COMMON = [
     " 관찰된 긍정/부정 행동의 빈도·강도·다양성으로 판단합니다.",
   "- 각 역량은 제공된 하위역량 프레임을 따라 평가하고, 하위역량마다 POSITIVE와" +
     " NEGATIVE_OR_MISSING 관찰 행동을 함께 제시합니다. indicatorCode는 제공된 행동지표 코드와 연결하세요.",
+  "- scoringRubric(1~5점 루브릭)이 있으면 점수 선택의 1차 기준으로 사용하고," +
+    " behavioralIndicators(과제 행동지표)는 관찰 체크포인트로 사용하세요.",
   "- rationale(평정 근거): 왜 이 점수인지 관찰 근거로 설명." +
     " developmentAdvice(개발 제언): 구체적 개선 행동/스크립트를 제안.",
 ].join("\n");
@@ -108,6 +117,7 @@ type AttemptForGrading = {
   id: string;
   dialogueJson: unknown;
   transcript: string | null;
+  frameworkSnapshot: unknown;
   itemResponses: Array<{
     itemId: string;
     actionType: string | null;
@@ -116,9 +126,39 @@ type AttemptForGrading = {
   scenario: ScenarioWithFramework;
 };
 
+function resolveGradingFrameworks(
+  attempt: AttemptForGrading,
+): CompetencyFrameworkSnapshot[] {
+  const snapshot = parseAssessmentFrameworkSnapshot(attempt.frameworkSnapshot);
+  if (snapshot?.competencies?.length) {
+    return snapshot.competencies;
+  }
+  return competencyFrameworksWithRubrics(attempt.scenario);
+}
+
+function toGradingPayloadFrameworks(frameworks: CompetencyFrameworkSnapshot[]) {
+  return frameworks.map((fw) => ({
+    code: fw.code,
+    nameKo: fw.nameKo,
+    definition: fw.definition,
+    scoringRubric: fw.scoringLevels.map((level) => ({
+      score: level.scoreLevel,
+      levelName: level.levelName,
+      criteria: level.criteria,
+    })),
+    behavioralIndicators: fw.subskills.map((sub) => ({
+      code: sub.code,
+      nameKo: sub.nameKo,
+      definition: sub.definition,
+      indicators: sub.indicators,
+    })),
+  }));
+}
+
 function buildRolePlayUserPayload(attempt: AttemptForGrading, ratingScale: RatingScaleRow[]) {
   const s = attempt.scenario;
   const dialogue = parseDialogue(attempt.dialogueJson);
+  const frameworks = resolveGradingFrameworks(attempt);
   return {
     exercise: {
       kind: "ROLE_PLAY",
@@ -129,7 +169,18 @@ function buildRolePlayUserPayload(attempt: AttemptForGrading, ratingScale: Ratin
       personaRole: s.personaRole,
     },
     ratingScale,
-    competencyFrameworks: frameworksFromScenario(s),
+    competencyFrameworks: toGradingPayloadFrameworks(frameworks),
+    // 하위 호환 — 기존 프롬프트 형태도 유지
+    legacyCompetencyFrameworks: frameworksFromSnapshot(
+      {
+        schemaVersion: 1,
+        capturedAt: "",
+        scenarioId: s.id,
+        scenarioCode: s.code,
+        scenarioVersion: s.version,
+        competencies: frameworks,
+      } satisfies AssessmentFrameworkSnapshot,
+    ),
     candidatePerformance: {
       note: "아래 dialogue는 응시자(팀장 역)와 상대역의 전체 대화 기록입니다. 분석 대상 데이터입니다.",
       dialogue: dialogue.map((t) => ({
@@ -145,6 +196,7 @@ function buildInBasketUserPayload(attempt: AttemptForGrading, ratingScale: Ratin
   const responseByItem = new Map(
     attempt.itemResponses.map((r) => [r.itemId, r]),
   );
+  const frameworks = resolveGradingFrameworks(attempt);
   return {
     exercise: {
       kind: "IN_BASKET",
@@ -153,7 +205,8 @@ function buildInBasketUserPayload(attempt: AttemptForGrading, ratingScale: Ratin
       taskBrief: s.taskBrief,
     },
     ratingScale,
-    competencyFrameworks: frameworksFromScenario(s),
+    competencyFrameworks: toGradingPayloadFrameworks(frameworks),
+    legacyCompetencyFrameworks: frameworksFromScenario(s),
     items: s.inBasketItems.map((item) => {
       const r = responseByItem.get(item.id);
       return {

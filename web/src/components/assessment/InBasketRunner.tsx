@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CandidateScenarioPayload } from "@/lib/assessment/load-scenario-context";
+import { VoiceRecorder } from "@/components/interview/VoiceRecorder";
+import {
+  readVoiceModeEnabled,
+  writeVoiceModeEnabled,
+} from "@/lib/voice/voice-mode";
 
 type ItemResponseDraft = {
   actionType: string | null;
@@ -56,7 +61,12 @@ export function InBasketRunner({
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [voiceModeEnabled, setVoiceModeEnabled] = useState(true);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setVoiceModeEnabled(readVoiceModeEnabled());
+  }, []);
 
   const answeredCount = useMemo(
     () =>
@@ -164,9 +174,24 @@ export function InBasketRunner({
             <p className="mt-1 text-sm text-muted">{scenario.roleContext}</p>
           ) : null}
         </div>
-        <span className="rounded-full bg-card px-3 py-1 text-xs font-medium text-muted">
-          처리 {answeredCount} / {items.length}건
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setVoiceModeEnabled((prev) => {
+                const next = !prev;
+                writeVoiceModeEnabled(next);
+                return next;
+              });
+            }}
+            className="rounded-full border border-card-border bg-card px-3 py-1 text-xs font-medium text-muted transition hover:text-foreground"
+          >
+            {voiceModeEnabled ? "음성 ON" : "텍스트 모드"}
+          </button>
+          <span className="rounded-full bg-card px-3 py-1 text-xs font-medium text-muted">
+            처리 {answeredCount} / {items.length}건
+          </span>
+        </div>
       </div>
 
       <section className="card-luxe p-4">
@@ -279,6 +304,32 @@ export function InBasketRunner({
                           : "저장 대기"}
                     </span>
                   </div>
+                  {voiceModeEnabled ? (
+                    <div className="mt-2 rounded-xl border border-card-border bg-background/60 p-3">
+                      <VoiceRecorder
+                        voiceInputEnabled
+                        allowTextFallback
+                        submitMode="draft"
+                        confirmLabel="텍스트에 반영"
+                        idleHint="처리 내용을 말씀하세요 — 반영 후 수정할 수 있습니다"
+                        disabled={submitting}
+                        onTranscript={(text) => {
+                          setDrafts((d) => {
+                            const prev = d[selected.id]?.responseText?.trim() ?? "";
+                            const next = prev ? `${prev}\n${text}` : text;
+                            return {
+                              ...d,
+                              [selected.id]: {
+                                ...d[selected.id],
+                                responseText: next.slice(0, 4000),
+                              },
+                            };
+                          });
+                          scheduleSave(selected.id);
+                        }}
+                      />
+                    </div>
+                  ) : null}
                   <textarea
                     value={selectedDraft.responseText}
                     onChange={(e) => {
@@ -292,7 +343,7 @@ export function InBasketRunner({
                     onBlur={() => void saveItem(selected.id)}
                     rows={8}
                     maxLength={4000}
-                    placeholder="이 항목을 실제로 어떻게 처리할지 구체적으로 작성하세요."
+                    placeholder="이 항목을 실제로 어떻게 처리할지 구체적으로 작성하세요. 음성으로도 받아쓸 수 있습니다."
                     className="mt-1.5 w-full resize-y rounded-xl border border-card-border bg-background px-3 py-2 text-sm leading-relaxed text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
                     disabled={submitting}
                   />
