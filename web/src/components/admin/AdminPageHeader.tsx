@@ -84,7 +84,7 @@ export function AdminPageHeader({
           )}
           <h1
             className={cn(
-              "text-2xl font-bold tracking-tight text-[var(--platform-text)]",
+              "text-xl font-bold tracking-tight text-[var(--platform-text)] sm:text-2xl",
               eyebrow ? "mt-1" : ""
             )}
           >
@@ -100,12 +100,12 @@ export function AdminPageHeader({
       </div>
 
       {links && links.length > 0 && (
-        <div className="flex flex-wrap gap-3 text-xs font-semibold">
+        <div className="-mx-1 flex gap-1 overflow-x-auto overscroll-x-contain px-1 pb-1 text-xs font-semibold [-webkit-overflow-scrolling:touch] sm:flex-wrap sm:gap-3 sm:overflow-visible sm:pb-0">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-[var(--platform-accent)] hover:underline"
+              className="min-h-9 shrink-0 inline-flex items-center rounded-md px-2 text-[var(--platform-accent)] hover:underline"
             >
               {link.label}
             </Link>
