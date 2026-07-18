@@ -45,7 +45,6 @@ export function ArcRadar({
             <PolarRadiusAxis
               type="number"
               domain={ARC_RADAR_DOMAIN}
-              ticks={[0, 1, 2, 3, 4, 5]}
               tickCount={6}
               allowDataOverflow
               tick={{ fontSize: 10, fill: "currentColor" }}

@@ -77,9 +77,16 @@ function CompetencyAccordionCard({ section }: { section: ReportSection }) {
             )}
           </div>
           {section.highlight && (
-            <p className="mt-2 border-l-2 border-gold/60 pl-3 text-sm italic text-foreground report-prose">
-              “{section.highlight}”
-            </p>
+            <div
+              className={`mt-2 border-l-2 pl-3 ${
+                section.highlightType === "growth" ? "border-rose-400/60" : "border-gold/60"
+              }`}
+            >
+              <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
+                {section.highlightType === "growth" ? "개선 근거" : "강점 근거"}
+              </p>
+              <p className="text-sm italic text-foreground report-prose">“{section.highlight}”</p>
+            </div>
           )}
         </div>
         <ChevronDown

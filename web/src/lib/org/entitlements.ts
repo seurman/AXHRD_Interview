@@ -3,7 +3,7 @@ import type { AccessContext } from "@/lib/platform/access";
 import type { OrgKind } from "@prisma/client";
 
 /** 제품 SKU — 기관을 나누지 않고 entitlement로 제어 */
-export type OrgProductKey = "interview" | "competency" | "diagnostic";
+export type OrgProductKey = "interview" | "competency" | "diagnostic" | "assessment";
 
 export type OrgProductEntitlement = {
   key: OrgProductKey;
@@ -35,17 +35,25 @@ export const ORG_PRODUCTS: OrgProductEntitlement[] = [
     description: "ARC Index 조직진단 웨이브·팀 리포트",
     tenantMenu: "조직진단",
   },
+  {
+    key: "assessment",
+    label: "역량평가 과제 (AC)",
+    shortLabel: "AC",
+    description: "서류함·역할연기 과제 배포·지원자 증거형 리포트",
+    tenantMenu: "역량평가 과제 배포",
+  },
 ];
 
 export type OrgEntitlementSnapshot = {
   interview: boolean;
   competency: boolean;
   diagnostic: boolean;
+  assessment: boolean;
 };
 
 type OrgEntitlementFields = Pick<
   Organization,
-  "interviewEnabled" | "saasPersonalizationEnabled" | "diagnosticEnabled"
+  "interviewEnabled" | "saasPersonalizationEnabled" | "diagnosticEnabled" | "assessmentEnabled"
 >;
 
 export function readOrgEntitlements(org: OrgEntitlementFields): OrgEntitlementSnapshot {
@@ -53,6 +61,7 @@ export function readOrgEntitlements(org: OrgEntitlementFields): OrgEntitlementSn
     interview: org.interviewEnabled,
     competency: org.saasPersonalizationEnabled,
     diagnostic: org.diagnosticEnabled,
+    assessment: org.assessmentEnabled,
   };
 }
 
@@ -73,11 +82,13 @@ export const ORG_KIND_PRODUCT_DEFAULTS: Record<OrgKind, OrgProductDefaults> = {
     interview: true,
     competency: false,
     diagnostic: false,
+    assessment: false,
   },
   HR_ENTERPRISE: {
     interview: true,
     competency: true,
     diagnostic: false,
+    assessment: false,
   },
 };
 
@@ -95,9 +106,13 @@ export function entitlementDbPatch(
       };
     case "diagnostic":
       return { diagnosticEnabled: enabled };
+    case "assessment":
+      return { assessmentEnabled: enabled };
   }
 }
 
 export function countActiveEntitlements(snapshot: OrgEntitlementSnapshot): number {
-  return [snapshot.interview, snapshot.competency, snapshot.diagnostic].filter(Boolean).length;
+  return [snapshot.interview, snapshot.competency, snapshot.diagnostic, snapshot.assessment].filter(
+    Boolean,
+  ).length;
 }

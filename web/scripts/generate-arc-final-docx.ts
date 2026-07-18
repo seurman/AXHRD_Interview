@@ -107,7 +107,7 @@ function countItems(seed: typeof ARC_INDEX_SEED) {
   let likert = 0;
   let imp = 0;
   let oe = 0;
-  for (const sec of seed.sections) {
+  for (const sec of seed.sections as SeedSection[]) {
     for (const it of sec.directItems ?? []) {
       if (it.isDemographic) dm++;
       else if (it.scaleType === "OPEN_TEXT") oe++;
@@ -154,7 +154,7 @@ function surveySection(sec: SeedSection): Paragraph[] {
 
 async function main() {
   const c = countItems(ARC_INDEX_SEED);
-  const children: Paragraph[] = [
+  const children: Array<Paragraph | Table> = [
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 200 },
@@ -441,13 +441,6 @@ async function main() {
   );
 
   const doc = new Document({
-    styles: {
-      default: {
-        document: {
-          styles: [{ id: "Normal", run: { font: "맑은 고딕", size: 20 } }],
-        },
-      },
-    },
     numbering: {
       config: [
         {

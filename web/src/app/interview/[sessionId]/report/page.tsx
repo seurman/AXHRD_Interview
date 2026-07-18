@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
 import { SessionReportView } from "@/components/report/SessionReportView";
+import { AssessmentResultsSummary } from "@/components/assessment/AssessmentResultsSummary";
 import { NextCompetencyButton } from "@/components/interview/NextCompetencyButton";
 import {
   filterQueueByProgress,
@@ -44,7 +45,8 @@ export default async function ReportPage({ params, searchParams }: PageProps) {
   }
 
   return (
-    <SessionReportView
+    <>
+      <SessionReportView
       session={session}
       variant="applicant"
       afterTimeline={
@@ -63,6 +65,10 @@ export default async function ReportPage({ params, searchParams }: PageProps) {
           />
         ) : undefined
       }
-    />
+      />
+      <div className="mx-auto mt-8 max-w-3xl pb-16">
+        <AssessmentResultsSummary userId={user.id} />
+      </div>
+    </>
   );
 }

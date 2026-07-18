@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Activity, ClipboardList, Users } from "lucide-react";
+import { Activity, Briefcase, ClipboardList, Users } from "lucide-react";
 import {
   ORG_PRODUCTS,
   type OrgEntitlementSnapshot,
@@ -13,12 +13,14 @@ const PRODUCT_ICONS: Record<OrgProductKey, typeof Users> = {
   interview: Users,
   competency: ClipboardList,
   diagnostic: Activity,
+  assessment: Briefcase,
 };
 
 const PRODUCT_ACCENT: Record<OrgProductKey, string> = {
   interview: "accent",
   competency: "gold",
   diagnostic: "accent",
+  assessment: "gold",
 };
 
 type Props = {

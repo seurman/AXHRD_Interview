@@ -54,7 +54,8 @@ export default async function CompetencyFeedbackPage({
   const strengths = fb.strengths as string[];
   const improvements = fb.improvements as string[];
   const suggestions = fb.suggestions as string[];
-  const highlights = (fb.highlights as Array<{ quote: string; note: string }> | null) ?? [];
+  const highlights =
+    (fb.highlights as Array<{ quote: string; note: string; type?: "strength" | "growth" }> | null) ?? [];
   const rewriteExample = fb.rewriteExample;
   const personaAlignmentNote = fb.personaAlignmentNote;
 
@@ -181,7 +182,13 @@ export default async function CompetencyFeedbackPage({
           <h2 className="mb-4 font-semibold text-foreground">답변 하이라이트</h2>
           <div className="space-y-4">
             {highlights.map((h, i) => (
-              <div key={i} className="border-l-2 border-gold pl-4">
+              <div
+                key={i}
+                className={`border-l-2 pl-4 ${h.type === "growth" ? "border-rose-400" : "border-gold"}`}
+              >
+                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
+                  {h.type === "growth" ? "개선 근거" : "강점 근거"}
+                </p>
                 <p className="italic leading-relaxed text-foreground">“{h.quote}”</p>
                 <p className="mt-1 text-sm text-muted">{h.note}</p>
               </div>

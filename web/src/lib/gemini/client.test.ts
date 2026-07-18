@@ -61,14 +61,15 @@ describe("gemini client text extraction", () => {
 });
 
 describe("gemini model tiers", () => {
-  it("routes user-facing interview tasks to pro", () => {
+  it("routes quality-critical interview tasks to pro", () => {
     expect(GEMINI_TASK_TIER.personalize_question).toBe("pro");
-    expect(GEMINI_TASK_TIER.evaluate_answer).toBe("pro");
     expect(GEMINI_TASK_TIER.triple_feedback).toBe("pro");
     expect(GEMINI_TASK_TIER.resume_review).toBe("pro");
+    expect(GEMINI_TASK_TIER.evidence_report).toBe("pro");
   });
 
   it("keeps high-volume utility on lite/standard", () => {
+    expect(GEMINI_TASK_TIER.evaluate_answer).toBe("lite");
     expect(GEMINI_TASK_TIER.transcript_correct).toBe("lite");
     expect(GEMINI_TASK_TIER.theme_mining).toBe("lite");
     expect(GEMINI_TASK_TIER.resume_enrich).toBe("standard");
@@ -78,7 +79,8 @@ describe("gemini model tiers", () => {
   it("lists pro tasks for observability", () => {
     const pro = listProTasks();
     expect(pro).toContain("personalize_question");
-    expect(pro).toContain("evaluate_answer");
+    expect(pro).toContain("evidence_report");
+    expect(pro).not.toContain("evaluate_answer");
     expect(pro).not.toContain("transcript_correct");
   });
 

@@ -19,6 +19,7 @@ export type CapabilityId =
   | "product.interview"
   | "product.resume_review"
   | "product.practice"
+  | "product.assessment"
   | "product.profile"
   | "product.demo_trial"
   | "tenant.cohort"
@@ -94,6 +95,15 @@ export const CAPABILITY_REGISTRY: Record<CapabilityId, CapabilityDef> = {
     descriptionKo: "질문 연습",
     href: "/practice/swipe",
     designNote: "스와이프 덱으로 실전 질문 민감도 훈련",
+  },
+  "product.assessment": {
+    id: "product.assessment",
+    category: "product",
+    labelKo: "역량평가",
+    labelEn: "Assessment Center",
+    descriptionKo: "서류함·역할연기 과제",
+    href: "/assessment",
+    designNote: "AC 기법(In-Basket·Role-Play)을 증거형 행동평가 리포트로",
   },
   "product.profile": {
     id: "product.profile",
@@ -266,6 +276,7 @@ const PRODUCT_CAPS: CapabilityId[] = [
   "product.interview",
   "product.resume_review",
   "product.practice",
+  "product.assessment",
   "product.profile",
   "product.demo_trial",
 ];
@@ -317,6 +328,7 @@ export const ROLE_CAPABILITY_MATRIX: Record<PlatformRoleKey, CapabilityId[]> = {
     "product.interview",
     "product.resume_review",
     "product.practice",
+    "product.assessment",
     "product.profile",
     "tenant.cohort",
     "tenant.settings",
@@ -330,6 +342,7 @@ export const ROLE_CAPABILITY_MATRIX: Record<PlatformRoleKey, CapabilityId[]> = {
     "product.interview",
     "product.resume_review",
     "product.practice",
+    "product.assessment",
     "product.profile",
     "tenant.cohort",
   ],
@@ -339,6 +352,7 @@ export const ROLE_CAPABILITY_MATRIX: Record<PlatformRoleKey, CapabilityId[]> = {
     "product.interview",
     "product.resume_review",
     "product.practice",
+    "product.assessment",
     "product.profile",
   ],
 };

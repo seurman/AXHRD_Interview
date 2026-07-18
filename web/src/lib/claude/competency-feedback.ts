@@ -1,9 +1,10 @@
 /**
- * 역량 단위 피드백 생성 (DeepSeek 또는 mock)
- * 폴더명(claude)은 레거시입니다 — Claude에서 DeepSeek로 교체했습니다.
+ * 역량 단위 피드백 생성 (Gemini Pro 또는 mock)
+ * 폴더명(claude)은 레거시입니다 — Claude → DeepSeek → Gemini Pro로 교체했습니다.
+ * (DeepSeek는 결제/크레딧 미설정으로 매 호출이 실패해 mock으로만 폴백되던 것을 정리)
  */
 
-import { fetchWithTimeout } from "@/lib/http/fetch-with-timeout";
+import { generateGeminiText } from "@/lib/gemini/client";
 import { competencyLabel } from "@/lib/labels";
 import {
   detectStarCoverage,
@@ -17,8 +18,6 @@ import {
   type CompetencyReportDimensions,
 } from "@/lib/interview/answer-dimensions";
 
-const DEEPSEEK_BASE = "https://api.deepseek.com";
-
 export interface CompetencyFeedbackData {
   summary: string;
   strengths: string[];
@@ -26,8 +25,9 @@ export interface CompetencyFeedbackData {
   suggestions: string[];
   dimensions: CompetencyReportDimensions;
   score: number;
-  /** 실제 답변에서 뽑은 인용문 + 코칭 노트 (Yoodli 등 선도 서비스의 "답변 하이라이트" 패턴 참고) */
-  highlights: Array<{ quote: string; note: string }>;
+  /** 실제 답변에서 뽑은 인용문 + 코칭 노트 (Yoodli 등 선도 서비스의 "답변 하이라이트" 패턴 참고).
+   *  type으로 강점 근거/개선 근거를 구분 — 최소 1개씩 포함하도록 프롬프트에서 요구. */
+  highlights: Array<{ quote: string; note: string; type?: "strength" | "growth" }>;
   /** STAR 구조로 다시 써보는 예시 문장 뼈대 */
   rewriteExample: string;
   /** "이 페르소나답게 답변했는가" 1문장 코칭 — persona가 주어졌을 때만 채워짐(채점 무관) */
@@ -37,10 +37,16 @@ export interface CompetencyFeedbackData {
 const SYSTEM = `당신은 한국 취업 면접 코치입니다.
 단일 역량에 대한 모의 면접 결과만 분석해 JSON으로 답하세요.
 
-중요:
-- "highlights"의 quote는 지원자가 실제로 한 말을 그대로 인용해야 합니다(지어내지 마세요).
+중요(근거 기반 평가 원칙):
+- "summary"는 반드시 (1) 관찰된 구체적 답변 내용(무엇을 어떻게 말했는지)을 먼저 제시하고 (2) 그 근거가
+  왜 이 점수/레벨에 해당하는지 판단을 뒤에 쓰는 순서로 작성하세요. 답변에서 실제로 확인되지 않은
+  행동·역량을 있다고 추정해서 쓰지 마세요 — 근거가 부족하면 "이번 답변만으로는 확인되지 않았다"고
+  솔직히 쓰세요.
+- "highlights"는 최소 2개를 만들되, 가능하면 하나는 강점을 보여주는 인용(type="strength"), 하나는
+  개선이 필요한 부분을 보여주는 인용(type="growth")으로 구성하세요. quote는 지원자가 실제로 한 말을
+  그대로 인용해야 합니다(지어내지 마세요). note는 그 인용이 왜 강점/개선점인지 구체적으로 설명하세요
+  (막연한 칭찬·지적 금지).
 - 꼬리질문이 있었던 문항(hadFollowUp=true)은 원 답변과 꼬리질문 답변을 함께 보고, 꼬리질문 대응도 summary·improvements·highlights에 자연스럽게 반영하세요.
-- note는 그 인용문에 대한 1문장 코칭(잘한 점 또는 보완점).
 - rewriteExample은 가장 약한 답변 하나를 상황-과제-행동-결과(STAR) 구조로 다시 쓴 예시 문장입니다.
 - "지원자 페르소나"가 주어지면, 답변들이 그 페르소나(가치관·태도)답게 일관됐는지 1문장으로
   코칭하세요(personaAlignmentNote). 페르소나가 없으면 null로 두세요. 이 코칭은 점수(score)에
@@ -48,13 +54,13 @@ const SYSTEM = `당신은 한국 취업 면접 코치입니다.
 
 반드시 JSON만:
 {
-  "summary": "2-3문장 역량별 총평",
+  "summary": "근거→판단 순으로 쓴 2-3문장 역량별 총평",
   "strengths": ["..."],
   "improvements": ["..."],
   "suggestions": ["다음 연습 방법"],
   "dimensions": {"questionIntent":0-100,"situationSpecificity":0-100,"individualOwnership":0-100,"logic":0-100,"outcomeQuantification":0-100,"delivery":0-100},
   "score": 0-100,
-  "highlights": [{"quote": "실제 답변 인용", "note": "1문장 코칭"}],
+  "highlights": [{"quote": "실제 답변 인용", "note": "왜 강점/개선점인지 설명", "type": "strength|growth"}],
   "rewriteExample": "STAR로 다시 쓴 예시 문장",
   "personaAlignmentNote": "페르소나답게 답변했는지 1문장 코칭 또는 null"
 }`;
@@ -74,14 +80,6 @@ export async function generateCompetencyFeedback(params: {
   jobRole?: string;
   persona?: { name: string; description: string } | null;
 }): Promise<CompetencyFeedbackData> {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-
-  if (!apiKey) {
-    return mockCompetencyFeedback(params);
-  }
-
-  const model = process.env.DEEPSEEK_REPORT_MODEL ?? "deepseek-chat";
-
   const userContent = JSON.stringify(
     {
       competency: competencyLabel(params.competency),
@@ -99,46 +97,32 @@ export async function generateCompetencyFeedback(params: {
   );
 
   try {
-    const res = await fetchWithTimeout(`${DEEPSEEK_BASE}/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: SYSTEM },
-          { role: "user", content: userContent },
-        ],
-        temperature: 0.4,
-        max_tokens: 1024,
-      }),
-      timeoutMs: 20000,
-      retries: 1,
+    const text = await generateGeminiText({
+      systemInstruction: SYSTEM,
+      userPrompt: userContent,
+      temperature: 0.4,
+      maxOutputTokens: 1536,
+      timeoutMs: 45_000,
+      task: "competency_feedback",
+      responseMimeType: "application/json",
     });
 
-    if (!res.ok) {
-      console.error("[DeepSeek competency-feedback] HTTP", res.status, await res.text());
-      return mockCompetencyFeedback(params);
-    }
-
-    const data = await res.json();
-    const text = data?.choices?.[0]?.message?.content ?? "";
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]) as CompetencyFeedbackData & {
-        dimensions?: unknown;
-      };
-      const normalizedDims = normalizeCompetencyDimensions(parsed.dimensions);
-      return {
-        ...parsed,
-        dimensions: normalizedDims ?? mockCompetencyFeedback(params).dimensions,
-        personaAlignmentNote: parsed.personaAlignmentNote?.trim() || null,
-      };
+    if (text) {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]) as CompetencyFeedbackData & {
+          dimensions?: unknown;
+        };
+        const normalizedDims = normalizeCompetencyDimensions(parsed.dimensions);
+        return {
+          ...parsed,
+          dimensions: normalizedDims ?? mockCompetencyFeedback(params).dimensions,
+          personaAlignmentNote: parsed.personaAlignmentNote?.trim() || null,
+        };
+      }
     }
   } catch (e) {
-    console.error("[DeepSeek competency-feedback]", e);
+    console.error("[Gemini competency-feedback]", e);
   }
 
   return mockCompetencyFeedback(params);
@@ -187,9 +171,11 @@ function mockCompetencyFeedback(params: {
     (r, i, arr) => r && arr.indexOf(r) === i
   );
 
-  const highlights = pickedResponses.map((r) => ({
+  const highlights = pickedResponses.map((r, i) => ({
     quote: extractQuote(r.answer),
     note: starCoachingNote(detectStarCoverage(r.answer)),
+    // pickedResponses[0]=최고점, 마지막=최저점 — 강점/개선 근거로 태깅
+    type: (i === 0 ? "strength" : "growth") as "strength" | "growth",
   }));
 
   return {

@@ -5,6 +5,7 @@ import { fetchJdTextFromUrl, htmlToPlainText, normalizeJdFetchUrl, resolveJdText
 
 const saraminFixturePath = join(__dirname, "fixtures", "saramin-view-snippet.html");
 const commaxFixturePath = join(__dirname, "fixtures", "saramin-commax-snippet.html");
+const describeLive = process.env.RUN_LIVE_TESTS === "1" ? describe : describe.skip;
 
 describe("normalizeJdFetchUrl", () => {
   it("rewrites Saramin relay URLs to the SEO view page", () => {
@@ -86,7 +87,7 @@ describe("resolveJdText", () => {
   });
 });
 
-describe("fetchJdTextFromUrl (live)", () => {
+describeLive("fetchJdTextFromUrl (live)", () => {
   it(
     "fetches a public job posting within performance budget",
     async () => {

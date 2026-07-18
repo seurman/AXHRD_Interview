@@ -22,6 +22,7 @@ export async function resolveOrgCandidateScreening(
       interviewEnabled: true,
       saasPersonalizationEnabled: true,
       diagnosticEnabled: true,
+      assessmentEnabled: true,
     },
   });
   if (!org) notFound();

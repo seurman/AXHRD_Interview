@@ -16,6 +16,7 @@ const TONE: Record<
   interview: "accent",
   competency: "gold",
   diagnostic: "accent",
+  assessment: "gold",
 };
 
 export function OrgProductBadges({ entitlements, className = "" }: Props) {

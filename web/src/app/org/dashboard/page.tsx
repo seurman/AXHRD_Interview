@@ -25,6 +25,7 @@ export default async function OrgDashboardPage() {
       interviewEnabled: true,
       saasPersonalizationEnabled: true,
       diagnosticEnabled: true,
+      assessmentEnabled: true,
     },
   });
 

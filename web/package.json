@@ -24,7 +24,8 @@
     "db:grant-role": "tsx scripts/grant-platform-role.ts",
     "db:studio": "prisma studio",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:seed:evidence": "tsx prisma/seed/evidence-assessment.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

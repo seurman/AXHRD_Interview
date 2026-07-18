@@ -25,7 +25,7 @@ export function buildSaasNavConfig(
   }
 
   if (caps.has("tenant.settings") || caps.has("tenant.interview_kit")) {
-    if (entitlements.competency || entitlements.interview) {
+    if (entitlements.competency || entitlements.interview || entitlements.assessment) {
       settingsLinks.push({ href: "/org/settings", labelKey: "settingsHub" });
     }
   }

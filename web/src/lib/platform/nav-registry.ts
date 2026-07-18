@@ -19,7 +19,7 @@ export type NavLabelKey =
   | "permissions"
   | "diagnostic";
 
-export type PrepareLabelKey = "interview" | "discover" | "cards" | "resumeReview" | "trialInterview";
+export type PrepareLabelKey = "interview" | "discover" | "cards" | "resumeReview" | "trialInterview" | "assessment";
 
 export type GuestProductLabelKey =
   | "allProducts"
@@ -126,6 +126,7 @@ const GROWTH_HREFS: { href: string; labelKey: PrepareLabelKey; capability: Capab
   { href: "/discover", labelKey: "discover", capability: "product.discover" },
   { href: "/resume-review", labelKey: "resumeReview", capability: "product.resume_review" },
   { href: "/interview/setup", labelKey: "interview", capability: "product.interview" },
+  { href: "/assessment", labelKey: "assessment", capability: "product.assessment" },
 ];
 
 const PRACTICE_HREFS: { href: string; labelKey: PrepareLabelKey; capability: CapabilityId }[] = [
@@ -234,11 +235,12 @@ export async function buildNavigationForUser(
         interviewEnabled: true,
         saasPersonalizationEnabled: true,
         diagnosticEnabled: true,
+        assessmentEnabled: true,
       },
     });
     const entitlements = orgRecord
       ? readOrgEntitlements(orgRecord)
-      : { interview: false, competency: false, diagnostic: false };
+      : { interview: false, competency: false, diagnostic: false, assessment: false };
 
     const hasTenantNav =
       superAdmin ||

@@ -1299,12 +1299,31 @@ async function finalizeFullSession(
   const regularResponses = session.responses.filter(
     (r) => !r.isBonusQuestion && !r.isClaimVerification && r.question,
   );
-  const reportData = await generateSessionReport({
+  const mappedResponses = regularResponses.map((r) => mapResponseForReport(r));
+  const legacyReportPromise = generateSessionReport({
     companyName: session.targetCompany?.name,
     jobRole: session.jobRole,
     competencies: summary.competencies,
-    responses: regularResponses.map((r) => mapResponseForReport(r)),
+    responses: mappedResponses,
   });
+  const evidenceReportPromise = import("@/lib/assessment/generate-evidence-report")
+    .then(({ generateEvidenceAssessmentReport }) =>
+      generateEvidenceAssessmentReport({
+        companyName: session.targetCompany?.name,
+        jobRole: session.jobRole,
+        competencies: summary.competencies,
+        responses: mappedResponses,
+      }),
+    )
+    .catch((error) => {
+      console.error("[interview evidence] 생성 실패:", error);
+      return null;
+    });
+
+  const [reportData, evidenceReport] = await Promise.all([
+    legacyReportPromise,
+    evidenceReportPromise,
+  ]);
 
   await prisma.sessionReport.create({
     data: {
@@ -1313,6 +1332,16 @@ async function finalizeFullSession(
       summaryJson: reportData as unknown as Prisma.InputJsonValue,
     },
   });
+
+  if (evidenceReport) {
+    try {
+      const { saveSessionEvidence } = await import("@/lib/assessment/persist-evidence");
+      await saveSessionEvidence(sessionId, evidenceReport);
+    } catch (error) {
+      // 기존 리포트 완료/리다이렉트는 증거 리포트 저장 실패와 독립적으로 유지한다.
+      console.error("[interview evidence] 저장 실패:", error);
+    }
+  }
 }
 
 async function resolveNextQueuedCompetency(planId: string): Promise<string | null> {
