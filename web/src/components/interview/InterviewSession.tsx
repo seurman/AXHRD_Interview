@@ -269,9 +269,9 @@ export function InterviewSession({
       : null;
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-      <div className="space-y-6">
-        <div className="card-luxe p-6">
+    <div className="grid gap-5 sm:gap-8 lg:grid-cols-[1fr_320px]">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="card-luxe p-4 sm:p-6">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted">
             {voiceModeEnabled && ttsStatus !== "idle" && (
@@ -328,7 +328,7 @@ export function InterviewSession({
               type="button"
               onClick={toggleVoiceMode}
               className={cn(
-                "shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition",
+                "min-h-9 shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition",
                 voiceModeEnabled
                   ? "border-accent/30 bg-accent/10 text-accent hover:bg-accent/15"
                   : "border-card-border bg-background text-muted hover:text-foreground"
@@ -338,7 +338,7 @@ export function InterviewSession({
               {voiceModeEnabled ? "보이스 모드 켜짐" : "보이스 모드 꺼짐"}
             </button>
           </div>
-          <h2 className="text-xl font-semibold leading-relaxed text-foreground">
+          <h2 className="text-lg font-semibold leading-relaxed text-foreground sm:text-xl">
             {q ? displayQuestionText(q) : "질문을 불러오는 중…"}
           </h2>
           {isPersonalized && q?.resumeAnchors && q.resumeAnchors.length > 0 && (
@@ -371,7 +371,7 @@ export function InterviewSession({
           </div>
         )}
 
-        <div className="card-luxe p-8">
+        <div className="card-luxe p-4 sm:p-8">
           {processing ? (
             <LoadingRitual
               variant={state.shouldTerminate ? "report" : "interview"}
@@ -413,15 +413,15 @@ export function InterviewSession({
         </p>
       </div>
 
-      <aside className="space-y-6">
-        <div className="card-luxe p-5">
+      <aside className="space-y-4 sm:space-y-6">
+        <div className="card-luxe p-4 sm:p-5">
           <CompetencyBar
             states={state.competencyStates as Record<string, CompetencyState>}
             activeCompetency={q?.competency}
           />
         </div>
 
-        <div className="card-luxe p-5 text-sm text-muted">
+        <div className="card-luxe hidden p-5 text-sm text-muted lg:block">
           <p className="mb-2 font-medium text-foreground">IRT 적응형 안내</p>
           <ul className="space-y-1 text-xs">
             <li>

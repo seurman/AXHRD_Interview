@@ -13,7 +13,7 @@ export function AdminTodoQueue({ items }: { items: PlatformTodoItem[] }) {
   }
 
   return (
-    <ul className="-mx-6 -mb-4 border-t border-[var(--platform-border)]">
+    <ul className="-mx-4 -mb-4 border-t border-[var(--platform-border)] sm:-mx-5">
       {items.map((item) => (
         <li key={item.id} className="border-b border-[var(--platform-border)] last:border-0">
           <Link

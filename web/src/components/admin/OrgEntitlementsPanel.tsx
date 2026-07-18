@@ -94,15 +94,15 @@ export function OrgEntitlementsPanel({
                 type="button"
                 disabled={busy === p.key}
                 onClick={(e) => void toggle(p.key, e)}
-                className={`relative h-6 w-10 shrink-0 rounded-full transition ${
+                className={`relative h-8 w-12 shrink-0 rounded-full transition sm:h-6 sm:w-10 ${
                   on ? "bg-accent" : "bg-card-border"
                 }`}
                 aria-pressed={on}
                 aria-label={`${organizationName} ${p.label} ${on ? "끄기" : "켜기"}`}
               >
                 <span
-                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${
-                    on ? "left-[18px]" : "left-0.5"
+                  className={`absolute top-0.5 h-7 w-7 rounded-full bg-white shadow transition sm:h-5 sm:w-5 ${
+                    on ? "left-4 sm:left-[18px]" : "left-0.5"
                   }`}
                 />
               </button>

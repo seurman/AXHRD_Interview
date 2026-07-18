@@ -79,15 +79,15 @@ export function FrameworkStudioTree({
   }
 
   return (
-    <aside className="flex h-full min-h-[640px] flex-col rounded-2xl border border-card-border bg-card shadow-sm">
-      <div className="border-b border-card-border p-4">
+    <aside className="flex h-full min-h-[min(28rem,70dvh)] flex-col rounded-2xl border border-card-border bg-card shadow-sm lg:min-h-[640px]">
+      <div className="border-b border-card-border p-3 sm:p-4">
         <div className="flex items-center justify-between gap-2">
           <h2 className="font-semibold text-foreground">역량 프레임워크</h2>
           {onCreateCompetency && (
             <button
               type="button"
               onClick={onCreateCompetency}
-              className="rounded-lg p-1.5 text-accent hover:bg-accent/10"
+              className="min-h-10 min-w-10 rounded-lg p-2 text-accent hover:bg-accent/10"
               title="역량 추가"
             >
               <Plus className="h-4 w-4" />
@@ -95,12 +95,12 @@ export function FrameworkStudioTree({
           )}
         </div>
         <div className="relative mt-3">
-          <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="코드·역량명 검색"
-            className="input-luxe w-full py-2 pl-8 pr-3 text-sm"
+            className="input-luxe w-full py-2.5 pl-8 pr-3 text-base sm:text-sm"
           />
         </div>
         <div className="mt-2 flex flex-wrap gap-1">
@@ -116,7 +116,7 @@ export function FrameworkStudioTree({
               key={key}
               type="button"
               onClick={() => onLifecycleFilterChange(key)}
-              className={`rounded-md px-2 py-1 text-xs font-medium ${
+              className={`min-h-9 rounded-md px-2.5 py-1.5 text-xs font-medium ${
                 lifecycleFilter === key ? "bg-accent/15 text-accent" : "text-muted hover:bg-muted/30"
               }`}
             >
@@ -126,7 +126,7 @@ export function FrameworkStudioTree({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-2">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 [-webkit-overflow-scrolling:touch]">
         {filtered.length === 0 ? (
           <p className="p-3 text-sm text-muted">조건에 맞는 역량이 없습니다.</p>
         ) : (
@@ -140,7 +140,7 @@ export function FrameworkStudioTree({
                   <button
                     type="button"
                     onClick={() => toggleCluster(cl.id)}
-                    className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-xs font-semibold text-muted hover:bg-muted/20"
+                    className="flex min-h-11 w-full items-center gap-1.5 rounded-lg px-2 py-2 text-left text-xs font-semibold text-muted hover:bg-muted/20"
                   >
                     {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                     <span className="min-w-0 flex-1 truncate text-foreground">{cl.nameKo}</span>
@@ -153,7 +153,7 @@ export function FrameworkStudioTree({
                           <button
                             type="button"
                             onClick={() => onSelect(c.id)}
-                            className={`w-full rounded-lg px-2 py-2 text-left transition ${
+                            className={`min-h-14 w-full rounded-lg px-2 py-2.5 text-left transition ${
                               selectedId === c.id
                                 ? "bg-accent/10 ring-1 ring-accent/30"
                                 : "hover:bg-muted/20"

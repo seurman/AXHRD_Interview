@@ -117,7 +117,7 @@ export function AdminDiagnosticWizard({ onClose, onCreated }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-3 sm:items-center sm:p-4">
       <div className="card-luxe max-h-[90vh] w-full max-w-lg overflow-y-auto p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-foreground">새 진단 시작</h2>

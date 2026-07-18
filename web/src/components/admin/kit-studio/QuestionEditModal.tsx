@@ -20,7 +20,7 @@ export function QuestionEditModal({
   const [hintsText, setHintsText] = useState((question.followUpHints ?? []).join("\n"));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-3 sm:items-center sm:p-4">
       <div className="card-luxe max-h-[90vh] w-full max-w-2xl overflow-y-auto p-6">
         <h3 className="text-lg font-bold">문항 · IRT · 루브릭</h3>
         <p className="text-xs text-muted">{draft.externalId}</p>

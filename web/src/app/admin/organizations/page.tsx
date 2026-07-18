@@ -103,7 +103,7 @@ export default async function AdminOrganizationsPage() {
         {active.length === 0 ? (
           <p className="text-sm text-muted">승인된 기관이 없습니다.</p>
         ) : (
-          <ul className="-mx-6 -mb-4 border-t border-card-border">
+          <ul className="-mx-4 -mb-4 border-t border-card-border sm:-mx-5 lg:-mx-6">
             {active.map((org) => {
               const seatCap = resolveOrgSeatCap(org, org.subscriptions[0]);
               const contractStatus = getOrgContractStatus(org);
@@ -112,29 +112,31 @@ export default async function AdminOrganizationsPage() {
                 <li key={org.id} className="border-b border-card-border last:border-0">
                   <Link
                     href={`/admin/organizations/${org.id}`}
-                    className="block px-6 py-3 transition hover:bg-background/60"
+                    className="block px-4 py-3 transition hover:bg-background/60 sm:px-5 lg:px-6"
                   >
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                      <span className="min-w-[10rem] flex-1 font-medium text-foreground">
+                    <div className="flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4">
+                      <span className="min-w-0 flex-1 font-medium text-foreground">
                         {org.name}
                       </span>
-                      <OrgKindBadge kind={org.kind} />
-                      <OrgProductBadges entitlements={entitlements} />
-                      <span className="text-xs text-muted">
-                        {org._count.members}명{seatCap != null ? ` / ${seatCap}` : ""}
-                      </span>
-                      <span className="text-xs text-muted">킷 {org._count.interviewKits}</span>
-                      <span className="font-mono text-xs text-muted">{org.joinCode}</span>
-                      {contractStatus === "expired" && (
-                        <StatusDot tone="danger">만료</StatusDot>
-                      )}
-                      {seatCap != null && org._count.members >= seatCap && (
-                        <StatusDot tone="warning">좌석 초과</StatusDot>
-                      )}
-                      <span className="ml-auto text-xs text-accent">허브 →</span>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                        <OrgKindBadge kind={org.kind} />
+                        <OrgProductBadges entitlements={entitlements} />
+                        <span className="text-xs text-muted">
+                          {org._count.members}명{seatCap != null ? ` / ${seatCap}` : ""}
+                        </span>
+                        <span className="text-xs text-muted">킷 {org._count.interviewKits}</span>
+                        <span className="font-mono text-xs text-muted">{org.joinCode}</span>
+                        {contractStatus === "expired" && (
+                          <StatusDot tone="danger">만료</StatusDot>
+                        )}
+                        {seatCap != null && org._count.members >= seatCap && (
+                          <StatusDot tone="warning">좌석 초과</StatusDot>
+                        )}
+                        <span className="text-xs text-accent sm:ml-auto">허브 →</span>
+                      </div>
                     </div>
                   </Link>
-                  <div className="border-t border-card-border/60 px-6 py-2">
+                  <div className="border-t border-card-border/60 px-4 py-2.5 sm:px-5 lg:px-6">
                     <OrgEntitlementsPanel
                       organizationId={org.id}
                       organizationName={org.name}
