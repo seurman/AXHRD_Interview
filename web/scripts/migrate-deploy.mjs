@@ -13,6 +13,18 @@ function run(command) {
   return { status: result.status ?? 1, output };
 }
 
+const databaseUrl = process.env.DATABASE_URL?.trim();
+const directUrl = process.env.DIRECT_URL?.trim();
+
+// Preview/로컬에서 DB env가 없으면 빌드를 막지 않는다.
+// Production에서는 Vercel에 DATABASE_URL·DIRECT_URL이 있어야 한다.
+if (!databaseUrl || !directUrl) {
+  console.warn(
+    "[migrate-deploy] DATABASE_URL 또는 DIRECT_URL이 없어 migrate deploy를 건너뜁니다.",
+  );
+  process.exit(0);
+}
+
 let { status, output } = run("npx prisma migrate deploy");
 
 if (
