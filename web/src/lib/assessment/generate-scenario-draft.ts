@@ -69,7 +69,8 @@ type AvailableCompetency = {
 
 const SYSTEM = [
   "당신은 한국 기업 역량평가(Assessment Center) 과제 설계 전문가입니다.",
-  "업로드된 과제 문서를 바탕으로 응시자용 역할연기 또는 서류함 과제 초안을 JSON으로 작성합니다.",
+  "관리자가 제공한 샘플 과제(또는 문서)를 참고해, 구조·난이도·채점 가능성이 유사한 새 과제를 JSON으로 작성합니다.",
+  "샘플을 그대로 복사하지 마세요. 상황·인물·회사·문서 내용은 새로 구성하되, 평가 목적과 관찰 가능한 행동 구조는 유지하세요.",
   "응시자에게 채점 기준·페르소나 내부 지침이 노출되지 않도록 필드 역할을 분리하세요.",
   "competencies는 제공된 플랫폼 역량 코드 중에서만 선택하세요.",
   "각 역량마다 하위역량과 POSITIVE / NEGATIVE_OR_MISSING 행동지표를 과제 맥락에 맞게 작성하세요.",
@@ -268,6 +269,8 @@ export async function generateScenarioDraftFromDocument(params: {
   kind: AssessmentScenarioKind;
   extractedText: string;
   availableCompetencies: AvailableCompetency[];
+  /** 관리자 추가 지시 (업종·직급·톤 등) */
+  guidance?: string | null;
 }): Promise<ScenarioDraft | null> {
   const text = params.extractedText.trim().slice(0, 24_000);
   if (!text) return null;
@@ -277,13 +280,19 @@ export async function generateScenarioDraftFromDocument(params: {
     "\n\n" +
     (params.kind === "IN_BASKET" ? inBasketContract() : rolePlayContract());
 
+  const guidance =
+    typeof params.guidance === "string" && params.guidance.trim()
+      ? params.guidance.trim().slice(0, 2000)
+      : null;
+
   const userPrompt = JSON.stringify(
     {
       kind: params.kind,
-      sourceDocument: text,
+      sampleTask: text,
+      adminGuidance: guidance,
       availableCompetencies: params.availableCompetencies.slice(0, 40),
       instruction:
-        "문서 내용을 바탕으로 실무형 평가 과제를 설계하세요. 제공된 역량 코드만 사용하세요.",
+        "샘플과 유사한 실무형 평가 과제를 새로 설계하세요. 제목·인물·상황·문서는 샘플과 다르게 만들고, 제공된 역량 코드만 사용하세요. adminGuidance가 있으면 우선 반영하세요.",
     },
     null,
     2,

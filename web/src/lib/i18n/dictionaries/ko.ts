@@ -53,6 +53,7 @@ export const dictionary: Dictionary = {
         settings: "설정",
       },
       content: "Framework Studio",
+      assessmentTasks: "역량평가 과제",
       repository: "역량·루브릭",
       demo: "데모 워크스페이스",
       users: "사용자",

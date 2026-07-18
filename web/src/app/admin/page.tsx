@@ -16,6 +16,11 @@ export const dynamic = "force-dynamic";
 
 const CONTENT_LINKS = [
   { href: "/admin/content", labelKey: "content" as const, desc: "Framework Studio · 역량·문항·루브릭·품질" },
+  {
+    href: "/admin/content/assessment",
+    labelKey: "assessmentTasks" as const,
+    desc: "샘플 붙여넣기 → 유사 역할연기·서류함 과제 생성",
+  },
   { href: "/admin/demo", labelKey: "demo" as const, desc: "고객 미팅용 데모 샌드박스" },
 ];
 
@@ -40,7 +45,7 @@ export default async function AdminHomePage() {
   }
 
   const contentLinks = CONTENT_LINKS.filter((l) => {
-    if (l.href === "/admin/content") {
+    if (l.href === "/admin/content" || l.href === "/admin/content/assessment") {
       return hasCapability(user, "platform.content");
     }
     if (l.href === "/admin/demo") return hasCapability(user, "platform.demo");

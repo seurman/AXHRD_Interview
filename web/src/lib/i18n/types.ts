@@ -51,6 +51,7 @@ export type Dictionary = {
       consoleTitle: string;
       backToService: string;
       content: string;
+      assessmentTasks: string;
       repository: string;
       demo: string;
       users: string;

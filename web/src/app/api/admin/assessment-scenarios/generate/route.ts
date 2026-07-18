@@ -18,6 +18,8 @@ type GenerateBody = {
   sourceId?: string;
   /** ROLE_PLAY | IN_BASKET | BOTH */
   modes?: string[] | string;
+  /** 업종·직급·톤 등 추가 지시 */
+  guidance?: string;
 };
 
 /** 업로드 원문 → 역할연기/서류함 초안 생성 (DRAFT, 비활성) */
@@ -62,6 +64,11 @@ export async function POST(req: Request) {
   }
   if (modes.size === 0) modes.add("ROLE_PLAY");
 
+  const guidance =
+    typeof body.guidance === "string" && body.guidance.trim()
+      ? body.guidance.trim().slice(0, 2000)
+      : null;
+
   const availableCompetencies = await prisma.competency.findMany({
     where: {
       organizationId: null,
@@ -90,6 +97,7 @@ export async function POST(req: Request) {
         kind,
         extractedText: source.extractedText,
         availableCompetencies,
+        guidance,
       });
       if (!draft) {
         errors.push(`${kind}: 초안 생성 실패`);

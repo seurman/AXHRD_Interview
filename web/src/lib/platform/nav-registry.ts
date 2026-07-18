@@ -7,6 +7,7 @@ import { buildSaasNavConfig } from "@/lib/org/saas-nav";
 
 export type NavLabelKey =
   | "content"
+  | "assessmentTasks"
   | "repository"
   | "demo"
   | "users"
@@ -51,6 +52,12 @@ export const PLATFORM_NAV_ORDER: AdminNavItem[] = [
     section: "tenants",
   },
   { href: "/admin/content", labelKey: "content", capability: "platform.content", section: "product" },
+  {
+    href: "/admin/content/assessment",
+    labelKey: "assessmentTasks",
+    capability: "platform.content",
+    section: "product",
+  },
   {
     href: "/admin/diagnostic",
     labelKey: "diagnostic",
