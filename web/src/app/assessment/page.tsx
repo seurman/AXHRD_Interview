@@ -50,10 +50,10 @@ export default async function AssessmentPage() {
   ]);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 pb-16">
+    <div className="mx-auto max-w-3xl space-y-6 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] sm:space-y-8 sm:pb-16">
       <div>
         <p className="text-sm font-medium text-accent">역량평가 (Assessment Center)</p>
-        <h1 className="mt-1 text-2xl font-bold text-foreground">
+        <h1 className="mt-1 text-xl font-bold leading-snug text-foreground sm:text-2xl">
           서류함·역할연기 과제
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-muted">
