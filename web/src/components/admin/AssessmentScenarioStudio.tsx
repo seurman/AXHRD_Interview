@@ -345,8 +345,12 @@ export function AssessmentScenarioStudio() {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-xl border border-card-border bg-card/40 p-5">
+    <div className="space-y-4 sm:space-y-6">
+      <section
+        className={`rounded-xl border border-card-border bg-card/40 p-4 sm:p-5 ${
+          selected ? "hidden lg:block" : ""
+        }`}
+      >
         <h2 className="text-base font-semibold text-foreground">샘플로 유사 과제 만들기</h2>
         <p className="mt-1 text-sm text-muted">
           갖고 계신 역할연기·서류함 샘플을 붙여넣으면, 구조는 비슷하고 상황·인물은 새로 짠
@@ -357,9 +361,9 @@ export function AssessmentScenarioStudio() {
           value={sampleText}
           onChange={(e) => setSampleText(e.target.value)}
           disabled={busy}
-          rows={10}
+          rows={8}
           placeholder={`예시)\n· 응시자 역할: 팀장\n· 상황: 성과 부진 팀원과의 1:1\n· 목표: 원인 진단 후 개선 계획 합의\n· 평가 역량: 의사소통, 리더십\n· (역할연기) 상대역 성격·첫 멘트\n· (서류함) 처리할 메일/메모 원문`}
-          className="mt-4 w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm leading-relaxed"
+          className="mt-4 w-full rounded-lg border border-card-border bg-background px-3 py-2 text-base leading-relaxed sm:text-sm"
         />
 
         <input
@@ -367,35 +371,37 @@ export function AssessmentScenarioStudio() {
           onChange={(e) => setGuidance(e.target.value)}
           disabled={busy}
           placeholder="추가 지시(선택): 예) 제조업 공장장 / 직급은 차장급 / 톤은 차분하게"
-          className="mt-3 w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm"
+          className="mt-3 w-full rounded-lg border border-card-border bg-background px-3 py-2.5 text-base sm:text-sm"
         />
 
-        <div className="mt-3 flex flex-wrap items-center gap-4">
-          <label className="flex items-center gap-2 text-xs text-muted">
-            <input
-              type="checkbox"
-              checked={modes.rolePlay}
-              onChange={(e) => setModes((m) => ({ ...m, rolePlay: e.target.checked }))}
-            />
-            역할연기
-          </label>
-          <label className="flex items-center gap-2 text-xs text-muted">
-            <input
-              type="checkbox"
-              checked={modes.inBasket}
-              onChange={(e) => setModes((m) => ({ ...m, inBasket: e.target.checked }))}
-            />
-            서류함
-          </label>
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="flex min-h-10 items-center gap-2 text-sm text-muted">
+              <input
+                type="checkbox"
+                checked={modes.rolePlay}
+                onChange={(e) => setModes((m) => ({ ...m, rolePlay: e.target.checked }))}
+              />
+              역할연기
+            </label>
+            <label className="flex min-h-10 items-center gap-2 text-sm text-muted">
+              <input
+                type="checkbox"
+                checked={modes.inBasket}
+                onChange={(e) => setModes((m) => ({ ...m, inBasket: e.target.checked }))}
+              />
+              서류함
+            </label>
+          </div>
           <button
             type="button"
             disabled={busy || sampleText.trim().length < 40}
             onClick={() => void generateFromSampleText()}
-            className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background disabled:opacity-50"
+            className="min-h-11 w-full rounded-lg bg-foreground px-4 py-2.5 text-sm font-medium text-background disabled:opacity-50 sm:w-auto"
           >
             {busy ? "생성 중…" : "유사 과제 생성"}
           </button>
-          <label className="cursor-pointer text-xs text-accent hover:underline">
+          <label className="min-h-10 cursor-pointer text-center text-sm text-accent hover:underline sm:text-left sm:text-xs">
             또는 문서 업로드
             <input
               type="file"
@@ -418,11 +424,15 @@ export function AssessmentScenarioStudio() {
         ) : null}
       </section>
 
-      <details className="rounded-xl border border-dashed border-card-border bg-background/40 px-5 py-3">
+      <details
+        className={`rounded-xl border border-dashed border-card-border bg-background/40 px-4 py-3 sm:px-5 ${
+          selected ? "hidden lg:block" : ""
+        }`}
+      >
         <summary className="cursor-pointer text-sm font-medium text-muted">
           임시 데모 시드 (김대리·서류함 샘플)
         </summary>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 pb-2">
+        <div className="mt-3 flex flex-col gap-3 pb-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <p className="text-xs text-muted">
             내부 검증용입니다. 실제 과제는 위 샘플 생성으로 만드는 것을 권장합니다.
           </p>
@@ -430,7 +440,7 @@ export function AssessmentScenarioStudio() {
             type="button"
             disabled={busy}
             onClick={() => void seedDemoScenarios()}
-            className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
+            className="btn-secondary min-h-10 px-3 py-1.5 text-xs disabled:opacity-50"
           >
             {busy ? "시드 중…" : "데모 넣기"}
           </button>
@@ -449,14 +459,18 @@ export function AssessmentScenarioStudio() {
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <section className="rounded-xl border border-card-border bg-card/40 p-3">
+        <section
+          className={`rounded-xl border border-card-border bg-card/40 p-3 ${
+            selected ? "hidden lg:block" : ""
+          }`}
+        >
           <div className="mb-2 flex items-center justify-between px-1">
             <h2 className="text-sm font-semibold">과제 목록</h2>
             <button
               type="button"
               disabled={busy}
               onClick={() => void refresh()}
-              className="text-xs text-accent hover:underline"
+              className="min-h-9 text-xs text-accent hover:underline"
             >
               새로고침
             </button>
@@ -468,21 +482,21 @@ export function AssessmentScenarioStudio() {
               등록된 과제가 없습니다. 위에서 샘플을 붙여넣고 「유사 과제 생성」을 누르세요.
             </p>
           ) : (
-            <ul className="max-h-[36rem] space-y-1 overflow-y-auto">
+            <ul className="max-h-[min(28rem,60dvh)] space-y-1 overflow-y-auto overscroll-contain lg:max-h-[36rem] [-webkit-overflow-scrolling:touch]">
               {scenarios.map((s) => (
                 <li key={s.id}>
                   <button
                     type="button"
                     onClick={() => setSelectedId(s.id)}
-                    className={`w-full rounded-lg px-3 py-2 text-left text-sm transition ${
+                    className={`min-h-14 w-full rounded-lg px-3 py-2.5 text-left text-sm transition ${
                       selectedId === s.id ? "bg-foreground text-background" : "hover:bg-background"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium">{s.titleKo}</span>
-                      <span className="text-[10px] opacity-80">{s.status}</span>
+                      <span className="line-clamp-2 font-medium">{s.titleKo}</span>
+                      <span className="shrink-0 text-[10px] opacity-80">{s.status}</span>
                     </div>
-                    <p className="mt-0.5 text-[11px] opacity-70">
+                    <p className="mt-0.5 truncate text-[11px] opacity-70">
                       {s.kind === "IN_BASKET" ? "서류함" : "역할연기"} · v{s.version} · {s.code}
                     </p>
                   </button>
@@ -492,18 +506,29 @@ export function AssessmentScenarioStudio() {
           )}
         </section>
 
-        <section className="rounded-xl border border-card-border bg-card/40 p-5">
+        <section
+          className={`rounded-xl border border-card-border bg-card/40 p-4 sm:p-5 ${
+            selected ? "" : "hidden lg:block"
+          }`}
+        >
           {!selected ? (
             <p className="text-sm text-muted">왼쪽에서 과제를 선택하세요.</p>
           ) : (
             <div className="space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs text-muted">
+              <button
+                type="button"
+                onClick={() => setSelectedId(null)}
+                className="min-h-10 text-sm font-medium text-accent hover:underline lg:hidden"
+              >
+                ← 과제 목록
+              </button>
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="break-all text-xs text-muted">
                     {selected.code} · {selected.status} · v{selected.version}
                   </p>
                   <input
-                    className="mt-1 w-full max-w-xl rounded-lg border border-card-border bg-background px-3 py-2 text-lg font-semibold"
+                    className="mt-1 w-full rounded-lg border border-card-border bg-background px-3 py-2 text-base font-semibold sm:max-w-xl sm:text-lg"
                     value={selected.titleKo}
                     onChange={(e) =>
                       setScenarios((list) =>
@@ -515,7 +540,7 @@ export function AssessmentScenarioStudio() {
                     onBlur={() => void saveSelected({ titleKo: selected.titleKo })}
                   />
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                   <button
                     type="button"
                     disabled={busy}
@@ -543,7 +568,7 @@ export function AssessmentScenarioStudio() {
                             }))
                           : undefined,
                     })}
-                    className="rounded-lg border border-card-border px-3 py-1.5 text-xs"
+                    className="min-h-11 rounded-lg border border-card-border px-3 py-2 text-sm sm:min-h-0 sm:py-1.5 sm:text-xs"
                   >
                     저장
                   </button>
@@ -552,7 +577,7 @@ export function AssessmentScenarioStudio() {
                       type="button"
                       disabled={busy}
                       onClick={() => void publishSelected(true)}
-                      className="rounded-lg border border-card-border px-3 py-1.5 text-xs"
+                      className="min-h-11 rounded-lg border border-card-border px-3 py-2 text-sm sm:min-h-0 sm:py-1.5 sm:text-xs"
                     >
                       게시 취소
                     </button>
@@ -561,7 +586,7 @@ export function AssessmentScenarioStudio() {
                       type="button"
                       disabled={busy || selected.status === "ARCHIVED"}
                       onClick={() => void publishSelected(false)}
-                      className="rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background"
+                      className="min-h-11 rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-background sm:min-h-0 sm:py-1.5 sm:text-xs"
                     >
                       게시
                     </button>
@@ -572,7 +597,7 @@ export function AssessmentScenarioStudio() {
               <label className="block text-xs font-medium">
                 과제 브리핑
                 <textarea
-                  className="mt-1 w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-lg border border-card-border bg-background px-3 py-2 text-base sm:text-sm"
                   rows={4}
                   value={selected.taskBrief}
                   onChange={(e) =>
@@ -680,9 +705,9 @@ export function AssessmentScenarioStudio() {
 
               <div className="space-y-2 border-t border-card-border pt-4">
                 <h3 className="text-xs font-semibold">역량 · 루브릭 · 행동지표</h3>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                   <select
-                    className="rounded-lg border border-card-border bg-background px-2 py-1.5 text-xs"
+                    className="min-h-11 w-full rounded-lg border border-card-border bg-background px-2 py-2 text-sm sm:min-h-0 sm:w-auto sm:py-1.5 sm:text-xs"
                     defaultValue=""
                     onChange={(e) => {
                       const id = e.target.value;
@@ -699,7 +724,7 @@ export function AssessmentScenarioStudio() {
                   </select>
                   {rubricOptions.length > 0 ? (
                     <select
-                      className="rounded-lg border border-card-border bg-background px-2 py-1.5 text-xs"
+                      className="min-h-11 w-full rounded-lg border border-card-border bg-background px-2 py-2 text-sm sm:min-h-0 sm:w-auto sm:py-1.5 sm:text-xs"
                       value={selected.competencies[0]?.rubricSetId ?? ""}
                       onChange={(e) => {
                         if (e.target.value) void setRubricForFirst(e.target.value);

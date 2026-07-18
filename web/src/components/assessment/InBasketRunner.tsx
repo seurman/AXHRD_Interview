@@ -45,6 +45,8 @@ export function InBasketRunner({
   const router = useRouter();
   const items = scenario.items;
   const [selectedId, setSelectedId] = useState<string | null>(items[0]?.id ?? null);
+  /** 모바일: 목록→상세 전환. 데스크톱에서는 항상 양쪽 표시 */
+  const [mobileShowDetail, setMobileShowDetail] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, ItemResponseDraft>>(() => {
     const map: Record<string, ItemResponseDraft> = {};
     for (const item of items) {
@@ -128,6 +130,7 @@ export function InBasketRunner({
     // 이동 전 현재 아이템 저장
     if (selectedId && selectedId !== itemId) void saveItem(selectedId);
     setSelectedId(itemId);
+    setMobileShowDetail(true);
   }
 
   async function submit() {
@@ -165,11 +168,13 @@ export function InBasketRunner({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+    <div className="space-y-3 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:space-y-4 sm:pb-0">
+      <div className="flex flex-wrap items-start justify-between gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-accent">서류함 과제</p>
-          <h1 className="mt-1 text-xl font-bold text-foreground">{scenario.titleKo}</h1>
+          <h1 className="mt-1 text-lg font-bold leading-snug text-foreground sm:text-xl">
+            {scenario.titleKo}
+          </h1>
           {scenario.roleContext ? (
             <p className="mt-1 text-sm text-muted">{scenario.roleContext}</p>
           ) : null}
@@ -184,17 +189,19 @@ export function InBasketRunner({
                 return next;
               });
             }}
-            className="rounded-full border border-card-border bg-card px-3 py-1 text-xs font-medium text-muted transition hover:text-foreground"
+            className="min-h-9 rounded-full border border-card-border bg-card px-3 py-1.5 text-xs font-medium text-muted transition hover:text-foreground"
           >
             {voiceModeEnabled ? "음성 ON" : "텍스트 모드"}
           </button>
-          <span className="rounded-full bg-card px-3 py-1 text-xs font-medium text-muted">
+          <span className="min-h-9 inline-flex items-center rounded-full bg-card px-3 py-1.5 text-xs font-medium text-muted">
             처리 {answeredCount} / {items.length}건
           </span>
         </div>
       </div>
 
-      <section className="card-luxe p-4">
+      <section
+        className={`card-luxe p-3 sm:p-4 ${mobileShowDetail ? "hidden lg:block" : ""}`}
+      >
         <p className="whitespace-pre-line text-sm leading-relaxed text-muted">
           {scenario.taskBrief}
         </p>
@@ -207,10 +214,14 @@ export function InBasketRunner({
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        {/* 좌측 — 아이템 목록 */}
-        <section className="card-luxe max-h-[32rem] overflow-y-auto p-2">
+        {/* 목록 — 모바일에서는 상세 열리면 숨김 */}
+        <section
+          className={`card-luxe max-h-[min(28rem,55dvh)] overflow-y-auto overscroll-contain p-2 [-webkit-overflow-scrolling:touch] lg:max-h-[32rem] ${
+            mobileShowDetail ? "hidden lg:block" : ""
+          }`}
+        >
           <ul className="divide-y divide-card-border">
-            {items.map((item) => {
+            {items.map((item, index) => {
               const answered =
                 (drafts[item.id]?.savedText ?? "").trim().length > 0;
               const active = item.id === selectedId;
@@ -219,19 +230,24 @@ export function InBasketRunner({
                   <button
                     type="button"
                     onClick={() => selectItem(item.id)}
-                    className={`w-full px-3 py-3 text-left transition ${
-                      active ? "bg-card" : "hover:bg-card/60"
+                    className={`min-h-14 w-full px-3 py-3 text-left transition ${
+                      active ? "bg-card" : "hover:bg-card/60 active:bg-card/80"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs text-muted">{item.fromLabel}</p>
+                      <p className="truncate text-xs text-muted">
+                        <span className="mr-1.5 font-medium text-foreground/70">
+                          {index + 1}.
+                        </span>
+                        {item.fromLabel}
+                      </p>
                       <span
-                        className={`text-xs ${answered ? "text-success" : "text-muted"}`}
+                        className={`shrink-0 text-xs ${answered ? "text-success" : "text-muted"}`}
                       >
                         {answered ? "처리됨" : "미처리"}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm font-medium text-foreground">
+                    <p className="mt-1 line-clamp-2 text-sm font-medium text-foreground">
                       {item.subject}
                     </p>
                   </button>
@@ -241,14 +257,30 @@ export function InBasketRunner({
           </ul>
         </section>
 
-        {/* 우측 — 본문 + 응답 */}
-        <section className="card-luxe flex flex-col p-4">
+        {/* 상세 — 모바일에서는 탭 후에만 */}
+        <section
+          className={`card-luxe flex flex-col p-3 sm:p-4 ${
+            mobileShowDetail ? "" : "hidden lg:flex"
+          }`}
+        >
           {selected && selectedDraft ? (
             <>
+              <button
+                type="button"
+                onClick={() => {
+                  void saveItem(selected.id);
+                  setMobileShowDetail(false);
+                }}
+                className="mb-3 min-h-10 text-left text-sm font-medium text-accent hover:underline lg:hidden"
+              >
+                ← 문서 목록
+              </button>
               <div className="border-b border-card-border pb-3">
                 <p className="text-xs text-muted">보낸 사람: {selected.fromLabel}</p>
-                <h2 className="mt-1 font-semibold text-foreground">{selected.subject}</h2>
-                <p className="mt-3 max-h-40 overflow-y-auto whitespace-pre-line text-sm leading-relaxed text-muted">
+                <h2 className="mt-1 text-base font-semibold leading-snug text-foreground sm:text-lg">
+                  {selected.subject}
+                </h2>
+                <p className="mt-3 max-h-[40dvh] overflow-y-auto overscroll-contain whitespace-pre-line break-words text-sm leading-relaxed text-muted sm:max-h-40 [-webkit-overflow-scrolling:touch]">
                   {selected.body}
                 </p>
               </div>
@@ -258,7 +290,7 @@ export function InBasketRunner({
                   <label className="text-xs font-medium text-foreground">
                     처리 방식
                   </label>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  <div className="mt-1.5 grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap">
                     {ACTION_OPTIONS.map((opt) => (
                       <button
                         key={opt.value}
@@ -276,7 +308,7 @@ export function InBasketRunner({
                           }));
                           scheduleSave(selected.id);
                         }}
-                        className={`rounded-full border px-3 py-1 text-xs transition ${
+                        className={`min-h-10 rounded-full border px-3 py-2 text-xs transition sm:py-1 ${
                           selectedDraft.actionType === opt.value
                             ? "border-accent bg-accent/10 font-medium text-accent"
                             : "border-card-border text-muted hover:text-foreground"
@@ -289,9 +321,9 @@ export function InBasketRunner({
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <label className="text-xs font-medium text-foreground">
-                      처리 내용 (회신문 초안 / 위임 지시 / 보고 내용 등)
+                      처리 내용
                     </label>
                     <span className="text-xs text-muted">
                       {selectedDraft.saving
@@ -341,10 +373,10 @@ export function InBasketRunner({
                       scheduleSave(selected.id);
                     }}
                     onBlur={() => void saveItem(selected.id)}
-                    rows={8}
+                    rows={7}
                     maxLength={4000}
                     placeholder="이 항목을 실제로 어떻게 처리할지 구체적으로 작성하세요. 음성으로도 받아쓸 수 있습니다."
-                    className="mt-1.5 w-full resize-y rounded-xl border border-card-border bg-background px-3 py-2 text-sm leading-relaxed text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+                    className="mt-1.5 w-full resize-y rounded-xl border border-card-border bg-background px-3 py-2 text-base leading-relaxed text-foreground focus:outline-none focus:ring-1 focus:ring-accent sm:text-sm"
                     disabled={submitting}
                   />
                   <p className="mt-1 text-right text-xs text-muted">
@@ -359,15 +391,19 @@ export function InBasketRunner({
         </section>
       </div>
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={() => void submit()}
-          disabled={submitting}
-          className="rounded-xl bg-foreground px-5 py-2.5 text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-50"
-        >
-          {submitting ? "채점 중… (최대 1분)" : `전체 제출하기 (${answeredCount}/${items.length})`}
-        </button>
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-card-border bg-background/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+        <div className="mx-auto flex max-w-4xl justify-stretch sm:justify-end">
+          <button
+            type="button"
+            onClick={() => void submit()}
+            disabled={submitting}
+            className="min-h-11 w-full rounded-xl bg-foreground px-5 py-2.5 text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-50 sm:w-auto"
+          >
+            {submitting
+              ? "채점 중… (최대 1분)"
+              : `전체 제출하기 (${answeredCount}/${items.length})`}
+          </button>
+        </div>
       </div>
     </div>
   );

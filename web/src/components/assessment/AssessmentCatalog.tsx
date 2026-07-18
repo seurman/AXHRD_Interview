@@ -74,7 +74,7 @@ export function AssessmentCatalog({
       ) : null}
 
       {scenarios.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-card-border bg-card/30 px-5 py-8 text-sm text-muted">
+        <div className="rounded-xl border border-dashed border-card-border bg-card/30 px-4 py-6 text-sm text-muted sm:px-5 sm:py-8">
           <p className="font-medium text-foreground">게시된 과제가 아직 없습니다.</p>
           <p className="mt-2 leading-relaxed">
             플랫폼 관리자가 데모 과제(저성과 팀원 면담 · 신임 팀장 서류함)를 시드하거나
@@ -83,7 +83,7 @@ export function AssessmentCatalog({
         </div>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
         {scenarios.map((s) => {
           const inProgress = attempts.find(
             (a) =>
@@ -91,12 +91,12 @@ export function AssessmentCatalog({
               (a.status === "DRAFT" || a.status === "IN_PROGRESS"),
           );
           return (
-            <article key={s.id} className="card-luxe flex flex-col gap-4 p-6">
+            <article key={s.id} className="card-luxe flex flex-col gap-4 p-4 sm:p-6">
               <div>
                 <span className="rounded-full bg-card px-3 py-1 text-xs font-medium text-accent">
                   {KIND_LABEL[s.kind]}
                 </span>
-                <h2 className="mt-3 text-lg font-semibold text-foreground">
+                <h2 className="mt-3 text-base font-semibold leading-snug text-foreground sm:text-lg">
                   {s.titleKo}
                 </h2>
                 {s.roleContext ? (
@@ -125,7 +125,7 @@ export function AssessmentCatalog({
                   type="button"
                   onClick={() => startScenario(s.id)}
                   disabled={startingId !== null}
-                  className="w-full rounded-xl bg-foreground px-4 py-2.5 text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-50"
+                  className="min-h-11 w-full rounded-xl bg-foreground px-4 py-2.5 text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-50"
                 >
                   {startingId === s.id
                     ? "준비 중…"
@@ -140,17 +140,17 @@ export function AssessmentCatalog({
       </div>
 
       {attempts.length > 0 ? (
-        <section className="card-luxe p-6">
-          <h2 className="text-lg font-semibold text-foreground">내 응시 기록</h2>
+        <section className="card-luxe p-4 sm:p-6">
+          <h2 className="text-base font-semibold text-foreground sm:text-lg">내 응시 기록</h2>
           <ul className="mt-4 divide-y divide-card-border">
             {attempts.map((a) => {
               const scenario = scenarios.find((s) => s.id === a.scenarioId);
               return (
                 <li
                   key={a.id}
-                  className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
+                  className="flex flex-col gap-2 py-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3"
                 >
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-medium text-foreground">
                       {scenario?.titleKo ?? "삭제된 과제"}
                     </p>
@@ -166,14 +166,14 @@ export function AssessmentCatalog({
                   {a.status === "SCORED" || a.status === "SUBMITTED" ? (
                     <Link
                       href={`/assessment/attempt/${a.id}/report`}
-                      className="text-sm text-accent hover:underline"
+                      className="min-h-10 inline-flex items-center text-sm text-accent hover:underline"
                     >
                       리포트 보기 →
                     </Link>
                   ) : (
                     <Link
                       href={`/assessment/attempt/${a.id}`}
-                      className="text-sm text-accent hover:underline"
+                      className="min-h-10 inline-flex items-center text-sm text-accent hover:underline"
                     >
                       이어서 진행 →
                     </Link>

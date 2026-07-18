@@ -36,7 +36,7 @@ export default async function AssessmentAttemptPage({ params }: Props) {
   const scenario = toCandidateScenarioPayload(attempt.scenario);
 
   return (
-    <div className="mx-auto max-w-4xl pb-16">
+    <div className="mx-auto max-w-4xl pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-16">
       {scenario.kind === "ROLE_PLAY" ? (
         <RolePlayRunner
           attemptId={attempt.id}

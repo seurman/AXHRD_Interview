@@ -12,18 +12,20 @@ export function EvidenceReportView({
   heading?: string;
 }) {
   return (
-    <section className="card-luxe space-y-6 p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+    <section className="card-luxe space-y-5 p-4 sm:space-y-6 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold">
             {report.reportKindLabel}
           </p>
-          <h2 className="mt-2 text-lg font-semibold text-foreground">{heading}</h2>
+          <h2 className="mt-2 text-base font-semibold leading-snug text-foreground sm:text-lg">
+            {heading}
+          </h2>
           {report.roleContext ? (
             <p className="mt-1 text-sm text-muted">{report.roleContext}</p>
           ) : null}
         </div>
-        <div className="rounded-xl border border-gold/30 bg-gold-light/10 px-4 py-3 text-center">
+        <div className="w-full rounded-xl border border-gold/30 bg-gold-light/10 px-4 py-3 text-center sm:w-auto">
           <p className="text-2xl font-bold text-foreground">
             {report.overallScore.toFixed(2)}
             <span className="text-sm font-normal text-muted"> / 5</span>
@@ -42,11 +44,11 @@ export function EvidenceReportView({
         {report.competencies.map((competency) => (
           <article
             key={competency.code}
-            className="rounded-2xl border border-card-border bg-background/60 p-5"
+            className="rounded-2xl border border-card-border bg-background/60 p-4 sm:p-5"
           >
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <h3 className="font-semibold text-foreground">{competency.nameKo}</h3>
-              <span className="rounded-full bg-card px-3 py-1 text-xs font-medium text-accent">
+              <span className="w-fit rounded-full bg-card px-3 py-1 text-xs font-medium text-accent">
                 {competency.score.toFixed(2)} · {competency.levelLabel}
               </span>
             </div>

@@ -36,14 +36,14 @@ export default async function AssessmentReportPage({ params }: Props) {
   const kindLabel = attempt.scenario.kind === "IN_BASKET" ? "서류함" : "역할연기";
 
   return (
-    <div className="report-print-wrap print-root mx-auto max-w-3xl space-y-6 pb-16">
-      <div className="print-hide flex flex-wrap items-start justify-between gap-4">
-        <div>
+    <div className="report-print-wrap print-root mx-auto max-w-3xl space-y-5 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] sm:space-y-6 sm:pb-16">
+      <div className="print-hide flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0">
           <Link href="/assessment" className="text-sm text-accent hover:underline">
             ← 역량평가 홈
           </Link>
           <p className="mt-3 text-sm font-medium text-accent">{kindLabel} 과제 리포트</p>
-          <h1 className="mt-1 text-2xl font-bold text-foreground">
+          <h1 className="mt-1 text-xl font-bold leading-snug text-foreground sm:text-2xl">
             {attempt.scenario.titleKo}
           </h1>
         </div>

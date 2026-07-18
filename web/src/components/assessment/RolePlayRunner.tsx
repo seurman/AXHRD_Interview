@@ -193,11 +193,13 @@ export function RolePlayRunner({
   const lastPersona = [...dialogue].reverse().find((t) => t.role === "PERSONA");
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+    <div className="space-y-3 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:space-y-4 sm:pb-0">
+      <div className="flex flex-wrap items-start justify-between gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-accent">역할연기 과제</p>
-          <h1 className="mt-1 text-xl font-bold text-foreground">{scenario.titleKo}</h1>
+          <h1 className="mt-1 text-lg font-bold leading-snug text-foreground sm:text-xl">
+            {scenario.titleKo}
+          </h1>
           {scenario.roleContext ? (
             <p className="mt-1 text-sm text-muted">{scenario.roleContext}</p>
           ) : null}
@@ -206,21 +208,21 @@ export function RolePlayRunner({
           <button
             type="button"
             onClick={toggleVoiceMode}
-            className="rounded-full border border-card-border bg-card px-3 py-1 text-xs font-medium text-muted transition hover:text-foreground"
+            className="min-h-9 rounded-full border border-card-border bg-card px-3 py-1.5 text-xs font-medium text-muted transition hover:text-foreground"
           >
             {voiceModeEnabled ? "음성 ON" : "텍스트 모드"}
           </button>
-          <span className="rounded-full bg-card px-3 py-1 text-xs font-medium text-muted">
+          <span className="min-h-9 inline-flex items-center rounded-full bg-card px-3 py-1.5 text-xs font-medium text-muted">
             발화 {turnsUsed} / {scenario.maxTurns}턴
           </span>
         </div>
       </div>
 
-      <section className="card-luxe p-4">
+      <section className="card-luxe p-3 sm:p-4">
         <button
           type="button"
           onClick={() => setBriefOpen((v) => !v)}
-          className="flex w-full items-center justify-between text-left text-sm font-medium text-foreground"
+          className="flex min-h-10 w-full items-center justify-between text-left text-sm font-medium text-foreground"
         >
           과제 브리핑
           <span className="text-xs text-muted">{briefOpen ? "접기 ▲" : "펼치기 ▼"}</span>
@@ -232,8 +234,8 @@ export function RolePlayRunner({
         ) : null}
       </section>
 
-      <section className="card-luxe flex h-[28rem] flex-col p-4">
-        <div className="flex-1 space-y-3 overflow-y-auto pr-1">
+      <section className="card-luxe flex h-[min(32rem,calc(100dvh-16rem))] flex-col p-3 sm:h-[28rem] sm:p-4">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
           {dialogue.map((turn, i) => (
             <div
               key={`${turn.at}-${i}`}
@@ -242,17 +244,22 @@ export function RolePlayRunner({
               <div
                 className={
                   turn.role === "CANDIDATE"
-                    ? "max-w-[80%] rounded-2xl rounded-br-sm bg-foreground px-4 py-2.5 text-sm leading-relaxed text-background"
-                    : "max-w-[80%] rounded-2xl rounded-bl-sm bg-card px-4 py-2.5 text-sm leading-relaxed text-foreground"
+                    ? "max-w-[92%] rounded-2xl rounded-br-sm bg-foreground px-3 py-2.5 text-sm leading-relaxed text-background sm:max-w-[80%] sm:px-4"
+                    : "max-w-[92%] rounded-2xl rounded-bl-sm bg-card px-3 py-2.5 text-sm leading-relaxed text-foreground sm:max-w-[80%] sm:px-4"
                 }
               >
                 {turn.role === "PERSONA" ? (
                   <p className="mb-1 text-xs font-medium text-accent">
                     {personaName}
-                    {scenario.personaRole ? ` · ${scenario.personaRole}` : ""}
+                    {scenario.personaRole ? (
+                      <span className="font-normal text-muted">
+                        {" "}
+                        · <span className="sm:inline">{scenario.personaRole}</span>
+                      </span>
+                    ) : null}
                   </p>
                 ) : null}
-                <p className="whitespace-pre-line">{turn.text}</p>
+                <p className="whitespace-pre-line break-words">{turn.text}</p>
               </div>
             </div>
           ))}
@@ -266,7 +273,7 @@ export function RolePlayRunner({
           <div ref={bottomRef} />
         </div>
 
-        <div className="mt-3 border-t border-card-border pt-3">
+        <div className="mt-3 shrink-0 border-t border-card-border pt-3">
           {error ? <p className="mb-2 text-xs text-warning">{error}</p> : null}
           {ttsStatus !== "idle" && voiceModeEnabled ? (
             <p className="mb-2 text-center text-xs text-muted">
@@ -283,7 +290,7 @@ export function RolePlayRunner({
                   onClick={() =>
                     void playPersonaTts(lastPersona.text, `replay-${dialogue.length}`)
                   }
-                  className="w-full text-center text-xs text-primary hover:underline"
+                  className="min-h-9 w-full text-center text-xs text-primary hover:underline"
                   disabled={sending || submitting}
                 >
                   상대역 다시 듣기
@@ -307,15 +314,17 @@ export function RolePlayRunner({
         </div>
       </section>
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={() => void submit()}
-          disabled={submitting || sending || turnsUsed < 1}
-          className="rounded-xl border border-card-border bg-card px-5 py-2.5 text-sm font-medium text-foreground transition hover:opacity-90 disabled:opacity-50"
-        >
-          {submitting ? "채점 중… (최대 1분)" : "대화 종료 · 제출하기"}
-        </button>
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-card-border bg-background/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+        <div className="mx-auto flex max-w-4xl justify-stretch sm:justify-end">
+          <button
+            type="button"
+            onClick={() => void submit()}
+            disabled={submitting || sending || turnsUsed < 1}
+            className="min-h-11 w-full rounded-xl border border-card-border bg-card px-5 py-2.5 text-sm font-medium text-foreground transition hover:opacity-90 disabled:opacity-50 sm:w-auto"
+          >
+            {submitting ? "채점 중… (최대 1분)" : "대화 종료 · 제출하기"}
+          </button>
+        </div>
       </div>
     </div>
   );
