@@ -107,7 +107,7 @@ export default async function AdminSessionsPage({
             name="q"
             defaultValue={query}
             placeholder="세션 ID, 이름, 이메일, 역량 코드"
-            className="input-luxe min-w-[14rem] flex-1"
+            className="input-luxe w-full min-w-0 flex-1 sm:min-w-[14rem]"
           />
           <select name="status" defaultValue={statusFilter ?? ""} className="input-luxe">
             <option value="">전체 상태</option>
@@ -133,54 +133,49 @@ export default async function AdminSessionsPage({
         {sessions.length === 0 ? (
           <p className="text-sm text-muted">조건에 맞는 세션이 없습니다.</p>
         ) : (
-          <ul className="-mx-6 -mb-6 border-t border-card-border">
+          <ul className="-mx-4 -mb-4 border-t border-card-border sm:-mx-5 sm:-mb-5 lg:-mx-6 lg:-mb-6">
             {sessions.map((s) => {
               const signals: string[] = [];
               if (s.pasteDetected) signals.push("붙여넣기");
               if (s.tabSwitchCount > 0) signals.push(`탭 ${s.tabSwitchCount}회`);
+              const orgLabel = s.kitOrganizationId
+                ? kitOrgName.get(s.kitOrganizationId) ?? s.kitOrganizationId.slice(0, 8)
+                : s.user.organization?.name ?? "—";
 
               return (
                 <li key={s.id} className="border-b border-card-border last:border-0">
                   <Link
                     href={`/admin/sessions/${s.id}`}
-                    className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-6 py-3 text-sm transition hover:bg-background/60"
+                    className="flex flex-col gap-1.5 px-4 py-3.5 text-sm transition hover:bg-background/60 active:bg-background/80 sm:px-5 lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-4 lg:px-6"
                   >
-                    <StatusDot tone={STATUS_TONE[s.status] ?? "neutral"} className="w-20 shrink-0">
-                      {STATUS_LABEL[s.status] ?? s.status}
-                    </StatusDot>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <StatusDot
+                        tone={STATUS_TONE[s.status] ?? "neutral"}
+                        className="w-16 shrink-0 sm:w-20"
+                      >
+                        {STATUS_LABEL[s.status] ?? s.status}
+                      </StatusDot>
+                      <span className="min-w-0 flex-1 truncate">
+                        <span className="font-medium text-foreground">
+                          {s.user.name ?? "—"}
+                        </span>
+                        <span className="text-muted"> · {s.user.email}</span>
+                      </span>
+                      {s.isPresenterDemo && <Badge tone="gold">presenter</Badge>}
+                    </div>
 
-                    <span className="min-w-[12rem] flex-1 truncate">
-                      <span className="font-medium text-foreground">{s.user.name ?? "—"}</span>
-                      <span className="text-muted"> · {s.user.email}</span>
-                    </span>
-
-                    {s.isPresenterDemo && <Badge tone="gold">presenter</Badge>}
-
-                    <span className="shrink-0 text-xs text-muted">
-                      {s.focusCompetency ? competencyLabel(s.focusCompetency) : "—"}
-                    </span>
-
-                    <span className="shrink-0 font-mono text-xs text-accent">
-                      {s.id.slice(0, 8)}…
-                    </span>
-
-                    <span className="shrink-0 text-xs text-muted">
-                      응답 {s._count.responses} · 칩 {s._count.chipEvents}
-                    </span>
-
-                    {signals.length > 0 && (
-                      <span className="shrink-0 text-xs text-warning">{signals.join(" · ")}</span>
-                    )}
-
-                    <span className="shrink-0 text-xs text-muted">
-                      {s.kitOrganizationId
-                        ? kitOrgName.get(s.kitOrganizationId) ?? s.kitOrganizationId.slice(0, 8)
-                        : s.user.organization?.name ?? "—"}
-                    </span>
-
-                    <span className="ml-auto shrink-0 text-xs text-muted">
-                      {formatRelativeTime(s.startedAt ?? s.createdAt)}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pl-[4.5rem] text-xs text-muted sm:pl-[5.5rem] lg:pl-0 lg:ml-auto">
+                      <span>{s.focusCompetency ? competencyLabel(s.focusCompetency) : "—"}</span>
+                      <span className="font-mono text-accent">{s.id.slice(0, 8)}…</span>
+                      <span>
+                        응답 {s._count.responses} · 칩 {s._count.chipEvents}
+                      </span>
+                      {signals.length > 0 && (
+                        <span className="text-warning">{signals.join(" · ")}</span>
+                      )}
+                      <span className="truncate">{orgLabel}</span>
+                      <span>{formatRelativeTime(s.startedAt ?? s.createdAt)}</span>
+                    </div>
                   </Link>
                 </li>
               );

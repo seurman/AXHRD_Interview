@@ -1529,7 +1529,13 @@ html.dark .platform-metric-tile {
   margin: 0 auto;
   width: 100%;
   max-width: 1200px;
-  padding: 1.5rem 1.25rem 3rem;
+  padding: 1rem 1rem calc(2.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 640px) {
+  .platform-content-inner {
+    padding: 1.5rem 1.25rem 3rem;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -1559,6 +1565,11 @@ html.dark .platform-metric-tile {
   color: var(--platform-text-muted);
 }
 
+.platform-icon-btn--touch {
+  height: 2.75rem;
+  width: 2.75rem;
+}
+
 .platform-icon-btn:hover {
   background: color-mix(in srgb, var(--platform-text) 6%, transparent);
   color: var(--platform-text);
@@ -1575,16 +1586,44 @@ html.dark .platform-metric-tile {
 
 .platform-panel-header {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
   border-bottom: 1px solid var(--platform-border);
-  padding: 1rem 1.25rem;
+  padding: 0.875rem 1rem;
   background: color-mix(in srgb, var(--platform-canvas-highlight) 40%, var(--platform-surface));
 }
 
+@media (min-width: 640px) {
+  .platform-panel-header {
+    align-items: center;
+    padding: 1rem 1.25rem;
+  }
+}
+
 .platform-panel-body {
-  padding: 1.25rem;
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .platform-panel-body {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 1023px) {
+  .platform-nav-item,
+  .platform-sidebar-footer-btn {
+    min-height: 2.75rem;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .platform-search {
+    min-height: 2.75rem;
+    font-size: 1rem;
+  }
 }
 
 .platform-btn-primary {

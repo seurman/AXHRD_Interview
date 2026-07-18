@@ -109,7 +109,7 @@ export function AdminOrgCustomCompetenciesPanel() {
       )}
 
       {promoteTarget && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
+        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-3 sm:items-center sm:p-4">
           <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-card-border bg-card p-5 shadow-luxe">
             <h3 className="font-semibold">승격: {promoteTarget.nameKo}</h3>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">

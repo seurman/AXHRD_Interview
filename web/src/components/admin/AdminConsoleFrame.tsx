@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { PlatformConsoleSidebar, type ConsoleNavSection } from "@/components/admin/PlatformConsoleSidebar";
 import { useRouteTransition } from "@/components/layout/RouteTransitionProvider";
 import { useI18n } from "@/lib/i18n/I18nProvider";
@@ -27,14 +27,23 @@ export function AdminConsoleFrame({ sections, userName, children }: Props) {
     };
   }, [mobileOpen]);
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mobileOpen]);
+
   return (
     <div className="platform-app flex min-h-screen w-full">
-      {/* 모바일 헤더 — Vercel은 사이드바만, 상단 탭 없음 */}
-      <div className="fixed inset-x-0 top-0 z-50 flex h-12 items-center gap-3 border-b border-[var(--platform-border)] bg-[var(--platform-surface)] px-4 shadow-sm lg:hidden">
+      {/* 모바일 헤더 */}
+      <div className="fixed inset-x-0 top-0 z-50 flex h-14 items-center gap-3 border-b border-[var(--platform-border)] bg-[var(--platform-surface)] px-3 pt-[env(safe-area-inset-top,0px)] shadow-sm lg:hidden">
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
-          className="platform-icon-btn"
+          className="platform-icon-btn platform-icon-btn--touch"
           aria-label={dict.common.menu}
         >
           <Menu className="h-5 w-5" />
@@ -45,14 +54,14 @@ export function AdminConsoleFrame({ sections, userName, children }: Props) {
       {mobileOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-[60] bg-black/30 lg:hidden"
+          className="fixed inset-0 z-[60] bg-black/35 lg:hidden"
           aria-label="Close menu"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       <div
-        className={`fixed inset-y-0 left-0 z-[70] transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-[70] w-[min(100vw-3rem,20rem)] transition-transform duration-200 lg:static lg:z-auto lg:w-auto lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -64,16 +73,16 @@ export function AdminConsoleFrame({ sections, userName, children }: Props) {
             <button
               type="button"
               onClick={() => setMobileOpen(false)}
-              className="platform-icon-btn lg:hidden"
+              className="platform-icon-btn platform-icon-btn--touch lg:hidden"
               aria-label="Close menu"
             >
-              ✕
+              <X className="h-5 w-5" />
             </button>
           }
         />
       </div>
 
-      <main className="platform-content relative min-w-0 flex-1 pt-12 lg:pt-0">
+      <main className="platform-content relative min-w-0 flex-1 pt-[calc(3.5rem+env(safe-area-inset-top,0px))] lg:pt-0">
         {pendingHref ? (
           <div className="platform-route-progress" aria-hidden />
         ) : null}

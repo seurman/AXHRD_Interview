@@ -50,6 +50,8 @@ export function FrameworkStudio({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [newComp, setNewComp] = useState({ code: "", nameKo: "", description: "" });
+  /** 모바일: 트리 ↔ 편집 전환 (데스크톱은 항상 양쪽) */
+  const [mobileShowWorkspace, setMobileShowWorkspace] = useState(Boolean(initialCompetencyCode));
 
   const selected = useMemo(
     () => competencies.find((c) => c.id === selectedId) ?? null,
@@ -148,19 +150,29 @@ export function FrameworkStudio({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/8 via-card to-gold/5 p-5">
+      <div
+        className={`rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/8 via-card to-gold/5 p-4 sm:p-5 ${
+          mobileShowWorkspace ? "hidden lg:block" : ""
+        }`}
+      >
         <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-accent">Framework Studio</p>
-        <h2 className="mt-1 text-lg font-bold text-foreground">통합 역량 · IRT 문항 메타데이터</h2>
+        <h2 className="mt-1 text-base font-bold text-foreground sm:text-lg">
+          통합 역량 · IRT 문항 메타데이터
+        </h2>
         <p className="mt-1 max-w-3xl text-sm text-muted">
           역량군 → 역량 → 문항 · 루브릭 · 품질을 한 워크스페이스에서 관리합니다. 기존 역량 뱅크(Repository) 기능은
           품질 탭에 통합되었습니다.
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div
+        className={`flex flex-col gap-2 sm:flex-row sm:flex-wrap ${
+          mobileShowWorkspace ? "hidden lg:flex" : ""
+        }`}
+      >
         <button
           type="button"
-          className="btn-secondary inline-flex items-center gap-1.5 text-sm"
+          className="btn-secondary inline-flex min-h-11 items-center justify-center gap-1.5 text-sm"
           onClick={() => setShowCatalog((v) => !v)}
         >
           <Upload className="h-4 w-4" />
@@ -168,7 +180,7 @@ export function FrameworkStudio({
         </button>
         <button
           type="button"
-          className="btn-primary inline-flex items-center gap-1.5 text-sm"
+          className="btn-primary inline-flex min-h-11 items-center justify-center gap-1.5 text-sm"
           onClick={() => setShowNewComp((v) => !v)}
         >
           <Plus className="h-4 w-4" />
@@ -228,7 +240,7 @@ export function FrameworkStudio({
                         key={`${c.source}-${c.code}`}
                         type="button"
                         disabled={inBank || busy}
-                        className="rounded border border-card-border px-2 py-0.5 text-[11px] disabled:opacity-40"
+                        className="min-h-10 rounded border border-card-border px-2.5 py-1.5 text-xs disabled:opacity-40"
                         onClick={() => void importFromCatalog(c.source, c.code)}
                       >
                         {competencyOptionLabel(c)}
@@ -243,34 +255,48 @@ export function FrameworkStudio({
         </div>
       )}
 
-      <div className="grid min-h-[680px] gap-5 lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)] xl:grid-cols-[minmax(280px,320px)_minmax(0,1fr)]">
-        <FrameworkStudioTree
-          clusters={clusters}
-          competencies={competencies}
-          selectedId={selected?.id ?? null}
-          onSelect={setSelectedId}
-          lifecycleFilter={lifecycleFilter}
-          onLifecycleFilterChange={setLifecycleFilter}
-          onCreateCompetency={() => setShowNewComp(true)}
-        />
-        <div className="min-w-0">
+      <div className="grid gap-5 lg:min-h-[680px] lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)] xl:grid-cols-[minmax(280px,320px)_minmax(0,1fr)]">
+        <div className={mobileShowWorkspace ? "hidden lg:block" : ""}>
+          <FrameworkStudioTree
+            clusters={clusters}
+            competencies={competencies}
+            selectedId={selected?.id ?? null}
+            onSelect={(id) => {
+              setSelectedId(id);
+              setMobileShowWorkspace(true);
+            }}
+            lifecycleFilter={lifecycleFilter}
+            onLifecycleFilterChange={setLifecycleFilter}
+            onCreateCompetency={() => setShowNewComp(true)}
+          />
+        </div>
+        <div className={`min-w-0 ${mobileShowWorkspace ? "" : "hidden lg:block"}`}>
           {selected ? (
-            <FrameworkCompetencyWorkspace
-              competency={selected}
-              clusters={clusters}
-              competencies={competencies}
-              questions={questions}
-              tab={workspaceTab}
-              onTabChange={setWorkspaceTab}
-              onCompetencyUpdated={(id, patch) => {
-                setCompetencies((prev) =>
-                  prev.map((c) => (c.id === id ? { ...c, ...patch } : c)),
-                );
-              }}
-              onDataRefresh={refresh}
-            />
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => setMobileShowWorkspace(false)}
+                className="min-h-10 text-sm font-medium text-accent hover:underline lg:hidden"
+              >
+                ← 역량 목록
+              </button>
+              <FrameworkCompetencyWorkspace
+                competency={selected}
+                clusters={clusters}
+                competencies={competencies}
+                questions={questions}
+                tab={workspaceTab}
+                onTabChange={setWorkspaceTab}
+                onCompetencyUpdated={(id, patch) => {
+                  setCompetencies((prev) =>
+                    prev.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+                  );
+                }}
+                onDataRefresh={refresh}
+              />
+            </div>
           ) : (
-            <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-dashed border-card-border bg-muted/10 px-6 text-center">
+            <div className="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-card-border bg-muted/10 px-6 text-center lg:min-h-[420px]">
               <p className="text-base font-medium text-foreground">역량을 선택하세요</p>
               <p className="mt-2 max-w-sm text-sm text-muted">
                 좌측 트리에서 역량군을 펼치고 역량을 고르면 개요·문항·루브릭·품질을 편집할 수 있습니다.

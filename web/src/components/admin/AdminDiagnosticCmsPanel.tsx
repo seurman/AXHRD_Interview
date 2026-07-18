@@ -259,31 +259,33 @@ export function AdminDiagnosticCmsPanel({
             </p>
           </div>
         ) : (
-          <ul className="-mx-6 -mb-6 border-t border-card-border">
+          <ul className="-mx-4 -mb-4 border-t border-card-border sm:-mx-5 sm:-mb-5 lg:-mx-6 lg:-mb-6">
             {waves.map((w) => (
               <li key={w.id} className="border-b border-card-border last:border-0">
                 <Link
                   href={`/admin/diagnostic/waves/${w.id}`}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-6 py-3 text-sm transition hover:bg-background/60"
+                  className="flex flex-col gap-1.5 px-4 py-3.5 text-sm transition hover:bg-background/60 sm:px-5 lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-4 lg:px-6"
                 >
-                  <StatusDot tone={WAVE_STATUS_TONE[w.statusLabel] ?? "neutral"} className="w-16 shrink-0">
-                    {w.statusLabel}
-                  </StatusDot>
-
-                  <span className="min-w-[10rem] flex-1 truncate">
-                    <span className="font-medium text-foreground">{w.organizationName}</span>
-                    <span className="text-muted"> · {w.label ?? `Wave ${w.waveNumber}`}</span>
-                  </span>
-
-                  <span className="shrink-0 text-xs text-muted">{w.sectionBadge}</span>
-
-                  <span className="shrink-0 text-xs text-muted">
-                    {formatDate(w.opensAt)} → {w.closesAt ? formatDate(w.closesAt) : "수동 마감"}
-                  </span>
-
-                  <span className="shrink-0 text-xs text-muted">응답 {w.responseCount}</span>
-
-                  <span className="ml-auto shrink-0 text-xs text-accent">상세 →</span>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <StatusDot
+                      tone={WAVE_STATUS_TONE[w.statusLabel] ?? "neutral"}
+                      className="w-16 shrink-0"
+                    >
+                      {w.statusLabel}
+                    </StatusDot>
+                    <span className="min-w-0 flex-1 truncate">
+                      <span className="font-medium text-foreground">{w.organizationName}</span>
+                      <span className="text-muted"> · {w.label ?? `Wave ${w.waveNumber}`}</span>
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pl-[4.5rem] text-xs text-muted lg:ml-auto lg:pl-0">
+                    <span>{w.sectionBadge}</span>
+                    <span>
+                      {formatDate(w.opensAt)} → {w.closesAt ? formatDate(w.closesAt) : "수동 마감"}
+                    </span>
+                    <span>응답 {w.responseCount}</span>
+                    <span className="text-accent">상세 →</span>
+                  </div>
                 </Link>
               </li>
             ))}

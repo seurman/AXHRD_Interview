@@ -152,8 +152,8 @@ export function PlatformConsoleSidebar({
   const noResults = q.length > 0 && visibleSections.length === 0 && !showHome;
 
   return (
-    <aside className="platform-sidebar flex h-full min-h-screen w-[240px] shrink-0 flex-col">
-      <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
+    <aside className="platform-sidebar flex h-full min-h-screen w-full shrink-0 flex-col lg:w-[240px]">
+      <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-[max(1rem,env(safe-area-inset-top,0px))]">
         <div className="min-w-0">
           <p className="truncate text-sm font-bold text-[var(--platform-text)]">AX Configure</p>
           <p className="truncate text-xs font-medium text-[var(--platform-text-muted)]">Platform Console</p>
@@ -220,7 +220,7 @@ export function PlatformConsoleSidebar({
         ))}
       </nav>
 
-      <div className="shrink-0 space-y-0.5 border-t border-[var(--platform-border)] px-2 py-3">
+      <div className="shrink-0 space-y-0.5 border-t border-[var(--platform-border)] px-2 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]">
         {userName && (
           <p className="truncate px-2.5 pb-2 text-xs font-bold text-[var(--platform-text)]">
             {locale === "ko" ? `${userName}${c.userSuffix}` : userName}
