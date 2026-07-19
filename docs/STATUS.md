@@ -2,6 +2,18 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 종합 리포트 레이더·교차 차트 설명 보강 (2026-07-19)
+
+실사용자가 종합 탭 차트만 보고 의미를 알기 어렵던 리터러시 장벽을 완화.
+새 산식 없음 — `AXIS_DEFINITIONS` · `oaiPattern` · 기준선 3.5 재사용.
+
+| 파일 | 변경 |
+|------|------|
+| `lib/diagnostic/report-guide.ts` | `ORI_OVI_QUADRANTS`, `buildOriOviQuadrantGuide`, `RADAR_AXIS_CAPTION` |
+| `ReportGuideUi.tsx` | `AxisDefinitionsHint`(ⓘ 팝오버), `OriOviQuadrantLegend` |
+| `ArcRadar.tsx` | `caption` ReactNode 지원 |
+| `AdminDiagnosticReport.tsx` | 종합 탭 레이더 캡션·패턴 + ORI×OVI 사분면 범례·옅은 라벨 |
+
 ## 최근 작업 — ARC 문항뱅크 배포 시 자동 동기화 (2026-07-19)
 
 프로덕션 Instrument Studio에 DM이 5개만 보이던 원인: 시드(DM06~12)는

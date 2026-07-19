@@ -39,8 +39,18 @@ import {
   highRiskSegmentPercent,
   quadrantLabel,
 } from "@/lib/diagnostic/report-narratives";
-import { buildAxisMeaningLine, type AxisCode } from "@/lib/diagnostic/report-guide";
-import { ReportGuideCard, ExecutiveSummaryCard } from "@/components/admin/diagnostic/ReportGuideUi";
+import {
+  buildAxisMeaningLine,
+  buildOriOviQuadrantGuide,
+  RADAR_AXIS_CAPTION,
+  type AxisCode,
+} from "@/lib/diagnostic/report-guide";
+import {
+  AxisDefinitionsHint,
+  ExecutiveSummaryCard,
+  OriOviQuadrantLegend,
+  ReportGuideCard,
+} from "@/components/admin/diagnostic/ReportGuideUi";
 import type { OpenTextThemeReport } from "@/lib/diagnostic/theme-mining";
 import {
   Bar,
@@ -48,6 +58,7 @@ import {
   CartesianGrid,
   Cell,
   Legend,
+  ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
   Scatter,
@@ -58,7 +69,7 @@ import {
   ZAxis,
 } from "recharts";
 import { ArcRadar } from "@/components/admin/diagnostic/ArcRadar";
-import { formatScore, scoreAxisTick } from "@/lib/diagnostic/format-score";
+import { ARC_SCALE_MAX, formatScore, scoreAxisTick } from "@/lib/diagnostic/format-score";
 import {
   computeCollectionRatePercent,
   formatCollectionRateMeta,
@@ -592,8 +603,24 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
 
               {radarData.length >= 2 && (
                 <div className="card-luxe p-4">
-                  <h3 className="mb-3 text-sm font-semibold">4축 레이더</h3>
-                  <ArcRadar data={radarData} />
+                  <div className="mb-3 flex items-center gap-2">
+                    <h3 className="text-sm font-semibold">4축 레이더</h3>
+                    <AxisDefinitionsHint />
+                  </div>
+                  <ArcRadar
+                    data={radarData}
+                    caption={
+                      <>
+                        <p>{RADAR_AXIS_CAPTION}</p>
+                        {aggregate?.scores?.oaiPattern ? (
+                          <p className="font-medium text-foreground/80">
+                            {aggregate.scores.oaiPattern.pattern} — {aggregate.scores.oaiPattern.message}
+                          </p>
+                        ) : null}
+                        <p className="opacity-80">만점 {ARC_SCALE_MAX.toFixed(1)} · 척도 고정 · 기준선 3.5</p>
+                      </>
+                    }
+                  />
                 </div>
               )}
 
@@ -602,7 +629,9 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
               {velocityScatter.length >= 5 && isEnabled("ORI") && isEnabled("OVI") && (
                 <div className="card-luxe p-4">
                   <h3 className="mb-1 text-sm font-semibold">4축 교차 — ORI × OVI 포지셔닝</h3>
-                  <p className="mb-3 text-xs text-muted">응답자 단위 (N={velocityScatter.length})</p>
+                  <p className="mb-3 text-xs text-muted">
+                    응답자 단위 (N={velocityScatter.length}) · X=준비도(ORI) · Y=실행속도(OVI) · 기준선 3.5
+                  </p>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <ScatterChart margin={{ top: 12, right: 12, bottom: 12, left: 12 }}>
@@ -610,6 +639,42 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                         <XAxis type="number" dataKey="ORI" domain={[1, 5]} tick={{ fontSize: 10 }} tickFormatter={scoreAxisTick} />
                         <YAxis type="number" dataKey="OVI" domain={[1, 5]} tick={{ fontSize: 10 }} tickFormatter={scoreAxisTick} />
                         <ZAxis range={[20, 20]} />
+                        <ReferenceArea
+                          x1={3.5}
+                          x2={5}
+                          y1={3.5}
+                          y2={5}
+                          fill="#10b981"
+                          fillOpacity={0.04}
+                          label={{ value: "건강하게 빠름", position: "insideTopRight", fontSize: 10, fill: "#94a3b8" }}
+                        />
+                        <ReferenceArea
+                          x1={1}
+                          x2={3.5}
+                          y1={3.5}
+                          y2={5}
+                          fill="#f59e0b"
+                          fillOpacity={0.04}
+                          label={{ value: "빠른 오류 위험", position: "insideTopLeft", fontSize: 10, fill: "#94a3b8" }}
+                        />
+                        <ReferenceArea
+                          x1={3.5}
+                          x2={5}
+                          y1={1}
+                          y2={3.5}
+                          fill="#64748b"
+                          fillOpacity={0.04}
+                          label={{ value: "준비됐지만 정체", position: "insideBottomRight", fontSize: 10, fill: "#94a3b8" }}
+                        />
+                        <ReferenceArea
+                          x1={1}
+                          x2={3.5}
+                          y1={1}
+                          y2={3.5}
+                          fill="#ef4444"
+                          fillOpacity={0.03}
+                          label={{ value: "정체", position: "insideBottomLeft", fontSize: 10, fill: "#94a3b8" }}
+                        />
                         <ReferenceLine x={3.5} stroke="#e2e8f0" />
                         <ReferenceLine y={3.5} stroke="#e2e8f0" />
                         <Tooltip cursor={{ strokeDasharray: "3 3" }} />
@@ -617,6 +682,14 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
                       </ScatterChart>
                     </ResponsiveContainer>
                   </div>
+                  <OriOviQuadrantLegend
+                    activeKey={
+                      buildOriOviQuadrantGuide(
+                        aggregate?.scores?.ori.ORI ?? null,
+                        aggregate?.scores?.ovi.OVI ?? null,
+                      )?.key ?? null
+                    }
+                  />
                 </div>
               )}
 

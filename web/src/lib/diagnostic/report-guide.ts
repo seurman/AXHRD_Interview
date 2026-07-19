@@ -115,3 +115,44 @@ export function oaiBandMessage(oai: number | null, band: string | null): string 
   if (b === "방향 이탈") return `${lead} 빠르게 움직여도 방향이 어긋날 수 있습니다. 전략 재정렬이 우선입니다.`;
   return `${lead} 전략·에너지·결과가 따로 놉니다. 경영진이 우선순위를 다시 제시할 필요가 큽니다.`;
 }
+
+/** ORI×OVI 교차 산점도 — 기준선 3.5 사분면 가이드(응답자·팀 공통) */
+export const ORI_OVI_QUADRANTS = [
+  {
+    key: "readyFast",
+    label: "건강하게 빠름",
+    cond: (ori: number, ovi: number) => ori >= BENCH && ovi >= BENCH,
+    text: "준비도와 실행속도가 함께 높습니다 — 건강하게 빠른 상태입니다.",
+  },
+  {
+    key: "fastError",
+    label: "빠른 오류 위험",
+    cond: (ori: number, ovi: number) => ori < BENCH && ovi >= BENCH,
+    text: "준비가 부족한데 속도만 빠릅니다 — 방향을 잃기 쉬운 위험군입니다.",
+  },
+  {
+    key: "readyStuck",
+    label: "준비됐지만 정체",
+    cond: (ori: number, ovi: number) => ori >= BENCH && ovi < BENCH,
+    text: "준비는 됐는데 실행이 느립니다 — 구조는 있는데 안 움직이는 병목입니다.",
+  },
+  {
+    key: "stalled",
+    label: "정체",
+    cond: (ori: number, ovi: number) => ori < BENCH && ovi < BENCH,
+    text: "준비도 안 됐고 속도도 느립니다 — 정체 상태입니다.",
+  },
+] as const;
+
+export function buildOriOviQuadrantGuide(
+  ori: number | null | undefined,
+  ovi: number | null | undefined,
+): (typeof ORI_OVI_QUADRANTS)[number] | null {
+  if (ori == null || ovi == null || !Number.isFinite(ori) || !Number.isFinite(ovi)) return null;
+  return ORI_OVI_QUADRANTS.find((q) => q.cond(ori, ovi)) ?? null;
+}
+
+/** 레이더 캡션 1행 — 축 약칭 */
+export const RADAR_AXIS_CAPTION =
+  "OHI 조직건강 · ORI 변화준비도 · OVI 변화속도 · OAI 방향정렬";
+
