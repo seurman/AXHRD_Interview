@@ -75,6 +75,9 @@ function RiskBreakdownTable({
     <div className="card-luxe overflow-x-auto p-4">
       <h3 className="text-sm font-semibold text-foreground">Risk Index 구성 신호</h3>
       <p className="mt-0.5 text-xs text-muted">
+        참고용 스크리닝 지표 · 검증된 가중치 아님
+      </p>
+      <p className="mt-1 text-xs text-muted">
         복합 위험 지수 {riskIndex != null ? `${Math.round(riskIndex * 100)}%` : "—"} — 이탈·번아웃 조기 경보
       </p>
       <table className="mt-3 w-full min-w-[400px] text-xs">
@@ -196,7 +199,7 @@ export function OhiReportSection({
         <MetricTile
           label="Risk Index"
           value={ohi.riskIndex != null ? ohi.riskIndex * 100 : null}
-          hint="번아웃·이탈 복합 (%)"
+          hint="참고용 스크리닝 지표 · 검증된 가중치 아님"
         />
       </div>
 
@@ -229,6 +232,7 @@ export function OhiReportSection({
         subtitle="현재 · 중요도 · IPA β · 집중개선 판정"
         rows={driverRows}
         columns="driver"
+        sampleSize={driverImportance?.n}
       />
 
       {gapChartData.length > 0 && (
@@ -255,12 +259,14 @@ export function OhiReportSection({
         rows={driverGapRows}
       />
 
-      {ipaChartData.length >= 2 && <IpaQuadrantChart data={ipaChartData} />}
+      {ipaChartData.length >= 2 && (
+        <IpaQuadrantChart data={ipaChartData} sampleSize={driverImportance?.n} />
+      )}
 
       {driverImportance && !driverImportance.insufficientData && (
         <NarrativeBlock
           label="IPA 회귀 요약"
-          text={`Y=SE · 9개 드라이버 β회귀 · R²=${formatScore(driverImportance.rSquared)} · N=${driverImportance.n} · FOCUS=${driverImportance.entries.filter((e) => e.priority === "FOCUS").map((e) => DRIVER_LABELS[e.code] ?? e.code).join(", ") || "없음"}`}
+          text={`Y=SE · 9개 드라이버 β회귀 · R²=${formatScore(driverImportance.rSquared)} · N=${driverImportance.n} · FOCUS=${driverImportance.entries.filter((e) => e.priority === "FOCUS").map((e) => DRIVER_LABELS[e.code] ?? e.code).join(", ") || "없음"} · 방향성 참고 지표(상관 기반)`}
         />
       )}
 
@@ -278,6 +284,7 @@ export function OhiReportSection({
             teamLevelDriverImportance,
           )}
           columns="driver"
+          sampleSize={teamLevelDriverImportance.n}
         />
       )}
 

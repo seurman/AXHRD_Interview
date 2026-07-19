@@ -4,22 +4,38 @@ import type { AnalysisRow } from "@/lib/diagnostic/analysis-tables";
 import { STATUS_CLASS } from "@/lib/diagnostic/analysis-tables";
 import { formatScore, formatScoreDelta } from "@/lib/diagnostic/format-score";
 
+const CORRELATION_CAVEAT =
+  "방향성 참고 지표 — 인과가 아닌 상관 기반";
+
 export function AnalysisTable({
   title,
   subtitle,
   rows,
   columns = "default",
+  sampleSize,
 }: {
   title: string;
   subtitle?: string;
   rows: AnalysisRow[];
   columns?: "default" | "driver" | "weighted";
+  /** IPA/HLM 등 회귀 기반 표일 때 표본수 배지 */
+  sampleSize?: number | null;
 }) {
   if (!rows.length) return null;
+  const showBetaSample = columns === "driver" && sampleSize != null && sampleSize > 0;
   return (
     <div className="card-luxe overflow-x-auto p-4">
-      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-      {subtitle && <p className="mt-0.5 text-xs text-muted">{subtitle}</p>}
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          {subtitle && <p className="mt-0.5 text-xs text-muted">{subtitle}</p>}
+        </div>
+        {showBetaSample ? (
+          <span className="rounded-full bg-black/[0.04] px-2 py-0.5 text-[10px] font-medium text-muted dark:bg-white/10">
+            n={sampleSize} 기준
+          </span>
+        ) : null}
+      </div>
       <table className="mt-3 w-full min-w-[520px] text-left text-xs">
         <thead>
           <tr className="border-b border-black/10 text-muted dark:border-white/10">
@@ -70,12 +86,16 @@ export function AnalysisTable({
           ))}
         </tbody>
       </table>
+      {showBetaSample ? (
+        <p className="mt-3 text-[11px] text-muted">{CORRELATION_CAVEAT}</p>
+      ) : null}
     </div>
   );
 }
 
 export function IpaQuadrantChart({
   data,
+  sampleSize,
 }: {
   data: Array<{
     code: string;
@@ -85,15 +105,25 @@ export function IpaQuadrantChart({
     beta: number | null;
     priority: string | null;
   }>;
+  sampleSize?: number | null;
 }) {
   if (data.length < 2) return null;
   const mid = 3.5;
   return (
     <div className="card-luxe p-4">
-      <h3 className="text-sm font-semibold text-foreground">드라이버 IPA 매트릭스</h3>
-      <p className="mt-0.5 text-xs text-muted">
-        X=현재 수준 · Y=중요도 · 점선=기준 3.5 · 빨강=집중개선(FOCUS)
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">드라이버 IPA 매트릭스</h3>
+          <p className="mt-0.5 text-xs text-muted">
+            X=현재 수준 · Y=중요도 · 점선=기준 3.5 · 빨강=집중개선(FOCUS)
+          </p>
+        </div>
+        {sampleSize != null && sampleSize > 0 ? (
+          <span className="rounded-full bg-black/[0.04] px-2 py-0.5 text-[10px] font-medium text-muted dark:bg-white/10">
+            n={sampleSize} 기준
+          </span>
+        ) : null}
+      </div>
       <div className="relative mt-3 h-72">
         <div className="pointer-events-none absolute inset-8 grid grid-cols-2 grid-rows-2 text-[10px] text-muted/60">
           <div className="border-r border-b border-dashed border-black/10 p-1 dark:border-white/10">유지·강화</div>
@@ -139,12 +169,20 @@ export function IpaQuadrantChart({
         {data
           .filter((d) => d.priority === "FOCUS")
           .map((d) => (
-            <li key={d.code} className="text-muted">
+            <li key={d.code} className="flex flex-wrap items-center gap-1.5 text-muted">
               <span className="font-medium text-red-600 dark:text-red-400">{d.label}</span>
-              {d.beta != null ? ` · β=${formatScore(d.beta)}` : ""}
+              {d.beta != null ? (
+                <span className="tabular-nums">β={formatScore(d.beta)}</span>
+              ) : null}
+              {sampleSize != null && sampleSize > 0 ? (
+                <span className="rounded-full bg-black/[0.04] px-1.5 py-0.5 text-[10px] dark:bg-white/10">
+                  n={sampleSize} 기준
+                </span>
+              ) : null}
             </li>
           ))}
       </ul>
+      <p className="mt-3 text-[11px] text-muted">{CORRELATION_CAVEAT}</p>
     </div>
   );
 }
