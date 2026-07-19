@@ -66,12 +66,21 @@ export function OrgReportSection({
     mode: string;
     xBase?: number | null;
     yBase?: number | null;
+    intercept?: number | null;
+    slope?: number | null;
+    rSquared?: number | null;
+    n?: number | null;
+    note?: string | null;
     teams?: Array<{
       teamId: string;
       teamName: string;
       ORI: number | null;
       OVI: number | null;
       quadrant: string | null;
+      typology?: string | null;
+      priorityManage?: boolean;
+      residual?: number | null;
+      fastErrorWarning?: boolean;
     }>;
   } | null;
   isEnabled: (code: string) => boolean;
@@ -355,13 +364,28 @@ export function OrgReportSection({
                     <Tooltip
                       cursor={{ strokeDasharray: "3 3" }}
                       labelFormatter={(_, payload) => {
-                        const p = payload?.[0]?.payload as { teamName?: string; quadrant?: string };
-                        return p?.teamName ? `${p.teamName} (${quadrantLabel(p.quadrant ?? null)})` : "";
+                        const p = payload?.[0]?.payload as {
+                          teamName?: string;
+                          quadrant?: string;
+                          typology?: string;
+                        };
+                        if (!p?.teamName) return "";
+                        const label = p.typology
+                          ? quadrantLabel(p.typology)
+                          : quadrantLabel(p.quadrant ?? null);
+                        return `${p.teamName} (${label})`;
                       }}
                     />
                     <Scatter data={gapTeams}>
                       {gapTeams.map((t) => (
-                        <Cell key={t.teamId} fill={QUADRANT_FILL[t.quadrant ?? ""] ?? "#c9a227"} />
+                        <Cell
+                          key={t.teamId}
+                          fill={
+                            t.priorityManage
+                              ? "#ef4444"
+                              : (QUADRANT_FILL[t.quadrant ?? ""] ?? "#c9a227")
+                          }
+                        />
                       ))}
                     </Scatter>
                   </ScatterChart>
@@ -369,7 +393,63 @@ export function OrgReportSection({
               </div>
               <AnalysisTable
                 title="팀 Gap 분석표"
-                subtitle="ORI(준비) vs OVI(속도)"
+                subtitle="ORI(준비) vs OVI(속도) · Gap² TOP3 우선관리 · OHI로 Crash/Super-Star/Apathy/Cartel 세분"
+                rows={gapMatrixRows(gapTeams)}
+              />
+            </div>
+          )}
+
+          {gapMatrix?.mode === "OLS_RESIDUAL" && gapTeams.length >= 2 && (
+            <div className="card-luxe p-4">
+              <h3 className="mb-1 text-sm font-semibold">
+                OLS 잔차 분석 (ORI → OVI)
+                {drillId ? ` — ${contextTitle} 범위` : " — 전체 팀"}
+              </h3>
+              <p className="mb-3 text-xs text-muted">
+                {gapMatrix.note}
+                {gapMatrix.rSquared != null ? ` · R²=${formatScore(gapMatrix.rSquared)}` : ""}
+                {gapMatrix.n != null ? ` · n=${gapMatrix.n}` : ""}
+              </p>
+              <div className="mt-3 h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" dataKey="ORI" domain={[1, 5]} />
+                    <YAxis type="number" dataKey="OVI" domain={[1, 5]} />
+                    <ZAxis range={[100, 400]} />
+                    <Tooltip
+                      cursor={{ strokeDasharray: "3 3" }}
+                      labelFormatter={(_, payload) => {
+                        const p = payload?.[0]?.payload as {
+                          teamName?: string;
+                          typology?: string;
+                          residual?: number;
+                        };
+                        return p?.teamName
+                          ? `${p.teamName} · ${quadrantLabel(p.typology ?? null)} · e=${formatScore(p.residual ?? null)}`
+                          : "";
+                      }}
+                    />
+                    <Scatter data={gapTeams}>
+                      {gapTeams.map((t) => (
+                        <Cell
+                          key={t.teamId}
+                          fill={
+                            t.priorityManage
+                              ? "#ef4444"
+                              : t.fastErrorWarning
+                                ? "#f59e0b"
+                                : "#c9a227"
+                          }
+                        />
+                      ))}
+                    </Scatter>
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
+              <AnalysisTable
+                title="팀 OLS 잔차 분석표"
+                subtitle="e² 상위 25% 우선관리 · 잔차×OHI 유형 · OVI≥3.5·OAI≤2.8 빠른오류"
                 rows={gapMatrixRows(gapTeams)}
               />
             </div>

@@ -128,6 +128,7 @@ type Scores = {
       TL_safety: number | null;
       band: string | null;
       riskIndex: number | null;
+      quietCrackingIndex?: number | null;
       drivers: Record<string, { current: number | null; importance: number | null }>;
     };
     ori: {
@@ -183,12 +184,23 @@ type Scores = {
     note?: string;
     xBase?: number | null;
     yBase?: number | null;
+    intercept?: number;
+    slope?: number;
+    rSquared?: number | null;
+    n?: number;
     teams?: Array<{
       teamId: string;
       teamName: string;
       ORI: number | null;
       OVI: number | null;
+      OHI_SE?: number | null;
+      OAI?: number | null;
       quadrant: string | null;
+      residual?: number | null;
+      residualSquared?: number | null;
+      typology?: string | null;
+      priorityManage?: boolean;
+      fastErrorWarning?: boolean;
     }>;
   };
 };
@@ -850,6 +862,70 @@ function TeamsOverview({
           </ul>
         </div>
       )}
+
+      {selectedNodeId === null &&
+        aggregate?.gapMatrix?.mode === "OLS_RESIDUAL" &&
+        (aggregate.gapMatrix.teams?.length ?? 0) >= 2 && (
+          <div className="card-luxe p-4">
+            <h4 className="mb-1 text-sm font-semibold">ORI × OVI OLS 잔차 분석</h4>
+            <p className="mb-3 text-xs text-muted">
+              {aggregate.gapMatrix.note}
+              {aggregate.gapMatrix.rSquared != null
+                ? ` · R²=${formatScore(aggregate.gapMatrix.rSquared)}`
+                : ""}
+              {aggregate.gapMatrix.n != null ? ` · n=${aggregate.gapMatrix.n}` : ""}
+            </p>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" dataKey="ORI" name="ORI" domain={[1, 5]} tickFormatter={scoreAxisTick} />
+                  <YAxis type="number" dataKey="OVI" name="OVI" domain={[1, 5]} tickFormatter={scoreAxisTick} />
+                  <ZAxis range={[100, 400]} />
+                  <Tooltip
+                    cursor={{ strokeDasharray: "3 3" }}
+                    formatter={(v: number) => formatScore(v)}
+                    labelFormatter={(_, payload) => {
+                      const p = payload?.[0]?.payload as {
+                        teamName?: string;
+                        typology?: string;
+                        residual?: number;
+                      };
+                      return p?.teamName
+                        ? `${p.teamName} · ${quadrantLabel(p.typology ?? null)} · e=${formatScore(p.residual ?? null)}`
+                        : "";
+                    }}
+                  />
+                  <Scatter data={aggregate.gapMatrix.teams ?? []} name="팀">
+                    {(aggregate.gapMatrix.teams ?? []).map((t) => (
+                      <Cell
+                        key={t.teamId}
+                        fill={
+                          t.priorityManage
+                            ? "#ef4444"
+                            : t.fastErrorWarning
+                              ? "#f59e0b"
+                              : "#c9a227"
+                        }
+                      />
+                    ))}
+                  </Scatter>
+                </ScatterChart>
+              </ResponsiveContainer>
+            </div>
+            <ul className="mt-3 grid gap-1 text-xs sm:grid-cols-2">
+              {(aggregate.gapMatrix.teams ?? []).slice(0, 8).map((t) => (
+                <li key={t.teamId} className="text-muted">
+                  <span className="font-medium text-foreground">{t.teamName}</span>
+                  {" — "}
+                  {quadrantLabel(t.typology ?? null)}
+                  {t.priorityManage ? " · 우선관리" : ""}
+                  {t.fastErrorWarning ? " · 빠른오류" : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
       {teamGapRows.length > 0 && (
         <AnalysisTable

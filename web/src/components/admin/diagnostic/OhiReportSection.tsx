@@ -40,6 +40,7 @@ type OhiScores = {
   TL_safety: number | null;
   band: string | null;
   riskIndex: number | null;
+  quietCrackingIndex?: number | null;
   drivers: Record<string, { current: number | null; importance: number | null }>;
 };
 
@@ -75,7 +76,7 @@ function RiskBreakdownTable({
     <div className="card-luxe overflow-x-auto p-4">
       <h3 className="text-sm font-semibold text-foreground">Risk Index 구성 신호</h3>
       <p className="mt-0.5 text-xs text-muted">
-        참고용 스크리닝 지표 · 검증된 가중치 아님
+        산식표 Risk Index = (SEC03≤2)×0.4 + (E≤2.5)×0.3 + (HV&lt;2.5)×0.3
       </p>
       <p className="mt-1 text-xs text-muted">
         복합 위험 지수 {riskIndex != null ? `${Math.round(riskIndex * 100)}%` : "—"} — 이탈·번아웃 조기 경보
@@ -192,14 +193,19 @@ export function OhiReportSection({
         interpretation={ohiBandMessage(ohi.overall, ohi.band)}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <MetricTile label="OHI 종합" value={ohi.overall} band={ohi.band} />
         <MetricTile label="SE 종합" value={ohi.SE} />
         <MetricTile label="BO 행동결과" value={ohi.BO} hint="번아웃·이직 행동 신호" />
         <MetricTile
           label="Risk Index"
           value={ohi.riskIndex != null ? ohi.riskIndex * 100 : null}
-          hint="참고용 스크리닝 지표 · 검증된 가중치 아님"
+          hint="산식표 가중 플래그 합(%)"
+        />
+        <MetricTile
+          label="QCI"
+          value={ohi.quietCrackingIndex ?? null}
+          hint="Quiet Cracking · (6−C03)·0.4+(6−E)·0.3+max(0,BO−3)·0.3"
         />
       </div>
 

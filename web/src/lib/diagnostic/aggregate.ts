@@ -70,6 +70,9 @@ function summarizeRespondents(
       TL_growth: avgNums(perRespondent.map((r) => r.ohi.TL?.growth ?? null)),
       TL_safety: avgNums(perRespondent.map((r) => r.ohi.TL?.safety ?? null)),
       riskIndex: avgNums(perRespondent.map((r) => r.ohi.riskIndex)),
+      quietCrackingIndex: avgNums(
+        perRespondent.map((r) => r.ohi.quietCrackingIndex ?? null),
+      ),
       band: healthBand(avgNums(perRespondent.map((r) => r.ohi.overall))),
       drivers: avgDrivers(perRespondent),
     },

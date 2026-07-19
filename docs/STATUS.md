@@ -884,23 +884,27 @@ npx.cmd tsx scripts/flow-smoke.ts
 
 1. 자소서 **마크다운 청크**(500~1000자) — `resume-summary.ts` 확장, `personalize-question.ts` 청크 단위 인용
 2. ~~ARC LPA·HLM·LDA·처방 탭 (리포트 placeholder 해소)~~ ✅ 완료 — `ArcAnalysisUi`/`OhiReportSection` 등 실데이터 연결, LDA는 Gemini 「주관식 응답 테마」로 정직 라벨
-3. **골든타임 추세 예측** (`longitudinal.ts` 확장, Wave≥3 데이터 필요) — 현재 Wave 간 비교만 존재. 단순 선형추세로 「현재 추세 유지 시 N개월 후」 카드는 미구현. 디자인 목업(`ARC-report-v1.0.pdf`)의 3/6/12개월 수치는 시안이며 코드에 추세추정 로직 없음
+3. ~~**골든타임 추세 예측** (`longitudinal.ts` 확장, Wave≥3 데이터 필요)~~ ✅ 완료 — Wave≥2 선형추세(≥3 OLS)로 3/6/12개월 투영 카드
 4. `org_home_by_entitlement` — 기관 entitlement별 홈 분리
 5. 대용량 커밋 분리 정책 — 이후 기능은 브랜치 단위 PR
 
 ### ARC Index 리포트 정합성 고도화 (2026-07-19)
 
-표시(UI 라벨·배지·각주)만 보강. `arc-scoring.ts` 산식(OLS/WLS·ICC·GMM/EM·Risk/Opp)은 변경하지 않음.
+표시(UI 라벨·배지·각주) + 산식표 정렬.
 
 | 파일 | 변경 |
 |------|------|
-| `web/src/components/admin/diagnostic/ArcAnalysisUi.tsx` | IPA β 옆 `n=◯◯ 기준` 배지, 「방향성 참고 지표 — 상관 기반」 |
-| `web/src/components/admin/diagnostic/OhiReportSection.tsx` | IPA/HLM 표 sampleSize, Risk Index 스크리닝 라벨 |
-| `web/src/components/admin/diagnostic/ArcAxisSections.tsx` | Opportunity Score 「검증된 가중치 아님」 부제 |
-| `web/src/components/admin/AdminDiagnosticReport.tsx` | CausalFlow Burke-Litwin 각주, ICC 구간 해석 |
+| `web/src/lib/diagnostic/arc-scoring.ts` | IPA FOCUS=`β≥0.25`∧현재낮음, 건강한 표류 패턴, QCI, ICC 구간 정렬, 팀≥15 OLS 잔차, Gap 유형·Gap² TOP3, 산식표 문항코드(역문항 포함) |
+| `web/src/lib/diagnostic/longitudinal.ts` | 골든타임 3/6/12개월 선형 투영 |
+| `web/src/components/diagnostic/DiagnosticLongitudinalPanel.tsx` | 골든타임 표 |
+| `web/src/components/admin/diagnostic/OhiReportSection.tsx` | Risk 산식표 표기 + QCI 타일 |
+| `web/src/components/admin/diagnostic/ArcAxisSections.tsx` | Opp=AXA−AXG 산식 표기 |
+| `web/src/components/admin/AdminDiagnosticReport.tsx` | OLS 잔차 차트 |
+| `web/src/components/admin/diagnostic/OrgReportSection.tsx` | Gap/OLS 잔차 차트·분석표 연동 |
 | `web/src/lib/diagnostic/axis-report.ts` | `buildIccInterpretation` |
+| `web/src/components/admin/diagnostic/ArcAnalysisUi.tsx` | IPA n 배지·상관 주의 |
 
-목업 주의: `docs/arc-index/ARC-report-v1.0.pdf`의 「LDA n=289」·「골든타임 3/6/12개월」은 디자인 시안 — 코드에 베끼지 않음.
+목업 주의: `docs/arc-index/ARC-report-v1.0.pdf`의 「LDA n=289」는 시안 — 실제는 Gemini 「주관식 응답 테마」.
 
 ### 이전 핸드오프 (2026-07-07)
 

@@ -25,6 +25,10 @@ const QUADRANT_LABEL: Record<string, string> = {
   POSITIVE_GAP: "속도 과잉",
   CRISIS: "위기 구역",
   NEGATIVE_GAP: "방향 부재",
+  CRASH: "Crash 위험",
+  SUPER_STAR: "Super-Star",
+  APATHY: "Apathy",
+  CARTEL: "Cartel",
 };
 
 type ScoresInput = {
