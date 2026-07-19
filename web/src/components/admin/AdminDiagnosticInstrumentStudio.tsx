@@ -259,7 +259,9 @@ export function AdminDiagnosticInstrumentStudio({ instrumentId, onSync, syncing 
                 {saving ? "저장 중…" : "문항 저장"}
               </button>
               <p className="text-xs text-muted">
-                정본: <code>docs/arc-index/source/*.md</code> — 「원본 동기화」로 시드와 맞춥니다.
+                정본: <code>docs/arc-index/source/*.md</code> — DM이 5개만 보이면 우측 상단
+                「원본 동기화」를 눌러 DM06~12(성별·고용형태·학력·관리자·근무형태·지역·장애)를
+                반영하세요.
               </p>
             </div>
           ) : (

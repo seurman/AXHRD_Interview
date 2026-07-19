@@ -2,6 +2,20 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — ARC 문항뱅크 배포 시 자동 동기화 (2026-07-19)
+
+프로덕션 Instrument Studio에 DM이 5개만 보이던 원인: 시드(DM06~12)는
+머지됐지만 DB 문항 동기화가 빌드에 없어 반영되지 않음.
+
+| 파일 | 변경 |
+|------|------|
+| `scripts/migrate-deploy.mjs` | 빌드 후 `sync-arc-instrument.ts` 멱등 실행 |
+| `lib/diagnostic/instrument-sync.ts` | `choiceOptions` 변경 감지 |
+| `prisma/seed/arc-index-data.ts` | instrument version `260719dm` |
+| Instrument Studio 카피 | DM 5개면 「원본 동기화」안내 |
+
+수동: `/admin/diagnostic` → Instrument → **원본 동기화** (배포 완료 전이면 이걸로 즉시 반영)
+
 ## 최근 작업 — ARC Index 데모그래픽 카탈로그 확장 + 웨이브 on/off (2026-07-19)
 
 글로벌·국내 벤치마킹으로 DM 문항 카탈로그를 확장하고, `enabledSectionCodes`와
