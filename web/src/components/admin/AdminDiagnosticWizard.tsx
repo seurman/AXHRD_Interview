@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { DEFAULT_DEMOGRAPHIC_CODES } from "@/lib/diagnostic/section-filter";
 
 type Org = { id: string; name: string };
 type Instrument = {
@@ -10,6 +11,36 @@ type Instrument = {
   nameKo: string;
   sections: Array<{ code: string; nameKo: string }>;
 };
+
+type DemographicGroupId = "basic" | "global" | "domestic" | "sensitive";
+
+type DemographicCatalogItem = {
+  code: string;
+  label: string;
+  group: DemographicGroupId;
+};
+
+const DEMOGRAPHIC_GROUPS: Array<{ id: DemographicGroupId; title: string }> = [
+  { id: "basic", title: "기본" },
+  { id: "global", title: "글로벌 표준" },
+  { id: "domestic", title: "국내 특화" },
+  { id: "sensitive", title: "민감정보 — 별도 동의 필요" },
+];
+
+const DEMOGRAPHIC_CATALOG: DemographicCatalogItem[] = [
+  { code: "DM01", label: "직급", group: "basic" },
+  { code: "DM02", label: "재직기간", group: "basic" },
+  { code: "DM03", label: "부서유형", group: "basic" },
+  { code: "DM04", label: "연령대", group: "basic" },
+  { code: "DM05", label: "AI 활용빈도", group: "basic" },
+  { code: "DM06", label: "성별", group: "basic" },
+  { code: "DM08", label: "최종학력", group: "basic" },
+  { code: "DM09", label: "관리자 여부", group: "global" },
+  { code: "DM10", label: "근무형태", group: "global" },
+  { code: "DM07", label: "고용형태", group: "domestic" },
+  { code: "DM11", label: "근무지역", group: "domestic" },
+  { code: "DM12", label: "장애 여부", group: "sensitive" },
+];
 
 type Props = {
   onClose: () => void;
@@ -26,6 +57,9 @@ export function AdminDiagnosticWizard({ onClose, onCreated }: Props) {
   const [newOrgName, setNewOrgName] = useState("");
   const [instrumentId, setInstrumentId] = useState("");
   const [enabledSections, setEnabledSections] = useState<string[]>([]);
+  const [enabledDemographicItems, setEnabledDemographicItems] = useState<string[]>([
+    ...DEFAULT_DEMOGRAPHIC_CODES,
+  ]);
   const [label, setLabel] = useState("");
   const [opensAt, setOpensAt] = useState("");
   const [closesAt, setClosesAt] = useState("");
@@ -56,6 +90,12 @@ export function AdminDiagnosticWizard({ onClose, onCreated }: Props) {
 
   const toggleSection = (code: string) => {
     setEnabledSections((prev) =>
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code],
+    );
+  };
+
+  const toggleDemographic = (code: string) => {
+    setEnabledDemographicItems((prev) =>
       prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code],
     );
   };
@@ -94,6 +134,11 @@ export function AdminDiagnosticWizard({ onClose, onCreated }: Props) {
         setLoading(false);
         return;
       }
+      if (enabledDemographicItems.length === 0) {
+        setError("데모그래픽 문항을 1개 이상 선택해 주세요.");
+        setLoading(false);
+        return;
+      }
       const res = await fetch("/api/admin/diagnostic/waves", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -101,6 +146,7 @@ export function AdminDiagnosticWizard({ onClose, onCreated }: Props) {
           organizationId,
           instrumentId,
           enabledSectionCodes: enabledSections,
+          enabledDemographicItemCodes: enabledDemographicItems,
           label: label.trim() || undefined,
           opensAt: opensAt || null,
           closesAt: closesAt || null,
@@ -193,6 +239,48 @@ export function AdminDiagnosticWizard({ onClose, onCreated }: Props) {
                 </label>
               ))}
             </div>
+
+            <div className="space-y-3 border-t border-card-border pt-4">
+              <p className="text-sm font-medium text-foreground">데모그래픽 문항</p>
+              <p className="text-xs text-muted">
+                이번 웨이브에서 수집할 기본 정보 문항을 선택합니다. 기본 5개(DM01~DM05)는 사전
+                선택되어 있습니다.
+              </p>
+              {DEMOGRAPHIC_GROUPS.map((group) => {
+                const items = DEMOGRAPHIC_CATALOG.filter((i) => i.group === group.id);
+                const sensitiveOn =
+                  group.id === "sensitive" &&
+                  items.some((i) => enabledDemographicItems.includes(i.code));
+                return (
+                  <div key={group.id} className="space-y-2 rounded-xl bg-black/[0.03] p-3 dark:bg-white/[0.04]">
+                    <p
+                      className={`text-xs font-semibold ${
+                        group.id === "sensitive" ? "text-amber-700 dark:text-amber-400" : "text-muted"
+                      }`}
+                    >
+                      {group.title}
+                    </p>
+                    {items.map((item) => (
+                      <label key={item.code} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={enabledDemographicItems.includes(item.code)}
+                          onChange={() => toggleDemographic(item.code)}
+                        />
+                        {item.code} — {item.label}
+                      </label>
+                    ))}
+                    {sensitiveOn && (
+                      <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-800 dark:text-amber-200">
+                        이 항목은 개인정보보호법상 민감정보입니다. 응답자에게 별도 동의를 받아야
+                        합니다.
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
             <input
               className="input-luxe w-full text-sm"
               placeholder="진단명 (선택)"
@@ -249,6 +337,10 @@ export function AdminDiagnosticWizard({ onClose, onCreated }: Props) {
                 }
                 if (step === 2 && enabledSections.length === 0) {
                   setError("섹션을 1개 이상 선택해 주세요.");
+                  return;
+                }
+                if (step === 2 && enabledDemographicItems.length === 0) {
+                  setError("데모그래픽 문항을 1개 이상 선택해 주세요.");
                   return;
                 }
                 setStep((s) => s + 1);

@@ -6,7 +6,7 @@ import {
   patchDiagnosticWave,
   teamLinksFromWave,
 } from "@/lib/diagnostic/campaigns";
-import { parseEnabledSectionCodes, sectionBadgeLabel } from "@/lib/diagnostic/section-filter";
+import { parseEnabledDemographicItemCodes, parseEnabledSectionCodes, sectionBadgeLabel } from "@/lib/diagnostic/section-filter";
 import { waveStatusLabel } from "@/lib/diagnostic/wave-status";
 import { resolveReportConfigForWave } from "@/lib/diagnostic/report-profile";
 import { countInviteLinks } from "@/lib/diagnostic/collection-rate";
@@ -38,6 +38,7 @@ export async function GET(req: Request, ctx: Ctx) {
   if (!wave) return NextResponse.json({ error: "캠페인을 찾을 수 없습니다." }, { status: 404 });
 
   const enabled = parseEnabledSectionCodes(wave.enabledSectionCodes);
+  const enabledDemographic = parseEnabledDemographicItemCodes(wave.enabledDemographicItemCodes);
   const reportConfig = await resolveReportConfigForWave(wave.id);
   const leafTeams = wave.teams.filter((t) => t.level === "TEAM");
   const inviteLinkCount = countInviteLinks(leafTeams.length);
@@ -53,6 +54,7 @@ export async function GET(req: Request, ctx: Ctx) {
       opensAt: wave.opensAt?.toISOString() ?? null,
       closesAt: wave.closesAt?.toISOString() ?? null,
       enabledSectionCodes: enabled,
+      enabledDemographicItemCodes: enabledDemographic,
       sectionBadge: sectionBadgeLabel(reportConfig?.activeSectionCodes ?? enabled),
       instrumentVersionSnapshot: wave.instrumentVersionSnapshot,
       reportConfig,
@@ -82,6 +84,7 @@ type PatchBody = {
   opensAt?: string | null;
   closesAt?: string | null;
   enabledSectionCodes?: string[];
+  enabledDemographicItemCodes?: string[];
 };
 
 export async function PATCH(req: Request, ctx: Ctx) {
@@ -98,9 +101,13 @@ export async function PATCH(req: Request, ctx: Ctx) {
       opensAt: body.opensAt !== undefined ? parseWaveDate(body.opensAt) : undefined,
       closesAt: body.closesAt !== undefined ? parseWaveDate(body.closesAt) : undefined,
       enabledSectionCodes: body.enabledSectionCodes,
+      enabledDemographicItemCodes: body.enabledDemographicItemCodes,
     });
 
     const enabled = parseEnabledSectionCodes(updated.enabledSectionCodes);
+    const enabledDemographic = parseEnabledDemographicItemCodes(
+      updated.enabledDemographicItemCodes,
+    );
     return NextResponse.json({
       ok: true,
       wave: {
@@ -111,6 +118,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
         opensAt: updated.opensAt?.toISOString() ?? null,
         closesAt: updated.closesAt?.toISOString() ?? null,
         enabledSectionCodes: enabled,
+        enabledDemographicItemCodes: enabledDemographic,
         sectionBadge: sectionBadgeLabel(enabled),
       },
     });
