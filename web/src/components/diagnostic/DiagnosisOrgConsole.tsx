@@ -1,8 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Check, ChevronDown, Copy, ExternalLink, Plus } from "lucide-react";
+import { Check, ChevronDown, Copy, ExternalLink, Plus, Trash2 } from "lucide-react";
+import {
+  HierarchyTeamFields,
+  draftFromFields,
+} from "@/components/diagnostic/HierarchyTeamFields";
+import { parseHierarchyPaste } from "@/lib/diagnostic/hierarchy-paste";
+import {
+  buildDraftHierarchyPreview,
+  buildOrderedTree,
+  levelDepth,
+  levelLabel,
+  type DraftTeamInput,
+  type HierarchyTreeNode,
+} from "@/lib/diagnostic/hierarchy-tree";
 
 type TeamLink = {
   id: string;
@@ -12,11 +25,8 @@ type TeamLink = {
   link: string;
 };
 
-type HierarchyNode = {
-  id: string;
-  name: string;
-  level: "DIVISION" | "UNIT" | "TEAM";
-  parentId: string | null;
+type HierarchyNode = HierarchyTreeNode & {
+  department?: string | null;
 };
 
 type SectionMeta = { code: string; nameKo: string };
@@ -36,19 +46,6 @@ type Wave = {
   teams: TeamLink[];
   hierarchy?: HierarchyNode[];
 };
-
-/** id로부터 사업본부 › 사업부 › 팀 전체 경로 이름을 조립한다. 하이어라키가 없으면 팀 이름만 반환. */
-function nodePath(nodeId: string, hierarchy: HierarchyNode[] | undefined): string {
-  if (!hierarchy?.length) return "";
-  const byId = new Map(hierarchy.map((n) => [n.id, n]));
-  const path: string[] = [];
-  let current = byId.get(nodeId);
-  while (current) {
-    path.unshift(current.name);
-    current = current.parentId ? byId.get(current.parentId) : undefined;
-  }
-  return path.join(" › ");
-}
 
 function statusTone(status: string): string {
   const s = status.toUpperCase();
@@ -95,6 +92,75 @@ function CopyLinkButton({
   );
 }
 
+function LevelBadge({ level }: { level: HierarchyNode["level"] }) {
+  return (
+    <span className="inline-flex rounded-md border border-card-border bg-card px-1.5 py-0.5 text-[10px] font-semibold text-muted">
+      {levelLabel(level)}
+    </span>
+  );
+}
+
+function HierarchyTreeList({
+  nodes,
+  teamLinkById,
+}: {
+  nodes: HierarchyNode[];
+  teamLinkById: Map<string, string>;
+}) {
+  const ordered = useMemo(() => buildOrderedTree(nodes), [nodes]);
+  if (ordered.length === 0) {
+    return <p className="text-sm text-muted">아직 등록된 사업부·팀이 없습니다.</p>;
+  }
+  return (
+    <ul className="space-y-2">
+      {ordered.map((node) => {
+        const depth = levelDepth(node.level);
+        const link = node.level === "TEAM" ? teamLinkById.get(node.id) : null;
+        return (
+          <li
+            key={node.id}
+            className="rounded-xl border border-card-border/70 bg-background/50 px-3 py-2.5"
+            style={{ marginLeft: depth * 16 }}
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <LevelBadge level={node.level} />
+              <span className="text-sm font-medium text-foreground">{node.name}</span>
+            </div>
+            {link ? (
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <p className="min-w-0 truncate font-mono text-[11px] text-muted">{link}</p>
+                <CopyLinkButton value={link} />
+              </div>
+            ) : null}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function DraftHierarchyPreview({ teams }: { teams: DraftTeamInput[] }) {
+  const preview = useMemo(() => buildDraftHierarchyPreview(teams), [teams]);
+  if (preview.length === 0) return null;
+  return (
+    <div className="rounded-xl border border-card-border bg-background/40 p-3">
+      <p className="text-xs font-semibold text-foreground">구조 미리보기</p>
+      <ul className="mt-2 space-y-1.5">
+        {preview.map((n) => (
+          <li
+            key={n.key}
+            className="flex items-center gap-2 text-sm"
+            style={{ marginLeft: n.depth * 16 }}
+          >
+            <LevelBadge level={n.level} />
+            <span className="font-medium text-foreground">{n.name}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function DiagnosisOrgConsole() {
   const [waves, setWaves] = useState<Wave[]>([]);
   const [orgName, setOrgName] = useState("");
@@ -103,12 +169,24 @@ export function DiagnosisOrgConsole() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [label, setLabel] = useState("");
-  const [teamText, setTeamText] = useState("");
   const [opensAt, setOpensAt] = useState("");
   const [closesAt, setClosesAt] = useState("");
   const [creating, setCreating] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
-  const [expandedLinks, setExpandedLinks] = useState<Record<string, boolean>>({});
+  const [expandedStructure, setExpandedStructure] = useState<Record<string, boolean>>({});
+  const [editingWaveId, setEditingWaveId] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+
+  const [draftTeams, setDraftTeams] = useState<DraftTeamInput[]>([]);
+  const [divisionName, setDivisionName] = useState("");
+  const [unitName, setUnitName] = useState("");
+  const [teamName, setTeamName] = useState("");
+  const [pasteInput, setPasteInput] = useState("");
+
+  const [editDivision, setEditDivision] = useState("");
+  const [editUnit, setEditUnit] = useState("");
+  const [editTeam, setEditTeam] = useState("");
+  const [editPaste, setEditPaste] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -143,25 +221,39 @@ export function DiagnosisOrgConsole() {
     if (!loading && waves.length === 0) setShowCreate(true);
   }, [loading, waves.length]);
 
-  // 한 줄에 팀 하나. 콤마로 구분한 열 개수에 따라 하이어라키 깊이가 달라진다.
-  const parseTeams = (text: string) =>
-    text
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line) => {
-        const cols = line.split(",").map((s) => s.trim()).filter(Boolean);
-        if (cols.length >= 3) {
-          const [divisionName, unitName, name] = cols;
-          return { name, divisionName, unitName };
-        }
-        if (cols.length === 2) {
-          const [unitName, name] = cols;
-          return { name, unitName };
-        }
-        return { name: cols[0] ?? "" };
-      })
-      .filter((t) => t.name);
+  const resetCreateHierarchy = () => {
+    setDraftTeams([]);
+    setDivisionName("");
+    setUnitName("");
+    setTeamName("");
+    setPasteInput("");
+  };
+
+  const addDraftOne = () => {
+    const row = draftFromFields(divisionName, unitName, teamName);
+    if (!row) {
+      setError("팀명을 입력해 주세요.");
+      return;
+    }
+    setError(null);
+    setDraftTeams((prev) => [...prev, row]);
+    setTeamName("");
+  };
+
+  const addDraftPaste = () => {
+    const rows = parseHierarchyPaste(pasteInput).map((r) => ({
+      name: r.name,
+      divisionName: r.divisionName ?? undefined,
+      unitName: r.unitName ?? undefined,
+    }));
+    if (rows.length === 0) {
+      setError("붙여넣을 줄을 입력해 주세요. 예: 그로스본부,사업부,팀명");
+      return;
+    }
+    setError(null);
+    setDraftTeams((prev) => [...prev, ...rows]);
+    setPasteInput("");
+  };
 
   const toggleSection = (code: string) => {
     setEnabledSections((prev) => {
@@ -174,7 +266,6 @@ export function DiagnosisOrgConsole() {
   };
 
   const createWave = async () => {
-    const teams = parseTeams(teamText);
     setCreating(true);
     setError(null);
     const res = await fetch("/api/org/diagnosis/waves", {
@@ -182,7 +273,7 @@ export function DiagnosisOrgConsole() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         label,
-        teams,
+        teams: draftTeams,
         enabledSectionCodes: enabledSections,
         opensAt: opensAt || null,
         closesAt: closesAt || null,
@@ -195,20 +286,49 @@ export function DiagnosisOrgConsole() {
       return;
     }
     setLabel("");
-    setTeamText("");
     setOpensAt("");
     setClosesAt("");
+    resetCreateHierarchy();
     setShowCreate(false);
     await load();
   };
 
+  const postTeams = async (waveId: string, teams: DraftTeamInput[]) => {
+    if (teams.length === 0) return;
+    setAdding(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/org/diagnosis/waves/${waveId}/teams`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teams }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "팀 추가 실패");
+      setEditDivision("");
+      setEditUnit("");
+      setEditTeam("");
+      setEditPaste("");
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "팀 추가 오류");
+    } finally {
+      setAdding(false);
+    }
+  };
+
   const exportCsv = (wave: Wave) => {
+    const ordered = buildOrderedTree(wave.hierarchy ?? []);
     const rows = [
-      ["유형", "조직 경로", "응답 링크"],
+      ["레벨", "이름", "응답 링크"],
       ["조직 전체", "—", wave.orgWideLink],
-      ...wave.teams.map((t) => ["팀", nodePath(t.id, wave.hierarchy) || t.name, t.link]),
+      ...ordered.map((n) => [
+        levelLabel(n.level),
+        `${"  ".repeat(levelDepth(n.level))}${n.name}`,
+        n.level === "TEAM" ? (wave.teams.find((t) => t.id === n.id)?.link ?? "") : "",
+      ]),
     ];
-    const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -241,8 +361,7 @@ export function DiagnosisOrgConsole() {
           <h1 className="mt-2 text-xl font-bold leading-snug sm:text-2xl">조직진단</h1>
           <p className="mt-1 text-sm text-white/70">{orgName}</p>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/65">
-            캠페인을 만들고 응답 링크를 배포하세요. 결과는 최소 표본 충족 후 리포트에서 확인할 수
-            있습니다.
+            캠페인을 만들고 사업본부 → 사업부 → 팀 구조를 등록한 뒤 응답 링크를 배포하세요.
           </p>
           <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <button
@@ -276,7 +395,8 @@ export function DiagnosisOrgConsole() {
         <section className="rounded-2xl border border-card-border bg-card/50 p-4 sm:p-6">
           <h2 className="text-base font-semibold text-foreground">새 진단 캠페인</h2>
           <p className="mt-1 text-sm text-muted">
-            축·기간을 정한 뒤 생성하면 조직 전체 링크가 바로 발급됩니다.
+            축·기간을 정한 뒤 생성하면 조직 전체 링크가 발급됩니다. 조직 구조는 선택이며, 나중에
+            추가할 수도 있습니다.
           </p>
 
           <div className="mt-4 space-y-4">
@@ -338,35 +458,53 @@ export function DiagnosisOrgConsole() {
               </label>
             </div>
 
-            <details className="rounded-xl border border-card-border bg-background/50 px-4 py-3">
-              <summary className="cursor-pointer text-sm font-medium text-foreground">
-                조직 구조 · 팀별 링크 (선택)
-              </summary>
-              <p className="mt-2 text-xs leading-relaxed text-muted">
-                비워두면 조직 전체 링크만 사용합니다. 한 줄에 팀 하나, 쉼표로 깊이를 정합니다.
-              </p>
-              <ul className="mt-2 space-y-1 text-xs text-muted">
-                <li>
-                  팀만: <code className="rounded bg-card px-1">콘텐츠팀</code>
-                </li>
-                <li>
-                  사업부, 팀:{" "}
-                  <code className="rounded bg-card px-1">마케팅사업부, 콘텐츠팀</code>
-                </li>
-                <li>
-                  본부, 사업부, 팀:{" "}
-                  <code className="rounded bg-card px-1">그로스본부, 마케팅사업부, 콘텐츠팀</code>
-                </li>
-              </ul>
-              <textarea
-                className="mt-3 min-h-[120px] w-full rounded-xl border border-card-border bg-background px-3 py-2.5 text-base sm:text-sm"
-                placeholder={
-                  "그로스본부, 마케팅사업부, 콘텐츠팀\n그로스본부, 마케팅사업부, 퍼포먼스팀\n오퍼레이션본부, 운영사업부, CS팀"
-                }
-                value={teamText}
-                onChange={(e) => setTeamText(e.target.value)}
+            <div className="space-y-3 rounded-xl border border-card-border bg-background/40 p-3 sm:p-4">
+              <div>
+                <p className="text-sm font-semibold text-foreground">사업부·팀 구조 (선택)</p>
+                <p className="mt-1 text-xs text-muted">
+                  하이어라키: 사업본부 → 사업부 → 팀. 비워두면 조직 전체 링크만 사용합니다.
+                </p>
+              </div>
+              <HierarchyTeamFields
+                divisionName={divisionName}
+                unitName={unitName}
+                teamName={teamName}
+                pasteInput={pasteInput}
+                onDivisionChange={setDivisionName}
+                onUnitChange={setUnitName}
+                onTeamChange={setTeamName}
+                onPasteChange={setPasteInput}
+                onAddOne={addDraftOne}
+                onAddPaste={addDraftPaste}
+                addOneLabel="목록에 추가"
+                addPasteLabel="붙여넣기 → 목록"
               />
-            </details>
+              {draftTeams.length > 0 ? (
+                <>
+                  <DraftHierarchyPreview teams={draftTeams} />
+                  <ul className="space-y-1.5">
+                    {draftTeams.map((t, idx) => (
+                      <li
+                        key={`${t.divisionName ?? ""}-${t.unitName ?? ""}-${t.name}-${idx}`}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-card-border/60 px-3 py-2 text-sm"
+                      >
+                        <span className="min-w-0 truncate text-foreground">
+                          {[t.divisionName, t.unitName, t.name].filter(Boolean).join(" › ")}
+                        </span>
+                        <button
+                          type="button"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted hover:bg-rose-500/10 hover:text-rose-600"
+                          aria-label="삭제"
+                          onClick={() => setDraftTeams((prev) => prev.filter((_, i) => i !== idx))}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+            </div>
 
             <button
               type="button"
@@ -405,8 +543,10 @@ export function DiagnosisOrgConsole() {
         ) : (
           <ul className="space-y-3">
             {waves.map((w) => {
-              const linksOpen = expandedLinks[w.id] ?? false;
+              const structureOpen = expandedStructure[w.id] ?? (w.hierarchy?.length ?? 0) > 0;
               const statusText = w.statusLabel ?? w.status;
+              const teamLinkById = new Map(w.teams.map((t) => [t.id, t.link]));
+              const isEditing = editingWaveId === w.id;
               return (
                 <li
                   key={w.id}
@@ -427,7 +567,10 @@ export function DiagnosisOrgConsole() {
                         {w.label ? ` — ${w.label}` : ""}
                       </h3>
                       <p className="mt-1 text-xs text-muted">
-                        제출 {w.responseCount}건 · 팀 링크 {w.teams.length}개
+                        제출 {w.responseCount}건 · 팀(리프) {w.teams.length}개
+                        {(w.hierarchy?.length ?? 0) > 0
+                          ? ` · 노드 ${w.hierarchy!.length}개`
+                          : ""}
                       </p>
                     </div>
                     <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
@@ -455,45 +598,88 @@ export function DiagnosisOrgConsole() {
                     </p>
                   </div>
 
-                  {w.teams.length > 0 ? (
-                    <div className="mt-3">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExpandedLinks((prev) => ({ ...prev, [w.id]: !linksOpen }))
-                        }
-                        className="inline-flex min-h-10 items-center gap-1 text-sm font-medium text-accent hover:underline"
-                      >
-                        팀별 링크 {w.teams.length}개
-                        <ChevronDown
-                          className={`h-4 w-4 transition ${linksOpen ? "rotate-180" : ""}`}
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedStructure((prev) => ({
+                          ...prev,
+                          [w.id]: !structureOpen,
+                        }))
+                      }
+                      className="inline-flex min-h-10 items-center gap-1 text-sm font-medium text-accent hover:underline"
+                    >
+                      사업부·팀 구조
+                      {(w.hierarchy?.length ?? 0) > 0
+                        ? ` (${w.hierarchy!.length})`
+                        : ""}
+                      <ChevronDown
+                        className={`h-4 w-4 transition ${structureOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+
+                    {structureOpen ? (
+                      <div className="mt-3 space-y-3">
+                        <HierarchyTreeList
+                          nodes={w.hierarchy ?? []}
+                          teamLinkById={teamLinkById}
                         />
-                      </button>
-                      {linksOpen ? (
-                        <ul className="mt-2 max-h-64 space-y-2 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
-                          {w.teams.map((t) => {
-                            const path = nodePath(t.id, w.hierarchy);
-                            return (
-                              <li
-                                key={t.id}
-                                className="flex flex-col gap-2 rounded-xl border border-card-border/60 bg-background/40 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
-                              >
-                                <div className="min-w-0">
-                                  <p className="text-sm font-medium text-foreground">
-                                    {path || t.name}
-                                  </p>
-                                  <p className="mt-0.5 truncate font-mono text-[11px] text-muted">
-                                    {t.link}
-                                  </p>
-                                </div>
-                                <CopyLinkButton value={t.link} />
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      ) : null}
-                    </div>
-                  ) : null}
+                        {isEditing ? (
+                          <div className="rounded-xl border border-card-border bg-background/50 p-3">
+                            <HierarchyTeamFields
+                              divisionName={editDivision}
+                              unitName={editUnit}
+                              teamName={editTeam}
+                              pasteInput={editPaste}
+                              busy={adding}
+                              onDivisionChange={setEditDivision}
+                              onUnitChange={setEditUnit}
+                              onTeamChange={setEditTeam}
+                              onPasteChange={setEditPaste}
+                              onAddOne={() => {
+                                const row = draftFromFields(editDivision, editUnit, editTeam);
+                                if (!row) {
+                                  setError("팀명을 입력해 주세요.");
+                                  return;
+                                }
+                                void postTeams(w.id, [row]);
+                              }}
+                              onAddPaste={() => {
+                                const rows = parseHierarchyPaste(editPaste).map((r) => ({
+                                  name: r.name,
+                                  divisionName: r.divisionName ?? undefined,
+                                  unitName: r.unitName ?? undefined,
+                                }));
+                                if (rows.length === 0) {
+                                  setError("붙여넣을 줄을 입력해 주세요.");
+                                  return;
+                                }
+                                void postTeams(w.id, rows);
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className="mt-2 text-xs text-muted hover:text-foreground"
+                              onClick={() => setEditingWaveId(null)}
+                            >
+                              닫기
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="text-sm font-medium text-accent hover:underline"
+                            onClick={() => {
+                              setEditingWaveId(w.id);
+                              setExpandedStructure((prev) => ({ ...prev, [w.id]: true }));
+                            }}
+                          >
+                            + 구조 추가
+                          </button>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
                 </li>
               );
             })}
