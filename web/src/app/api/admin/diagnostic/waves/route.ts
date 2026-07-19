@@ -4,6 +4,7 @@ import { requireDiagnosticSuperadmin } from "@/lib/diagnostic/admin-access";
 import {
   campaignErrorResponse,
   createDiagnosticWave,
+  normalizeEnabledDemographicItemCodes,
   normalizeEnabledSectionCodes,
   parseWaveDate,
   waveListDto,
@@ -37,6 +38,7 @@ type PostBody = {
   organizationId?: string;
   instrumentId?: string;
   enabledSectionCodes?: string[];
+  enabledDemographicItemCodes?: string[];
   label?: string;
   opensAt?: string | null;
   closesAt?: string | null;
@@ -68,11 +70,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "활성 섹션을 1개 이상 선택해 주세요." }, { status: 400 });
     }
 
+    const enabledDemographic = normalizeEnabledDemographicItemCodes(
+      body.enabledDemographicItemCodes,
+    );
+
     const wave = await createDiagnosticWave({
       organizationId,
       instrumentId,
       label: typeof body.label === "string" ? body.label : null,
       enabledSectionCodes: enabled,
+      enabledDemographicItemCodes: enabledDemographic,
       opensAt: parseWaveDate(body.opensAt),
       closesAt: parseWaveDate(body.closesAt),
     });

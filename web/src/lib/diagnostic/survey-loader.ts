@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { SCALE_LABELS } from "@/lib/diagnostic/constants";
-import { filterSectionsByEnabled, parseEnabledSectionCodes } from "@/lib/diagnostic/section-filter";
+import {
+  filterDemographicItems,
+  filterSectionsByEnabled,
+  parseEnabledDemographicItemCodes,
+  parseEnabledSectionCodes,
+} from "@/lib/diagnostic/section-filter";
 
 function mapItem(item: {
   id: string;
@@ -26,6 +31,33 @@ function mapItem(item: {
     isDemographic: item.isDemographic,
     choiceOptions: item.choiceOptions,
   };
+}
+
+function mapSectionsWithDemographicFilter(
+  filteredSections: Array<{
+    code: string;
+    nameKo: string;
+    subscales: Array<{
+      code: string;
+      nameKo: string;
+      isDriver: boolean;
+      items: Parameters<typeof mapItem>[0][];
+    }>;
+    items: Parameters<typeof mapItem>[0][];
+  }>,
+  enabledDemographic: string[] | null,
+) {
+  return filteredSections.map((sec) => ({
+    code: sec.code,
+    nameKo: sec.nameKo,
+    subscales: sec.subscales.map((sub) => ({
+      code: sub.code,
+      nameKo: sub.nameKo,
+      isDriver: sub.isDriver,
+      items: sub.items.map(mapItem),
+    })),
+    directItems: filterDemographicItems(sec.items.map(mapItem), enabledDemographic),
+  }));
 }
 
 export function orgWideCookieKey(waveSlug: string) {
@@ -73,6 +105,7 @@ export async function loadOrgWideSurvey(waveSlug: string, respondentToken?: stri
 
   const enabled = parseEnabledSectionCodes(wave.enabledSectionCodes);
   const filteredSections = filterSectionsByEnabled(wave.instrument.sections, enabled);
+  const enabledDemographic = parseEnabledDemographicItemCodes(wave.enabledDemographicItemCodes);
 
   let response = respondentToken
     ? await prisma.diagnosticResponse.findUnique({
@@ -85,17 +118,7 @@ export async function loadOrgWideSurvey(waveSlug: string, respondentToken?: stri
     response = null;
   }
 
-  const sections = filteredSections.map((sec) => ({
-    code: sec.code,
-    nameKo: sec.nameKo,
-    subscales: sec.subscales.map((sub) => ({
-      code: sub.code,
-      nameKo: sub.nameKo,
-      isDriver: sub.isDriver,
-      items: sub.items.map(mapItem),
-    })),
-    directItems: sec.items.map(mapItem),
-  }));
+  const sections = mapSectionsWithDemographicFilter(filteredSections, enabledDemographic);
 
   const answerMap: Record<string, { current?: number; importance?: number; text?: string }> = {};
   if (response) {
@@ -162,6 +185,7 @@ export async function loadTeamSurvey(waveSlug: string, teamSlug: string, respond
 
   const enabled = parseEnabledSectionCodes(wave.enabledSectionCodes);
   const filteredSections = filterSectionsByEnabled(wave.instrument.sections, enabled);
+  const enabledDemographic = parseEnabledDemographicItemCodes(wave.enabledDemographicItemCodes);
 
   let response = respondentToken
     ? await prisma.diagnosticResponse.findUnique({
@@ -174,17 +198,7 @@ export async function loadTeamSurvey(waveSlug: string, teamSlug: string, respond
     response = null;
   }
 
-  const sections = filteredSections.map((sec) => ({
-    code: sec.code,
-    nameKo: sec.nameKo,
-    subscales: sec.subscales.map((sub) => ({
-      code: sub.code,
-      nameKo: sub.nameKo,
-      isDriver: sub.isDriver,
-      items: sub.items.map(mapItem),
-    })),
-    directItems: sec.items.map(mapItem),
-  }));
+  const sections = mapSectionsWithDemographicFilter(filteredSections, enabledDemographic);
 
   const answerMap: Record<string, { current?: number; importance?: number; text?: string }> = {};
   if (response) {

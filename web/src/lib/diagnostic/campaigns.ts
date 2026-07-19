@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma, PrismaClient } from "@prisma/client";
-import { parseEnabledSectionCodes, sectionBadgeLabel } from "@/lib/diagnostic/section-filter";
+import {
+  DEMOGRAPHIC_ITEM_CODES,
+  parseEnabledDemographicItemCodes,
+  parseEnabledSectionCodes,
+  sectionBadgeLabel,
+} from "@/lib/diagnostic/section-filter";
 import { deriveInitialWaveStatus, waveStatusLabel } from "@/lib/diagnostic/wave-status";
 import { uniqueSlug, waveSlug } from "@/lib/diagnostic/slug";
 import type { DiagnosticWaveStatus } from "@prisma/client";
@@ -23,6 +28,16 @@ export function normalizeEnabledSectionCodes(
 ): string[] | null {
   if (!Array.isArray(requested) || requested.length === 0) return null;
   const filtered = requested.filter((c) => validCodes.has(c));
+  return filtered.length > 0 ? filtered : null;
+}
+
+const VALID_DEMOGRAPHIC_CODES = new Set<string>(DEMOGRAPHIC_ITEM_CODES);
+
+export function normalizeEnabledDemographicItemCodes(
+  requested: string[] | undefined | null,
+): string[] | null {
+  if (!Array.isArray(requested) || requested.length === 0) return null;
+  const filtered = requested.filter((c) => VALID_DEMOGRAPHIC_CODES.has(c));
   return filtered.length > 0 ? filtered : null;
 }
 
@@ -49,6 +64,7 @@ export type CreateWaveInput = {
   instrumentId: string;
   label?: string | null;
   enabledSectionCodes?: string[] | null;
+  enabledDemographicItemCodes?: string[] | null;
   opensAt?: Date | null;
   closesAt?: Date | null;
   status?: DiagnosticWaveStatus;
@@ -66,6 +82,7 @@ type WaveListRow = {
   opensAt: Date | null;
   closesAt: Date | null;
   enabledSectionCodes: unknown;
+  enabledDemographicItemCodes?: unknown;
   organization: { id: string; name: string };
   instrument: { nameKo: string };
   teams?: Array<{
@@ -93,6 +110,7 @@ export function waveListDto(wave: WaveListRow, baseUrl: string) {
     opensAt: wave.opensAt?.toISOString() ?? null,
     closesAt: wave.closesAt?.toISOString() ?? null,
     enabledSectionCodes: enabled,
+    enabledDemographicItemCodes: parseEnabledDemographicItemCodes(wave.enabledDemographicItemCodes),
     sectionBadge: sectionBadgeLabel(enabled),
     organizationId: wave.organization.id,
     organizationName: wave.organization.name,
@@ -136,6 +154,9 @@ export async function createDiagnosticWave(input: CreateWaveInput, db: Db = pris
     input.enabledSectionCodes ?? undefined,
     sectionCodes,
   );
+  const enabledDemographicItemCodes = normalizeEnabledDemographicItemCodes(
+    input.enabledDemographicItemCodes ?? undefined,
+  );
 
   const opensAt = input.opensAt ?? null;
   const closesAt = input.closesAt ?? null;
@@ -169,6 +190,7 @@ export async function createDiagnosticWave(input: CreateWaveInput, db: Db = pris
       opensAt,
       closesAt,
       enabledSectionCodes: enabledSectionCodes ?? undefined,
+      enabledDemographicItemCodes: enabledDemographicItemCodes ?? undefined,
       instrumentVersionSnapshot: instrument.version,
     },
   });
@@ -320,6 +342,7 @@ export type PatchWaveInput = {
   opensAt?: Date | null;
   closesAt?: Date | null;
   enabledSectionCodes?: string[] | null;
+  enabledDemographicItemCodes?: string[] | null;
 };
 
 export async function patchDiagnosticWave(
@@ -344,6 +367,7 @@ export async function patchDiagnosticWave(
     opensAt?: Date | null;
     closesAt?: Date | null;
     enabledSectionCodes?: Prisma.InputJsonValue | typeof Prisma.JsonNull;
+    enabledDemographicItemCodes?: Prisma.InputJsonValue | typeof Prisma.JsonNull;
   } = {};
 
   if (patch.status) data.status = patch.status;
@@ -357,6 +381,13 @@ export async function patchDiagnosticWave(
       valid,
     );
     data.enabledSectionCodes =
+      normalized === null ? Prisma.JsonNull : (normalized as Prisma.InputJsonValue);
+  }
+  if (patch.enabledDemographicItemCodes !== undefined) {
+    const normalized = normalizeEnabledDemographicItemCodes(
+      patch.enabledDemographicItemCodes ?? undefined,
+    );
+    data.enabledDemographicItemCodes =
       normalized === null ? Prisma.JsonNull : (normalized as Prisma.InputJsonValue);
   }
 

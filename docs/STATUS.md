@@ -1,6 +1,44 @@
-# 현재 상태 (2026-07-18 기준)
+# 현재 상태 (2026-07-19 기준)
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
+
+## 최근 작업 — ARC Index 데모그래픽 카탈로그 확장 + 웨이브 on/off (2026-07-19)
+
+글로벌·국내 벤치마킹으로 DM 문항 카탈로그를 확장하고, `enabledSectionCodes`와
+같은 패턴으로 **웨이브별 데모그래픽 문항 on/off**를 추가했습니다.
+
+### 스키마
+- `DiagnosticWave.enabledDemographicItemCodes Json?`
+- 마이그레이션: `20260719160000_wave_enabled_demographic_items`
+- **null이면 DM01~DM05만 활성** (기존 웨이브 하위호환)
+
+### 신규 데모그래픽 코드 (`prisma/seed/arc-index-data.ts`)
+| 코드 | 문항 | 그룹 |
+|------|------|------|
+| DM06 | 성별 | 기본 확장 |
+| DM07 | 고용형태 | 국내 특화 |
+| DM08 | 최종학력 | 기본 확장 |
+| DM09 | 관리자 여부 | 글로벌 표준 |
+| DM10 | 근무형태 | 글로벌 표준 |
+| DM11 | 근무지역 | 국내 특화 |
+| DM12 | 장애 여부 | 민감정보(기본 OFF + 동의 경고) |
+
+기존 DM01~DM05는 코드·순서·내용 변경 없음. 세대구분은 DM04 파생
+(`mapAgeBandToGeneration`).
+
+### 변경 파일
+| 파일 | 내용 |
+|------|------|
+| `prisma/schema.prisma` | `enabledDemographicItemCodes` |
+| `prisma/seed/arc-index-data.ts` | DM06~DM12 |
+| `lib/diagnostic/section-filter.ts` | parse/filter + 세대 파생 |
+| `lib/diagnostic/survey-loader.ts` | org/team 로더 양쪽에 필터 |
+| `lib/diagnostic/campaigns.ts` | create/patch normalize |
+| `api/admin/diagnostic/waves/*` | read/write |
+| `AdminDiagnosticWizard.tsx` | Step2 데모그래픽 체크박스 |
+
+배포 후: `npx prisma migrate deploy` + `npm run db:seed:arc`(또는 instrument sync)로
+신규 문항을 DB에 반영.
 
 ## 최근 작업 — 음성 중심 역량평가 + 과제 CMS (2026-07-18)
 
