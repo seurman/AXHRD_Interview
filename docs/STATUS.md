@@ -2,6 +2,18 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 사업부·팀 구조 관리 + 엑셀 내보내기 (2026-07-19)
+
+이미 있던 `createHierarchyTeams` / GET `hierarchy`를 관리자 화면에 연결하고,
+조직 구조·설정용 `.xlsx` 다운로드를 추가했습니다(**개인 응답 원자료 미포함**).
+
+| 파일 | 변경 |
+|------|------|
+| `api/.../waves/[id]/teams` | `teams[{name,divisionName,unitName}]` + `names[]` 하위호환 |
+| `AdminDiagnosticWaveDetail.tsx` | 3칸/붙여넣기 입력 + hierarchy 트리 + 엑셀 버튼 |
+| `api/.../waves/[id]/export` | exceljs 4시트(조직/구조/DM설정/웨이브요약) |
+| `package.json` | `exceljs` 추가(이번 배치 유일한 새 의존성) |
+
 ## 최근 작업 — 종합 리포트 레이더·교차 차트 설명 보강 (2026-07-19)
 
 실사용자가 종합 탭 차트만 보고 의미를 알기 어렵던 리터러시 장벽을 완화.
