@@ -242,17 +242,29 @@ export function gapMatrixRows(
     ORI: number | null;
     OVI: number | null;
     quadrant: string | null;
+    typology?: string | null;
+    priorityManage?: boolean;
+    residual?: number | null;
   }>,
 ) {
-  return teams.map((t) => ({
-    id: t.teamId,
-    label: t.teamName,
-    score: t.ORI,
-    benchmark: t.OVI,
-    gap: t.ORI != null && t.OVI != null ? t.ORI - t.OVI : null,
-    status: scoreStatus(t.OVI),
-    note: quadrantLabel(t.quadrant),
-  }));
+  return teams.map((t) => {
+    const typeLabel = t.typology ? quadrantLabel(t.typology) : quadrantLabel(t.quadrant);
+    const flags = [
+      t.priorityManage ? "우선관리" : null,
+      t.residual != null ? `e=${t.residual.toFixed(2)}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    return {
+      id: t.teamId,
+      label: t.teamName,
+      score: t.ORI,
+      benchmark: t.OVI,
+      gap: t.ORI != null && t.OVI != null ? t.ORI - t.OVI : null,
+      status: scoreStatus(t.OVI),
+      note: flags ? `${typeLabel} · ${flags}` : typeLabel,
+    };
+  });
 }
 
 export function heatmapTone(value: number | null, benchmark = 3.5): string {

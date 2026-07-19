@@ -45,6 +45,27 @@ describe("formula-book alignments", () => {
     }
   });
 
+  it("classifies GAP_MATRIX typology and marks Gap² TOP3 priority", () => {
+    const teams = [
+      { teamId: "a", teamName: "A", ORI: 2.0, OVI: 4.0, OHI_SE: 2.5, OAI: 3.5 }, // POSITIVE + low OHI → CRASH
+      { teamId: "b", teamName: "B", ORI: 2.1, OVI: 3.8, OHI_SE: 4.0, OAI: 3.5 }, // POSITIVE + high OHI → SUPER_STAR
+      { teamId: "c", teamName: "C", ORI: 4.0, OVI: 2.0, OHI_SE: 2.5, OAI: 3.5 }, // NEGATIVE + low OHI → APATHY
+      { teamId: "d", teamName: "D", ORI: 3.9, OVI: 2.1, OHI_SE: 4.0, OAI: 3.5 }, // NEGATIVE + high OHI → CARTEL
+      { teamId: "e", teamName: "E", ORI: 3.0, OVI: 3.0, OHI_SE: 3.5, OAI: 3.5 }, // near mean
+      { teamId: "f", teamName: "F", ORI: 3.2, OVI: 3.1, OHI_SE: 3.5, OAI: 3.5 },
+    ];
+    const result = computeTeamGapMatrix(teams);
+    expect(result.mode).toBe("GAP_MATRIX");
+    if (result.mode !== "GAP_MATRIX") return;
+    const byId = Object.fromEntries(result.teams.map((t) => [t.teamId, t]));
+    expect(byId.a.typology).toBe("CRASH");
+    expect(byId.b.typology).toBe("SUPER_STAR");
+    expect(byId.c.typology).toBe("APATHY");
+    expect(byId.d.typology).toBe("CARTEL");
+    const prioritized = result.teams.filter((t) => t.priorityManage);
+    expect(prioritized).toHaveLength(3);
+  });
+
   it("projects golden-time horizons from a 3-wave series", () => {
     const forecast = projectGoldenTimeFromSeries({
       points: [

@@ -121,12 +121,12 @@ export function computeTL(answers: ScoredAnswers, reversed: Set<string>) {
   return { trust, growth, safety, TL };
 }
 
-/** v260715 경량 시드 기준 — 없는 코드는 pick 시 자동 제외 */
+/** 산식표 드라이버 코드 — 없는 문항은 pick 시 자동 제외(경량/통합 시드 호환) */
 const DRIVER_CODES: Record<string, string[]> = {
   SL: ["SL01", "SL02", "SL03"],
   SV: ["SV01", "SV02", "SV03"],
-  PS: ["PS01", "PS02"],
-  EM: ["EM01", "EM02"],
+  PS: ["PS01", "PS02", "PS03"],
+  EM: ["EM01", "EM02", "EM03"],
   PM: ["PM01", "PM02", "PM04"],
   LG: ["LG01", "LG02"],
   CI: ["CI01", "CI02"],
@@ -220,11 +220,24 @@ export function computeDynamicCongruenceGap(AV: number | null, HV: number | null
 }
 
 export function computeOai(answers: ScoredAnswers, reversed: Set<string>) {
-  const SA = average(pickRaw(answers, ["SA01", "SA02", "SA03", "SA05", "SA06"], reversed));
-  const EA = average(pickRaw(answers, ["EA01", "EA02", "EA05"], reversed));
-  const OA = average(pickRaw(answers, ["OA01", "OA03", "OA04", "OA06"], reversed));
+  // 산식표: SA(SA01~06·SA04_R) · EA(EA01·02·03_R·05·06_R) · OA(OA01·02_R·03·04·06)
+  const SA = average(pickRaw(answers, ["SA01", "SA02", "SA03", "SA04", "SA05", "SA06"], reversed));
+  const EA = average(pickRaw(answers, ["EA01", "EA02", "EA03", "EA05", "EA06"], reversed));
+  const OA = average(pickRaw(answers, ["OA01", "OA02", "OA03", "OA04", "OA06"], reversed));
   const OAI = SA != null && EA != null && OA != null ? SA * 0.4 + EA * 0.35 + OA * 0.25 : null;
   return { SA, EA, OA, OAI, band: bandOai(OAI) };
+}
+
+export type GapTypology = "CRASH" | "SUPER_STAR" | "APATHY" | "CARTEL";
+
+/** 산식표 6-2/6-3 — 잔차·갭 방향 × OHI로 Crash/Super-Star/Apathy/Cartel 분류 */
+export function classifyGapTypology(
+  directionPositive: boolean,
+  ohiSe: number | null,
+): GapTypology {
+  const ohiLow = ohiSe == null || ohiSe < 3.5;
+  if (directionPositive) return ohiLow ? "CRASH" : "SUPER_STAR";
+  return ohiLow ? "APATHY" : "CARTEL";
 }
 
 export function computeOaiPattern(
@@ -319,7 +332,7 @@ export type TeamGapTeamRow = {
   quadrant: string | null;
   residual?: number | null;
   residualSquared?: number | null;
-  typology?: "CRASH" | "SUPER_STAR" | "APATHY" | "CARTEL" | null;
+  typology?: GapTypology | null;
   priorityManage?: boolean;
   fastErrorWarning?: boolean;
 };
@@ -371,12 +384,7 @@ export function computeTeamGapMatrix(
         const predicted = intercept + slope * t.ORI;
         const residual = t.OVI - predicted;
         const residualSquared = residual * residual;
-        const se = t.OHI_SE;
-        let typology: TeamGapTeamRow["typology"] = null;
-        if (residual > 0 && (se == null || se < 3.5)) typology = "CRASH";
-        else if (residual > 0) typology = "SUPER_STAR";
-        else if (residual < 0 && (se == null || se < 3.5)) typology = "APATHY";
-        else typology = "CARTEL";
+        const typology = classifyGapTypology(residual > 0, t.OHI_SE);
         const gap = t.ORI - t.OVI;
         return {
           ...t,
@@ -410,24 +418,43 @@ export function computeTeamGapMatrix(
 
   const xBase = average(complete.map((t) => t.ORI));
   const yBase = average(complete.map((t) => t.OVI));
+  const mapped = teams.map((t) => {
+    const gap = t.ORI != null && t.OVI != null ? t.ORI - t.OVI : null;
+    const gapSquared = gap != null ? gap * gap : null;
+    let quadrant: string | null = null;
+    let typology: TeamGapTeamRow["typology"] = null;
+    if (t.ORI != null && t.OVI != null && xBase != null && yBase != null) {
+      if (t.ORI >= xBase && t.OVI >= yBase) quadrant = "IDEAL";
+      else if (t.ORI < xBase && t.OVI >= yBase) {
+        quadrant = "POSITIVE_GAP";
+        typology = classifyGapTypology(true, t.OHI_SE);
+      } else if (t.ORI < xBase && t.OVI < yBase) quadrant = "CRISIS";
+      else {
+        quadrant = "NEGATIVE_GAP";
+        typology = classifyGapTypology(false, t.OHI_SE);
+      }
+    }
+    return {
+      ...t,
+      gap,
+      gapSquared,
+      quadrant,
+      typology,
+      priorityManage: false as boolean,
+      fastErrorWarning:
+        t.OVI != null && t.OVI >= 3.5 && (t.OAI == null || t.OAI <= 2.8),
+    } satisfies TeamGapTeamRow;
+  });
+  const sorted = [...mapped].sort((a, b) => (b.gapSquared ?? 0) - (a.gapSquared ?? 0));
+  // 산식표 6-3: Gap² TOP 3팀 = 긴급 처방 대상
+  const topPriority = sorted.filter((t) => t.gapSquared != null).slice(0, 3);
+  for (const t of topPriority) t.priorityManage = true;
+
   return {
     mode: "GAP_MATRIX",
     xBase,
     yBase,
-    teams: teams
-      .map((t) => {
-        const gap = t.ORI != null && t.OVI != null ? t.ORI - t.OVI : null;
-        const gapSquared = gap != null ? gap * gap : null;
-        let quadrant: string | null = null;
-        if (t.ORI != null && t.OVI != null && xBase != null && yBase != null) {
-          if (t.ORI >= xBase && t.OVI >= yBase) quadrant = "IDEAL";
-          else if (t.ORI < xBase && t.OVI >= yBase) quadrant = "POSITIVE_GAP";
-          else if (t.ORI < xBase && t.OVI < yBase) quadrant = "CRISIS";
-          else quadrant = "NEGATIVE_GAP";
-        }
-        return { ...t, gap, gapSquared, quadrant };
-      })
-      .sort((a, b) => (b.gapSquared ?? 0) - (a.gapSquared ?? 0)),
+    teams: sorted,
   };
 }
 

@@ -894,12 +894,13 @@ npx.cmd tsx scripts/flow-smoke.ts
 
 | 파일 | 변경 |
 |------|------|
-| `web/src/lib/diagnostic/arc-scoring.ts` | IPA FOCUS=`β≥0.25`∧현재낮음, 건강한 표류 패턴, QCI, ICC 구간 정렬, 팀≥15 OLS 잔차 |
+| `web/src/lib/diagnostic/arc-scoring.ts` | IPA FOCUS=`β≥0.25`∧현재낮음, 건강한 표류 패턴, QCI, ICC 구간 정렬, 팀≥15 OLS 잔차, Gap 유형·Gap² TOP3, 산식표 문항코드(역문항 포함) |
 | `web/src/lib/diagnostic/longitudinal.ts` | 골든타임 3/6/12개월 선형 투영 |
 | `web/src/components/diagnostic/DiagnosticLongitudinalPanel.tsx` | 골든타임 표 |
 | `web/src/components/admin/diagnostic/OhiReportSection.tsx` | Risk 산식표 표기 + QCI 타일 |
 | `web/src/components/admin/diagnostic/ArcAxisSections.tsx` | Opp=AXA−AXG 산식 표기 |
 | `web/src/components/admin/AdminDiagnosticReport.tsx` | OLS 잔차 차트 |
+| `web/src/components/admin/diagnostic/OrgReportSection.tsx` | Gap/OLS 잔차 차트·분석표 연동 |
 | `web/src/lib/diagnostic/axis-report.ts` | `buildIccInterpretation` |
 | `web/src/components/admin/diagnostic/ArcAnalysisUi.tsx` | IPA n 배지·상관 주의 |
 
