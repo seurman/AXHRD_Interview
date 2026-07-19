@@ -136,7 +136,8 @@ function resolveGradingFrameworks(
   return competencyFrameworksWithRubrics(attempt.scenario);
 }
 
-function toGradingPayloadFrameworks(frameworks: CompetencyFrameworkSnapshot[]) {
+/** 채점 LLM에 넣는 역량 페이로드 — 루브릭(점수 기준)과 행동지표(체크포인트) 분리 */
+export function toGradingPayloadFrameworks(frameworks: CompetencyFrameworkSnapshot[]) {
   return frameworks.map((fw) => ({
     code: fw.code,
     nameKo: fw.nameKo,
@@ -153,6 +154,13 @@ function toGradingPayloadFrameworks(frameworks: CompetencyFrameworkSnapshot[]) {
       indicators: sub.indicators,
     })),
   }));
+}
+
+/** 시도 스냅샷 우선, 없으면 시나리오 현재 프레임 */
+export function resolveAttemptGradingFrameworks(
+  attempt: Pick<AttemptForGrading, "frameworkSnapshot" | "scenario">,
+): CompetencyFrameworkSnapshot[] {
+  return resolveGradingFrameworks(attempt as AttemptForGrading);
 }
 
 function buildRolePlayUserPayload(attempt: AttemptForGrading, ratingScale: RatingScaleRow[]) {

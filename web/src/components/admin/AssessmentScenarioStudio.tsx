@@ -72,12 +72,15 @@ export function AssessmentScenarioStudio() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [bankCompetencies, setBankCompetencies] = useState<BankCompetency[]>([]);
-  const [rubricOptions, setRubricOptions] = useState<RubricSetOption[]>([]);
   const [modes, setModes] = useState({ rolePlay: true, inBasket: false });
   const [sampleText, setSampleText] = useState("");
   const [guidance, setGuidance] = useState("");
   const [sourcePreview, setSourcePreview] = useState<string | null>(null);
   const [publishIssues, setPublishIssues] = useState<string[]>([]);
+  const [rubricOptionsByCompetency, setRubricOptionsByCompetency] = useState<
+    Record<string, RubricSetOption[]>
+  >({});
+  const [candidatePreview, setCandidatePreview] = useState<string | null>(null);
 
   const selected = useMemo(
     () => scenarios.find((s) => s.id === selectedId) ?? null,
@@ -130,25 +133,44 @@ export function AssessmentScenarioStudio() {
   }, []);
 
   useEffect(() => {
-    if (!selected?.competencies[0]?.competencyId) {
-      setRubricOptions([]);
+    const ids = [
+      ...new Set(
+        (selected?.competencies ?? [])
+          .map((c) => c.competencyId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    if (ids.length === 0) {
+      setRubricOptionsByCompetency({});
       return;
     }
-    const competencyId = selected.competencies[0].competencyId;
+    let cancelled = false;
     void (async () => {
-      try {
-        const res = await fetch(
-          `/api/admin/repository/rubric-sets?competencyId=${encodeURIComponent(competencyId)}`,
-        );
-        const data = (await res.json()) as {
-          rubricSets?: RubricSetOption[];
-        };
-        if (res.ok) setRubricOptions(data.rubricSets ?? []);
-      } catch {
-        setRubricOptions([]);
-      }
+      const next: Record<string, RubricSetOption[]> = {};
+      await Promise.all(
+        ids.map(async (competencyId) => {
+          try {
+            const res = await fetch(
+              `/api/admin/repository/rubric-sets?competencyId=${encodeURIComponent(competencyId)}`,
+            );
+            const data = (await res.json()) as { rubricSets?: RubricSetOption[] };
+            if (res.ok) next[competencyId] = data.rubricSets ?? [];
+          } catch {
+            next[competencyId] = [];
+          }
+        }),
+      );
+      if (!cancelled) setRubricOptionsByCompetency(next);
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [selected?.competencies]);
+
+  useEffect(() => {
+    setCandidatePreview(null);
+    setPublishIssues([]);
+  }, [selectedId]);
 
   async function createFromParsedSource(parseInit: RequestInit) {
     setBusy(true);
@@ -383,16 +405,115 @@ export function AssessmentScenarioStudio() {
     await saveSelected({ competencyLinks: existing });
   }
 
-  async function setRubricForFirst(rubricSetId: string) {
-    if (!selected?.competencies[0]?.competencyId) return;
+  async function setRubricForCompetency(competencyId: string, rubricSetId: string) {
+    if (!selected) return;
     const links = selected.competencies
       .filter((c) => c.competencyId)
-      .map((c, index) => ({
+      .map((c) => ({
         competencyId: c.competencyId!,
-        rubricSetId: index === 0 ? rubricSetId : c.rubricSetId,
+        rubricSetId: c.competencyId === competencyId ? rubricSetId : c.rubricSetId,
         subskills: c.subskills,
       }));
     await saveSelected({ competencyLinks: links });
+  }
+
+  async function duplicateSelected() {
+    if (!selected) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/admin/assessment-scenarios/${selected.id}/duplicate`,
+        { method: "POST" },
+      );
+      const data = (await res.json()) as { scenario?: AdminScenario; error?: string };
+      if (!res.ok || !data.scenario) throw new Error(data.error ?? "복제 실패");
+      setMessage(`복제본을 만들었습니다: ${data.scenario.code}`);
+      await refresh();
+      setSelectedId(data.scenario.id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "복제 실패");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function archiveSelected() {
+    if (!selected) return;
+    if (!window.confirm(`「${selected.titleKo}」을(를) 보관하시겠습니까?`)) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/assessment-scenarios/${selected.id}`, {
+        method: "DELETE",
+      });
+      const data = (await res.json()) as { scenario?: AdminScenario; error?: string };
+      if (!res.ok || !data.scenario) throw new Error(data.error ?? "보관 실패");
+      setScenarios((list) =>
+        list.map((s) => (s.id === data.scenario!.id ? data.scenario! : s)),
+      );
+      setMessage("보관했습니다. 목록에서 ARCHIVED로 표시됩니다.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "보관 실패");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function loadCandidatePreview() {
+    if (!selected) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/admin/assessment-scenarios/${selected.id}/preview`,
+      );
+      const data = (await res.json()) as {
+        preview?: {
+          candidateFacing: {
+            personaName: string | null;
+            openingLine: string | null;
+            competencies: Array<{ nameKo: string }>;
+            inBasketItems: Array<{ subject: string; fromLabel: string }>;
+          };
+          titleKo: string;
+          taskBrief: string;
+          kind: string;
+        };
+        publishReady?: boolean;
+        issues?: Array<{ message: string }>;
+        error?: string;
+      };
+      if (!res.ok || !data.preview) throw new Error(data.error ?? "미리보기 실패");
+      const cf = data.preview.candidateFacing;
+      const lines = [
+        `[응시자 화면 미리보기] ${data.preview.titleKo}`,
+        data.preview.taskBrief,
+        "",
+        data.preview.kind === "ROLE_PLAY"
+          ? `상대역: ${cf.personaName ?? "—"}`
+          : `서류함 ${cf.inBasketItems.length}건`,
+        data.preview.kind === "ROLE_PLAY" && cf.openingLine
+          ? `첫 발화: ${cf.openingLine}`
+          : "",
+        `연결 역량: ${cf.competencies.map((c) => c.nameKo).join(", ") || "—"}`,
+        data.preview.kind === "IN_BASKET"
+          ? cf.inBasketItems
+              .map((it, i) => `${i + 1}. ${it.subject} (${it.fromLabel})`)
+              .join("\n")
+          : "",
+        "",
+        data.publishReady
+          ? "게시 가능"
+          : `게시 전 보완: ${(data.issues ?? []).map((i) => i.message).join(" · ")}`,
+      ].filter(Boolean);
+      setCandidatePreview(lines.join("\n"));
+      setMessage("응시자 관점 미리보기를 불러왔습니다.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "미리보기 실패");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function seedDemoScenarios() {
@@ -680,6 +801,22 @@ export function AssessmentScenarioStudio() {
                   >
                     저장
                   </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void loadCandidatePreview()}
+                    className="min-h-11 rounded-lg border border-card-border px-3 py-2 text-sm sm:min-h-0 sm:py-1.5 sm:text-xs"
+                  >
+                    미리보기
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void duplicateSelected()}
+                    className="min-h-11 rounded-lg border border-card-border px-3 py-2 text-sm sm:min-h-0 sm:py-1.5 sm:text-xs"
+                  >
+                    복제
+                  </button>
                   {selected.status === "PUBLISHED" ? (
                     <button
                       type="button"
@@ -699,8 +836,24 @@ export function AssessmentScenarioStudio() {
                       {busy ? "처리 중…" : "드래프트 게시"}
                     </button>
                   )}
+                  {selected.status !== "ARCHIVED" ? (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void archiveSelected()}
+                      className="min-h-11 rounded-lg border border-warning/40 px-3 py-2 text-sm text-warning sm:min-h-0 sm:py-1.5 sm:text-xs"
+                    >
+                      보관
+                    </button>
+                  ) : null}
                 </div>
               </div>
+
+              {candidatePreview ? (
+                <pre className="max-h-48 overflow-auto rounded-lg border border-card-border bg-background/80 p-3 text-xs whitespace-pre-wrap text-muted">
+                  {candidatePreview}
+                </pre>
+              ) : null}
 
               {selected.status !== "ARCHIVED" ? (
                 <div className="rounded-lg border border-card-border bg-background/50 p-3">
@@ -852,23 +1005,6 @@ export function AssessmentScenarioStudio() {
                       </option>
                     ))}
                   </select>
-                  {rubricOptions.length > 0 ? (
-                    <select
-                      className="min-h-11 w-full rounded-lg border border-card-border bg-background px-2 py-2 text-sm sm:min-h-0 sm:w-auto sm:py-1.5 sm:text-xs"
-                      value={selected.competencies[0]?.rubricSetId ?? ""}
-                      onChange={(e) => {
-                        if (e.target.value) void setRubricForFirst(e.target.value);
-                      }}
-                    >
-                      <option value="">첫 역량 루브릭 선택…</option>
-                      {rubricOptions.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.rubricName}
-                          {r.isDefault ? " (기본)" : ""}
-                        </option>
-                      ))}
-                    </select>
-                  ) : null}
                 </div>
                 <ul className="space-y-2">
                   {selected.competencies.map((c) => (
@@ -885,6 +1021,25 @@ export function AssessmentScenarioStudio() {
                         하위역량 {c.subskills.length} · 행동지표{" "}
                         {c.subskills.reduce((n, s) => n + s.indicators.length, 0)}
                       </p>
+                      {c.competencyId ? (
+                        <select
+                          className="mt-2 min-h-10 w-full rounded-lg border border-card-border bg-background px-2 py-1.5 text-xs"
+                          value={c.rubricSetId ?? ""}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              void setRubricForCompetency(c.competencyId!, e.target.value);
+                            }
+                          }}
+                        >
+                          <option value="">이 역량 루브릭 선택…</option>
+                          {(rubricOptionsByCompetency[c.competencyId] ?? []).map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {r.rubricName}
+                              {r.isDefault ? " (기본)" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

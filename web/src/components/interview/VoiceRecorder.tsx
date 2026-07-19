@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IconMic, IconSquare } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
+import { speechRecognitionErrorMessage } from "@/lib/voice/voice-mode";
 
 interface VoiceRecorderProps {
   onTranscript: (text: string, durationSec?: number) => void;
@@ -22,19 +23,6 @@ interface VoiceRecorderProps {
   confirmLabel?: string;
   /** 마이크 안내 문구 */
   idleHint?: string;
-}
-
-const SPEECH_ERROR_MESSAGES: Record<string, string> = {
-  "not-allowed": "마이크 권한이 거부되었습니다. 브라우저 설정에서 마이크를 허용해 주세요.",
-  "no-speech": "음성이 감지되지 않았습니다. 조금 더 크게 말씀해 주세요.",
-  network: "음성 인식 네트워크 오류입니다. 인터넷 연결을 확인해 주세요.",
-  aborted: "음성 인식이 중단되었습니다. 다시 시도해 주세요.",
-  "audio-capture": "마이크를 찾을 수 없습니다. 장치 연결을 확인해 주세요.",
-  "service-not-allowed": "이 페이지에서는 음성 인식을 사용할 수 없습니다. HTTPS 또는 localhost에서 시도해 주세요.",
-};
-
-function speechErrorMessage(code: string): string {
-  return SPEECH_ERROR_MESSAGES[code] ?? `음성 인식 오류(${code}). 다시 시도하거나 직접 입력해 주세요.`;
 }
 
 export function VoiceRecorder({
@@ -113,7 +101,7 @@ export function VoiceRecorder({
       const code = event.error ?? "unknown";
       setListening(false);
       if (code !== "aborted") {
-        setError(speechErrorMessage(code));
+        setError(speechRecognitionErrorMessage(code));
       }
     };
 
