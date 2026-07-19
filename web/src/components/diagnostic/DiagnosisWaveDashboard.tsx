@@ -69,7 +69,15 @@ type Scores = {
     note?: string;
     xBase?: number | null;
     yBase?: number | null;
-    teams?: Array<{ teamId: string; teamName: string; ORI: number | null; OVI: number | null; quadrant: string | null }>;
+    teams?: Array<{
+      teamId: string;
+      teamName: string;
+      ORI: number | null;
+      OVI: number | null;
+      quadrant: string | null;
+      priorityManage?: boolean;
+      typology?: string | null;
+    }>;
   };
 };
 
@@ -567,9 +575,33 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
               );
             })()}
 
-          {drillId === null && aggregate?.gapMatrix?.mode === "OLS_REQUIRED" && (
-            <div className="rounded-2xl border border-card-border bg-card/30 p-4 text-sm text-muted">
-              {aggregate.gapMatrix.note}
+          {drillId === null && aggregate?.gapMatrix?.mode === "OLS_RESIDUAL" && (
+            <div className="rounded-2xl border border-card-border bg-card/40 p-4">
+              <h3 className="mb-1 text-sm font-semibold">팀 OLS 잔차 (ORI→OVI)</h3>
+              <p className="mb-3 text-xs text-muted">{aggregate.gapMatrix.note}</p>
+              <div className="h-64 sm:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid />
+                    <XAxis type="number" dataKey="ORI" name="ORI" domain={[1, 5]} />
+                    <YAxis type="number" dataKey="OVI" name="OVI" domain={[1, 5]} />
+                    <ZAxis range={[80, 80]} />
+                    <Tooltip cursor={{ strokeDasharray: "3 3" }} />
+                    <Scatter
+                      data={(aggregate.gapMatrix.teams ?? []).filter(
+                        (t) => t.ORI != null && t.OVI != null,
+                      )}
+                    >
+                      {(aggregate.gapMatrix.teams ?? []).map((t) => (
+                        <Cell
+                          key={t.teamId}
+                          fill={t.priorityManage ? "#ef4444" : "#c9a227"}
+                        />
+                      ))}
+                    </Scatter>
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           )}
           {drillId === null && aggregate?.gapMatrix?.mode === "GAP_MATRIX" && aggregate.gapMatrix.teams && (

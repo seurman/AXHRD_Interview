@@ -167,6 +167,28 @@ export function computeRiskIndex(
   return c03Flag * 0.4 + eFlag * 0.3 + hvFlag * 0.3;
 }
 
+/**
+ * Quiet Cracking Index — 문항 추가 없이 기존 응답으로 계산하는 연속 위험 파생지표.
+ * QCI = (6−C03)×0.4 + (6−E평균)×0.3 + max(0, BO평균−3)×0.3
+ * (설문 최적화 제안서 산식. 값이 클수록 “몰입은 무너졌지만 행동은 유지” 위험군)
+ */
+export function computeQuietCrackingIndex(
+  answers: ScoredAnswers,
+  reversed: Set<string>,
+  Eavg: number | null,
+  BO: number | null,
+): number | null {
+  const c03 = answers.SEC03?.current ?? answers.C03?.current;
+  const c03raw = c03 != null ? rawValue(reversed.has("SEC03") || reversed.has("C03"), c03) : null;
+  if (c03raw == null || Eavg == null || BO == null) return null;
+  const qci =
+    (6 - c03raw) * 0.4 + (6 - Eavg) * 0.3 + Math.max(0, BO - 3) * 0.3;
+  return Math.round(qci * 1000) / 1000;
+}
+
+/** IPA 집중개선 — 산식표: 표준화 β ≥ 0.25 이면서 현재수준이 낮을 때 */
+export const IPA_BETA_FOCUS_THRESHOLD = 0.25;
+
 export function computeOri(answers: ScoredAnswers, reversed: Set<string>) {
   const CD = average(pickRaw(answers, ["CD01", "CD02", "CD03", "CD04", "CD05"], reversed));
   const LA = average(pickRaw(answers, ["LA01", "LA02", "LA03"], reversed));
@@ -218,6 +240,12 @@ export function computeOaiPattern(
     return {
       pattern: "이상적 조직",
       message: "4축 균형 상태. 번아웃 예방과 Wave 2 재진단 설계로 전환.",
+    };
+  }
+  if (hi(OHI) && lo(OVI) && lo(OAI)) {
+    return {
+      pattern: "건강한 표류",
+      message: "활력은 있으나 방향도 없고 속도도 없음. 공공기관에서 흔한 패턴.",
     };
   }
   if (hi(OHI) && hi(OVI) && lo(OAI)) {
@@ -279,19 +307,111 @@ export function computeAxMaturityStage(input: {
   return null;
 }
 
-export function computeTeamGapMatrix(
-  teams: Array<{ teamId: string; teamName: string; ORI: number | null; OVI: number | null; OHI_SE: number | null; OAI: number | null }>,
-) {
-  if (teams.length >= 15) {
-    return {
-      mode: "OLS_REQUIRED" as const,
-      note: "팀 15개 이상 — OLS 회귀+잔차분석 필요(2단계 통계엔진 대상, 이번 단계 미구현)",
+export type TeamGapTeamRow = {
+  teamId: string;
+  teamName: string;
+  ORI: number | null;
+  OVI: number | null;
+  OHI_SE: number | null;
+  OAI: number | null;
+  gap: number | null;
+  gapSquared: number | null;
+  quadrant: string | null;
+  residual?: number | null;
+  residualSquared?: number | null;
+  typology?: "CRASH" | "SUPER_STAR" | "APATHY" | "CARTEL" | null;
+  priorityManage?: boolean;
+  fastErrorWarning?: boolean;
+};
+
+export type TeamGapMatrixResult =
+  | {
+      mode: "GAP_MATRIX";
+      xBase: number | null;
+      yBase: number | null;
+      teams: TeamGapTeamRow[];
+    }
+  | {
+      mode: "OLS_RESIDUAL";
+      intercept: number;
+      slope: number;
+      rSquared: number | null;
+      n: number;
+      teams: TeamGapTeamRow[];
+      note: string;
     };
+
+/**
+ * 팀 ORI×OVI 갭 분석.
+ * - 팀 5~14: 4사분면 Gap 매트릭스 (산식표 6-3)
+ * - 팀 ≥15: OLS 회귀선 + 잔차 분석 (산식표 6-2). Ŷ=a+b·ORI, e=OVI−Ŷ, e² 상위 25% 우선관리
+ */
+export function computeTeamGapMatrix(
+  teams: Array<{
+    teamId: string;
+    teamName: string;
+    ORI: number | null;
+    OVI: number | null;
+    OHI_SE: number | null;
+    OAI: number | null;
+  }>,
+): TeamGapMatrixResult {
+  const complete = teams.filter(
+    (t): t is typeof t & { ORI: number; OVI: number } => t.ORI != null && t.OVI != null,
+  );
+
+  if (complete.length >= 15) {
+    const X = complete.map((t) => [t.ORI]);
+    const y = complete.map((t) => t.OVI);
+    const reg = olsRegression(X, y);
+    if (reg && reg.coefficients.length >= 2) {
+      const intercept = reg.coefficients[0];
+      const slope = reg.coefficients[1];
+      const withResiduals = complete.map((t) => {
+        const predicted = intercept + slope * t.ORI;
+        const residual = t.OVI - predicted;
+        const residualSquared = residual * residual;
+        const se = t.OHI_SE;
+        let typology: TeamGapTeamRow["typology"] = null;
+        if (residual > 0 && (se == null || se < 3.5)) typology = "CRASH";
+        else if (residual > 0) typology = "SUPER_STAR";
+        else if (residual < 0 && (se == null || se < 3.5)) typology = "APATHY";
+        else typology = "CARTEL";
+        const gap = t.ORI - t.OVI;
+        return {
+          ...t,
+          gap,
+          gapSquared: gap * gap,
+          quadrant: null,
+          residual,
+          residualSquared,
+          typology,
+          priorityManage: false as boolean,
+          fastErrorWarning: t.OVI >= 3.5 && (t.OAI == null || t.OAI <= 2.8),
+        } satisfies TeamGapTeamRow;
+      });
+      const sorted = [...withResiduals].sort(
+        (a, b) => (b.residualSquared ?? 0) - (a.residualSquared ?? 0),
+      );
+      const priorityCount = Math.max(1, Math.ceil(sorted.length * 0.25));
+      for (let i = 0; i < priorityCount; i += 1) sorted[i].priorityManage = true;
+
+      return {
+        mode: "OLS_RESIDUAL",
+        intercept,
+        slope,
+        rSquared: reg.rSquared,
+        n: complete.length,
+        teams: sorted,
+        note: "팀 15개 이상 — OLS 회귀선(Ŷ=a+b·ORI) + 잔차 e=OVI−Ŷ. e² 상위 25% 우선관리.",
+      };
+    }
   }
-  const xBase = average(teams.map((t) => t.ORI));
-  const yBase = average(teams.map((t) => t.OVI));
+
+  const xBase = average(complete.map((t) => t.ORI));
+  const yBase = average(complete.map((t) => t.OVI));
   return {
-    mode: "GAP_MATRIX" as const,
+    mode: "GAP_MATRIX",
     xBase,
     yBase,
     teams: teams
@@ -453,6 +573,16 @@ export type DriverImportanceSummary = {
   insufficientData: boolean;
 };
 
+function assignIpaPriority(
+  beta: number | null,
+  current: number | null,
+  currentMedian: number,
+): DriverImportance["priority"] {
+  if (beta == null || current == null) return null;
+  if (beta >= IPA_BETA_FOCUS_THRESHOLD && current < currentMedian) return "FOCUS";
+  return "MAINTAIN";
+}
+
 /**
  * Y=SE(활력·헌신·몰두 종합) / X=9개 드라이버 영역 현재점수 — 응답자 단위 완전사례만 사용.
  * 예측변수(10개) 대비 표본이 너무 적으면(경험칙 n < p×3) 불안정하므로 계산하지 않는다.
@@ -484,15 +614,17 @@ export function computeDriverImportance(
   const reg = olsRegression(rows, ys);
   const currentAvg = DRIVER_ORDER.map((_, idx) => average(rows.map((row) => row[idx])));
   const betas = reg?.standardizedCoefficients ?? DRIVER_ORDER.map(() => null);
-  const betaMedian = median(betas.filter((b): b is number => b != null));
   const currentMedian = median(currentAvg.filter((v): v is number => v != null));
 
   const entries = DRIVER_ORDER.map((code, idx) => {
     const beta = reg ? betas[idx] : null;
     const current = currentAvg[idx];
-    const priority: DriverImportance["priority"] =
-      beta != null && current != null ? (beta >= betaMedian && current < currentMedian ? "FOCUS" : "MAINTAIN") : null;
-    return { code, current, beta, priority };
+    return {
+      code,
+      current,
+      beta,
+      priority: assignIpaPriority(beta, current, currentMedian),
+    };
   });
 
   return { entries, rSquared: reg?.rSquared ?? null, n: rows.length, insufficientData: false };
@@ -534,15 +666,17 @@ export function computeTeamLevelDriverImportance(
   const reg = olsRegression(rows, ys, weights);
   const currentAvg = DRIVER_ORDER.map((_, idx) => average(rows.map((row) => row[idx])));
   const betas = reg?.standardizedCoefficients ?? DRIVER_ORDER.map(() => null);
-  const betaMedian = median(betas.filter((b): b is number => b != null));
   const currentMedian = median(currentAvg.filter((v): v is number => v != null));
 
   const entries = DRIVER_ORDER.map((code, idx) => {
     const beta = reg ? betas[idx] : null;
     const current = currentAvg[idx];
-    const priority: DriverImportance["priority"] =
-      beta != null && current != null ? (beta >= betaMedian && current < currentMedian ? "FOCUS" : "MAINTAIN") : null;
-    return { code, current, beta, priority };
+    return {
+      code,
+      current,
+      beta,
+      priority: assignIpaPriority(beta, current, currentMedian),
+    };
   });
 
   return { entries, rSquared: reg?.rSquared ?? null, n: rows.length, insufficientData: false };
@@ -557,9 +691,13 @@ export type IccResult = {
 
 function iccInterpretation(icc: number | null): string | null {
   if (icc == null) return null;
-  if (icc < 0.05) return "팀 간 차이 미미 — 조직 전체 개입으로 충분";
-  if (icc < 0.15) return "팀 간 차이 존재 — 팀 단위 코칭 고려";
-  return "팀마다 편차 큼 — 팀별 맞춤 개입 필수(조직 평균만으로는 오진 위험)";
+  if (icc < 0.05) return "팀 간 차이가 크지 않아 조직 단위 해석을 권장합니다";
+  if (icc <= 0.2) {
+    return icc >= 0.1
+      ? "팀 간 차이가 보통 수준입니다 (ICC≥.10 — HLM 적용 정당화 구간)"
+      : "팀 간 차이가 보통 수준입니다";
+  }
+  return "팀별 개입 근거가 충분합니다";
 }
 
 /**
@@ -820,6 +958,7 @@ export function computeArcScoresFromAnswers(
   const ovi = computeOvi(answers, reversed);
   const oai = computeOai(answers, reversed);
   const riskIndex = computeRiskIndex(answers, reversed, se.E, ovi.HV);
+  const quietCrackingIndex = computeQuietCrackingIndex(answers, reversed, se.E, bo);
   const opportunity = computeOpportunityScore(answers, reversed);
   const dynamicGap = computeDynamicCongruenceGap(ovi.AV, ovi.HV);
   const axMaturity = computeAxMaturityStage({
@@ -839,6 +978,7 @@ export function computeArcScoresFromAnswers(
       overall: ohi,
       band: healthBand(ohi),
       riskIndex,
+      quietCrackingIndex,
     },
     ori: {
       ...ori,

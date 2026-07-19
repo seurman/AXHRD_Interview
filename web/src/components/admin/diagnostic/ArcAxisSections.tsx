@@ -192,7 +192,7 @@ export function OriReportSection({
           label="Opportunity"
           value={ori.opportunity?.oppScore ?? null}
           hint={[
-            "참고용 스크리닝 지표 · 검증된 가중치 아님",
+            "산식 AXA−AXG",
             ori.opportunity?.band,
           ]
             .filter(Boolean)
@@ -220,7 +220,7 @@ export function OriReportSection({
         <div className="card-luxe p-4">
           <h3 className="mb-1 text-sm font-semibold">Opportunity Score — AXA vs AXG</h3>
           <p className="mb-1 text-xs text-muted">
-            참고용 스크리닝 지표 · 검증된 가중치 아님
+            산식표: Opportunity = AXA(수용의지) − AXG(거버넌스공포)
           </p>
           <p className="mb-3 text-xs text-muted">AXA(쓰고 싶다) − AXG(못 쓴다) = 구조 vs 의지</p>
           <div className="h-48">
