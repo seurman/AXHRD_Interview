@@ -10,6 +10,11 @@ import { Badge } from "@/components/admin/Badge";
 import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
 import type { HierarchyNodeDto, TeamInput } from "@/lib/diagnostic/campaigns";
 import { parseHierarchyPaste } from "@/lib/diagnostic/hierarchy-paste";
+import {
+  buildOrderedTree,
+  levelDepth,
+  levelLabel,
+} from "@/lib/diagnostic/hierarchy-tree";
 
 type WaveDetail = {
   id: string;
@@ -26,40 +31,6 @@ type WaveDetail = {
   teams: Array<{ id: string; name: string; slug: string; link: string }>;
   hierarchy: HierarchyNodeDto[];
 };
-
-function levelDepth(level: HierarchyNodeDto["level"]) {
-  if (level === "DIVISION") return 0;
-  if (level === "UNIT") return 1;
-  return 2;
-}
-
-function levelBadge(level: HierarchyNodeDto["level"]) {
-  if (level === "DIVISION") return "사업본부";
-  if (level === "UNIT") return "사업부";
-  return "팀";
-}
-
-function buildOrderedTree(nodes: HierarchyNodeDto[]): HierarchyNodeDto[] {
-  const byParent = new Map<string | null, HierarchyNodeDto[]>();
-  for (const n of nodes) {
-    const key = n.parentId ?? null;
-    const list = byParent.get(key) ?? [];
-    list.push(n);
-    byParent.set(key, list);
-  }
-  for (const list of byParent.values()) {
-    list.sort((a, b) => a.name.localeCompare(b.name, "ko"));
-  }
-  const out: HierarchyNodeDto[] = [];
-  const walk = (parentId: string | null) => {
-    for (const n of byParent.get(parentId) ?? []) {
-      out.push(n);
-      walk(n.id);
-    }
-  };
-  walk(null);
-  return out;
-}
 
 export function AdminDiagnosticWaveDetail({
   waveId,
@@ -318,7 +289,7 @@ export function AdminDiagnosticWaveDetail({
                       style={{ marginLeft: depth * 16 }}
                     >
                       <div className="mb-1 flex flex-wrap items-center gap-2">
-                        <Badge tone="neutral">{levelBadge(node.level)}</Badge>
+                        <Badge tone="neutral">{levelLabel(node.level)}</Badge>
                         <span className="text-sm font-medium text-foreground">{node.name}</span>
                         {node.department ? (
                           <span className="text-[11px] text-muted">{node.department}</span>
