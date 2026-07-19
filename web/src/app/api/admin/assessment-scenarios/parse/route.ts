@@ -10,7 +10,10 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import {
   parseTaskDocument,
   parseTaskSampleText,
+  isUploadBlob,
 } from "@/lib/assessment/parse-task-document";
+
+export const maxDuration = 30;
 
 /** 과제 문서 업로드 또는 샘플 텍스트 → AssessmentTaskSource 저장 */
 export async function POST(req: Request) {
@@ -46,13 +49,16 @@ export async function POST(req: Request) {
       try {
         form = await req.formData();
       } catch {
-        return NextResponse.json({ error: "multipart 또는 JSON이 필요합니다." }, { status: 400 });
+        return NextResponse.json(
+          { error: "multipart 또는 JSON이 필요합니다." },
+          { status: 400 },
+        );
       }
       const file = form.get("file");
       const pasted = form.get("text");
       if (typeof pasted === "string" && pasted.trim()) {
         parsed = parseTaskSampleText(pasted);
-      } else if (file instanceof File) {
+      } else if (isUploadBlob(file)) {
         parsed = await parseTaskDocument(file);
       } else {
         return NextResponse.json(
@@ -60,6 +66,13 @@ export async function POST(req: Request) {
           { status: 400 },
         );
       }
+    }
+
+    if (!parsed.extractedText.trim()) {
+      return NextResponse.json(
+        { error: "문서에서 텍스트를 추출하지 못했습니다. PDF/DOCX/TXT를 확인해 주세요." },
+        { status: 400 },
+      );
     }
 
     const source = await prisma.assessmentTaskSource.create({

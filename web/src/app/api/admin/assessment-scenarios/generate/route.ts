@@ -7,12 +7,17 @@ import {
 } from "@/lib/admin/auth";
 import { logAdminAudit } from "@/lib/admin/audit";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { generateScenarioDraftFromDocument } from "@/lib/assessment/generate-scenario-draft";
+import {
+  generateScenarioDraftFromDocument,
+  ScenarioDraftError,
+} from "@/lib/assessment/generate-scenario-draft";
 import {
   createScenarioFromDraft,
   toAdminScenarioDto,
 } from "@/lib/assessment/admin-scenario-service";
 import type { AssessmentScenarioKind } from "@prisma/client";
+
+export const maxDuration = 120;
 
 type GenerateBody = {
   sourceId?: string;
@@ -99,10 +104,6 @@ export async function POST(req: Request) {
         availableCompetencies,
         guidance,
       });
-      if (!draft) {
-        errors.push(`${kind}: 초안 생성 실패`);
-        continue;
-      }
       const scenario = await createScenarioFromDraft({
         draft,
         sourceId: source.id,
@@ -119,9 +120,13 @@ export async function POST(req: Request) {
         afterState: { code: scenario.code, kind, sourceId: source.id },
       });
     } catch (e) {
-      errors.push(
-        `${kind}: ${e instanceof Error ? e.message : "생성 중 오류"}`,
-      );
+      if (e instanceof ScenarioDraftError) {
+        errors.push(`${kind}: ${e.message}`);
+      } else {
+        errors.push(
+          `${kind}: ${e instanceof Error ? e.message : "생성 중 오류"}`,
+        );
+      }
     }
   }
 

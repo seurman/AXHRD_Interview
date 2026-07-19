@@ -77,6 +77,7 @@ export function AssessmentScenarioStudio() {
   const [sampleText, setSampleText] = useState("");
   const [guidance, setGuidance] = useState("");
   const [sourcePreview, setSourcePreview] = useState<string | null>(null);
+  const [publishIssues, setPublishIssues] = useState<string[]>([]);
 
   const selected = useMemo(
     () => scenarios.find((s) => s.id === selectedId) ?? null,
@@ -153,6 +154,7 @@ export function AssessmentScenarioStudio() {
     setBusy(true);
     setError(null);
     setMessage(null);
+    setPublishIssues([]);
     try {
       const parseRes = await fetch("/api/admin/assessment-scenarios/parse", parseInit);
       const parseData = (await parseRes.json()) as {
@@ -182,16 +184,25 @@ export function AssessmentScenarioStudio() {
         scenarios?: AdminScenario[];
         error?: string;
         details?: string[];
+        errors?: string[];
       };
       if (!genRes.ok) {
+        const detail = genData.details?.filter(Boolean).join(" · ");
         throw new Error(
-          genData.error ??
-            (genData.details?.join("; ") || "유사 과제 생성 실패"),
+          detail
+            ? `${genData.error ?? "유사 과제 생성 실패"}: ${detail}`
+            : genData.error ?? "유사 과제 생성 실패",
         );
       }
-      setMessage(
-        `${genData.scenarios?.length ?? 0}개 초안을 만들었습니다. 아래에서 검토·수정한 뒤 게시하세요.`,
-      );
+      if (genData.errors?.length) {
+        setMessage(
+          `${genData.scenarios?.length ?? 0}개 초안 생성. 일부 실패: ${genData.errors.join(" · ")}`,
+        );
+      } else {
+        setMessage(
+          `${genData.scenarios?.length ?? 0}개 초안을 만들었습니다. 아래에서 검토한 뒤 「게시」를 누르면 /assessment에 노출됩니다.`,
+        );
+      }
       await refresh();
       if (genData.scenarios?.[0]) setSelectedId(genData.scenarios[0].id);
     } catch (e) {
@@ -238,12 +249,12 @@ export function AssessmentScenarioStudio() {
     }
   }
 
-  async function publishSelected(unpublish = false) {
-    if (!selected) return;
+  async function publishScenario(scenarioId: string, unpublish = false) {
     setBusy(true);
     setError(null);
+    setPublishIssues([]);
     try {
-      const res = await fetch(`/api/admin/assessment-scenarios/${selected.id}/publish`, {
+      const res = await fetch(`/api/admin/assessment-scenarios/${scenarioId}/publish`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ unpublish }),
@@ -252,21 +263,88 @@ export function AssessmentScenarioStudio() {
         scenario?: AdminScenario;
         error?: string;
         issues?: Array<{ message: string }>;
+        repairs?: string[];
       };
       if (!res.ok || !data.scenario) {
-        const issueText = data.issues?.map((i) => i.message).join(" · ");
-        throw new Error(issueText || data.error || "게시 실패");
+        const issues = data.issues?.map((i) => i.message).filter(Boolean) ?? [];
+        setPublishIssues(issues);
+        throw new Error(
+          issues.length > 0
+            ? `게시 조건을 충족하지 않습니다.`
+            : data.error || "게시 실패",
+        );
       }
       setScenarios((list) =>
         list.map((s) => (s.id === data.scenario!.id ? data.scenario! : s)),
       );
-      setMessage(unpublish ? "게시를 취소했습니다." : "게시했습니다.");
+      setSelectedId(data.scenario.id);
+      const repairNote =
+        data.repairs && data.repairs.length > 0
+          ? ` (자동 보정: ${data.repairs.join(", ")})`
+          : "";
+      setMessage(
+        unpublish
+          ? "게시를 취소했습니다. 다시 DRAFT 상태입니다."
+          : `게시했습니다. /assessment에 노출됩니다.${repairNote}`,
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "게시 실패");
     } finally {
       setBusy(false);
     }
   }
+
+  async function publishSelected(unpublish = false) {
+    if (!selected) return;
+    await publishScenario(selected.id, unpublish);
+  }
+
+  const readiness = useMemo(() => {
+    if (!selected || selected.status === "ARCHIVED") return [];
+    const rows: Array<{ ok: boolean; label: string }> = [];
+    rows.push({
+      ok: Boolean(selected.titleKo.trim()),
+      label: "과제 제목",
+    });
+    rows.push({
+      ok: Boolean(selected.taskBrief.trim()),
+      label: "과제 브리핑",
+    });
+    rows.push({
+      ok: selected.competencies.length > 0,
+      label: "역량 1개 이상",
+    });
+    rows.push({
+      ok: selected.competencies.every((c) => Boolean(c.competencyId)),
+      label: "플랫폼 역량 연결 (게시 시 자동 보정 가능)",
+    });
+    rows.push({
+      ok: selected.competencies.every(
+        (c) => c.subskills.reduce((n, s) => n + s.indicators.length, 0) > 0,
+      ),
+      label: "행동지표 (게시 시 자동 보정 가능)",
+    });
+    if (selected.kind === "ROLE_PLAY") {
+      rows.push({
+        ok: Boolean(selected.personaName?.trim()),
+        label: "상대역 이름",
+      });
+      rows.push({
+        ok: Boolean(selected.openingLine?.trim()),
+        label: "첫 발화",
+      });
+      rows.push({
+        ok: Boolean(selected.personaProfile?.trim()),
+        label: "연기 지침",
+      });
+    } else {
+      rows.push({
+        ok: selected.items.length >= 3,
+        label: `서류함 항목 ${selected.items.length}/3+`,
+      });
+    }
+    return rows;
+  }, [selected]);
 
   async function linkCompetency(competencyId: string) {
     if (!selected) return;
@@ -448,9 +526,16 @@ export function AssessmentScenarioStudio() {
       </details>
 
       {error ? (
-        <p className="rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
-          {error}
-        </p>
+        <div className="rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
+          <p>{error}</p>
+          {publishIssues.length > 0 ? (
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
+              {publishIssues.map((issue) => (
+                <li key={issue}>{issue}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
       ) : null}
       {message ? (
         <p className="rounded-lg border border-accent/30 bg-accent/10 px-4 py-3 text-sm text-accent">
@@ -485,21 +570,44 @@ export function AssessmentScenarioStudio() {
             <ul className="max-h-[min(28rem,60dvh)] space-y-1 overflow-y-auto overscroll-contain lg:max-h-[36rem] [-webkit-overflow-scrolling:touch]">
               {scenarios.map((s) => (
                 <li key={s.id}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedId(s.id)}
-                    className={`min-h-14 w-full rounded-lg px-3 py-2.5 text-left text-sm transition ${
-                      selectedId === s.id ? "bg-foreground text-background" : "hover:bg-background"
+                  <div
+                    className={`flex items-stretch gap-1 rounded-lg ${
+                      selectedId === s.id ? "bg-foreground text-background" : ""
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="line-clamp-2 font-medium">{s.titleKo}</span>
-                      <span className="shrink-0 text-[10px] opacity-80">{s.status}</span>
-                    </div>
-                    <p className="mt-0.5 truncate text-[11px] opacity-70">
-                      {s.kind === "IN_BASKET" ? "서류함" : "역할연기"} · v{s.version} · {s.code}
-                    </p>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(s.id)}
+                      className={`min-h-14 min-w-0 flex-1 px-3 py-2.5 text-left text-sm transition ${
+                        selectedId === s.id ? "" : "rounded-lg hover:bg-background"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="line-clamp-2 font-medium">{s.titleKo}</span>
+                        <span className="shrink-0 text-[10px] opacity-80">{s.status}</span>
+                      </div>
+                      <p className="mt-0.5 truncate text-[11px] opacity-70">
+                        {s.kind === "IN_BASKET" ? "서류함" : "역할연기"} · v{s.version} ·{" "}
+                        {s.code}
+                      </p>
+                    </button>
+                    {s.status === "DRAFT" ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        title="드래프트 게시"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void publishScenario(s.id, false);
+                        }}
+                        className={`shrink-0 self-center px-2 py-1 text-[10px] font-medium underline-offset-2 hover:underline disabled:opacity-50 ${
+                          selectedId === s.id ? "text-background/90" : "text-accent"
+                        }`}
+                      >
+                        게시
+                      </button>
+                    ) : null}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -588,11 +696,33 @@ export function AssessmentScenarioStudio() {
                       onClick={() => void publishSelected(false)}
                       className="min-h-11 rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-background sm:min-h-0 sm:py-1.5 sm:text-xs"
                     >
-                      게시
+                      {busy ? "처리 중…" : "드래프트 게시"}
                     </button>
                   )}
                 </div>
               </div>
+
+              {selected.status !== "ARCHIVED" ? (
+                <div className="rounded-lg border border-card-border bg-background/50 p-3">
+                  <p className="text-xs font-semibold text-foreground">게시 준비 상태</p>
+                  <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+                    {readiness.map((row) => (
+                      <li
+                        key={row.label}
+                        className={`text-xs ${row.ok ? "text-muted" : "text-warning"}`}
+                      >
+                        {row.ok ? "✓" : "·"} {row.label}
+                      </li>
+                    ))}
+                  </ul>
+                  {selected.status === "DRAFT" ? (
+                    <p className="mt-2 text-[11px] text-muted">
+                      「드래프트 게시」를 누르면 미연결 역량·루브릭·기본 행동지표를 자동 보정한 뒤
+                      게시합니다.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
 
               <label className="block text-xs font-medium">
                 과제 브리핑
