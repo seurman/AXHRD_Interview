@@ -114,11 +114,11 @@ export default async function AdminOrgHubPage({ params }: Props) {
       {hub.status === "APPROVED" && !hub.entitlements.diagnostic && (
         <div className="rounded-xl border border-amber-300/50 bg-amber-50/80 px-5 py-4 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
           <strong>조직진단 제품이 꺼져 있습니다.</strong> 아래 토글을 켜야 기관 ADMIN 메뉴에 조직진단이
-          표시됩니다. 수퍼어드민 캠페인은{" "}
+          표시됩니다. 수퍼어드민은 기관 허브의 「조직진단 웨이브」또는{" "}
           <Link href="/admin/diagnostic" className="text-accent hover:underline">
             조직진단 CMS
           </Link>
-          에서 별도 생성합니다.
+          에서 웨이브를 만들 수 있습니다.
         </div>
       )}
 
@@ -179,9 +179,10 @@ export default async function AdminOrgHubPage({ params }: Props) {
             )}
             {hub.entitlements.diagnostic && (
               <AdminHubTile
-                href="/admin/diagnostic"
-                title="조직진단 CMS"
-                description="수퍼어드민 캠페인 생성·리포트 (기관 셀프서브 /org/diagnosis 와 별개)"
+                href={`${hubBase}/waves`}
+                title="조직진단 웨이브"
+                description="기관 → 웨이브 → 사업부·팀 구조 · 응답 링크 · 리포트"
+                meta="코호트·인터뷰 킷과 같은 기관 허브 진입"
                 icon={Activity}
                 className="md:col-span-2"
               />

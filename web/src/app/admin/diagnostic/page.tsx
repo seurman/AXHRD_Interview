@@ -42,7 +42,7 @@ export default async function AdminDiagnosticPage({
       }),
       prisma.diagnosticWave.findMany({
         include: {
-          organization: { select: { name: true } },
+          organization: { select: { id: true, name: true } },
           instrument: { select: { nameKo: true } },
           _count: {
             select: {
@@ -87,6 +87,7 @@ export default async function AdminDiagnosticPage({
         statusLabel: waveStatusLabel(w.status),
         sectionBadge: sectionBadgeLabel(enabled),
         instrumentName: w.instrument.nameKo,
+        organizationId: w.organization.id,
         organizationName: w.organization.name,
         opensAt: w.opensAt?.toISOString() ?? null,
         closesAt: w.closesAt?.toISOString() ?? null,

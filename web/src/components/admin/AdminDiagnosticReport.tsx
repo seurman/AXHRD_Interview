@@ -225,6 +225,7 @@ type WaveMeta = {
   enabledSectionCodes: string[] | null;
   sectionBadge: string;
   reportConfig: ResolvedReportConfig | null;
+  organizationId?: string | null;
   organizationName?: string | null;
 };
 
@@ -283,6 +284,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
         enabledSectionCodes: w.enabledSectionCodes,
         sectionBadge: w.sectionBadge,
         reportConfig: w.reportConfig ?? null,
+        organizationId: w.organization?.id ?? w.organizationId ?? null,
         organizationName: w.organization?.name ?? null,
       });
       const config = w.reportConfig as ResolvedReportConfig | null;
@@ -434,8 +436,15 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
       </div>
 
       <div className="print-hide">
-        <Link href={`/admin/diagnostic/waves/${waveId}`} className="text-sm text-accent hover:underline">
-          ← 캠페인 상세
+        <Link
+          href={
+            wave.organizationId
+              ? `/admin/organizations/${wave.organizationId}/waves/${waveId}`
+              : `/admin/diagnostic/waves/${waveId}`
+          }
+          className="text-sm text-accent hover:underline"
+        >
+          ← 웨이브 상세
         </Link>
       </div>
 
@@ -707,6 +716,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
               {hierarchyRows.length > 0 && showGapMatrix && (
                 <TeamsOverview
                   waveId={waveId}
+                  organizationId={wave.organizationId ?? null}
                   aggregate={aggregate}
                   hierarchyRows={hierarchyRows}
                   selectedNodeId={selectedNodeId}
@@ -780,6 +790,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
             >
               <OrgReportSection
                 waveId={waveId}
+                organizationId={wave.organizationId ?? null}
                 teams={hierarchyRows}
                 gapMatrix={showGapMatrix ? aggregate?.gapMatrix : null}
                 isEnabled={isEnabled}
@@ -834,6 +845,7 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
 
 function TeamsOverview({
   waveId,
+  organizationId,
   aggregate,
   hierarchyRows,
   selectedNodeId,
@@ -842,6 +854,7 @@ function TeamsOverview({
   visibleChildren,
 }: {
   waveId: string;
+  organizationId?: string | null;
   aggregate: Scores | null;
   hierarchyRows: NonNullable<Scores["teams"]>;
   selectedNodeId: string | null;
@@ -1029,7 +1042,14 @@ function TeamsOverview({
         </div>
       )}
 
-      <Link href={`/admin/diagnostic/waves/${waveId}#team-links`} className="print-hide text-xs text-accent hover:underline">
+      <Link
+        href={
+          organizationId
+            ? `/admin/organizations/${organizationId}/waves/${waveId}#team-links`
+            : `/admin/diagnostic/waves/${waveId}#team-links`
+        }
+        className="print-hide text-xs text-accent hover:underline"
+      >
         팀별 링크 관리 →
       </Link>
     </div>

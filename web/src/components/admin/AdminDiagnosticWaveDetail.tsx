@@ -61,7 +61,14 @@ function buildOrderedTree(nodes: HierarchyNodeDto[]): HierarchyNodeDto[] {
   return out;
 }
 
-export function AdminDiagnosticWaveDetail({ waveId }: { waveId: string }) {
+export function AdminDiagnosticWaveDetail({
+  waveId,
+  navContext = "cms",
+}: {
+  waveId: string;
+  /** org = 기관 허브 표준 경로, cms = 진단 CMS 크로스-기관 진입 */
+  navContext?: "org" | "cms";
+}) {
   const searchParams = useSearchParams();
   const showCreated = searchParams.get("created") === "1";
   const [wave, setWave] = useState<WaveDetail | null>(null);
@@ -149,16 +156,30 @@ export function AdminDiagnosticWaveDetail({ waveId }: { waveId: string }) {
 
   const title = wave.label ?? `Wave ${wave.waveNumber}`;
   const leafCount = wave.teams.length;
+  const orgBase = `/admin/organizations/${wave.organization.id}`;
+  const waveBase =
+    navContext === "org"
+      ? `${orgBase}/waves/${waveId}`
+      : `/admin/diagnostic/waves/${waveId}`;
+  const breadcrumb =
+    navContext === "org"
+      ? [
+          { label: "기관 관리", href: "/admin/organizations" },
+          { label: wave.organization.name, href: orgBase },
+          { label: "조직진단", href: `${orgBase}/waves` },
+          { label: title },
+        ]
+      : [
+          { label: "조직진단 CMS", href: "/admin/diagnostic" },
+          { label: title },
+        ];
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow={PLATFORM_EYEBROW.diagnostic}
+        eyebrow={navContext === "org" ? PLATFORM_EYEBROW.tenants : PLATFORM_EYEBROW.diagnostic}
         title={title}
-        breadcrumb={[
-          { label: "조직진단 CMS", href: "/admin/diagnostic" },
-          { label: title },
-        ]}
+        breadcrumb={breadcrumb}
         actions={
           <div className="flex flex-wrap gap-2">
             <a
@@ -167,10 +188,7 @@ export function AdminDiagnosticWaveDetail({ waveId }: { waveId: string }) {
             >
               엑셀 다운로드
             </a>
-            <Link
-              href={`/admin/diagnostic/waves/${waveId}/report`}
-              className="btn-primary px-4 py-2 text-sm"
-            >
+            <Link href={`${waveBase}/report`} className="btn-primary px-4 py-2 text-sm">
               보고서
             </Link>
           </div>
@@ -179,7 +197,7 @@ export function AdminDiagnosticWaveDetail({ waveId }: { waveId: string }) {
 
       {showCreated && (
         <div className="rounded-xl border border-emerald-300/60 bg-emerald-50/80 p-4 text-sm text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
-          ARC Index 조직진단이 생성되었습니다.
+          ARC Index 조직진단이 생성되었습니다. 아래에서 사업부·팀 구조를 등록하세요.
         </div>
       )}
 
@@ -198,12 +216,14 @@ export function AdminDiagnosticWaveDetail({ waveId }: { waveId: string }) {
             {wave.closesAt ? new Date(wave.closesAt).toLocaleDateString("ko-KR") : "수동 마감"}
           </p>
         )}
-        <Link
-          href={`/admin/organizations/${wave.organization.id}`}
-          className="mt-3 inline-block text-xs text-accent hover:underline"
-        >
-          기관 허브 →
-        </Link>
+        <div className="mt-3 flex flex-wrap gap-3 text-xs">
+          <Link href={orgBase} className="text-accent hover:underline">
+            기관 허브 →
+          </Link>
+          <Link href={`${orgBase}/waves`} className="text-accent hover:underline">
+            이 기관 웨이브 목록 →
+          </Link>
+        </div>
       </div>
 
       <AdminSection title="기본 응답 링크" description="조직 전체용 — teamId null 응답">

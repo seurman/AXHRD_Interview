@@ -44,15 +44,21 @@ const DEMOGRAPHIC_CATALOG: DemographicCatalogItem[] = [
 
 type Props = {
   onClose: () => void;
-  onCreated: (waveId: string) => void;
+  onCreated: (waveId: string, organizationId: string) => void;
+  /** 기관 허브에서 열면 기관 고정 */
+  lockedOrganizationId?: string;
 };
 
-export function AdminDiagnosticWizard({ onClose, onCreated }: Props) {
+export function AdminDiagnosticWizard({
+  onClose,
+  onCreated,
+  lockedOrganizationId,
+}: Props) {
   const router = useRouter();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(lockedOrganizationId ? 2 : 1);
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [instruments, setInstruments] = useState<Instrument[]>([]);
-  const [orgId, setOrgId] = useState("");
+  const [orgId, setOrgId] = useState(lockedOrganizationId ?? "");
   const [newOrgMode, setNewOrgMode] = useState(false);
   const [newOrgName, setNewOrgName] = useState("");
   const [instrumentId, setInstrumentId] = useState("");
@@ -88,6 +94,10 @@ export function AdminDiagnosticWizard({ onClose, onCreated }: Props) {
     })();
   }, []);
 
+  useEffect(() => {
+    if (lockedOrganizationId) setOrgId(lockedOrganizationId);
+  }, [lockedOrganizationId]);
+
   const toggleSection = (code: string) => {
     setEnabledSections((prev) =>
       prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code],
@@ -101,6 +111,7 @@ export function AdminDiagnosticWizard({ onClose, onCreated }: Props) {
   };
 
   const ensureOrgId = async (): Promise<string | null> => {
+    if (lockedOrganizationId) return lockedOrganizationId;
     if (!newOrgMode) return orgId || null;
     const name = newOrgName.trim();
     if (name.length < 2) {
@@ -154,8 +165,9 @@ export function AdminDiagnosticWizard({ onClose, onCreated }: Props) {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "생성 실패");
-      onCreated(json.wave.id);
-      router.push(`/admin/diagnostic/waves/${json.wave.id}?created=1`);
+      const waveId = json.wave.id as string;
+      onCreated(waveId, organizationId);
+      router.push(`/admin/organizations/${organizationId}/waves/${waveId}?created=1`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "생성 중 오류");
       setLoading(false);
@@ -172,9 +184,11 @@ export function AdminDiagnosticWizard({ onClose, onCreated }: Props) {
           </button>
         </div>
 
-        <p className="mb-4 text-xs text-muted">Step {step} / 3</p>
+        <p className="mb-4 text-xs text-muted">
+          {lockedOrganizationId ? `기관 고정 · Step ${step} / 3` : `Step ${step} / 3`}
+        </p>
 
-        {step === 1 && (
+        {step === 1 && !lockedOrganizationId && (
           <div className="space-y-4">
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -320,7 +334,7 @@ export function AdminDiagnosticWizard({ onClose, onCreated }: Props) {
           <button
             type="button"
             className="btn-secondary px-4 py-2 text-sm"
-            disabled={step === 1}
+            disabled={step === 1 || (lockedOrganizationId != null && step === 2)}
             onClick={() => setStep((s) => s - 1)}
           >
             이전
@@ -331,7 +345,7 @@ export function AdminDiagnosticWizard({ onClose, onCreated }: Props) {
               className="btn-primary px-4 py-2 text-sm"
               onClick={() => {
                 setError(null);
-                if (step === 1 && !newOrgMode && !orgId) {
+                if (step === 1 && !lockedOrganizationId && !newOrgMode && !orgId) {
                   setError("기관을 선택해 주세요.");
                   return;
                 }

@@ -27,6 +27,7 @@ type WaveRow = {
   id: string;
   waveNumber: number;
   label: string | null;
+  organizationId: string;
   organizationName: string;
   sectionBadge: string;
 };
@@ -243,7 +244,12 @@ export function AdminDiagnosticReportStudio({ instruments, waves }: Props) {
                     캠페인 프로필 저장
                   </button>
                   <Link
-                    href={`/admin/diagnostic/waves/${selectedWaveId}/report`}
+                    href={(() => {
+                      const orgId = waves.find((w) => w.id === selectedWaveId)?.organizationId;
+                      return orgId
+                        ? `/admin/organizations/${orgId}/waves/${selectedWaveId}/report`
+                        : `/admin/diagnostic/waves/${selectedWaveId}/report`;
+                    })()}
                     className="btn-secondary px-4 py-2 text-sm"
                   >
                     보고서 미리보기 →

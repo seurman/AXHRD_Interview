@@ -55,12 +55,14 @@ const BENCHMARK_MODES: Array<{ id: BenchmarkMode; label: string }> = [
 
 export function OrgReportSection({
   waveId,
+  organizationId,
   teams,
   gapMatrix,
   isEnabled,
   orgScores,
 }: {
   waveId: string;
+  organizationId?: string | null;
   teams: OrgNode[];
   gapMatrix?: {
     mode: string;
@@ -91,6 +93,9 @@ export function OrgReportSection({
     oai: number | null;
   };
 }) {
+  const waveDetailHref = organizationId
+    ? `/admin/organizations/${organizationId}/waves/${waveId}`
+    : `/admin/diagnostic/waves/${waveId}`;
   const [drillId, setDrillId] = useState<string | null>(null);
   const [benchmarkMode, setBenchmarkMode] = useState<BenchmarkMode>("parent");
 
@@ -209,7 +214,7 @@ export function OrgReportSection({
     return (
       <div className="card-luxe space-y-3 p-6 text-center">
         <p className="text-sm text-muted">팀별 링크를 발급하면 조직별 비교가 활성화됩니다.</p>
-        <Link href={`/admin/diagnostic/waves/${waveId}#team-links`} className="btn-primary inline-flex px-4 py-2 text-sm">
+        <Link href={`${waveDetailHref}#team-links`} className="btn-primary inline-flex px-4 py-2 text-sm">
           팀별 링크 추가
         </Link>
       </div>
@@ -484,7 +489,7 @@ export function OrgReportSection({
         </div>
       </div>
 
-      <Link href={`/admin/diagnostic/waves/${waveId}#team-links`} className="print-hide text-xs text-accent hover:underline">
+      <Link href={`${waveDetailHref}#team-links`} className="print-hide text-xs text-accent hover:underline">
         팀별 링크 관리 →
       </Link>
     </div>
