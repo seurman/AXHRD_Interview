@@ -63,6 +63,7 @@ import {
   computeCollectionRatePercent,
   formatCollectionRateMeta,
 } from "@/lib/diagnostic/collection-rate";
+import { buildIccInterpretation } from "@/lib/diagnostic/axis-report";
 
 const LPA_COLOR: Record<string, string> = {
   "고몰입형": "bg-emerald-500",
@@ -904,6 +905,11 @@ function CausalFlowCard({ summary }: { summary?: DriverImportanceSummary }) {
           </span>
         ))}
       </div>
+      <p className="mt-3 text-[11px] leading-relaxed text-muted">
+        이 경로는 Burke-Litwin 조직변화 모형에 기반한 이론적 가정이며, 이번 데이터로
+        인과관계가 통계적으로 확정된 것은 아닙니다.
+        {summary.n > 0 ? ` (β 참고 · n=${summary.n})` : ""}
+      </p>
     </div>
   );
 }
@@ -945,12 +951,18 @@ function IccCard({ reliability }: { reliability?: Scores["teamReliability"] }) {
       </div>
     );
   }
+  const guide = buildIccInterpretation(reliability.icc);
   return (
     <div className="card-luxe p-4">
       <h3 className="text-sm font-semibold">ICC(1) — 팀간 신뢰도</h3>
       <p className="mt-2 text-2xl font-bold">{formatScore(reliability.icc)}</p>
       <p className="mt-1 text-xs text-muted">팀 {reliability.k}개 · N={reliability.n}</p>
-      {reliability.interpretation && <p className="mt-2 text-xs text-muted">{reliability.interpretation}</p>}
+      {guide ? (
+        <p className="mt-2 text-xs leading-relaxed text-foreground">{guide}</p>
+      ) : null}
+      {reliability.interpretation && reliability.interpretation !== guide ? (
+        <p className="mt-1 text-[11px] text-muted">{reliability.interpretation}</p>
+      ) : null}
     </div>
   );
 }

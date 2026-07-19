@@ -191,7 +191,12 @@ export function OriReportSection({
         <MetricTile
           label="Opportunity"
           value={ori.opportunity?.oppScore ?? null}
-          hint={ori.opportunity?.band}
+          hint={[
+            "참고용 스크리닝 지표 · 검증된 가중치 아님",
+            ori.opportunity?.band,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
         />
       </div>
 
@@ -214,6 +219,9 @@ export function OriReportSection({
       {oppChart.length === 2 && (
         <div className="card-luxe p-4">
           <h3 className="mb-1 text-sm font-semibold">Opportunity Score — AXA vs AXG</h3>
+          <p className="mb-1 text-xs text-muted">
+            참고용 스크리닝 지표 · 검증된 가중치 아님
+          </p>
           <p className="mb-3 text-xs text-muted">AXA(쓰고 싶다) − AXG(못 쓴다) = 구조 vs 의지</p>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">

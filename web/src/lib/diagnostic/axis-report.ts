@@ -186,6 +186,21 @@ export function buildOpportunityInsight(opp: OriScores["opportunity"]): string |
   return `Opportunity Score ${opp.oppScore >= 0 ? "+" : ""}${opp.oppScore.toFixed(2)} (AXA ${axa} − AXG ${axg}) · ${scored.band} — ${scored.prescription}`;
 }
 
+/**
+ * ICC(1) 구간 해석 — 리포트 표시용 가이드.
+ * 계산식(`computeIcc1`)은 변경하지 않고, 값의 의미를 읽는 문구만 제공한다.
+ */
+export function buildIccInterpretation(icc: number | null | undefined): string | null {
+  if (icc == null || !Number.isFinite(icc)) return null;
+  if (icc < 0.05) {
+    return "팀 간 차이가 크지 않아 조직 단위 해석을 권장합니다";
+  }
+  if (icc <= 0.2) {
+    return "팀 간 차이가 보통 수준입니다";
+  }
+  return "팀별 개입 근거가 충분합니다";
+}
+
 export const ORI_RADAR_LABELS: Record<string, string> = {
   CD: "변화방향",
   LA: "학습적응",
