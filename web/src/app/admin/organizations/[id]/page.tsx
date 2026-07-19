@@ -149,6 +149,7 @@ export default async function AdminOrgHubPage({ params }: Props) {
           adminNotes: hub.adminNotes,
           memberCount: hub.memberCount,
           seatCap: hub.seatCap,
+          diagnosticPricing: hub.diagnosticPricing,
         }}
       />
 

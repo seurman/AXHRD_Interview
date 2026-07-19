@@ -15,6 +15,7 @@ import {
   levelDepth,
   levelLabel,
 } from "@/lib/diagnostic/hierarchy-tree";
+import { formatKrw, type WavePricingQuote } from "@/lib/diagnostic/pricing";
 
 type WaveDetail = {
   id: string;
@@ -26,6 +27,9 @@ type WaveDetail = {
   closesAt: string | null;
   responseCount: number;
   orgWideLink: string;
+  quotedFeeKrw?: number | null;
+  estimatedResponses?: number | null;
+  pricingQuote?: WavePricingQuote | null;
   organization: { id: string; name: string };
   instrument: { nameKo: string };
   teams: Array<{ id: string; name: string; slug: string; link: string }>;
@@ -200,6 +204,44 @@ export function AdminDiagnosticWaveDetail({
       <AdminSection title="기본 응답 링크" description="조직 전체용 — teamId null 응답">
         <AdminCopyField label="배포 URL" hint="복사 후 이메일·메신저로 직접 전달" value={wave.orgWideLink} />
       </AdminSection>
+
+      {wave.pricingQuote ? (
+        <AdminSection
+          title="웨이브 견적"
+          description="기관 단가 설정 기준 · VAT 별도 · 수동 청구(세금계산서)"
+        >
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <p className="text-xs text-muted">{wave.pricingQuote.modelLabel}</p>
+                <p className="text-2xl font-bold tabular-nums text-foreground">
+                  {formatKrw(wave.pricingQuote.waveFeeKrw)}
+                </p>
+              </div>
+              <p className="text-xs text-muted">
+                예상 응답 {wave.estimatedResponses?.toLocaleString("ko-KR") ?? "—"}명 · 실제 제출{" "}
+                {wave.responseCount.toLocaleString("ko-KR")}건
+              </p>
+            </div>
+            {wave.pricingQuote.contractSummary ? (
+              <p className="text-xs text-muted">{wave.pricingQuote.contractSummary}</p>
+            ) : null}
+            <ul className="space-y-1 text-sm">
+              {wave.pricingQuote.lines.map((l) => (
+                <li
+                  key={l.code}
+                  className="flex justify-between gap-3 border-b border-card-border/60 py-1.5 last:border-0"
+                >
+                  <span className="text-muted">{l.label}</span>
+                  <span className="tabular-nums font-medium text-foreground">
+                    {formatKrw(l.amountKrw)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </AdminSection>
+      ) : null}
 
       <AdminSection
         id="team-links"

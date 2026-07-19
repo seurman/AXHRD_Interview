@@ -4,6 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { OrgKind, OrgStatus } from "@prisma/client";
 import { ORG_KIND_CONFIG, ORG_KINDS } from "@/lib/org/kinds";
+import { OrgDiagnosticPricingEditor } from "@/components/admin/OrgDiagnosticPricingEditor";
+import {
+  defaultOrgDiagnosticPricing,
+  parseOrgDiagnosticPricing,
+  type OrgDiagnosticPricing,
+} from "@/lib/diagnostic/pricing";
 
 type Props = {
   organizationId: string;
@@ -18,6 +24,7 @@ type Props = {
     adminNotes: string | null;
     memberCount: number;
     seatCap: number | null;
+    diagnosticPricing?: unknown;
   };
 };
 
@@ -38,6 +45,9 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
     initial.maxSeats != null ? String(initial.maxSeats) : "",
   );
   const [adminNotes, setAdminNotes] = useState(initial.adminNotes ?? "");
+  const [diagnosticPricing, setDiagnosticPricing] = useState<OrgDiagnosticPricing>(
+    () => parseOrgDiagnosticPricing(initial.diagnosticPricing) ?? defaultOrgDiagnosticPricing(),
+  );
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -56,6 +66,7 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
           validUntil: validUntil || null,
           maxSeats: maxSeats.trim() ? Number(maxSeats) : null,
           adminNotes: adminNotes.trim() || null,
+          diagnosticPricing,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -221,6 +232,8 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
           />
         </label>
       </div>
+
+      <OrgDiagnosticPricingEditor value={diagnosticPricing} onChange={setDiagnosticPricing} />
 
       <div className="flex flex-wrap gap-3">
         <button

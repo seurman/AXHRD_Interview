@@ -95,7 +95,13 @@ export const ORG_KIND_PRODUCT_DEFAULTS: Record<OrgKind, OrgProductDefaults> = {
 export function entitlementDbPatch(
   product: OrgProductKey,
   enabled: boolean,
-): Partial<Organization> {
+): {
+  interviewEnabled?: boolean;
+  saasPersonalizationEnabled?: boolean;
+  saasPersonalizationEnabledAt?: Date | null;
+  diagnosticEnabled?: boolean;
+  assessmentEnabled?: boolean;
+} {
   switch (product) {
     case "interview":
       return { interviewEnabled: enabled };

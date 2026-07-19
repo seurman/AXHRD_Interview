@@ -197,6 +197,11 @@ model Organization {
   diagnosticWaves     DiagnosticWave[]
   diagnosticEnabled   Boolean                @default(false)
   /**
+   * ARC Index 조직진단 B2B 단가 설정 (JSON: OrgDiagnosticPricing).
+   * null이면 카탈로그 기본(WAVE_PACKAGE / GROWTH)으로 견적.
+   */
+  diagnosticPricing   Json?
+  /**
    * 면접·코호트·세션 (기본 ON)
    */
   interviewEnabled    Boolean                @default(true)
@@ -1626,6 +1631,18 @@ model DiagnosticWave {
    * 캠페인 생성 시점 Instrument.version 스냅샷
    */
   instrumentVersionSnapshot String?
+  /**
+   * 생성 시점 견적 스냅샷 (JSON: WavePricingQuote)
+   */
+  pricingQuote              Json?
+  /**
+   * 견적 웨이브 요금 합계 (KRW, VAT 별도) — 목록·필터용 캐시
+   */
+  quotedFeeKrw              Int?
+  /**
+   * 견적에 사용한 예상 응답 수
+   */
+  estimatedResponses        Int?
   reportProfile             DiagnosticReportProfile?
   teams                     DiagnosticTeam[]
   responses                 DiagnosticResponse[]
