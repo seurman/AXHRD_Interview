@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminSection } from "@/components/admin/AdminSection";
 import { AdminCopyField } from "@/components/admin/AdminCopyField";
 import { Badge } from "@/components/admin/Badge";
 import { PLATFORM_EYEBROW } from "@/lib/admin/eyebrow";
+import type { HierarchyNodeDto, TeamInput } from "@/lib/diagnostic/campaigns";
+import { parseHierarchyPaste } from "@/lib/diagnostic/hierarchy-paste";
 
 type WaveDetail = {
   id: string;
@@ -22,13 +24,51 @@ type WaveDetail = {
   organization: { id: string; name: string };
   instrument: { nameKo: string };
   teams: Array<{ id: string; name: string; slug: string; link: string }>;
+  hierarchy: HierarchyNodeDto[];
 };
+
+function levelDepth(level: HierarchyNodeDto["level"]) {
+  if (level === "DIVISION") return 0;
+  if (level === "UNIT") return 1;
+  return 2;
+}
+
+function levelBadge(level: HierarchyNodeDto["level"]) {
+  if (level === "DIVISION") return "사업본부";
+  if (level === "UNIT") return "사업부";
+  return "팀";
+}
+
+function buildOrderedTree(nodes: HierarchyNodeDto[]): HierarchyNodeDto[] {
+  const byParent = new Map<string | null, HierarchyNodeDto[]>();
+  for (const n of nodes) {
+    const key = n.parentId ?? null;
+    const list = byParent.get(key) ?? [];
+    list.push(n);
+    byParent.set(key, list);
+  }
+  for (const list of byParent.values()) {
+    list.sort((a, b) => a.name.localeCompare(b.name, "ko"));
+  }
+  const out: HierarchyNodeDto[] = [];
+  const walk = (parentId: string | null) => {
+    for (const n of byParent.get(parentId) ?? []) {
+      out.push(n);
+      walk(n.id);
+    }
+  };
+  walk(null);
+  return out;
+}
 
 export function AdminDiagnosticWaveDetail({ waveId }: { waveId: string }) {
   const searchParams = useSearchParams();
   const showCreated = searchParams.get("created") === "1";
   const [wave, setWave] = useState<WaveDetail | null>(null);
-  const [teamInput, setTeamInput] = useState("");
+  const [pasteInput, setPasteInput] = useState("");
+  const [divisionName, setDivisionName] = useState("");
+  const [unitName, setUnitName] = useState("");
+  const [teamName, setTeamName] = useState("");
   const [teamOpen, setTeamOpen] = useState(showCreated);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +76,7 @@ export function AdminDiagnosticWaveDetail({ waveId }: { waveId: string }) {
   const load = useCallback(async () => {
     const res = await fetch(`/api/admin/diagnostic/waves/${waveId}`);
     const json = await res.json();
-    if (res.ok) setWave(json.wave);
+    if (res.ok) setWave({ ...json.wave, hierarchy: json.wave.hierarchy ?? [] });
     else setError(json.error ?? "불러오기 실패");
   }, [waveId]);
 
@@ -44,23 +84,33 @@ export function AdminDiagnosticWaveDetail({ waveId }: { waveId: string }) {
     void load();
   }, [load]);
 
-  const addTeams = async () => {
-    const names = teamInput
-      .split(/[,，\n]/)
-      .map((n) => n.trim())
-      .filter(Boolean);
-    if (names.length === 0) return;
+  const orderedHierarchy = useMemo(
+    () => buildOrderedTree(wave?.hierarchy ?? []),
+    [wave?.hierarchy],
+  );
+
+  const teamLinkById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const t of wave?.teams ?? []) map.set(t.id, t.link);
+    return map;
+  }, [wave?.teams]);
+
+  const postTeams = async (teams: TeamInput[]) => {
+    if (teams.length === 0) return;
     setAdding(true);
     setError(null);
     try {
       const res = await fetch(`/api/admin/diagnostic/waves/${waveId}/teams`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ names }),
+        body: JSON.stringify({ teams }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "팀 추가 실패");
-      setTeamInput("");
+      setPasteInput("");
+      setDivisionName("");
+      setUnitName("");
+      setTeamName("");
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "팀 추가 오류");
@@ -69,11 +119,36 @@ export function AdminDiagnosticWaveDetail({ waveId }: { waveId: string }) {
     }
   };
 
+  const addFromForm = async () => {
+    const name = teamName.trim();
+    if (!name) {
+      setError("팀명을 입력해 주세요.");
+      return;
+    }
+    await postTeams([
+      {
+        name,
+        divisionName: divisionName.trim() || undefined,
+        unitName: unitName.trim() || undefined,
+      },
+    ]);
+  };
+
+  const addFromPaste = async () => {
+    const rows = parseHierarchyPaste(pasteInput);
+    if (rows.length === 0) {
+      setError("붙여넣을 줄을 입력해 주세요. 예: 본사,영업본부,서울팀");
+      return;
+    }
+    await postTeams(rows);
+  };
+
   if (!wave) {
     return <p className="text-sm text-muted">{error ?? "불러오는 중…"}</p>;
   }
 
   const title = wave.label ?? `Wave ${wave.waveNumber}`;
+  const leafCount = wave.teams.length;
 
   return (
     <div className="space-y-6">
@@ -85,12 +160,20 @@ export function AdminDiagnosticWaveDetail({ waveId }: { waveId: string }) {
           { label: title },
         ]}
         actions={
-          <Link
-            href={`/admin/diagnostic/waves/${waveId}/report`}
-            className="btn-primary px-4 py-2 text-sm"
-          >
-            보고서
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={`/api/admin/diagnostic/waves/${waveId}/export`}
+              className="btn-secondary px-4 py-2 text-sm"
+            >
+              엑셀 다운로드
+            </a>
+            <Link
+              href={`/admin/diagnostic/waves/${waveId}/report`}
+              className="btn-primary px-4 py-2 text-sm"
+            >
+              보고서
+            </Link>
+          </div>
         }
       />
 
@@ -129,8 +212,8 @@ export function AdminDiagnosticWaveDetail({ waveId }: { waveId: string }) {
 
       <AdminSection
         id="team-links"
-        title="팀별 링크 (선택)"
-        description="없어도 캠페인 운영에 문제 없습니다. 팀 이름 입력 후 Enter."
+        title="사업부·팀 구조"
+        description="사업본부 → 사업부 → 팀. 응답 링크는 팀(리프)에만 발급됩니다."
         actions={
           <button
             type="button"
@@ -142,45 +225,99 @@ export function AdminDiagnosticWaveDetail({ waveId }: { waveId: string }) {
         }
       >
         {teamOpen && (
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              <input
-                className="input-luxe min-w-[12rem] flex-1 text-sm"
-                placeholder="예: 개발팀, HR팀"
-                value={teamInput}
-                onChange={(e) => setTeamInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    void addTeams();
-                  }
-                }}
+          <div className="space-y-5">
+            <div className="space-y-2 rounded-xl border border-card-border bg-background/40 p-3">
+              <p className="text-xs font-semibold text-foreground">한 줄 추가</p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <input
+                  className="input-luxe text-sm"
+                  placeholder="사업본부 (선택)"
+                  value={divisionName}
+                  onChange={(e) => setDivisionName(e.target.value)}
+                />
+                <input
+                  className="input-luxe text-sm"
+                  placeholder="사업부 (선택)"
+                  value={unitName}
+                  onChange={(e) => setUnitName(e.target.value)}
+                />
+                <input
+                  className="input-luxe text-sm"
+                  placeholder="팀명 (필수)"
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void addFromForm();
+                    }
+                  }}
+                />
+              </div>
+              <button
+                type="button"
+                className="btn-secondary px-4 py-2 text-sm disabled:opacity-50"
+                disabled={adding}
+                onClick={() => void addFromForm()}
+              >
+                {adding ? "추가 중…" : "팀 추가"}
+              </button>
+            </div>
+
+            <div className="space-y-2 rounded-xl border border-card-border bg-background/40 p-3">
+              <p className="text-xs font-semibold text-foreground">여러 줄 붙여넣기</p>
+              <p className="text-[11px] text-muted">
+                한 줄에 <code className="text-[10px]">사업본부,사업부,팀명</code> (엑셀에서 복사
+                가능). 콤마 1개=팀만, 2개=사업부+팀, 3개=사업본부+사업부+팀.
+              </p>
+              <textarea
+                className="input-luxe min-h-[6rem] w-full text-sm"
+                placeholder={"본사,영업본부,서울팀\n본사,영업본부,부산팀\n지원팀"}
+                value={pasteInput}
+                onChange={(e) => setPasteInput(e.target.value)}
               />
               <button
                 type="button"
                 className="btn-secondary px-4 py-2 text-sm disabled:opacity-50"
                 disabled={adding}
-                onClick={() => void addTeams()}
+                onClick={() => void addFromPaste()}
               >
-                {adding ? "추가 중…" : "팀 추가"}
+                {adding ? "추가 중…" : "붙여넣기 추가"}
               </button>
             </div>
-            {wave.teams.length > 0 ? (
-              <ul className="space-y-3">
-                {wave.teams.map((t) => (
-                  <li key={t.id}>
-                    <p className="mb-1 text-sm font-medium text-foreground">{t.name}</p>
-                    <AdminCopyField value={t.link} label="" />
-                  </li>
-                ))}
+
+            {orderedHierarchy.length > 0 ? (
+              <ul className="space-y-2">
+                {orderedHierarchy.map((node) => {
+                  const depth = levelDepth(node.level);
+                  const link = node.level === "TEAM" ? teamLinkById.get(node.id) : null;
+                  return (
+                    <li
+                      key={node.id}
+                      className="rounded-lg border border-card-border/70 bg-card/40 px-3 py-2"
+                      style={{ marginLeft: depth * 16 }}
+                    >
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <Badge tone="neutral">{levelBadge(node.level)}</Badge>
+                        <span className="text-sm font-medium text-foreground">{node.name}</span>
+                        {node.department ? (
+                          <span className="text-[11px] text-muted">{node.department}</span>
+                        ) : null}
+                      </div>
+                      {link ? <AdminCopyField value={link} label="" /> : null}
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
-              <p className="text-sm text-muted">아직 팀별 링크가 없습니다.</p>
+              <p className="text-sm text-muted">아직 등록된 사업부·팀이 없습니다.</p>
             )}
           </div>
         )}
-        {!teamOpen && wave.teams.length > 0 && (
-          <p className="text-sm text-muted">{wave.teams.length}개 팀 링크 발급됨 — 펼쳐서 관리</p>
+        {!teamOpen && leafCount > 0 && (
+          <p className="text-sm text-muted">
+            팀(리프) {leafCount}개 · 노드 {orderedHierarchy.length}개 — 펼쳐서 관리
+          </p>
         )}
       </AdminSection>
 
