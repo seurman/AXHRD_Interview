@@ -7,7 +7,8 @@ import { logAdminAudit } from "@/lib/admin/audit";
 import { generateJoinCode } from "@/lib/org/join-code";
 import { parseDateInput, validateOrgPeriodRange } from "@/lib/org/period";
 import { parseOrgKind } from "@/lib/org/kinds";
-import type { OrgKind, OrgStatus } from "@prisma/client";
+import { parseOrgDiagnosticPricing } from "@/lib/diagnostic/pricing";
+import { Prisma, type OrgKind, type OrgStatus } from "@prisma/client";
 
 function orgSnapshot(org: {
   name: string;
@@ -160,6 +161,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   if (typeof body.adminNotes === "string") {
     data.adminNotes = body.adminNotes.trim() || null;
+  }
+
+  if (body.diagnosticPricing !== undefined) {
+    if (body.diagnosticPricing === null) {
+      data.diagnosticPricing = Prisma.JsonNull;
+    } else {
+      const parsed = parseOrgDiagnosticPricing(body.diagnosticPricing);
+      if (!parsed) {
+        return NextResponse.json({ error: "조직진단 단가 형식이 올바르지 않습니다." }, { status: 400 });
+      }
+      data.diagnosticPricing = parsed;
+    }
   }
 
   if (typeof body.saasPersonalizationEnabled === "boolean") {

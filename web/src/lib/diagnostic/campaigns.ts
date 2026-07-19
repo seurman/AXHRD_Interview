@@ -8,6 +8,11 @@ import {
 } from "@/lib/diagnostic/section-filter";
 import { deriveInitialWaveStatus, waveStatusLabel } from "@/lib/diagnostic/wave-status";
 import { uniqueSlug, waveSlug } from "@/lib/diagnostic/slug";
+import {
+  defaultOrgDiagnosticPricing,
+  parseOrgDiagnosticPricing,
+  quoteDiagnosticWave,
+} from "@/lib/diagnostic/pricing";
 import type { DiagnosticWaveStatus } from "@prisma/client";
 
 type Tx = Prisma.TransactionClient;
@@ -71,6 +76,8 @@ export type CreateWaveInput = {
   teams?: TeamInput[];
   /** 수퍼어드민 캠페인 생성 시 SKU 자동 활성화 */
   enableDiagnosticSku?: boolean;
+  /** 견적용 예상 응답 수 (없으면 티어 포함 인원 또는 0) */
+  estimatedResponses?: number | null;
 };
 
 type WaveListRow = {
@@ -94,6 +101,9 @@ type WaveListRow = {
     parentId?: string | null;
   }>;
   _count: { responses: number; teams: number };
+  quotedFeeKrw?: number | null;
+  estimatedResponses?: number | null;
+  pricingQuote?: unknown;
 };
 
 export function waveListDto(wave: WaveListRow, baseUrl: string) {
@@ -118,6 +128,8 @@ export function waveListDto(wave: WaveListRow, baseUrl: string) {
     // teams 관계를 안 불러온 목록 쿼리(예: 관리자 전체 웨이브 목록)에서도 정확하도록 _count 우선 사용
     teamCount: wave.teams ? leafTeams.length : wave._count.teams,
     responseCount: wave._count.responses,
+    quotedFeeKrw: wave.quotedFeeKrw ?? null,
+    estimatedResponses: wave.estimatedResponses ?? null,
     orgWideLink: `${baseUrl}/diagnosis/w/${wave.slug}`,
     // 팀(리프)만 — 실제 응답 링크가 있는 노드
     teams: leafTeams.map((t) => ({
@@ -179,6 +191,36 @@ export async function createDiagnosticWave(input: CreateWaveInput, db: Db = pris
     });
   }
 
+  const orgPricing =
+    parseOrgDiagnosticPricing(org.diagnosticPricing) ?? defaultOrgDiagnosticPricing();
+  const yearStart = new Date(new Date().getFullYear(), 0, 1);
+  const wavesUsedThisYear = await db.diagnosticWave.count({
+    where: {
+      organizationId: input.organizationId,
+      createdAt: { gte: yearStart },
+    },
+  });
+  const tierDefaultN =
+    orgPricing.model === "WAVE_PACKAGE"
+      ? (orgPricing.includedResponses ??
+        (orgPricing.waveTierCode === "STARTER"
+          ? 50
+          : orgPricing.waveTierCode === "SCALE"
+            ? 500
+            : orgPricing.waveTierCode === "ENTERPRISE"
+              ? 1000
+              : 200))
+      : orgPricing.seatCount ?? 0;
+  const estimatedResponses =
+    input.estimatedResponses != null && Number.isFinite(input.estimatedResponses)
+      ? Math.max(0, Math.floor(input.estimatedResponses))
+      : tierDefaultN;
+  const pricingQuote = quoteDiagnosticWave({
+    pricing: orgPricing,
+    estimatedResponses,
+    wavesUsedThisYear,
+  });
+
   const created = await db.diagnosticWave.create({
     data: {
       instrumentId: input.instrumentId,
@@ -192,6 +234,9 @@ export async function createDiagnosticWave(input: CreateWaveInput, db: Db = pris
       enabledSectionCodes: enabledSectionCodes ?? undefined,
       enabledDemographicItemCodes: enabledDemographicItemCodes ?? undefined,
       instrumentVersionSnapshot: instrument.version,
+      pricingQuote,
+      quotedFeeKrw: pricingQuote.waveFeeKrw,
+      estimatedResponses,
     },
   });
 

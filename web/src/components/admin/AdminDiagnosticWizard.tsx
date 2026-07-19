@@ -69,6 +69,7 @@ export function AdminDiagnosticWizard({
   const [label, setLabel] = useState("");
   const [opensAt, setOpensAt] = useState("");
   const [closesAt, setClosesAt] = useState("");
+  const [estimatedResponses, setEstimatedResponses] = useState("200");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -161,6 +162,9 @@ export function AdminDiagnosticWizard({
           label: label.trim() || undefined,
           opensAt: opensAt || null,
           closesAt: closesAt || null,
+          estimatedResponses: estimatedResponses.trim()
+            ? Number(estimatedResponses)
+            : undefined,
         }),
       });
       const json = await res.json();
@@ -324,7 +328,20 @@ export function AdminDiagnosticWizard({
                 onChange={(e) => setClosesAt(e.target.value)}
               />
             </div>
-            <p className="text-xs text-muted">비워두면 수동 마감합니다.</p>
+            <div>
+              <label className="text-xs text-muted">예상 응답 인원 (견적)</label>
+              <input
+                type="number"
+                min={0}
+                className="input-luxe mt-1 w-full text-sm"
+                value={estimatedResponses}
+                onChange={(e) => setEstimatedResponses(e.target.value)}
+              />
+              <p className="mt-1 text-xs text-muted">
+                기관 단가(웨이브 패키지·연간 좌석·응답 단가)로 생성 시 견적이 스냅샷됩니다.
+              </p>
+            </div>
+            <p className="text-xs text-muted">시작·종료를 비워두면 수동 마감합니다.</p>
           </div>
         )}
 

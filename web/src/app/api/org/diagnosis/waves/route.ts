@@ -72,6 +72,7 @@ type PostBody = {
   opensAt?: string | null;
   closesAt?: string | null;
   status?: "DRAFT" | "OPEN" | "CLOSED";
+  estimatedResponses?: number | null;
 };
 
 export async function POST(req: Request) {
@@ -107,6 +108,8 @@ export async function POST(req: Request) {
       opensAt: parseWaveDate(body.opensAt),
       closesAt: parseWaveDate(body.closesAt),
       status: body.status === "OPEN" ? "OPEN" : body.status === "CLOSED" ? "CLOSED" : undefined,
+      estimatedResponses:
+        typeof body.estimatedResponses === "number" ? body.estimatedResponses : null,
       teams: teams.map((t) => ({
         name: typeof t.name === "string" ? t.name : "",
         department: typeof t.department === "string" ? t.department : null,

@@ -77,6 +77,7 @@ export async function getOrgHubSnapshot(organizationId: string) {
     personalizationEnabledAt: org.saasPersonalizationEnabledAt,
     diagnosticEnabled: org.diagnosticEnabled,
     interviewEnabled: org.interviewEnabled,
+    diagnosticPricing: org.diagnosticPricing ?? null,
     entitlements: readOrgEntitlements(org),
     kitCount: org.interviewKits.length,
     kits: org.interviewKits,

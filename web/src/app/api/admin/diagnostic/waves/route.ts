@@ -42,6 +42,7 @@ type PostBody = {
   label?: string;
   opensAt?: string | null;
   closesAt?: string | null;
+  estimatedResponses?: number | null;
 };
 
 export async function POST(req: Request) {
@@ -82,6 +83,8 @@ export async function POST(req: Request) {
       enabledDemographicItemCodes: enabledDemographic,
       opensAt: parseWaveDate(body.opensAt),
       closesAt: parseWaveDate(body.closesAt),
+      estimatedResponses:
+        typeof body.estimatedResponses === "number" ? body.estimatedResponses : null,
     });
 
     const baseUrl = new URL(req.url).origin;

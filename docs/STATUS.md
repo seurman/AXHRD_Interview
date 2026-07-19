@@ -2,6 +2,25 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — ARC Index 조직진단 단가 (2026-07-19)
+
+글로벌 EX(Culture Amp/Qualtrics PEPM·연간) + 국내 진단(웨이브 패키지·응답 단가) 벤치마크로
+B2B 견적 엔진을 추가. 접근은 여전히 `diagnosticEnabled` SKU, 결제는 수동(세금계산서).
+
+| 모델 | 기본 카탈로그 |
+|------|----------------|
+| WAVE_PACKAGE | Starter 150만/~50 · Growth 350만/~200 · Scale 700만/~500 · Enterprise 1200만/~1000 + 초과 응답 |
+| SEAT_ANNUAL | 좌석당 연 2.5만(최소 200만) · 연 2회 포함 · 추가 웨이브 100만 |
+| PER_RESPONSE | 1.5만/응답 · 최소 웨이브 80만 |
+| CUSTOM | 영업 맞춤 |
+
+| 파일 | 변경 |
+|------|------|
+| `lib/diagnostic/pricing.ts` | 카탈로그·견적 |
+| `Organization.diagnosticPricing` / `DiagnosticWave.pricingQuote` | JSON 스냅샷 |
+| `OrgContractEditor` | 단가 편집 UI |
+| 웨이브 생성 | 견적 스냅샷 저장 · 상세에 표시 |
+
 ## 최근 작업 — 기관 콘솔 조직구조 하이어라키 UI (2026-07-19)
 
 `/org/diagnosis` 생성 화면이 텍스트 붙여넣기만 있어 하이어라키가 안 보이던 문제를 수정.
