@@ -33,6 +33,7 @@ type WaveRow = {
   statusLabel: string;
   sectionBadge: string;
   instrumentName: string;
+  organizationId: string;
   organizationName: string;
   opensAt: string | null;
   closesAt: string | null;
@@ -131,8 +132,9 @@ export function AdminDiagnosticCmsPanel({
         title="Diagnostic Studio"
         subtitle={
           <>
-            Instrument · Campaign · Report를 한 콘솔에서 관리합니다. 기관 셀프서브{" "}
-            <code className="text-xs">/org/diagnosis</code>와 동일한 캠페인 엔진을 공유합니다.
+            Instrument · 크로스-기관 Campaign 목록 · Report Studio. 일상 운영은{" "}
+            <strong className="font-medium text-foreground">기관 → 조직진단 웨이브</strong>에서
+            합니다(코호트·인터뷰 킷과 동일).
           </>
         }
         actions={
@@ -142,7 +144,7 @@ export function AdminDiagnosticCmsPanel({
               className="btn-primary px-4 py-2 text-sm"
               onClick={() => setWizardOpen(true)}
             >
-              + 새 진단 시작
+              + 새 웨이브
             </button>
           ) : undefined
         }
@@ -222,8 +224,8 @@ export function AdminDiagnosticCmsPanel({
 
       {tab === "campaign" && (
       <AdminSection
-        title="진단 캠페인"
-        description="기관 선택 → 섹션 → 일정. 팀별 링크는 생성 후 상세 화면에서 추가합니다."
+        title="진단 캠페인 (크로스-기관)"
+        description="전체 기관 웨이브 목록. 클릭하면 기관 → 웨이브 상세로 이동합니다. 생성은 모달 마법사, 상세·리포트는 별도 페이지(코호트·킷과 동일)."
         actions={
           <div className="flex flex-wrap gap-2">
             <button
@@ -263,7 +265,7 @@ export function AdminDiagnosticCmsPanel({
             {waves.map((w) => (
               <li key={w.id} className="border-b border-card-border last:border-0">
                 <Link
-                  href={`/admin/diagnostic/waves/${w.id}`}
+                  href={`/admin/organizations/${w.organizationId}/waves/${w.id}`}
                   className="flex flex-col gap-1.5 px-4 py-3.5 text-sm transition hover:bg-background/60 sm:px-5 lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-4 lg:px-6"
                 >
                   <div className="flex min-w-0 items-center gap-2">

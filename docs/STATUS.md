@@ -2,6 +2,26 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 기관→웨이브 표준 내비 (2026-07-19)
+
+코호트·인터뷰 킷과 같이 **기관 허브에서 선택**하는 패턴으로 조직진단 운영을 맞췄습니다.
+일상 운영 경로: `기관 관리 → 기관 허브 → 조직진단 웨이브 → 웨이브 상세(사업부·팀) → 리포트`.
+
+| 결정 | 내용 |
+|------|------|
+| 표준 경로 | `/admin/organizations/[id]/waves` · `/waves/[waveId]` · `/report` |
+| 생성 UX | 모달 마법사 유지(가벼운 생성). 상세·리포트는 **별도 페이지**(코호트·킷과 동일, 딥워크에 적합) |
+| CMS | `/admin/diagnostic`은 Instrument · 크로스-기관 목록 · Report Studio. 목록 클릭 시 기관→웨이브로 이동 |
+| 레거시 | `/admin/diagnostic/waves/[id]`(+report) → 기관 스코프 경로로 리다이렉트 |
+
+| 파일 | 변경 |
+|------|------|
+| `organizations/[id]/waves/**` | 목록·상세·리포트 페이지 |
+| `AdminOrgWavesPanel.tsx` | 기관 고정 웨이브 목록 + 생성 마법사 |
+| `AdminDiagnosticWaveDetail.tsx` | `navContext="org"|"cms"` 브레드크럼 |
+| `diagnostic/waves/[id]/**` | 리다이렉트 |
+| org hub tile | `…/waves` 진입 |
+
 ## 최근 작업 — 사업부·팀 구조 관리 + 엑셀 내보내기 (2026-07-19)
 
 이미 있던 `createHierarchyTeams` / GET `hierarchy`를 관리자 화면에 연결하고,

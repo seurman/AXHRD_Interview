@@ -57,7 +57,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/admin/content/resume-review": "자소서 첨삭 기준",
   "/admin/irt-recalibration": "IRT 재보정",
   "/admin/repository": "역량·루브릭",
-  "/admin/diagnostic": "진단 캠페인",
+  "/admin/diagnostic": "조직진단 CMS",
   "/admin/demo": "데모 워크스페이스",
   "/admin/users": "사용자",
   "/admin/sessions": "면접 세션",
@@ -84,10 +84,15 @@ export function resolvePlatformPageTitle(pathname: string): string {
   if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
 
   if (pathname.startsWith("/admin/organizations/") && pathname !== "/admin/organizations/benchmark") {
+    if (/\/waves\/[^/]+\/report\/?$/.test(pathname)) return "진단 리포트";
+    if (/\/waves\/[^/]+\/?$/.test(pathname)) return "웨이브 상세";
+    if (/\/waves\/?$/.test(pathname)) return "조직진단 웨이브";
+    if (pathname.includes("/cohort")) return "코호트";
+    if (pathname.includes("/interview-kit")) return "인터뷰 킷";
     return "기관 허브";
   }
   if (pathname.startsWith("/admin/diagnostic/waves/")) {
-    return pathname.endsWith("/report") ? "진단 리포트" : "캠페인 상세";
+    return pathname.endsWith("/report") ? "진단 리포트" : "웨이브 상세";
   }
   if (pathname.startsWith("/admin/sessions/")) return "세션 상세";
   if (pathname.startsWith("/admin/demo/")) return "데모 워크스페이스";
