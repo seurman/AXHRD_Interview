@@ -172,7 +172,7 @@ export function AdminDiagnosticCmsPanel({
       {tab === "instrument" && (
       <AdminSection
         title="Instrument Studio"
-        description="정본: docs/arc-index/source/*.md — 원본 동기화 후 문항 편집"
+        description="정본: docs/arc-index/source/*.md — 「원본 동기화」로 DM06~12 등 시드 문항을 DB에 반영합니다"
         actions={
           <button
             type="button"

@@ -37,10 +37,15 @@ function itemChanged(
     isDemographic: boolean;
     order: number;
     subscaleId: string | null;
+    choiceOptions: unknown;
   },
   item: SeedItem,
   subscaleId: string | null,
 ): boolean {
+  const seedChoices = item.choiceOptions ?? null;
+  const existingChoices = existing.choiceOptions ?? null;
+  const choicesChanged =
+    JSON.stringify(existingChoices) !== JSON.stringify(seedChoices);
   return (
     existing.textKo !== item.textKo ||
     existing.scaleType !== item.scaleType ||
@@ -48,7 +53,8 @@ function itemChanged(
     existing.isReversed !== (item.isReversed ?? false) ||
     existing.isDemographic !== (item.isDemographic ?? false) ||
     existing.order !== item.order ||
-    existing.subscaleId !== subscaleId
+    existing.subscaleId !== subscaleId ||
+    choicesChanged
   );
 }
 
@@ -73,6 +79,7 @@ async function upsertItemsForSection(
       isDemographic: true,
       order: true,
       subscaleId: true,
+      choiceOptions: true,
     },
   });
   const byCode = new Map(existingItems.map((i) => [i.itemCode, i]));

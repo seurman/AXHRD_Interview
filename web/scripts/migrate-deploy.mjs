@@ -54,6 +54,15 @@ if (status === 0) {
       "[migrate-deploy] evidence assessment seed failed (non-fatal). Use /admin/content/assessment → 「데모 과제 넣기」.",
     );
   }
+
+  // ARC Index 문항뱅크(데모그래픽 DM06~12 등) — 멱등 sync. 실패해도 빌드는 계속.
+  console.log("[migrate-deploy] Syncing ARC Index instrument from seed…");
+  const arc = run("npx tsx scripts/sync-arc-instrument.ts");
+  if (arc.status !== 0) {
+    console.warn(
+      "[migrate-deploy] ARC instrument sync failed (non-fatal). Use /admin/diagnostic → 「원본 동기화」.",
+    );
+  }
 }
 
 process.exit(status);

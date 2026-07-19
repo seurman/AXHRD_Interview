@@ -35,7 +35,7 @@ export const ARC_INDEX_SEED = {
   instrument: {
     code: "ARC_INDEX",
     nameKo: "ARC Index — 통합 조직진단",
-    version: "260715p",
+    version: "260719dm",
     estimatedMinutes: 16,
   },
   sections: [
