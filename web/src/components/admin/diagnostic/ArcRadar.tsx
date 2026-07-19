@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import {
   PolarAngleAxis,
   PolarGrid,
@@ -20,7 +21,7 @@ type Props = {
   stroke?: string;
   fillOpacity?: number;
   heightClass?: string;
-  caption?: string;
+  caption?: ReactNode;
 };
 
 /**
@@ -67,7 +68,11 @@ export function ArcRadar({
           </RadarChart>
         </ResponsiveContainer>
       </div>
-      <p className="mt-1 text-center text-[10px] text-muted">{caption}</p>
+      {typeof caption === "string" ? (
+        <p className="mt-1 text-center text-[10px] text-muted">{caption}</p>
+      ) : (
+        <div className="mt-1 space-y-0.5 text-center text-[10px] text-muted">{caption}</div>
+      )}
     </div>
   );
 }
