@@ -376,6 +376,182 @@ export async function duplicateScenario(scenarioId: string): Promise<ScenarioWit
   });
 }
 
+function normalizeCompetencyName(value: string): string {
+  return value.replace(/\s+/g, "").toLowerCase();
+}
+
+/**
+ * 게시 전 자동 보정: 플랫폼 역량/기본 루브릭 연결, 행동지표·역할연기 필수 필드 보강.
+ * 검증을 통과할 수 있게 만든 뒤 호출측에서 validateScenarioForPublish를 다시 수행한다.
+ */
+export async function prepareScenarioForPublish(scenarioId: string): Promise<{
+  scenario: ScenarioWithFramework;
+  repairs: string[];
+}> {
+  const repairs: string[] = [];
+  let scenario = await prisma.assessmentScenario.findUnique({
+    where: { id: scenarioId },
+    include: SCENARIO_WITH_FRAMEWORK_INCLUDE,
+  });
+  if (!scenario) throw new Error("과제를 찾을 수 없습니다.");
+
+  const bank = await prisma.competency.findMany({
+    where: {
+      organizationId: null,
+      ownerScope: "PLATFORM",
+      isActive: true,
+      lifecycleStatus: "ACTIVE",
+    },
+    include: {
+      rubricSets: {
+        where: { organizationId: null },
+        orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+        include: { details: { orderBy: { scoreLevel: "asc" } } },
+      },
+    },
+  });
+
+  const byCode = new Map(bank.map((c) => [c.code.toUpperCase(), c]));
+  const byName = new Map(bank.map((c) => [normalizeCompetencyName(c.nameKo), c]));
+
+  for (const c of scenario.competencies) {
+    let matched = c.competencyId
+      ? bank.find((b) => b.id === c.competencyId) ?? null
+      : null;
+    if (!matched) {
+      matched =
+        byCode.get(c.competencyCode.toUpperCase()) ??
+        byName.get(normalizeCompetencyName(c.nameKo)) ??
+        null;
+      if (!matched) {
+        const needle = normalizeCompetencyName(c.nameKo || c.competencyCode);
+        matched =
+          bank.find((b) => {
+            const n = normalizeCompetencyName(b.nameKo);
+            return n.includes(needle) || needle.includes(n);
+          }) ?? null;
+      }
+    }
+
+    if (matched && (!c.competencyId || c.competencyId !== matched.id)) {
+      const rubric =
+        matched.rubricSets.find((r) => r.details.length >= 3) ??
+        matched.rubricSets[0] ??
+        null;
+      await prisma.assessmentScenarioCompetency.update({
+        where: { id: c.id },
+        data: {
+          competencyId: matched.id,
+          competencyCode: matched.code,
+          nameKo: matched.nameKo,
+          definition: matched.description ?? c.definition,
+          rubricSetId: c.rubricSetId ?? rubric?.id ?? null,
+        },
+      });
+      repairs.push(`${c.nameKo} → ${matched.code} 역량 연결`);
+    } else if (matched && !c.rubricSetId) {
+      const rubric =
+        matched.rubricSets.find((r) => r.details.length >= 3) ??
+        matched.rubricSets[0] ??
+        null;
+      if (rubric) {
+        await prisma.assessmentScenarioCompetency.update({
+          where: { id: c.id },
+          data: { rubricSetId: rubric.id },
+        });
+        repairs.push(`${matched.nameKo}: 기본 루브릭 연결`);
+      }
+    }
+
+    const indicatorCount = c.subskills.reduce((n, s) => n + s.indicators.length, 0);
+    if (indicatorCount < 1) {
+      const name = matched?.nameKo ?? c.nameKo;
+      if (c.subskills.length === 0) {
+        const sub = await prisma.assessmentScenarioSubskill.create({
+          data: {
+            scenarioCompetencyId: c.id,
+            code: "CORE",
+            nameKo: "핵심 행동",
+            definition: `${name} 핵심 관찰 영역`,
+            sortOrder: 0,
+          },
+        });
+        await prisma.assessmentScenarioIndicator.createMany({
+          data: [
+            {
+              subskillId: sub.id,
+              code: "P1",
+              polarity: "POSITIVE",
+              textKo: `${name} 관련 긍정 행동이 명확히 나타난다.`,
+              sortOrder: 0,
+            },
+            {
+              subskillId: sub.id,
+              code: "N1",
+              polarity: "NEGATIVE_OR_MISSING",
+              textKo: `${name} 관련 행동이 관찰되지 않거나 부정적으로 나타난다.`,
+              sortOrder: 1,
+            },
+          ],
+        });
+      } else {
+        await prisma.assessmentScenarioIndicator.createMany({
+          data: [
+            {
+              subskillId: c.subskills[0].id,
+              code: "P1",
+              polarity: "POSITIVE",
+              textKo: `${name} 관련 긍정 행동이 명확히 나타난다.`,
+              sortOrder: 0,
+            },
+            {
+              subskillId: c.subskills[0].id,
+              code: "N1",
+              polarity: "NEGATIVE_OR_MISSING",
+              textKo: `${name} 관련 행동이 관찰되지 않거나 부정적으로 나타난다.`,
+              sortOrder: 1,
+            },
+          ],
+        });
+      }
+      repairs.push(`${name}: 기본 행동지표 추가`);
+    }
+  }
+
+  if (scenario.kind === "ROLE_PLAY") {
+    const personaPatch: Prisma.AssessmentScenarioUpdateInput = {};
+    if (!scenario.personaName?.trim()) {
+      personaPatch.personaName = "상대역";
+      repairs.push("상대역 이름 기본값 설정");
+    }
+    if (!scenario.personaProfile?.trim()) {
+      personaPatch.personaProfile =
+        "과제 맥락에 맞는 실무자로 행동한다. 응시자의 질문·제안에 현실적으로 반응하되, 과도하게 협조하거나 적대적이지 않는다.";
+      repairs.push("상대역 연기 지침 기본값 설정");
+    }
+    if (!scenario.openingLine?.trim()) {
+      personaPatch.openingLine = "안녕하세요. 부르셨다고 해서 왔습니다.";
+      repairs.push("첫 발화 기본값 설정");
+    }
+    if (scenario.maxTurns < 1) {
+      personaPatch.maxTurns = 6;
+      repairs.push("최대 턴 수 기본값 설정");
+    }
+    if (Object.keys(personaPatch).length > 0) {
+      await prisma.assessmentScenario.update({
+        where: { id: scenarioId },
+        data: personaPatch,
+      });
+    }
+  }
+
+  scenario = await prisma.assessmentScenario.findUniqueOrThrow({
+    where: { id: scenarioId },
+    include: SCENARIO_WITH_FRAMEWORK_INCLUDE,
+  });
+  return { scenario, repairs };
+}
+
 export function toAdminScenarioDto(scenario: ScenarioWithFramework) {
   return {
     id: scenario.id,

@@ -2,7 +2,7 @@
  * 업로드 원문 → 역할연기/서류함 과제 구조화 초안 (Gemini).
  * 결과는 즉시 게시하지 않고 DRAFT로 저장한다.
  */
-import { generateGeminiText } from "@/lib/gemini/client";
+import { generateGeminiForTier } from "@/lib/gemini/client";
 import type { AssessmentScenarioKind } from "@prisma/client";
 
 export type DraftCompetencyLink = {
@@ -67,12 +67,22 @@ type AvailableCompetency = {
   description: string | null;
 };
 
+export class ScenarioDraftError extends Error {
+  constructor(
+    message: string,
+    public readonly reason: string,
+  ) {
+    super(message);
+    this.name = "ScenarioDraftError";
+  }
+}
+
 const SYSTEM = [
   "당신은 한국 기업 역량평가(Assessment Center) 과제 설계 전문가입니다.",
   "관리자가 제공한 샘플 과제(또는 문서)를 참고해, 구조·난이도·채점 가능성이 유사한 새 과제를 JSON으로 작성합니다.",
   "샘플을 그대로 복사하지 마세요. 상황·인물·회사·문서 내용은 새로 구성하되, 평가 목적과 관찰 가능한 행동 구조는 유지하세요.",
   "응시자에게 채점 기준·페르소나 내부 지침이 노출되지 않도록 필드 역할을 분리하세요.",
-  "competencies는 제공된 플랫폼 역량 코드 중에서만 선택하세요.",
+  "competencies는 제공된 플랫폼 역량 코드 중에서만 선택하세요. competencyCode는 availableCompetencies의 code와 정확히 일치해야 합니다.",
   "각 역량마다 하위역량과 POSITIVE / NEGATIVE_OR_MISSING 행동지표를 과제 맥락에 맞게 작성하세요.",
 ].join("\n");
 
@@ -136,6 +146,38 @@ function sanitizeLevel(value: unknown, fallback: "LOW" | "MEDIUM" | "HIGH") {
     : fallback;
 }
 
+function normalizeName(value: string): string {
+  return value.replace(/\s+/g, "").toLowerCase();
+}
+
+function defaultSubskills(nameKo: string): DraftCompetencyLink["subskills"] {
+  return [
+    {
+      code: "CORE",
+      nameKo: "핵심 행동",
+      definition: `${nameKo} 핵심 관찰 영역`,
+      indicators: [
+        {
+          code: "P1",
+          polarity: "POSITIVE",
+          textKo: `${nameKo} 관련 긍정 행동이 명확히 나타난다.`,
+        },
+        {
+          code: "N1",
+          polarity: "NEGATIVE_OR_MISSING",
+          textKo: `${nameKo} 관련 행동이 관찰되지 않거나 부정적으로 나타난다.`,
+        },
+      ],
+    },
+  ];
+}
+
+function ensureDraftSubskills(c: DraftCompetencyLink): DraftCompetencyLink {
+  const hasIndicators = c.subskills.some((s) => s.indicators.length > 0);
+  if (hasIndicators) return c;
+  return { ...c, subskills: defaultSubskills(c.nameKo) };
+}
+
 function parseCompetencies(raw: unknown): DraftCompetencyLink[] {
   if (!Array.isArray(raw)) return [];
   const out: DraftCompetencyLink[] = [];
@@ -146,7 +188,7 @@ function parseCompetencies(raw: unknown): DraftCompetencyLink[] {
       typeof c.competencyCode === "string" ? c.competencyCode.trim().toUpperCase() : "";
     const nameKo = typeof c.nameKo === "string" ? c.nameKo.trim() : "";
     const definition = typeof c.definition === "string" ? c.definition.trim() : "";
-    if (!competencyCode || !nameKo) continue;
+    if (!competencyCode && !nameKo) continue;
     const subskillsRaw = Array.isArray(c.subskills) ? c.subskills : [];
     const subskills: DraftCompetencyLink["subskills"] = [];
     for (const s of subskillsRaw) {
@@ -170,14 +212,77 @@ function parseCompetencies(raw: unknown): DraftCompetencyLink[] {
       }
       subskills.push({ code, nameKo: sName, definition: sDef || sName, indicators });
     }
-    out.push({
-      competencyCode,
-      nameKo,
-      definition: definition || nameKo,
-      subskills,
-    });
+    out.push(
+      ensureDraftSubskills({
+        competencyCode: competencyCode || nameKo.toUpperCase().replace(/\s+/g, "_"),
+        nameKo: nameKo || competencyCode,
+        definition: definition || nameKo || competencyCode,
+        subskills,
+      }),
+    );
   }
   return out;
+}
+
+/** AI가 만든 역량을 플랫폼 뱅크 코드에 정렬. 코드/이름 매칭 실패 시 뱅크 상위 역량으로 폴백. */
+export function alignCompetenciesToBank(
+  competencies: DraftCompetencyLink[],
+  available: AvailableCompetency[],
+): DraftCompetencyLink[] {
+  if (available.length === 0) return [];
+
+  const byCode = new Map(available.map((c) => [c.code.toUpperCase(), c]));
+  const byName = new Map(available.map((c) => [normalizeName(c.nameKo), c]));
+  const used = new Set<string>();
+  const aligned: DraftCompetencyLink[] = [];
+
+  function matchBank(c: DraftCompetencyLink): AvailableCompetency | null {
+    const codeHit = byCode.get(c.competencyCode.toUpperCase());
+    if (codeHit) return codeHit;
+    const nameHit = byName.get(normalizeName(c.nameKo));
+    if (nameHit) return nameHit;
+    const needle = normalizeName(c.nameKo || c.competencyCode);
+    if (!needle) return null;
+    for (const a of available) {
+      const n = normalizeName(a.nameKo);
+      if (n.includes(needle) || needle.includes(n)) return a;
+    }
+    return null;
+  }
+
+  for (const c of competencies) {
+    const bank = matchBank(c);
+    if (!bank) continue;
+    const key = bank.code.toUpperCase();
+    if (used.has(key)) continue;
+    used.add(key);
+    aligned.push(
+      ensureDraftSubskills({
+        ...c,
+        competencyCode: bank.code.toUpperCase(),
+        nameKo: bank.nameKo,
+        definition: c.definition || bank.description || bank.nameKo,
+      }),
+    );
+  }
+
+  if (aligned.length === 0) {
+    const seed = competencies[0];
+    for (const bank of available.slice(0, Math.min(2, available.length))) {
+      aligned.push(
+        ensureDraftSubskills({
+          competencyCode: bank.code.toUpperCase(),
+          nameKo: bank.nameKo,
+          definition: bank.description || bank.nameKo,
+          subskills: seed?.subskills?.length
+            ? seed.subskills
+            : defaultSubskills(bank.nameKo),
+        }),
+      );
+    }
+  }
+
+  return aligned;
 }
 
 export function parseScenarioDraftJson(
@@ -271,9 +376,20 @@ export async function generateScenarioDraftFromDocument(params: {
   availableCompetencies: AvailableCompetency[];
   /** 관리자 추가 지시 (업종·직급·톤 등) */
   guidance?: string | null;
-}): Promise<ScenarioDraft | null> {
+}): Promise<ScenarioDraft> {
   const text = params.extractedText.trim().slice(0, 24_000);
-  if (!text) return null;
+  if (!text) {
+    throw new ScenarioDraftError(
+      "원문 텍스트가 비어 있습니다.",
+      "empty_source",
+    );
+  }
+  if (params.availableCompetencies.length === 0) {
+    throw new ScenarioDraftError(
+      "활성화된 플랫폼 역량이 없습니다.",
+      "no_competencies",
+    );
+  }
 
   const system =
     SYSTEM +
@@ -292,40 +408,84 @@ export async function generateScenarioDraftFromDocument(params: {
       adminGuidance: guidance,
       availableCompetencies: params.availableCompetencies.slice(0, 40),
       instruction:
-        "샘플과 유사한 실무형 평가 과제를 새로 설계하세요. 제목·인물·상황·문서는 샘플과 다르게 만들고, 제공된 역량 코드만 사용하세요. adminGuidance가 있으면 우선 반영하세요.",
+        "샘플과 유사한 실무형 평가 과제를 새로 설계하세요. 제목·인물·상황·문서는 샘플과 다르게 만들고, competencyCode는 availableCompetencies의 code만 사용하세요. adminGuidance가 있으면 우선 반영하세요.",
     },
     null,
     2,
   );
 
-  const content = await generateGeminiText({
+  const gemini = await generateGeminiForTier({
     systemInstruction: system,
     userPrompt,
-    temperature: 0.4,
+    temperature: 0.35,
     maxOutputTokens: 8192,
-    timeoutMs: 60_000,
+    timeoutMs: 90_000,
     task: "assessment_scenario_draft",
     responseMimeType: "application/json",
   });
-  if (!content) return null;
+  if (!gemini.text) {
+    throw new ScenarioDraftError(
+      `AI 응답을 받지 못했습니다${gemini.attempts ? ` (${gemini.attempts})` : ""}.`,
+      "gemini_empty",
+    );
+  }
 
+  let parsed: unknown;
   try {
-    const match = content.match(/\{[\s\S]*\}/);
-    if (!match) return null;
-    const parsed = JSON.parse(match[0]) as unknown;
-    const draft = parseScenarioDraftJson(parsed, params.kind);
-    if (!draft) return null;
+    const match = gemini.text.match(/\{[\s\S]*\}/);
+    if (!match) {
+      throw new ScenarioDraftError(
+        "AI 응답에서 JSON을 찾지 못했습니다.",
+        "json_missing",
+      );
+    }
+    parsed = JSON.parse(match[0]) as unknown;
+  } catch (e) {
+    if (e instanceof ScenarioDraftError) throw e;
+    throw new ScenarioDraftError(
+      "AI 응답 JSON 파싱에 실패했습니다.",
+      "json_parse",
+    );
+  }
 
-    // 제공된 역량 코드만 유지
+  const draft = parseScenarioDraftJson(parsed, params.kind);
+  if (!draft) {
+    throw new ScenarioDraftError(
+      params.kind === "IN_BASKET"
+        ? "서류함 초안 형식이 올바르지 않습니다(제목·브리핑·항목 3건·역량 필요)."
+        : "역할연기 초안 형식이 올바르지 않습니다(제목·브리핑·역량 필요).",
+      "draft_invalid",
+    );
+  }
+
+  draft.competencies = alignCompetenciesToBank(
+    draft.competencies,
+    params.availableCompetencies,
+  );
+  if (draft.competencies.length === 0) {
+    throw new ScenarioDraftError(
+      "역량을 플랫폼 뱅크에 연결하지 못했습니다.",
+      "competency_align",
+    );
+  }
+
+  if (draft.kind === "IN_BASKET") {
     const allowed = new Set(
       params.availableCompetencies.map((c) => c.code.toUpperCase()),
     );
-    draft.competencies = draft.competencies.filter((c) =>
-      allowed.has(c.competencyCode.toUpperCase()),
-    );
-    if (draft.competencies.length === 0) return null;
-    return draft;
-  } catch {
-    return null;
+    draft.items = draft.items.map((item) => {
+      if (!item.targetCompetencyCode) return item;
+      if (allowed.has(item.targetCompetencyCode)) return item;
+      const byName = params.availableCompetencies.find(
+        (c) =>
+          normalizeName(c.nameKo) === normalizeName(item.targetCompetencyCode ?? ""),
+      );
+      return {
+        ...item,
+        targetCompetencyCode: byName?.code.toUpperCase() ?? null,
+      };
+    });
   }
+
+  return draft;
 }

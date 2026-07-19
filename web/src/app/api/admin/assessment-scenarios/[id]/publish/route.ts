@@ -10,11 +10,14 @@ import {
   SCENARIO_WITH_FRAMEWORK_INCLUDE,
 } from "@/lib/assessment/load-scenario-context";
 import { validateScenarioForPublish } from "@/lib/assessment/scenario-publish";
-import { toAdminScenarioDto } from "@/lib/assessment/admin-scenario-service";
+import {
+  prepareScenarioForPublish,
+  toAdminScenarioDto,
+} from "@/lib/assessment/admin-scenario-service";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-/** 게시 — 검증 통과 시 PUBLISHED + isActive */
+/** 게시 — 자동 보정 후 검증 통과 시 PUBLISHED + isActive */
 export async function POST(req: Request, ctx: Ctx) {
   const auth = await requireProductionContentApi();
   if (isAdminResponse(auth)) return auth;
@@ -49,10 +52,22 @@ export async function POST(req: Request, ctx: Ctx) {
     return NextResponse.json({ scenario: toAdminScenarioDto(updated) });
   }
 
-  const issues = validateScenarioForPublish(scenario);
+  if (scenario.status === "ARCHIVED") {
+    return NextResponse.json(
+      { error: "보관된 과제는 게시할 수 없습니다." },
+      { status: 400 },
+    );
+  }
+
+  const prepared = await prepareScenarioForPublish(id);
+  const issues = validateScenarioForPublish(prepared.scenario);
   if (issues.length > 0) {
     return NextResponse.json(
-      { error: "게시 조건을 충족하지 않습니다.", issues },
+      {
+        error: "게시 조건을 충족하지 않습니다.",
+        issues,
+        repairs: prepared.repairs,
+      },
       { status: 400 },
     );
   }
@@ -62,8 +77,11 @@ export async function POST(req: Request, ctx: Ctx) {
     data: {
       status: "PUBLISHED",
       isActive: true,
-      publishedAt: scenario.publishedAt ?? new Date(),
-      version: scenario.status === "PUBLISHED" ? scenario.version : scenario.version,
+      publishedAt: prepared.scenario.publishedAt ?? new Date(),
+      version:
+        prepared.scenario.status === "PUBLISHED"
+          ? prepared.scenario.version
+          : prepared.scenario.version,
     },
     include: SCENARIO_WITH_FRAMEWORK_INCLUDE,
   });
@@ -79,8 +97,12 @@ export async function POST(req: Request, ctx: Ctx) {
       status: updated.status,
       isActive: updated.isActive,
       publishedAt: updated.publishedAt,
+      repairs: prepared.repairs,
     },
   });
 
-  return NextResponse.json({ scenario: toAdminScenarioDto(updated) });
+  return NextResponse.json({
+    scenario: toAdminScenarioDto(updated),
+    repairs: prepared.repairs,
+  });
 }

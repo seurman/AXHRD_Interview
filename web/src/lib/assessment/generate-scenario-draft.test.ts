@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseScenarioDraftJson } from "@/lib/assessment/generate-scenario-draft";
+import {
+  alignCompetenciesToBank,
+  parseScenarioDraftJson,
+} from "@/lib/assessment/generate-scenario-draft";
 
 describe("parseScenarioDraftJson", () => {
   it("parses a role-play draft", () => {
@@ -66,5 +69,68 @@ describe("parseScenarioDraftJson", () => {
       "IN_BASKET",
     );
     expect(draft).toBeNull();
+  });
+
+  it("fills default indicators when subskills are empty", () => {
+    const draft = parseScenarioDraftJson(
+      {
+        titleKo: "역할",
+        taskBrief: "진행",
+        competencies: [
+          {
+            competencyCode: "LEAD",
+            nameKo: "리더십",
+            definition: "d",
+            subskills: [],
+          },
+        ],
+      },
+      "ROLE_PLAY",
+    );
+    expect(draft?.competencies[0].subskills[0].indicators.length).toBeGreaterThan(0);
+  });
+});
+
+describe("alignCompetenciesToBank", () => {
+  const bank = [
+    { code: "COMM", nameKo: "의사소통", description: "소통" },
+    { code: "LEAD", nameKo: "리더십", description: "리드" },
+  ];
+
+  it("maps by code and drops unknowns via name fallback", () => {
+    const aligned = alignCompetenciesToBank(
+      [
+        {
+          competencyCode: "COMM",
+          nameKo: "의사소통",
+          definition: "d",
+          subskills: [],
+        },
+        {
+          competencyCode: "UNKNOWN",
+          nameKo: "리더십",
+          definition: "d",
+          subskills: [],
+        },
+      ],
+      bank,
+    );
+    expect(aligned.map((c) => c.competencyCode)).toEqual(["COMM", "LEAD"]);
+  });
+
+  it("falls back to bank competencies when none match", () => {
+    const aligned = alignCompetenciesToBank(
+      [
+        {
+          competencyCode: "ZZZ",
+          nameKo: "없는역량",
+          definition: "d",
+          subskills: [],
+        },
+      ],
+      bank,
+    );
+    expect(aligned.length).toBeGreaterThan(0);
+    expect(aligned[0].competencyCode).toBe("COMM");
   });
 });

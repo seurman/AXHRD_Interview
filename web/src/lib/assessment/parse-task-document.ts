@@ -9,8 +9,31 @@ import {
 
 export const TASK_DOC_MAX_BYTES = 5 * 1024 * 1024;
 
-export function validateTaskDocument(file: File): string | null {
-  return validateResumeFile(file);
+/** FormData 파일이 Node/Edge에서 File instanceof가 깨질 수 있어 duck-type 사용 */
+export type UploadBlob = {
+  name?: string;
+  type?: string;
+  size: number;
+  arrayBuffer: () => Promise<ArrayBuffer>;
+};
+
+export function isUploadBlob(value: unknown): value is UploadBlob {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.size === "number" &&
+    typeof v.arrayBuffer === "function" &&
+    (typeof v.name === "string" || typeof v.name === "undefined")
+  );
+}
+
+export function validateTaskDocument(file: UploadBlob): string | null {
+  const asFile = {
+    name: file.name || "upload.bin",
+    type: file.type || "",
+    size: file.size,
+  } as File;
+  return validateResumeFile(asFile);
 }
 
 export type ParsedTaskDocument = {
@@ -21,16 +44,17 @@ export type ParsedTaskDocument = {
   extractedText: string;
 };
 
-export async function parseTaskDocument(file: File): Promise<ParsedTaskDocument> {
-  const validationError = validateTaskDocument(file);
+export async function parseTaskDocument(file: UploadBlob): Promise<ParsedTaskDocument> {
+  const fileName = (file.name || "upload.bin").trim() || "upload.bin";
+  const validationError = validateTaskDocument({ ...file, name: fileName });
   if (validationError) throw new Error(validationError);
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const extractedText = await parseResumeBuffer(buffer, file.name);
+  const extractedText = await parseResumeBuffer(buffer, fileName);
   const checksumSha256 = createHash("sha256").update(buffer).digest("hex");
 
   return {
-    fileName: file.name,
+    fileName,
     mimeType: file.type || null,
     byteSize: file.size,
     checksumSha256,
