@@ -901,8 +901,8 @@ export const dictionary: Dictionary = {
       PUBLIC: "Public sector",
     },
     tripleFeedback: {
-      title: "Triple feedback mode (optional)",
-      hint: "After each answer, see coaching cards from large enterprise, public sector, and startup lenses. IRT score stays single; uses more tokens. Off by default.",
+      title: "Triple feedback mode (advanced)",
+      hint: "After each answer, see coaching from large enterprise, public, and startup lenses. Default coaching is one improvement + one STAR rewrite; this option is advanced. IRT score stays single; uses more tokens.",
     },
     jdBonus: {
       title: "Add job-posting bonus question (optional)",

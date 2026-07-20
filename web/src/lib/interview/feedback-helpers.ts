@@ -163,9 +163,12 @@ export function buildAnswerKeyPointFeedback(params: {
   chipType?: "pass" | "attempt" | "downgrade";
   level?: number;
   competency?: string;
+  competencyLabelText?: string;
   nextLevel?: number;
   isInterim?: boolean;
   score?: number;
+  /** TOUGH 문항 직후 짧은 압박 코칭 */
+  pressureTier?: "GENTLE" | "NEUTRAL" | "TOUGH";
 }): {
   summary: string;
   keyPoints: string[];
@@ -174,6 +177,11 @@ export function buildAnswerKeyPointFeedback(params: {
   evidence: FeedbackEvidenceItem[];
   dimensions?: AnswerDimensions;
   weakestDimension?: AnswerDimensionKey;
+  /** 기본 UI용 — 보완점 한 줄 */
+  primaryImprovement: string;
+  /** 기본 UI용 — STAR 리라이트 한 줄 */
+  starRewrite: string;
+  pressureCoaching?: string;
 } {
   const coverage = detectStarCoverage(params.answer);
   const keyPoints: string[] = [];
@@ -182,6 +190,7 @@ export function buildAnswerKeyPointFeedback(params: {
     keyPoints.push(`${coverage[key] ? "✓" : "·"} ${label}: ${coverage[key] ? "드러남" : "보강 필요"}`);
   }
 
+  let primaryImprovement = starCoachingNote(coverage);
   if (params.dimensions) {
     const sorted = Object.entries(params.dimensions).sort((a, b) => b[1] - a[1]);
     const best = sorted[0];
@@ -191,6 +200,7 @@ export function buildAnswerKeyPointFeedback(params: {
     }
     if (weak && weak[1] < 0.55) {
       keyPoints.push(`보완 — ${dimensionLabel(weak[0])} (${Math.round(weak[1] * 100)}%)`);
+      primaryImprovement = `${dimensionLabel(weak[0])} 축을 보강하세요 (${Math.round(weak[1] * 100)}%). 구체 사례·수치·본인 역할을 한 문장에 담아 보세요.`;
     }
   }
 
@@ -220,12 +230,23 @@ export function buildAnswerKeyPointFeedback(params: {
     }
   }
 
+  const label = params.competencyLabelText ?? "이 역량";
+  const starRewrite = starRewriteTemplate(label);
+
+  const pressureCoaching =
+    params.pressureTier === "TOUGH"
+      ? "방금은 압박 면접 톤이었습니다. 핵심 결과(수치)와 본인 역할을 먼저 말한 뒤, 근거를 한 문장으로 붙이면 설득력이 올라갑니다."
+      : undefined;
+
   return {
     summary: params.briefFeedback.trim() || starCoachingNote(coverage),
     keyPoints,
     irtNote,
     quote,
     evidence,
+    primaryImprovement,
+    starRewrite,
+    ...(pressureCoaching ? { pressureCoaching } : {}),
     ...(params.dimensions
       ? {
           dimensions: params.dimensions,

@@ -93,6 +93,12 @@ export interface AnswerFeedback {
   tripleFeedback?: import("@/lib/interview/triple-feedback").TripleFeedbackResult;
   dimensions?: AnswerDimensions;
   weakestDimension?: string;
+  /** 기본 코칭 — 보완점 한 줄 */
+  primaryImprovement?: string;
+  /** 기본 코칭 — STAR 리라이트 한 줄 */
+  starRewrite?: string;
+  /** TOUGH 문항 직후 압박 코칭 */
+  pressureCoaching?: string;
   /** 자소서 경험 확인 질문 피드백 — 점수 없이 라벨·근거만 */
   claimVerification?: {
     label: "검증됨" | "부분검증" | "설명부족";

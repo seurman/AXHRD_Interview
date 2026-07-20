@@ -5120,6 +5120,14 @@ html.dark .lp-faq-question {
 .card-luxe--session {
   border-top: 3px solid color-mix(in srgb, var(--color-gold) 45%, var(--color-card-border));
 }
+@media (max-width: 1023px) {
+  .interview-answer-dock {
+    position: sticky;
+    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    z-index: 30;
+    box-shadow: 0 -8px 24px color-mix(in srgb, var(--color-foreground) 8%, transparent);
+  }
+}
 .report-jangpyo-tabs {
   display: flex;
   flex-wrap: wrap;

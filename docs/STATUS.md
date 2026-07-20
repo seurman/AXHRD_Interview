@@ -2,9 +2,26 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 면접 Stage 3·4 UX (2026-07-20)
+
+코칭 차별화 + 성장·플랫폼. 
+
+| Stage | 항목 | 내용 |
+|------|------|------|
+| 3 | 차수 미리보기 | Setup `RoundPreviewCard` — 순서·문항·시간·페르소나/공고 이유 |
+| 3 | 약한 축 CTA | 턴 피드백·역량 피드백·플랜 차수 요약 → 재연습 링크 |
+| 3 | 기본 코칭 | `AnswerFeedbackPanel` = 보완 1 + STAR 리라이트 · 자세히=6축/근거 · 트리플=고급 |
+| 3 | 맥락·히어로 | 세션 중 자소서/회사 맥락 칩 · 피드백 히어로 grounding 요약 |
+| 3 | 압박 코칭 | TOUGH 답변 직후 `pressureCoaching` 카드 |
+| 4 | 공유·PDF | `FeedbackShareControls` (링크 복사+인쇄) · 피드백/차수 요약 |
+| 4 | 킷 패리티 | `KitStartClient` 시간 예산·자소서 텍스트 |
+| 4 | 퍼널 | `trackFunnel` + `/api/analytics/event` (setup/answer/leave/resume/next) |
+| 4 | 차수 종합 | 플랜 페이지 역량 레이더 + RoundBrief + 약점 CTA |
+| 4 | 모바일 | θ/칩 접기 · 답변 영역 sticky dock |
+
 ## 최근 작업 — 면접 Stage 2 UX (2026-07-20)
 
-세션 품질·신뢰성. Stage 3(코칭 차별화)는 미착수.
+세션 품질·신뢰성.
 
 | 항목 | 내용 |
 |------|------|
