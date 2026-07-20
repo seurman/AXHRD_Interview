@@ -845,7 +845,7 @@ export const dictionary: Dictionary = {
     title: "모의 면접 설정",
     subtitle: "역량 세트 · 시간 예산 · 피드백 저장 · 자소서는 선택 사항",
     industry: {
-      title: "1. 산업군",
+      title: "산업군",
       hint: "산업군과 기업 규모를 함께 고르면 면접 톤이 더 정확해집니다.",
       placeholder: "선택해 주세요",
       companyPlaceholder: "지원 회사명 (선택 — 있으면 질문 문구에 반영)",
@@ -865,17 +865,24 @@ export const dictionary: Dictionary = {
       remove: "제거",
       charsApplied: "{chars}자 반영",
       placeholder: "채용공고(JD) 원문이나 인재상 키워드를 붙여넣으세요…",
+      analyzeCta: "AI로 필요역량 분석",
+      analyzing: "공고 분석 중…",
+      needMoreChars: "공고 분석에는 {min}자 이상이 필요합니다. (현재 {current}자)",
     },
-    job: { title: "2. 지원 직무" },
+    job: { title: "지원 직무" },
     persona: { eyebrow: "당신의 면접 페르소나" },
     competency: {
-      title: "3. 역량 선택",
+      title: "역량 선택",
       hint: "산업·직무를 고르면 추천 역량이 자동 체크돼요 · 자유롭게 추가/해제 가능 · 시간은 아래에서 선택",
       plan: "진행 중인 플랜",
       recommended: "추천",
       done: "완료",
       inProgress: "진행 중",
       notStarted: "미시작",
+      multiSessionHint:
+        "{first}부터 시작합니다. 이번 세션은 한 역량만 진행하고, 끝나면 선택한 나머지 {remaining}개 역량으로 이어갈 수 있습니다.",
+      multiSessionHintOne:
+        "{first}부터 시작합니다. 이번 세션은 한 역량만 진행하고, 끝나면 다음 선택 역량으로 이어갈 수 있습니다.",
     },
     prepMode: {
       title: "면접 준비 모드",
@@ -885,7 +892,7 @@ export const dictionary: Dictionary = {
     },
     timeBudget: {
       title: "면접 시간",
-      hint: "이번 차수 전체 예상 시간입니다. 선택한 역량 수에 맞춰 문항 수가 자동 배분됩니다.",
+      hint: "이번 차수 전체 예상 시간입니다. 선택한 역량마다 세션이 이어지며, 문항 수는 역량당으로 배분됩니다.",
       unit: "분",
       perCompetency: "약 {minutes}분 · 역량당 {questions}문항",
     },
@@ -895,7 +902,7 @@ export const dictionary: Dictionary = {
       unit: "문항",
     },
     resume: {
-      title: "4. 자기소개서 (선택)",
+      title: "자기소개서 (선택)",
       hint: "업로드하면 첫 질문에 내용이 반영됩니다. 없어도 일반 질문으로 면접을 진행할 수 있습니다.",
       upload: "PDF · Word · TXT 업로드",
       parsing: "파일에서 텍스트 추출 중…",

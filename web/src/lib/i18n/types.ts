@@ -491,10 +491,23 @@ export type Dictionary = {
       remove: string;
       charsApplied: string;
       placeholder: string;
+      analyzeCta: string;
+      analyzing: string;
+      needMoreChars: string;
     };
     job: { title: string };
     persona: { eyebrow: string };
-    competency: { title: string; hint: string; plan: string; recommended: string; done: string; inProgress: string; notStarted: string };
+    competency: {
+      title: string;
+      hint: string;
+      plan: string;
+      recommended: string;
+      done: string;
+      inProgress: string;
+      notStarted: string;
+      multiSessionHint: string;
+      multiSessionHintOne: string;
+    };
     prepMode: { title: string; hint: string; competencySet: string; companyTarget: string };
     timeBudget: { title: string; hint: string; unit: string; perCompetency: string };
     questionCount: { title: string; hint: string; unit: string };
