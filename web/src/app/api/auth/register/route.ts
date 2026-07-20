@@ -7,10 +7,22 @@ import { loadPersonalAccessContext } from "@/lib/auth/personal-access";
 import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";
 import { recordUserLogin } from "@/lib/auth/presence";
 import { clientIpFromRequest, evaluateSignupAnomaly } from "@/lib/auth/signup-anomaly";
+import { createMembershipRequest } from "@/lib/org/membership";
+import { acceptOrgInvitation } from "@/lib/org/invitations";
 
 export async function POST(req: Request) {
   try {
-    const { email, password, name, phone, next, dataUseConsent } = await req.json();
+    const body = await req.json();
+    const { email, password, name, phone, next, dataUseConsent, joinCode, invite } = body as {
+      email?: string;
+      password?: string;
+      name?: string;
+      phone?: string;
+      next?: string;
+      dataUseConsent?: boolean;
+      joinCode?: string;
+      invite?: string;
+    };
 
     if (!email?.trim() || !password || password.length < 8) {
       return NextResponse.json(
@@ -46,7 +58,7 @@ export async function POST(req: Request) {
     const signupFlag = evaluateSignupAnomaly(ip, normalized);
     const now = new Date();
 
-    const user = exists
+    let user = exists
       ? await prisma.user.update({
           where: { id: exists.id },
           data: {
@@ -70,9 +82,48 @@ export async function POST(req: Request) {
           },
         });
 
+    let membershipNote: string | null = null;
+    let redirectOverride: string | null = null;
+
+    const inviteToken = typeof invite === "string" ? invite.trim() : "";
+    const code = typeof joinCode === "string" ? joinCode.trim().toUpperCase() : "";
+
+    if (inviteToken) {
+      try {
+        const accepted = await acceptOrgInvitation(inviteToken, user.id);
+        membershipNote = `${accepted.organization.name} 초대를 수락했습니다.`;
+        redirectOverride = "/org/dashboard";
+        user = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+      } catch (e) {
+        membershipNote =
+          e instanceof Error ? `초대 수락 실패: ${e.message}` : "초대 수락에 실패했습니다.";
+        redirectOverride = `/org/invite/${inviteToken}`;
+      }
+    } else if (code) {
+      try {
+        const result = await createMembershipRequest({
+          userId: user.id,
+          joinCode: code,
+        });
+        if (result.mode === "joined") {
+          membershipNote = `${result.organization.name}에 소속되었습니다.`;
+          redirectOverride = "/dashboard";
+        } else {
+          membershipNote = `${result.organization.name} 승인 대기 중입니다.`;
+          redirectOverride = "/org/setup";
+        }
+        user = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+      } catch (e) {
+        membershipNote =
+          e instanceof Error ? `기관 연결 실패: ${e.message}` : "기관 연결에 실패했습니다.";
+        redirectOverride = "/org/setup";
+      }
+    }
+
     await syncSuperadminPlatformRole(user.id, user.email);
     const accessContext = await loadPersonalAccessContext(user.id);
-    const redirect = resolvePostLoginRedirect(user, accessContext, next);
+    const redirect =
+      redirectOverride ?? resolvePostLoginRedirect(user, accessContext, next);
 
     const response = NextResponse.json({
       ok: true,
@@ -81,6 +132,7 @@ export async function POST(req: Request) {
       name: user.name,
       upgraded: Boolean(exists),
       redirect,
+      membershipNote,
     });
     await recordUserLogin(user.id);
     await applySessionCookie(response, user.id);

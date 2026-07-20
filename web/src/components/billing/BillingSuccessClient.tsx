@@ -16,6 +16,11 @@ export function BillingSuccessClient() {
     const authKey = params.get("authKey");
     const customerKey = params.get("customerKey");
     const planTier = params.get("planTier") as PlanTier | null;
+    const seatQuantityRaw = params.get("seatQuantity");
+    const seatQuantity =
+      seatQuantityRaw != null && Number.isFinite(Number(seatQuantityRaw))
+        ? Number(seatQuantityRaw)
+        : undefined;
 
     if (!authKey || !customerKey || !planTier) {
       setStatus("error");
@@ -28,12 +33,16 @@ export function BillingSuccessClient() {
         const res = await fetch("/api/billing/confirm", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ authKey, customerKey, planTier }),
+          body: JSON.stringify({ authKey, customerKey, planTier, seatQuantity }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "구독 등록 실패");
         setStatus("ok");
-        setMessage(`${data.planName ?? PLANS[planTier].nameKo} 구독이 시작되었습니다.`);
+        const seats =
+          typeof data.maxSeats === "number" ? ` · 좌석 ${data.maxSeats}` : "";
+        setMessage(
+          `${data.planName ?? PLANS[planTier].nameKo} 구독이 시작되었습니다.${seats}`,
+        );
         router.refresh();
       } catch (e) {
         setStatus("error");
@@ -53,9 +62,14 @@ export function BillingSuccessClient() {
         <>
           <p className="text-lg font-semibold text-success">구독 완료</p>
           <p className="mt-2 text-sm text-muted">{message}</p>
-          <Link href="/dashboard" className="btn-primary mt-6 inline-block px-6 py-2 text-sm">
-            대시보드로
-          </Link>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            <Link href="/org/dashboard?tab=members" className="btn-primary px-6 py-2 text-sm">
+              초대 · 좌석 관리
+            </Link>
+            <Link href="/dashboard" className="btn-secondary px-6 py-2 text-sm">
+              대시보드
+            </Link>
+          </div>
         </>
       )}
       {status === "error" && (

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requirePageUser } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { OrgSetupForm } from "@/components/org/OrgSetupForm";
+import { LeaveOrgButton } from "@/components/org/LeaveOrgButton";
 import { getPendingRequestForUser } from "@/lib/org/membership";
 
 export const dynamic = "force-dynamic";
@@ -20,24 +21,24 @@ export default async function OrgSetupPage() {
     return (
       <div className="mx-auto max-w-lg space-y-6">
         <h1 className="text-2xl font-bold text-foreground">기관 연결</h1>
-        <div className="card-luxe p-6">
+        <div className="card-luxe space-y-4 p-6">
           <p className="text-foreground">
             이미 <span className="font-semibold">{org?.name ?? "알 수 없는 기관"}</span>에
             소속되어 있습니다.
           </p>
           {isStaff && org?.status === "PENDING" && (
-            <p className="mt-2 text-sm text-muted">
+            <p className="text-sm text-muted">
               기관 생성 요청이 승인 대기 중입니다. 승인 후 멤버·승인 메뉴를 이용할 수 있습니다.
             </p>
           )}
           {isStaff && org?.status === "REJECTED" && (
-            <p className="mt-2 text-sm text-muted">
+            <p className="text-sm text-muted">
               기관 생성 요청이 승인되지 않았습니다. 문의사항이 있으시면 운영팀에 연락해 주세요.
             </p>
           )}
           {isStaff && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Link href="/org/members" className="btn-primary inline-block">
+            <div className="flex flex-wrap gap-2">
+              <Link href="/org/dashboard?tab=members" className="btn-primary inline-block">
                 멤버 · 승인 →
               </Link>
               <Link href="/org/dashboard" className="btn-secondary inline-block">
@@ -45,6 +46,9 @@ export default async function OrgSetupPage() {
               </Link>
             </div>
           )}
+          <div className="border-t border-card-border pt-3">
+            <LeaveOrgButton organizationName={org?.name} />
+          </div>
         </div>
       </div>
     );

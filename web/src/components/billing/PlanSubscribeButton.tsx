@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import type { PlanTier } from "@prisma/client";
-import { PLANS, formatPriceKrw } from "@/lib/billing/plans";
+import {
+  PLANS,
+  clampSeatQuantity,
+  formatPriceKrw,
+  resolvePlanChargeAmount,
+} from "@/lib/billing/plans";
 
 type PlanCardProps = {
   tier: PlanTier;
@@ -19,8 +25,21 @@ export function PlanSubscribeButton({
   subscribeLabel = "구독하기",
   loggedIn,
 }: PlanCardProps) {
-  const [loading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
   const plan = PLANS[tier];
+  const isOrgSeats = plan.pricePerSeatMonthlyKrw != null;
+  const defaultSeats = useMemo(() => {
+    const fromQuery = Number(searchParams.get("seats"));
+    return clampSeatQuantity(
+      tier,
+      Number.isFinite(fromQuery) && fromQuery > 0
+        ? fromQuery
+        : plan.limits.orgMemberCap ?? plan.minSeats ?? 10,
+    );
+  }, [plan.limits.orgMemberCap, plan.minSeats, searchParams, tier]);
+
+  const [loading, setLoading] = useState(false);
+  const [seats, setSeats] = useState(defaultSeats);
 
   if (!plan.selfServeBilling) {
     return (
@@ -43,7 +62,8 @@ export function PlanSubscribeButton({
     );
   }
 
-  if (plan.priceMonthlyKrw === null) {
+  const amount = resolvePlanChargeAmount(tier, isOrgSeats ? seats : null);
+  if (amount == null) {
     return (
       <button
         type="button"
@@ -65,7 +85,10 @@ export function PlanSubscribeButton({
       const prep = await fetch("/api/billing/prepare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planTier: tier }),
+        body: JSON.stringify({
+          planTier: tier,
+          seatQuantity: isOrgSeats ? seats : undefined,
+        }),
       });
       const data = await prep.json();
       if (!prep.ok) throw new Error(data.error ?? "결제 준비 실패");
@@ -87,19 +110,46 @@ export function PlanSubscribeButton({
   };
 
   return (
-    <button
-      type="button"
-      onClick={subscribe}
-      disabled={loading}
-      className="btn-primary mt-6 w-full py-2.5 text-sm disabled:opacity-50"
-    >
-      {loading ? "결제창 여는 중…" : subscribeLabel}
-    </button>
+    <div className="mt-6 space-y-3">
+      {isOrgSeats ? (
+        <label className="block text-xs text-muted">
+          좌석 수
+          <input
+            type="number"
+            min={plan.minSeats ?? 1}
+            max={plan.maxSeatsPurchase ?? 500}
+            value={seats}
+            onChange={(e) => setSeats(clampSeatQuantity(tier, Number(e.target.value)))}
+            className="mt-1 min-h-10 w-full rounded-lg border border-card-border bg-background px-3 text-sm text-foreground"
+          />
+          <span className="mt-1 block tabular-nums">
+            {formatPriceKrw(amount)} ({seats}석 × ₩
+            {(plan.pricePerSeatMonthlyKrw ?? 0).toLocaleString("ko-KR")})
+          </span>
+        </label>
+      ) : null}
+      <button
+        type="button"
+        onClick={subscribe}
+        disabled={loading}
+        className="btn-primary w-full py-2.5 text-sm disabled:opacity-50"
+      >
+        {loading ? "결제창 여는 중…" : subscribeLabel}
+      </button>
+    </div>
   );
 }
 
 export function PlanPrice({ tier }: { tier: PlanTier }) {
   const plan = PLANS[tier];
+  if (plan.pricePerSeatMonthlyKrw != null) {
+    return (
+      <p className="mt-4 text-3xl font-bold text-foreground">
+        ₩{plan.pricePerSeatMonthlyKrw.toLocaleString("ko-KR")}
+        <span className="text-base font-medium text-muted">/좌석·월</span>
+      </p>
+    );
+  }
   return (
     <p className="mt-4 text-3xl font-bold text-foreground">
       {formatPriceKrw(plan.priceMonthlyKrw)}

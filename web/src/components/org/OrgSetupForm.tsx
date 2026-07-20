@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ORG_KIND_CONFIG } from "@/lib/org/kinds";
 import type { OrgKind } from "@prisma/client";
 
@@ -24,6 +24,7 @@ type Pending = {
 
 export function OrgSetupForm({ initialPending }: { initialPending?: Pending | null }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<Mode>("join");
   const [joinCode, setJoinCode] = useState("");
   const [message, setMessage] = useState("");
@@ -35,6 +36,18 @@ export function OrgSetupForm({ initialPending }: { initialPending?: Pending | nu
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fromQuery =
+      searchParams.get("joinCode")?.trim().toUpperCase() ||
+      searchParams.get("code")?.trim().toUpperCase() ||
+      "";
+    if (fromQuery) {
+      setJoinCode(fromQuery);
+      setSelectedOrgId(null);
+      setMode("join");
+    }
+  }, [searchParams]);
 
   const loadDirectory = useCallback(async (q: string) => {
     const res = await fetch(`/api/org/directory?q=${encodeURIComponent(q)}`);

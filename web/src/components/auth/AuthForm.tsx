@@ -15,8 +15,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const a = dict.auth;
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/interview/setup";
+  const joinCode = searchParams.get("joinCode") ?? searchParams.get("code") ?? "";
+  const invite = searchParams.get("invite") ?? "";
+  const prefillEmail = searchParams.get("email") ?? "";
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +29,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
   useEffect(() => {
     const oauthError = searchParams.get("error");
     if (oauthError) setError(oauthError);
-  }, [searchParams]);
+    if (prefillEmail) setEmail(prefillEmail);
+  }, [searchParams, prefillEmail]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +42,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
     const body =
       mode === "login"
         ? { email, password, next }
-        : { email, password, name, next, dataUseConsent };
+        : {
+            email,
+            password,
+            name,
+            next,
+            dataUseConsent,
+            ...(joinCode ? { joinCode } : {}),
+            ...(invite ? { invite } : {}),
+          };
 
     try {
       const res = await fetch(url, {
@@ -54,9 +66,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
         (typeof data.name === "string" ? data.name : "").trim() || name.trim();
       let successMessage: string;
       if (mode === "register") {
+        const note =
+          typeof data.membershipNote === "string" ? data.membershipNote : "";
         successMessage = data.upgraded
           ? `${displayName}님, 비밀번호 설정이 완료되었습니다.`
           : `${displayName}님, 회원가입이 완료되었습니다!`;
+        if (note) successMessage = `${successMessage} ${note}`;
       } else {
         successMessage = `${displayName}님, 로그인되었습니다.`;
       }
@@ -80,14 +95,24 @@ export function AuthForm({ mode }: { mode: Mode }) {
     }
   };
 
-  const registerHref =
-    next && next !== "/demo"
-      ? `/auth/register?next=${encodeURIComponent(next)}`
-      : "/auth/register";
+  const registerHref = (() => {
+    const q = new URLSearchParams();
+    if (next && next !== "/demo") q.set("next", next);
+    if (joinCode) q.set("joinCode", joinCode);
+    if (invite) q.set("invite", invite);
+    const s = q.toString();
+    return s ? `/auth/register?${s}` : "/auth/register";
+  })();
   const loginHref =
     next && next !== "/demo"
       ? `/auth/login?next=${encodeURIComponent(next)}`
       : "/auth/login";
+
+  const oauthNext = (() => {
+    if (invite) return `/org/invite/${invite}`;
+    if (joinCode) return `/org/setup?joinCode=${encodeURIComponent(joinCode)}`;
+    return next;
+  })();
 
   return (
     <div className="card-luxe mx-auto max-w-md p-6 sm:p-8">
@@ -101,14 +126,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
       {!success && (
         <div className="mt-6 grid gap-3">
           <a
-            href={`/api/auth/oauth/kakao/start?next=${encodeURIComponent(next)}`}
+            href={`/api/auth/oauth/kakao/start?next=${encodeURIComponent(oauthNext)}`}
             className="flex w-full items-center justify-center rounded-lg bg-[#FEE500] px-4 py-2.5 text-sm font-medium text-[#191919] transition hover:brightness-95"
             aria-label="카카오로 로그인"
           >
             카카오로 {mode === "login" ? "로그인" : "시작하기"}
           </a>
           <a
-            href={`/api/auth/oauth/naver/start?next=${encodeURIComponent(next)}`}
+            href={`/api/auth/oauth/naver/start?next=${encodeURIComponent(oauthNext)}`}
             className="flex w-full items-center justify-center rounded-lg bg-[#03C75A] px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-95"
             aria-label="네이버로 로그인"
           >

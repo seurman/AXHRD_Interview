@@ -8,6 +8,7 @@ import { getUserStrengthDeck } from "@/lib/discover/user-strengths";
 import { StrengthCardDeck } from "@/components/profile/StrengthCardDeck";
 import { OrgCoachingConsentToggle } from "@/components/profile/OrgCoachingConsentToggle";
 import { BillingManageCard } from "@/components/billing/BillingManageCard";
+import { LeaveOrgButton } from "@/components/org/LeaveOrgButton";
 import { COMPETENCY_CODES } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -145,24 +146,31 @@ export default async function ProfilePage() {
         </section>
       )}
 
-      <Link
-        href={user.organizationId ? "/org/dashboard" : "/org/setup"}
-        className="flex items-center justify-between rounded-2xl border border-card-border bg-background p-6 transition hover:border-gold/40"
-      >
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Organization</p>
-          <p className="mt-1 font-semibold text-foreground">
-            {user.organizationId
-              ? `${user.organization?.name ?? "소속 기관"} · ${
-                  user.orgRole === "MEMBER" || user.orgRole === "STUDENT"
-                    ? "구성원"
-                    : "참여 현황"
-                }`
-              : "기관 연결하기"}
-          </p>
-        </div>
-        <span className="text-2xl text-accent">→</span>
-      </Link>
+      <div className="space-y-2">
+        <Link
+          href={user.organizationId ? "/org/dashboard" : "/org/setup"}
+          className="flex items-center justify-between rounded-2xl border border-card-border bg-background p-6 transition hover:border-gold/40"
+        >
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Organization</p>
+            <p className="mt-1 font-semibold text-foreground">
+              {user.organizationId
+                ? `${user.organization?.name ?? "소속 기관"} · ${
+                    user.orgRole === "MEMBER" || user.orgRole === "STUDENT"
+                      ? "구성원"
+                      : "참여 현황"
+                  }`
+                : "기관 연결하기"}
+            </p>
+          </div>
+          <span className="text-2xl text-accent">→</span>
+        </Link>
+        {user.organizationId ? (
+          <div className="flex justify-end px-1">
+            <LeaveOrgButton organizationName={user.organization?.name} />
+          </div>
+        ) : null}
+      </div>
 
       <section className="card-luxe p-6">
         <h2 className="mb-4 font-semibold text-foreground">기본 정보</h2>

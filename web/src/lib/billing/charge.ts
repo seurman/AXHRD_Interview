@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { PLANS } from "./plans";
+import { resolvePlanChargeAmount } from "./plans";
 import {
   addBillingPeriod,
   generateOrderId,
@@ -20,8 +20,7 @@ export async function chargeSubscription(subscriptionId: string) {
     throw new Error("빌링키가 없는 구독입니다(수동 계약 플랜).");
   }
 
-  const plan = PLANS[sub.planTier];
-  const amount = plan.priceMonthlyKrw;
+  const amount = resolvePlanChargeAmount(sub.planTier, sub.seatQuantity);
   if (amount === null || amount <= 0) {
     throw new Error(`${sub.planTier} 플랜 가격이 설정되지 않았습니다.`);
   }

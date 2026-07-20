@@ -6,10 +6,13 @@ import {
   MembershipReviewModal,
   type MembershipReviewMode,
 } from "@/components/org/MembershipReviewModal";
+import { OrgInvitePanel } from "@/components/org/OrgInvitePanel";
+import Link from "next/link";
 
 type Seats = {
   members: number;
   pending: number;
+  invites?: number;
   reserved: number;
   cap: number | null;
   remaining: number | null;
@@ -286,19 +289,40 @@ export function OrgMembersPanel({
             />
           </div>
           <p className="mt-2 text-xs text-muted">
-            예약 = 소속 멤버 + 승인 대기. 대기 건도 좌석을 미리 점유합니다.
+            예약 = 소속 멤버 + 승인 대기 + 초대. 초대·대기도 좌석을 미리 점유합니다.
           </p>
           {seatFull ? (
             <p className="mt-2 text-xs font-medium text-danger">
-              좌석 상한에 도달했습니다. 승인 전에 상한을 올리거나 멤버를 정리하세요.
+              좌석 상한에 도달했습니다.{" "}
+              <Link href={`/pricing?seats=${(seats.cap ?? 0) + 10}`} className="underline">
+                좌석 추가 구독
+              </Link>
+              으로 상한을 올리거나 멤버를 정리하세요.
             </p>
           ) : seatTight ? (
             <p className="mt-2 text-xs font-medium text-warning">
-              좌석이 90% 이상 사용 중입니다. 상한 확장을 검토하세요.
+              좌석이 90% 이상 사용 중입니다.{" "}
+              <Link href={`/pricing?seats=${Math.ceil((seats.cap ?? 10) * 1.2)}`} className="underline">
+                좌석 확장
+              </Link>
+              을 검토하세요.
             </p>
           ) : null}
+          {seats.invites != null && seats.invites > 0 ? (
+            <p className="mt-1 text-xs text-muted">대기 초대 {seats.invites}건도 좌석에 포함됩니다.</p>
+          ) : null}
         </div>
-      ) : null}
+      ) : (
+        <div className="rounded-xl border border-dashed border-card-border px-4 py-3 text-xs text-muted">
+          좌석 상한이 없습니다.{" "}
+          <Link href="/pricing" className="text-accent hover:underline">
+            Organization Standard
+          </Link>
+          로 좌석을 구매하면 초대·승인 한도가 적용됩니다.
+        </div>
+      )}
+
+      {isAdmin ? <OrgInvitePanel isAdmin={isAdmin} /> : null}
 
       {isAdmin ? (
         <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-card-border bg-card p-4 text-sm sm:p-5">
