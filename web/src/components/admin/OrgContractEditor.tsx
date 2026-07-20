@@ -2,9 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import type { OrgKind, OrgStatus } from "@prisma/client";
 import { ORG_KIND_CONFIG, ORG_KINDS } from "@/lib/org/kinds";
 import { OrgDiagnosticPricingEditor } from "@/components/admin/OrgDiagnosticPricingEditor";
+import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   defaultOrgDiagnosticPricing,
   parseOrgDiagnosticPricing,
@@ -20,13 +30,13 @@ type Props = {
     status: OrgStatus;
     validFrom: string | null;
     validUntil: string | null;
-  maxSeats: number | null;
-  adminNotes: string | null;
-  memberCount: number;
-  seatCap: number | null;
-  diagnosticPricing?: unknown;
-  requireMembershipApproval?: boolean;
-};
+    maxSeats: number | null;
+    adminNotes: string | null;
+    memberCount: number;
+    seatCap: number | null;
+    diagnosticPricing?: unknown;
+    requireMembershipApproval?: boolean;
+  };
 };
 
 function toDateInput(iso: string | null): string {
@@ -54,6 +64,7 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
   );
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [pending, setPending] = useState<"regen" | "delete" | null>(null);
 
   const save = async () => {
     setSaving(true);
@@ -77,16 +88,15 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "저장에 실패했습니다.");
       router.refresh();
-      alert("저장되었습니다.");
+      toast.success("저장되었습니다.");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "저장에 실패했습니다.");
+      toast.error(e instanceof Error ? e.message : "저장에 실패했습니다.");
     } finally {
       setSaving(false);
     }
   };
 
   const regenerateCode = async () => {
-    if (!confirm("가입 코드를 새로 발급할까요? 기존 코드로는 가입할 수 없습니다.")) return;
     setSaving(true);
     try {
       const res = await fetch(`/api/admin/organizations/${organizationId}`, {
@@ -98,19 +108,16 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
       if (!res.ok) throw new Error(data.error ?? "재발급에 실패했습니다.");
       setJoinCode(data.organization.joinCode);
       router.refresh();
+      toast.success("가입 코드가 재발급되었습니다.");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "재발급에 실패했습니다.");
+      toast.error(e instanceof Error ? e.message : "재발급에 실패했습니다.");
     } finally {
       setSaving(false);
+      setPending(null);
     }
   };
 
   const remove = async () => {
-    const msg =
-      initial.memberCount > 0
-        ? `소속 멤버 ${initial.memberCount}명이 있습니다. 기관을 삭제하면 모두 소속이 해제됩니다. 계속할까요?`
-        : "이 기관을 삭제할까요? 되돌릴 수 없습니다.";
-    if (!confirm(msg)) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/admin/organizations/${organizationId}`, {
@@ -120,17 +127,24 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "삭제에 실패했습니다.");
+      setPending(null);
       router.push("/admin/organizations");
       router.refresh();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "삭제에 실패했습니다.");
+      toast.error(e instanceof Error ? e.message : "삭제에 실패했습니다.");
     } finally {
       setDeleting(false);
+      setPending(null);
     }
   };
 
+  const deleteDescription =
+    initial.memberCount > 0
+      ? `소속 멤버 ${initial.memberCount}명이 있습니다. 기관을 삭제하면 모두 소속이 해제됩니다. 계속할까요?`
+      : "이 기관을 삭제할까요? 되돌릴 수 없습니다.";
+
   return (
-    <section className="card-luxe space-y-5 p-6">
+    <section className="platform-panel platform-panel--elevated space-y-5 p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-semibold text-foreground">계약 · 좌석 · 가입 코드</h2>
@@ -145,15 +159,16 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
             )}
           </p>
         </div>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as OrgStatus)}
-          className="input-luxe text-sm"
-        >
-          <option value="PENDING">승인 대기</option>
-          <option value="APPROVED">운영 중</option>
-          <option value="REJECTED">중지/반려</option>
-        </select>
+        <Select value={status} onValueChange={(v) => setStatus(v as OrgStatus)}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="PENDING">승인 대기</SelectItem>
+            <SelectItem value="APPROVED">운영 중</SelectItem>
+            <SelectItem value="REJECTED">중지/반려</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -165,21 +180,22 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
             className="input-luxe mt-1 w-full"
           />
         </label>
-        <label className="block text-sm sm:col-span-2">
+        <div className="block text-sm sm:col-span-2">
           <span className="font-medium">기관 유형</span>
-          <select
-            value={kind}
-            onChange={(e) => setKind(e.target.value as OrgKind)}
-            className="input-luxe mt-1 w-full"
-          >
-            {ORG_KINDS.map((k) => (
-              <option key={k} value={k}>
-                {ORG_KIND_CONFIG[k].label}
-              </option>
-            ))}
-          </select>
+          <Select value={kind} onValueChange={(v) => setKind(v as OrgKind)}>
+            <SelectTrigger className="mt-1 w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ORG_KINDS.map((k) => (
+                <SelectItem key={k} value={k}>
+                  {ORG_KIND_CONFIG[k].label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <span className="mt-1 block text-xs text-muted">{ORG_KIND_CONFIG[kind].description}</span>
-        </label>
+        </div>
         <label className="block text-sm">
           <span className="font-medium">가입 코드</span>
           <div className="mt-1 flex gap-2">
@@ -190,7 +206,7 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
             />
             <button
               type="button"
-              onClick={() => void regenerateCode()}
+              onClick={() => setPending("regen")}
               disabled={saving}
               className="btn-secondary shrink-0 px-3 text-xs"
             >
@@ -237,11 +253,10 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
           />
         </label>
         <label className="flex items-start gap-3 text-sm sm:col-span-2">
-          <input
-            type="checkbox"
+          <Checkbox
             className="mt-1"
             checked={requireMembershipApproval}
-            onChange={(e) => setRequireMembershipApproval(e.target.checked)}
+            onCheckedChange={(checked) => setRequireMembershipApproval(checked === true)}
           />
           <span>
             <span className="font-medium">가입 시 담당자 승인 필요</span>
@@ -265,13 +280,33 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
         </button>
         <button
           type="button"
-          onClick={() => void remove()}
+          onClick={() => setPending("delete")}
           disabled={saving || deleting}
           className="rounded-lg border border-danger/40 px-4 py-2 text-sm text-danger hover:bg-danger/10 disabled:opacity-50"
         >
           {deleting ? "삭제 중…" : "기관 삭제"}
         </button>
       </div>
+
+      <AdminConfirmDialog
+        open={pending != null}
+        onOpenChange={(open) => {
+          if (!open) setPending(null);
+        }}
+        title={pending === "delete" ? "기관 삭제" : "가입 코드 재발급"}
+        description={
+          pending === "delete"
+            ? deleteDescription
+            : "가입 코드를 새로 발급할까요? 기존 코드로는 가입할 수 없습니다."
+        }
+        confirmLabel={pending === "delete" ? "삭제" : "재발급"}
+        confirmTone={pending === "delete" ? "danger" : "primary"}
+        busy={saving || deleting}
+        onConfirm={() => {
+          if (pending === "regen") return regenerateCode();
+          if (pending === "delete") return remove();
+        }}
+      />
     </section>
   );
 }

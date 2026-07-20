@@ -4952,6 +4952,24 @@ html.dark .lp-faq-question {
 }
 
 
+
+/* ── Admin studio tabs (shadcn + platform tokens) ── */
+.admin-studio-tabs [data-slot="tabs-trigger"] {
+  color: var(--platform-text-muted);
+}
+.admin-studio-tabs [data-slot="tabs-trigger"]:hover {
+  color: var(--platform-text);
+  background: color-mix(in srgb, var(--platform-border) 55%, transparent);
+}
+.admin-studio-tabs [data-slot="tabs-trigger"][data-state="active"],
+.admin-studio-tabs [data-slot="tabs-trigger"][data-active] {
+  background: var(--platform-accent) !important;
+  color: #fff !important;
+}
+.platform-panel--elevated {
+  border-top: 3px solid color-mix(in srgb, var(--platform-accent) 55%, var(--platform-border));
+}
+
 /* ── Candidate product stage (interview setup/session + report 장표) ── */
 .product-stage {
   position: relative;

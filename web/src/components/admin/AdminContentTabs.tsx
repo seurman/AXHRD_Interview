@@ -7,6 +7,7 @@ import { AdminOrgCustomCompetenciesPanel } from "@/components/admin/AdminOrgCust
 import { GlobalCompetencyDictionaryPanel } from "@/components/admin/GlobalCompetencyDictionaryPanel";
 import { NcsCompetencyBankPanel } from "@/components/admin/NcsCompetencyBankPanel";
 import { MeaningLayerPanel } from "@/components/admin/MeaningLayerPanel";
+import { AdminStudioTabs } from "@/components/admin/AdminStudioTabs";
 import type { BankCluster, BankCompetencyRow } from "@/lib/competency/content-bank-data";
 import type { FrameworkWorkspaceTab } from "@/components/admin/framework/FrameworkCompetencyWorkspace";
 
@@ -15,19 +16,13 @@ export type ContentStudioView = "platform" | "ncs" | "global_source" | "alignmen
 type Props = {
   initialClusters: BankCluster[];
   initialCompetencies: BankCompetencyRow[];
-  initialQuestions: Awaited<ReturnType<typeof import("@/lib/competency/content-bank-data").loadContentBankSnapshot>>["questions"];
+  initialQuestions: Awaited<
+    ReturnType<typeof import("@/lib/competency/content-bank-data").loadContentBankSnapshot>
+  >["questions"];
   initialCompetencyCode?: string | null;
   initialTab?: FrameworkWorkspaceTab | null;
   initialView?: ContentStudioView | null;
 };
-
-const VIEW_TABS: { id: ContentStudioView; label: string }[] = [
-  { id: "platform", label: "Framework Studio" },
-  { id: "ncs", label: "NCS 역량" },
-  { id: "global_source", label: "글로벌 사전 (원본)" },
-  { id: "alignment", label: "정렬 · 온톨로지" },
-  { id: "org_custom", label: "기관 커스텀 역량" },
-];
 
 export function AdminContentTabs({
   initialClusters,
@@ -40,24 +35,11 @@ export function AdminContentTabs({
   const router = useRouter();
   const [view, setView] = useState<ContentStudioView>(initialView ?? "platform");
 
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2 border-b border-card-border pb-2">
-        {VIEW_TABS.map(({ id, label }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setView(id)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium ${
-              view === id ? "bg-accent text-white" : "text-muted hover:bg-card-border/40"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {view === "platform" && (
+  const tabs = [
+    {
+      id: "platform",
+      label: "Framework Studio",
+      content: (
         <FrameworkStudio
           initialClusters={initialClusters}
           initialCompetencies={initialCompetencies}
@@ -65,20 +47,40 @@ export function AdminContentTabs({
           initialCompetencyCode={initialCompetencyCode}
           initialTab={initialTab}
         />
-      )}
-
-      {view === "ncs" && (
+      ),
+    },
+    {
+      id: "ncs",
+      label: "NCS 역량",
+      content: (
         <NcsCompetencyBankPanel
           competencies={initialCompetencies}
           onSynced={() => router.refresh()}
         />
-      )}
+      ),
+    },
+    {
+      id: "global_source",
+      label: "글로벌 사전 (원본)",
+      content: <GlobalCompetencyDictionaryPanel embedded />,
+    },
+    {
+      id: "alignment",
+      label: "정렬 · 온톨로지",
+      content: <MeaningLayerPanel embedded />,
+    },
+    {
+      id: "org_custom",
+      label: "기관 커스텀 역량",
+      content: <AdminOrgCustomCompetenciesPanel />,
+    },
+  ];
 
-      {view === "global_source" && <GlobalCompetencyDictionaryPanel embedded />}
-
-      {view === "alignment" && <MeaningLayerPanel embedded />}
-
-      {view === "org_custom" && <AdminOrgCustomCompetenciesPanel />}
-    </div>
+  return (
+    <AdminStudioTabs
+      tabs={tabs}
+      value={view}
+      onValueChange={(v) => setView(v as ContentStudioView)}
+    />
   );
 }
