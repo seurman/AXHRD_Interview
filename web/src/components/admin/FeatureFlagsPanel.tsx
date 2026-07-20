@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
+import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 
 type FlagRow = {
   key: string;
@@ -14,20 +16,12 @@ export function FeatureFlagsPanel({ flags: initial }: { flags: FlagRow[] }) {
   const router = useRouter();
   const [flags, setFlags] = useState(initial);
   const [busy, setBusy] = useState<string | null>(null);
+  const [pending, setPending] = useState<FlagRow | null>(null);
 
-  async function toggle(flag: FlagRow) {
+  async function confirmToggle() {
+    if (!pending) return;
+    const flag = pending;
     const next = !flag.enabled;
-    if (
-      !confirm(
-        `「${flag.label}」을(를) ${next ? "활성화" : "비활성화"}할까요?${
-          next
-            ? ""
-            : "\n비활성화하면 지원자 SetupForm에서 해당 옵션이 숨겨지고, API로 직접 요청해도 서버가 무시합니다."
-        }`,
-      )
-    ) {
-      return;
-    }
 
     setBusy(flag.key);
     try {
@@ -38,17 +32,23 @@ export function FeatureFlagsPanel({ flags: initial }: { flags: FlagRow[] }) {
       });
       const json = (await res.json()) as { error?: string; flag?: FlagRow };
       if (!res.ok) {
-        alert(json.error ?? "변경 실패");
+        toast.error(json.error ?? "변경 실패");
         return;
       }
       if (json.flag) {
         setFlags((prev) => prev.map((f) => (f.key === json.flag!.key ? json.flag! : f)));
       }
+      toast.success(
+        `「${flag.label}」을(를) ${next ? "활성화" : "비활성화"}했습니다.`,
+      );
       router.refresh();
     } finally {
       setBusy(null);
+      setPending(null);
     }
   }
+
+  const pendingNext = pending ? !pending.enabled : false;
 
   return (
     <div className="space-y-3">
@@ -69,7 +69,7 @@ export function FeatureFlagsPanel({ flags: initial }: { flags: FlagRow[] }) {
           <button
             type="button"
             disabled={busy === flag.key}
-            onClick={() => void toggle(flag)}
+            onClick={() => setPending(flag)}
             className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
               flag.enabled
                 ? "bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 dark:text-emerald-300"
@@ -80,6 +80,25 @@ export function FeatureFlagsPanel({ flags: initial }: { flags: FlagRow[] }) {
           </button>
         </div>
       ))}
+
+      <AdminConfirmDialog
+        open={pending != null}
+        onOpenChange={(open) => {
+          if (!open) setPending(null);
+        }}
+        title={`「${pending?.label ?? ""}」 ${pendingNext ? "활성화" : "비활성화"}`}
+        description={`「${pending?.label ?? ""}」을(를) ${
+          pendingNext ? "활성화" : "비활성화"
+        }할까요?${
+          pendingNext
+            ? ""
+            : "\n비활성화하면 지원자 SetupForm에서 해당 옵션이 숨겨지고, API로 직접 요청해도 서버가 무시합니다."
+        }`}
+        confirmLabel={pendingNext ? "활성화" : "비활성화"}
+        confirmTone={pendingNext ? "primary" : "danger"}
+        busy={busy != null}
+        onConfirm={() => confirmToggle()}
+      />
     </div>
   );
 }

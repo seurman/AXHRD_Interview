@@ -24,6 +24,7 @@ import { OhiReportSection } from "@/components/admin/diagnostic/OhiReportSection
 import { OrgReportSection } from "@/components/admin/diagnostic/OrgReportSection";
 import { buildFourAxisRows, scoreStatus } from "@/lib/diagnostic/analysis-tables";
 import { PrintButton } from "@/components/ui/PrintButton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ResolvedReportConfig, ReportTab } from "@/lib/diagnostic/report-profile";
 import {
   isSectionEnabledInReport,
@@ -481,18 +482,27 @@ export function AdminDiagnosticReport({ waveId }: { waveId: string }) {
 
       <DiagnosticLongitudinalPanel waveId={waveId} apiBase="admin" />
 
-      <nav className="arc-report-tabs print-hide flex flex-wrap gap-2" aria-label="보고서 섹션">
-        {visibleTabs.map((key) => (
-          <button
-            key={key}
-            type="button"
-            className={`nav-pill ${tab === key ? "nav-pill-active" : ""}`}
-            onClick={() => setTab(key)}
-          >
-            {REPORT_TAB_LABELS[key]}
-          </button>
-        ))}
-      </nav>
+      <Tabs
+        value={tab}
+        onValueChange={(v) => setTab(v as ReportTab)}
+        className="arc-report-tabs print-hide gap-0"
+      >
+        <TabsList
+          variant="line"
+          className="admin-studio-tabs h-auto w-full flex-wrap justify-start gap-2 rounded-none border-0 bg-transparent p-0"
+          aria-label="보고서 섹션"
+        >
+          {visibleTabs.map((key) => (
+            <TabsTrigger
+              key={key}
+              value={key}
+              className={`nav-pill ${tab === key ? "nav-pill-active" : ""}`}
+            >
+              {REPORT_TAB_LABELS[key]}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {hidden ? (
         <SampleInsufficient sampleSize={aggregate?.sampleSize} minGroupSize={aggregate?.minGroupSize} />

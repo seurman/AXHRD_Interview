@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Building2, GraduationCap, Plus } from "lucide-react";
 import type { OrgKind, PlanTier } from "@prisma/client";
 import { ORG_KIND_CONFIG, ORG_KINDS } from "@/lib/org/kinds";
@@ -95,12 +96,12 @@ export function OrgCreatePanel() {
       reset();
       setOpen(false);
       router.refresh();
-      alert(message);
+      toast.success(message);
       if (data.organization?.id) {
         router.push(`/admin/organizations/${data.organization.id}`);
       }
     } catch (e) {
-      alert(e instanceof Error ? e.message : "생성에 실패했습니다.");
+      toast.error(e instanceof Error ? e.message : "생성에 실패했습니다.");
     } finally {
       setSaving(false);
     }
@@ -120,7 +121,7 @@ export function OrgCreatePanel() {
   }
 
   return (
-    <div className="card-luxe space-y-6 p-5 sm:p-6">
+    <div className="platform-panel platform-panel--elevated space-y-6 p-5 sm:p-6">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="font-semibold text-foreground">신규 기관 등록</h2>
