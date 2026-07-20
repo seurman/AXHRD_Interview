@@ -2,11 +2,22 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   MembershipReviewModal,
   type MembershipReviewMode,
 } from "@/components/org/MembershipReviewModal";
 import { OrgInvitePanel } from "@/components/org/OrgInvitePanel";
+import { OrgStudioTabs } from "@/components/org/OrgStudioTabs";
+import { OrgConfirmDialog } from "@/components/org/OrgConfirmDialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import Link from "next/link";
 
 type Seats = {
@@ -66,6 +77,10 @@ export function OrgMembersPanel({
     mode: MembershipReviewMode;
     ids: string[];
   } | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -121,6 +136,7 @@ export function OrgMembersPanel({
   const openModal = (mode: MembershipReviewMode, ids: string[]) => {
     if (ids.length === 0) return;
     if (mode === "approve" && seatFull) {
+      toast.error("좌석 상한에 도달해 승인할 수 없습니다.");
       setError("좌석 상한에 도달해 승인할 수 없습니다.");
       return;
     }
@@ -149,11 +165,14 @@ export function OrgMembersPanel({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "처리 실패");
       setMessage(data.message);
+      toast.success(data.message ?? "처리했습니다.");
       setModal(null);
       await load();
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "처리 오류");
+      const msg = e instanceof Error ? e.message : "처리 오류";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusyId(null);
     }
@@ -172,28 +191,37 @@ export function OrgMembersPanel({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "역할 변경 실패");
       setMessage(data.message);
+      toast.success(data.message ?? "역할을 변경했습니다.");
       await load();
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "역할 변경 오류");
+      const msg = e instanceof Error ? e.message : "역할 변경 오류";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusyId(null);
     }
   };
 
-  const removeMember = async (userId: string, name: string) => {
-    if (!confirm(`${name}님의 소속을 해제할까요? 좌석이 반환됩니다.`)) return;
-    setBusyId(userId);
+  const removeMember = async () => {
+    if (!removeTarget) return;
+    setBusyId(removeTarget.id);
     setError(null);
     try {
-      const res = await fetch(`/api/org/members/${userId}`, { method: "DELETE" });
+      const res = await fetch(`/api/org/members/${removeTarget.id}`, {
+        method: "DELETE",
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "해제 실패");
       setMessage(data.message);
+      toast.success(data.message ?? "소속을 해제했습니다.");
+      setRemoveTarget(null);
       await load();
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "해제 오류");
+      const msg = e instanceof Error ? e.message : "해제 오류";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusyId(null);
     }
@@ -211,14 +239,16 @@ export function OrgMembersPanel({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "설정 실패");
       setRequireApproval(next);
-      setMessage(
-        next
-          ? "가입 시 담당자 승인이 필요합니다. 승인된 인원만 좌석에 집계됩니다."
-          : "가입 코드·기관 선택 시 즉시 소속됩니다.",
-      );
+      const msg = next
+        ? "가입 시 담당자 승인이 필요합니다. 승인된 인원만 좌석에 집계됩니다."
+        : "가입 코드·기관 선택 시 즉시 소속됩니다.";
+      setMessage(msg);
+      toast.success(msg);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "설정 오류");
+      const msg = e instanceof Error ? e.message : "설정 오류";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusyId(null);
     }
@@ -237,7 +267,7 @@ export function OrgMembersPanel({
       }
     >
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-card-border bg-card-border sm:grid-cols-4">
-        <div className="bg-card px-5 py-4 sm:px-6">
+        <div className="org-ops-kpi bg-card px-5 py-4 sm:px-6">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted">
             소속 멤버
           </p>
@@ -245,7 +275,7 @@ export function OrgMembersPanel({
             {seats?.members ?? 0}
           </p>
         </div>
-        <div className="bg-card px-5 py-4 sm:px-6">
+        <div className="org-ops-kpi bg-card px-5 py-4 sm:px-6">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted">
             승인 대기
           </p>
@@ -253,7 +283,7 @@ export function OrgMembersPanel({
             {seats?.pending ?? 0}
           </p>
         </div>
-        <div className="bg-card px-5 py-4 sm:px-6">
+        <div className="org-ops-kpi bg-card px-5 py-4 sm:px-6">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted">
             좌석 상한
           </p>
@@ -261,7 +291,7 @@ export function OrgMembersPanel({
             {seats?.cap == null ? "∞" : seats.cap}
           </p>
         </div>
-        <div className="bg-card px-5 py-4 sm:px-6">
+        <div className="org-ops-kpi bg-card px-5 py-4 sm:px-6">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted">
             가입 코드
           </p>
@@ -283,7 +313,7 @@ export function OrgMembersPanel({
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-background">
             <div
               className={`h-full rounded-full transition-[width] ${
-                seatFull ? "bg-danger" : seatTight ? "bg-warning" : "bg-foreground"
+                seatFull ? "bg-danger" : seatTight ? "bg-warning" : "bg-gold"
               }`}
               style={{ width: `${seatPct ?? 0}%` }}
             />
@@ -326,12 +356,11 @@ export function OrgMembersPanel({
 
       {isAdmin ? (
         <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-card-border bg-card p-4 text-sm sm:p-5">
-          <input
-            type="checkbox"
+          <Checkbox
             className="mt-1"
             checked={requireApproval}
             disabled={busyId === "settings"}
-            onChange={(e) => void toggleApproval(e.target.checked)}
+            onCheckedChange={(v) => void toggleApproval(v === true)}
           />
           <span>
             <span className="font-semibold text-foreground">가입 시 담당자 승인 필요</span>
@@ -342,32 +371,15 @@ export function OrgMembersPanel({
         </label>
       ) : null}
 
-      <div
-        role="tablist"
-        className="grid grid-cols-2 gap-1 rounded-xl border border-card-border bg-background p-1"
-      >
-        {(
-          [
-            ["pending", `승인 대기 (${pending.length})`],
-            ["members", `멤버 (${members.length})`],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={tab === id}
-            onClick={() => setTab(id)}
-            className={`min-h-10 rounded-lg text-sm font-semibold transition ${
-              tab === id
-                ? "bg-foreground text-background"
-                : "text-muted hover:text-foreground"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <OrgStudioTabs
+        triggersOnly
+        value={tab}
+        onValueChange={(v) => setTab(v === "members" ? "members" : "pending")}
+        tabs={[
+          { id: "pending", label: `승인 대기 (${pending.length})`, badge: pending.length },
+          { id: "members", label: `멤버 (${members.length})` },
+        ]}
+      />
 
       {error ? (
         <p className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
@@ -389,10 +401,9 @@ export function OrgMembersPanel({
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <label className="flex items-center gap-2 text-xs text-muted">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={selected.size === pending.length && pending.length > 0}
-                  onChange={toggleSelectAll}
+                  onCheckedChange={() => toggleSelectAll()}
                 />
                 전체 선택
               </label>
@@ -420,11 +431,10 @@ export function OrgMembersPanel({
                   className="flex flex-col gap-3 bg-card px-5 py-4 sm:flex-row sm:items-center sm:px-6"
                 >
                   <label className="flex items-start gap-3 sm:items-center">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       className="mt-1 sm:mt-0"
                       checked={selected.has(p.id)}
-                      onChange={() => toggleSelect(p.id)}
+                      onCheckedChange={() => toggleSelect(p.id)}
                     />
                     <span className="min-w-0">
                       <span className="block font-semibold text-foreground">{p.user.name}</span>
@@ -476,17 +486,21 @@ export function OrgMembersPanel({
               <span className="min-w-[7rem] font-medium text-foreground">{m.name}</span>
               <span className="min-w-[10rem] flex-1 truncate text-muted">{m.email}</span>
               {isAdmin && m.orgRole !== "ADMIN" ? (
-                <select
+                <Select
                   value={m.orgRole === "STAFF" ? "STAFF" : "MEMBER"}
                   disabled={busyId === m.id}
-                  onChange={(e) =>
-                    void changeRole(m.id, e.target.value === "STAFF" ? "STAFF" : "MEMBER")
+                  onValueChange={(v) =>
+                    void changeRole(m.id, v === "STAFF" ? "STAFF" : "MEMBER")
                   }
-                  className="min-h-9 rounded-md border border-card-border bg-background px-2 text-xs"
                 >
-                  <option value="MEMBER">구성원</option>
-                  <option value="STAFF">담당자</option>
-                </select>
+                  <SelectTrigger className="h-9 w-[7.5rem] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MEMBER">구성원</SelectItem>
+                    <SelectItem value="STAFF">담당자</SelectItem>
+                  </SelectContent>
+                </Select>
               ) : (
                 <span className="rounded-md border border-card-border px-2 py-0.5 text-xs text-muted">
                   {ROLE_LABEL[m.orgRole] ?? m.orgRole}
@@ -497,7 +511,7 @@ export function OrgMembersPanel({
                   type="button"
                   className="text-xs text-danger hover:underline disabled:opacity-50"
                   disabled={busyId === m.id}
-                  onClick={() => void removeMember(m.id, m.name)}
+                  onClick={() => setRemoveTarget({ id: m.id, name: m.name })}
                 >
                   소속 해제
                 </button>
@@ -517,6 +531,22 @@ export function OrgMembersPanel({
           if (busyId !== "bulk") setModal(null);
         }}
         onConfirm={(opts) => void runReview(opts)}
+      />
+      <OrgConfirmDialog
+        open={removeTarget != null}
+        onOpenChange={(open) => {
+          if (!open && busyId !== removeTarget?.id) setRemoveTarget(null);
+        }}
+        title="소속 해제"
+        description={
+          removeTarget
+            ? `${removeTarget.name}님의 소속을 해제할까요? 좌석이 반환됩니다.`
+            : undefined
+        }
+        confirmLabel="해제"
+        confirmTone="danger"
+        busy={busyId === removeTarget?.id}
+        onConfirm={removeMember}
       />
     </div>
   );

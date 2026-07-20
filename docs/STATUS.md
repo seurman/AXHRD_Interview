@@ -2,6 +2,19 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 기관 콘솔(/org) 보이는 shadcn 현대화 (2026-07-20)
+
+`/org/**` 운영 콘솔만. 검은 반전 탭 → **금색 Org Studio** 크롬이 한눈에 보이도록.
+
+| 항목 | 내용 |
+|------|------|
+| 셸 | `OrgOpsConsole` → `org-ops-shell`(금색 상단선·오로라) · 레일 `org-ops-rail-item--active` · KPI `org-ops-kpi` |
+| 탭 | `OrgStudioTabs` (금색 active) — 모바일 콘솔 · 승인/멤버 · setup join/create |
+| 확인 | `OrgConfirmDialog` — 소속 해제 · 코드 재발급 · 기관 탈퇴 · 가입 요청 취소 |
+| People | 정렬 Select · 필터 칩 금색 · CSV toast |
+| Members | Checkbox/Select · 승인 Dialog+Select · toast |
+| 유지 | `--color-*`/`btn-*`/`card-luxe` · admin `--platform-*`와 분리 |
+
 ## 최근 작업 — 관리자 모드(/admin) shadcn UI 현대화 (2026-07-20)
 
 Platform Console(`/admin/**`)만 대상. `/org` 기관 콘솔은 별도.

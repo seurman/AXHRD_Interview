@@ -2,10 +2,18 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import type { OrgPeopleDashboardData, PeopleMemberRow } from "@/lib/org/people-dashboard";
 import { competencyLabel, formatPercentile } from "@/lib/labels";
 import { ORG_ROLE_LABEL } from "@/lib/auth/roles";
 import { PeopleSearchField, Sparkline } from "@/components/org/CompetencyTrendChart";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function formatRelative(iso: string | null): string {
   if (!iso) return "기록 없음";
@@ -127,7 +135,7 @@ export function OrgPeopleDashboardClient({
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
-      window.alert(e instanceof Error ? e.message : "내보내기 실패");
+      toast.error(e instanceof Error ? e.message : "내보내기 실패");
     } finally {
       setExporting(false);
     }
@@ -205,17 +213,18 @@ export function OrgPeopleDashboardClient({
           </div>
           <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
             <PeopleSearchField value={q} onChange={setQ} />
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as SortKey)}
-              className="min-h-10 rounded-lg border border-card-border bg-background px-3 text-sm"
-            >
-              <option value="score">백분위순</option>
-              <option value="interviews">면접 횟수순</option>
-              <option value="delta">향상도순</option>
-              <option value="login">최근 로그인순</option>
-              <option value="name">이름순</option>
-            </select>
+            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+              <SelectTrigger className="min-h-10 w-full sm:w-[10.5rem]">
+                <SelectValue placeholder="정렬" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="score">백분위순</SelectItem>
+                <SelectItem value="interviews">면접 횟수순</SelectItem>
+                <SelectItem value="delta">향상도순</SelectItem>
+                <SelectItem value="login">최근 로그인순</SelectItem>
+                <SelectItem value="name">이름순</SelectItem>
+              </SelectContent>
+            </Select>
             <button
               type="button"
               onClick={() => void exportCsv()}
@@ -244,8 +253,8 @@ export function OrgPeopleDashboardClient({
               onClick={() => setFilter(id)}
               className={`rounded-lg border px-2.5 py-1.5 font-medium transition ${
                 filter === id
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-card-border text-muted hover:text-foreground"
+                  ? "border-gold bg-gold text-white shadow-sm"
+                  : "border-card-border text-muted hover:border-gold/40 hover:text-foreground"
               }`}
             >
               {label}
@@ -309,7 +318,7 @@ function Kpi({ label, value, hint }: { label: string; value: string; hint: strin
 
 function KpiStrip({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <div className="bg-card px-5 py-4 sm:px-6 sm:py-5">
+    <div className="org-ops-kpi bg-card px-5 py-4 sm:px-6 sm:py-5">
       <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted">{label}</p>
       <p className="mt-2 font-[family-name:var(--font-ibm-plex)] text-2xl font-semibold tabular-nums text-foreground">
         {value}

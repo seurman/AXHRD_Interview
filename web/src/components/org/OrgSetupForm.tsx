@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { ORG_KIND_CONFIG } from "@/lib/org/kinds";
 import type { OrgKind } from "@prisma/client";
+import { OrgConfirmDialog } from "@/components/org/OrgConfirmDialog";
+import { OrgStudioTabs } from "@/components/org/OrgStudioTabs";
 
 type Mode = "join" | "create";
 
@@ -36,6 +39,7 @@ export function OrgSetupForm({ initialPending }: { initialPending?: Pending | nu
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   useEffect(() => {
     const fromQuery =
@@ -63,7 +67,6 @@ export function OrgSetupForm({ initialPending }: { initialPending?: Pending | nu
 
   const cancelPending = async () => {
     if (!pending) return;
-    if (!confirm("가입 요청을 취소할까요?")) return;
     setLoading(true);
     setError(null);
     try {
@@ -71,10 +74,14 @@ export function OrgSetupForm({ initialPending }: { initialPending?: Pending | nu
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "취소 실패");
       setPending(null);
+      setCancelOpen(false);
       setInfo("요청을 취소했습니다. 다른 기관을 선택할 수 있습니다.");
+      toast.success("가입 요청을 취소했습니다.");
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "취소 중 오류");
+      const msg = e instanceof Error ? e.message : "취소 중 오류";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -173,36 +180,35 @@ export function OrgSetupForm({ initialPending }: { initialPending?: Pending | nu
           type="button"
           className="btn-secondary w-full py-3"
           disabled={loading}
-          onClick={() => void cancelPending()}
+          onClick={() => setCancelOpen(true)}
         >
           {loading ? "처리 중…" : "요청 취소"}
         </button>
+        <OrgConfirmDialog
+          open={cancelOpen}
+          onOpenChange={setCancelOpen}
+          title="가입 요청 취소"
+          description="가입 요청을 취소할까요?"
+          confirmLabel="취소하기"
+          confirmTone="danger"
+          busy={loading}
+          onConfirm={cancelPending}
+        />
       </div>
     );
   }
 
   return (
     <div className="card-luxe space-y-5 p-6">
-      <div className="flex gap-2 rounded-full bg-background p-1 text-sm">
-        <button
-          type="button"
-          onClick={() => setMode("join")}
-          className={`flex-1 rounded-full py-2 transition ${
-            mode === "join" ? "bg-primary text-white" : "text-muted"
-          }`}
-        >
-          기관 선택 · 가입
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("create")}
-          className={`flex-1 rounded-full py-2 transition ${
-            mode === "create" ? "bg-primary text-white" : "text-muted"
-          }`}
-        >
-          담당자 · 기관 만들기
-        </button>
-      </div>
+      <OrgStudioTabs
+        triggersOnly
+        value={mode}
+        onValueChange={(v) => setMode(v === "create" ? "create" : "join")}
+        tabs={[
+          { id: "join", label: "기관 선택 · 가입" },
+          { id: "create", label: "담당자 · 기관 만들기" },
+        ]}
+      />
 
       {mode === "join" ? (
         <div className="space-y-4">
