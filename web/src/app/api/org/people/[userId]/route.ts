@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isOrgAdminUser, isOrgStaffUser, type RoleUser } from "@/lib/auth/roles";
 import { getOrgMemberPeopleDetail } from "@/lib/org/people-dashboard";
-import { COHORT_MEMBER_ROLES } from "@/lib/auth/roles";
 
 function canCoach(user: RoleUser) {
   return !!user.organizationId && (isOrgAdminUser(user) || isOrgStaffUser(user));
@@ -54,11 +53,7 @@ export async function POST(req: Request, ctx: Ctx) {
     where: { id: userId },
     select: { id: true, organizationId: true, orgRole: true },
   });
-  if (
-    !member ||
-    member.organizationId !== user.organizationId ||
-    !COHORT_MEMBER_ROLES.includes(member.orgRole as (typeof COHORT_MEMBER_ROLES)[number])
-  ) {
+  if (!member || member.organizationId !== user.organizationId) {
     return NextResponse.json({ error: "구성원을 찾을 수 없습니다." }, { status: 404 });
   }
 
