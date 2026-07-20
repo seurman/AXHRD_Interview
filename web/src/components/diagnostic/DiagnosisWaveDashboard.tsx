@@ -210,7 +210,15 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
     });
   }, [activeScores, wave, loading]);
 
-  if (loading) return <p className="text-sm text-muted">집계 중…</p>;
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        <div className="h-12 animate-pulse rounded-xl bg-muted/25" />
+        <div className="h-40 animate-pulse rounded-xl bg-muted/20" />
+        <div className="h-40 animate-pulse rounded-xl bg-muted/20" />
+      </div>
+    );
+  }
   if (!wave) return <p className="text-sm text-muted">웨이브를 찾을 수 없습니다.</p>;
 
   const reportConfig = wave.reportConfig ?? null;
@@ -502,10 +510,10 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
           <div className="-mx-1 flex gap-1 overflow-x-auto overscroll-x-contain px-1 pb-1 text-sm [-webkit-overflow-scrolling:touch]">
             <button
               type="button"
-              className={`min-h-10 shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${
+              className={`min-h-10 shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                 drillId === null
-                  ? "bg-foreground text-background"
-                  : "border border-card-border text-muted"
+                  ? "bg-gold text-white shadow-sm"
+                  : "border border-card-border text-muted hover:border-gold/40 hover:text-foreground"
               }`}
               onClick={() => setDrillId(null)}
             >
@@ -516,10 +524,10 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
                 <span className="text-muted">›</span>
                 <button
                   type="button"
-                  className={`min-h-10 rounded-full px-3 py-1.5 text-xs font-medium ${
+                  className={`min-h-10 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                     drillId === node.teamId
-                      ? "bg-foreground text-background"
-                      : "border border-card-border text-muted"
+                      ? "bg-gold text-white shadow-sm"
+                      : "border border-card-border text-muted hover:border-gold/40 hover:text-foreground"
                   }`}
                   onClick={() => setDrillId(node.teamId)}
                 >

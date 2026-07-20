@@ -2,6 +2,17 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — Org Studio 위성 정렬·UI 폴리시 (2026-07-20)
+
+감사 후 **크롬 불일치**가 가장 큼. 진단/지원자/설정·웨이브를 Org Studio 셸로 맞춤.
+
+| 항목 | 내용 |
+|------|------|
+| `OrgStudioFrame` | 공통 `org-ops-shell` + Outfit 금색 헤더 · 스켈레톤 |
+| 진단 | `DiagnosisOrgConsole` 다크 히어로 제거 → Org Studio · 웨이브 리포트 동일 |
+| 위성 | `/org/candidates` · `/org/settings` · wave 페이지 프레임 정렬 |
+| 폴리시 | 중복 toast+배너 제거 · 웨이브 drill 칩 금색 · MobileNav 금색 active · Kit/Swipe Select · 로더 스켈레톤 |
+
 ## 최근 작업 — 잔여 인터랙티브 UI (Dialog/Select/Checkbox/toast) (2026-07-20)
 
 아직 전 구간이 신규 크롬은 아님(랜딩·대시보드 카드 레이아웃·딥 어드민 CMS는 유지). **인터랙티브** 경로는 가능한 곳부터 shadcn으로 맞춤.

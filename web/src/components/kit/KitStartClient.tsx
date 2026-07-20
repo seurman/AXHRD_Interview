@@ -6,6 +6,14 @@ import { IconLoader } from "@/components/ui/icons";
 import { competencyLabel, jobRoleLabel } from "@/lib/labels";
 import { JOB_ROLES } from "@/types";
 import type { PublicKitShare } from "@/lib/org/kit-share";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
 type Props = {
   slug: string;
@@ -45,7 +53,9 @@ export function KitStartClient({ slug, initialShare }: Props) {
       }
       router.push(`/interview/${data.sessionId}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "면접을 시작하지 못했습니다.");
+      const msg = e instanceof Error ? e.message : "면접을 시작하지 못했습니다.";
+      setError(msg);
+      toast.error(msg);
       setLoading(false);
     }
   };
@@ -71,17 +81,18 @@ export function KitStartClient({ slug, initialShare }: Props) {
 
       <section className="card-luxe space-y-4 p-6">
         <h2 className="font-semibold text-foreground">직무</h2>
-        <select
-          value={jobRole}
-          onChange={(e) => setJobRole(e.target.value)}
-          className="input-luxe w-full"
-        >
-          {JOB_ROLES.map((r) => (
-            <option key={r} value={r}>
-              {jobRoleLabel(r)}
-            </option>
-          ))}
-        </select>
+        <Select value={jobRole} onValueChange={setJobRole}>
+          <SelectTrigger className="input-luxe h-auto w-full py-2.5">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {JOB_ROLES.map((r) => (
+              <SelectItem key={r} value={r}>
+                {jobRoleLabel(r)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </section>
 
       <section className="card-luxe space-y-4 p-6">

@@ -184,9 +184,9 @@ export function MobileNav({
   }, [dashboardHref, growthLinks, open, prefetchHrefs, profileHref, router]);
 
   const linkClass = (href: string, indent = false) =>
-    `keep-one-line rounded-lg py-2.5 hover:bg-primary/5 ${indent ? "pl-5 pr-3" : "px-3"} ${
+    `keep-one-line rounded-lg py-2.5 hover:bg-gold/10 ${indent ? "pl-5 pr-3" : "px-3"} ${
       pathname === href.split("#")[0] || pathname.startsWith(`${href.split("#")[0]}/`)
-        ? "bg-primary/5 font-medium text-primary"
+        ? "bg-gold/15 font-semibold text-foreground shadow-[inset_3px_0_0_var(--color-gold)]"
         : "text-foreground"
     }`;
 
@@ -222,7 +222,7 @@ export function MobileNav({
             type="button"
             onClick={closeDrawer}
             aria-label="Close menu"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-primary/5"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-gold/10"
           >
             <X className="h-5 w-5" />
           </button>

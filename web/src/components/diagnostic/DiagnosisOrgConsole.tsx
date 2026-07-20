@@ -16,6 +16,8 @@ import {
   type DraftTeamInput,
   type HierarchyTreeNode,
 } from "@/lib/diagnostic/hierarchy-tree";
+import { OrgStudioFrame, OrgStudioSkeleton } from "@/components/org/OrgStudioFrame";
+import { toast } from "sonner";
 
 type TeamLink = {
   id: string;
@@ -283,6 +285,7 @@ export function DiagnosisOrgConsole() {
     setCreating(false);
     if (!res.ok) {
       setError(json.error ?? "생성 실패");
+      toast.error(json.error ?? "생성 실패");
       return;
     }
     setLabel("");
@@ -290,6 +293,7 @@ export function DiagnosisOrgConsole() {
     setClosesAt("");
     resetCreateHierarchy();
     setShowCreate(false);
+    toast.success("진단 캠페인을 만들었습니다.");
     await load();
   };
 
@@ -339,52 +343,36 @@ export function DiagnosisOrgConsole() {
   };
 
   if (loading) {
-    return (
-      <div className="mx-auto max-w-4xl px-1 py-10 text-sm text-muted sm:px-0">
-        조직진단을 불러오는 중…
-      </div>
-    );
+    return <OrgStudioSkeleton rows={4} />;
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] sm:space-y-8">
-      <header className="relative overflow-hidden rounded-2xl border border-card-border bg-gradient-to-br from-[#0f1419] via-[#1a2330] to-[#0f1419] px-5 py-6 text-white sm:px-7 sm:py-8">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-40"
-          style={{
-            background:
-              "radial-gradient(ellipse 80% 60% at 10% 0%, rgba(201,162,39,0.35), transparent 55%), radial-gradient(ellipse 50% 40% at 90% 100%, rgba(100,116,139,0.35), transparent 50%)",
-          }}
-        />
-        <div className="relative">
-          <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gold">ARC Index</p>
-          <h1 className="mt-2 text-xl font-bold leading-snug sm:text-2xl">조직진단</h1>
-          <p className="mt-1 text-sm text-white/70">{orgName}</p>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/65">
-            캠페인을 만들고 사업본부 → 사업부 → 팀 구조를 등록한 뒤 응답 링크를 배포하세요.
-          </p>
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <button
-              type="button"
-              onClick={() => setShowCreate((v) => !v)}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-[#0f1419]"
+    <OrgStudioFrame
+      eyebrow={`${orgName} · ARC Index`}
+      title="조직진단"
+      description="캠페인을 만들고 사업본부 → 사업부 → 팀 구조를 등록한 뒤 응답 링크를 배포하세요."
+      actions={
+        <>
+          <button
+            type="button"
+            onClick={() => setShowCreate((v) => !v)}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-[#0f1419]"
+          >
+            <Plus className="h-4 w-4" />
+            {showCreate ? "작성 닫기" : "새 캠페인"}
+          </button>
+          {waves[0] ? (
+            <Link
+              href={`/org/diagnosis/waves/${waves[0].id}`}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-card-border bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:border-gold/40"
             >
-              <Plus className="h-4 w-4" />
-              {showCreate ? "작성 닫기" : "새 캠페인"}
-            </button>
-            {waves[0] ? (
-              <Link
-                href={`/org/diagnosis/waves/${waves[0].id}`}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-medium text-white hover:bg-white/10"
-              >
-                최근 리포트 보기
-                <ExternalLink className="h-3.5 w-3.5 opacity-70" />
-              </Link>
-            ) : null}
-          </div>
-        </div>
-      </header>
-
+              최근 리포트
+              <ExternalLink className="h-3.5 w-3.5 opacity-70" />
+            </Link>
+          ) : null}
+        </>
+      }
+    >
       {error ? (
         <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300">
           {error}
@@ -423,7 +411,7 @@ export function DiagnosisOrgConsole() {
                         onClick={() => toggleSection(sec.code)}
                         className={`min-h-11 rounded-xl border px-3 py-2 text-left text-sm transition ${
                           on
-                            ? "border-accent/40 bg-accent/10 font-medium text-foreground"
+                            ? "border-gold/50 bg-gold/15 font-medium text-foreground"
                             : "border-card-border text-muted"
                         }`}
                         aria-pressed={on}
@@ -686,6 +674,6 @@ export function DiagnosisOrgConsole() {
           </ul>
         )}
       </section>
-    </div>
+    </OrgStudioFrame>
   );
 }

@@ -3,6 +3,7 @@ import { ChevronRight, ClipboardList, BarChart3, Layers, Briefcase } from "lucid
 import { requirePageUser } from "@/lib/auth/guards";
 import { resolveInterviewKitAccess } from "@/lib/org/interview-kit";
 import { resolveAssessmentShareAccess } from "@/lib/org/assessment-share";
+import { OrgStudioFrame } from "@/components/org/OrgStudioFrame";
 
 export const dynamic = "force-dynamic";
 
@@ -48,26 +49,23 @@ export default async function OrgSettingsPage() {
     : "";
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-widest text-gold">
-          {access.allowed ? access.organizationName : "기관"}
-        </p>
-        <h1 className="mt-1 text-2xl font-bold text-foreground">면접·역량 설정</h1>
-        <p className="mt-2 text-sm text-muted">
-          인터뷰 킷 조립·역량 관리 등 기관 면접 경험을 한곳에서 설정합니다.
-        </p>
-      </div>
-
+    <OrgStudioFrame
+      maxWidth="3xl"
+      eyebrow={access.allowed ? `${access.organizationName} · Settings` : "Org Studio · Settings"}
+      title="면접·역량 설정"
+      description="인터뷰 킷 조립·역량 관리 등 기관 면접 경험을 한곳에서 설정합니다."
+    >
       {items.length === 0 ? (
-        <div className="card-luxe p-6 text-sm text-muted">{blockedMessage}</div>
+        <div className="rounded-xl border border-dashed border-card-border px-5 py-8 text-sm text-muted">
+          {blockedMessage}
+        </div>
       ) : (
         <ul className="space-y-3">
           {items.map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}
-                className="card-luxe flex items-center gap-4 p-5 transition hover:border-gold/30"
+                className="flex items-center gap-4 rounded-xl border border-card-border bg-card p-5 transition hover:border-gold/40"
               >
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/10 text-gold">
                   <item.icon className="h-5 w-5" />
@@ -84,14 +82,14 @@ export default async function OrgSettingsPage() {
       )}
 
       <p className="text-center text-xs text-muted">
-        <Link href="/org/members" className="mr-4 inline-flex items-center gap-1 text-accent hover:underline">
+        <Link href="/org/dashboard?tab=members" className="mr-4 inline-flex items-center gap-1 text-accent hover:underline">
           멤버 · 승인
         </Link>
         <Link href="/org/dashboard" className="inline-flex items-center gap-1 text-accent hover:underline">
           <BarChart3 className="h-3.5 w-3.5" />
-          참여 현황
+          운영 콘솔
         </Link>
       </p>
-    </div>
+    </OrgStudioFrame>
   );
 }

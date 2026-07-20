@@ -9,6 +9,13 @@ import { IconLoader } from "@/components/ui/icons";
 import { AnswerPracticeModal } from "@/components/practice/AnswerPracticeModal";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { formatMessage } from "@/lib/i18n";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Card = {
   id: string;
@@ -118,28 +125,30 @@ export function SwipeDeck({
           <p className="section-eyebrow text-primary">{s.setupEyebrow}</p>
           <h2 className="mt-1 text-xl font-bold text-foreground">{s.setupTitle}</h2>
         </div>
-        <select
-          value={pendingIndustry}
-          onChange={(e) => setPendingIndustry(e.target.value)}
-          className="input-luxe w-full"
-        >
-          {INDUSTRY_CODES.map((code) => (
-            <option key={code} value={code}>
-              {industryLabel(code)}
-            </option>
-          ))}
-        </select>
-        <select
-          value={pendingJobRole}
-          onChange={(e) => setPendingJobRole(e.target.value)}
-          className="input-luxe w-full"
-        >
-          {JOB_ROLES.map((code) => (
-            <option key={code} value={code}>
-              {jobRoleLabel(code)}
-            </option>
-          ))}
-        </select>
+        <Select value={pendingIndustry} onValueChange={setPendingIndustry}>
+          <SelectTrigger className="input-luxe h-auto w-full py-2.5">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {INDUSTRY_CODES.map((code) => (
+              <SelectItem key={code} value={code}>
+                {industryLabel(code)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={pendingJobRole} onValueChange={setPendingJobRole}>
+          <SelectTrigger className="input-luxe h-auto w-full py-2.5">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {JOB_ROLES.map((code) => (
+              <SelectItem key={code} value={code}>
+                {jobRoleLabel(code)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <button type="button" onClick={confirmTarget} className="btn-primary w-full py-3.5">
           {s.startDeck}
         </button>
