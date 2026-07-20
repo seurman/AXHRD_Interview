@@ -35,6 +35,16 @@ function PresenceDot({ online }: { online: boolean }) {
 }
 
 type SortKey = "name" | "interviews" | "score" | "login" | "delta";
+type PeopleFilter = "all" | "inactive" | "no_consent" | "declining" | "online" | "consent";
+
+const FILTER_EMPTY: Record<PeopleFilter, string> = {
+  all: "아직 소속 계정이 없습니다. 「승인·좌석」 탭에서 가입을 승인해 주세요.",
+  inactive: "면접을 아직 완료하지 않은 구성원이 없습니다.",
+  no_consent: "상세 미동의 구성원이 없습니다.",
+  declining: "향상도가 하락한 구성원이 없습니다.",
+  online: "최근 접속 중인 구성원이 없습니다.",
+  consent: "상세 동의한 구성원이 없습니다.",
+};
 
 export function OrgPeopleDashboardClient({
   data,
@@ -45,14 +55,31 @@ export function OrgPeopleDashboardClient({
 }) {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<SortKey>("score");
-  const [onlyConsent, setOnlyConsent] = useState(false);
-  const [onlyOnline, setOnlyOnline] = useState(false);
+  const [filter, setFilter] = useState<PeopleFilter>("all");
+  const [exporting, setExporting] = useState(false);
 
   const members = useMemo(() => {
     const needle = q.trim().toLowerCase();
     let list = data.members.filter((m) => {
-      if (onlyConsent && !m.coachingConsent) return false;
-      if (onlyOnline && !m.online) return false;
+      switch (filter) {
+        case "inactive":
+          if (m.completedInterviews !== 0) return false;
+          break;
+        case "no_consent":
+          if (m.coachingConsent) return false;
+          break;
+        case "declining":
+          if (m.deltaPercentile == null || m.deltaPercentile >= 0) return false;
+          break;
+        case "online":
+          if (!m.online) return false;
+          break;
+        case "consent":
+          if (!m.coachingConsent) return false;
+          break;
+        default:
+          break;
+      }
       if (!needle) return true;
       return (
         m.name.toLowerCase().includes(needle) ||
@@ -74,9 +101,37 @@ export function OrgPeopleDashboardClient({
       }
     });
     return list;
-  }, [data.members, onlyConsent, onlyOnline, q, sort]);
+  }, [data.members, filter, q, sort]);
 
   const s = data.summary;
+  const hasRoster = data.members.length > 0;
+  const emptyHint = !hasRoster
+    ? FILTER_EMPTY.all
+    : q.trim()
+      ? "검색 결과가 없습니다. 이름·이메일을 바꿔 보세요."
+      : FILTER_EMPTY[filter];
+
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/org/people/export");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error ?? "내보내기 실패");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `org-people-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "내보내기 실패");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <div className={embedded ? "space-y-5" : "mx-auto max-w-6xl space-y-8"}>
@@ -161,26 +216,41 @@ export function OrgPeopleDashboardClient({
               <option value="login">최근 로그인순</option>
               <option value="name">이름순</option>
             </select>
+            <button
+              type="button"
+              onClick={() => void exportCsv()}
+              disabled={exporting || !hasRoster}
+              className="btn-secondary min-h-10 px-3 text-sm disabled:opacity-50"
+            >
+              {exporting ? "내보내는 중…" : "CSV"}
+            </button>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3 px-5 py-3 text-xs sm:px-6">
-          <label className="flex items-center gap-2 text-muted">
-            <input
-              type="checkbox"
-              checked={onlyConsent}
-              onChange={(e) => setOnlyConsent(e.target.checked)}
-            />
-            상세 동의만
-          </label>
-          <label className="flex items-center gap-2 text-muted">
-            <input
-              type="checkbox"
-              checked={onlyOnline}
-              onChange={(e) => setOnlyOnline(e.target.checked)}
-            />
-            최근 접속만
-          </label>
+        <div className="flex flex-wrap gap-2 px-5 py-3 text-xs sm:px-6">
+          {(
+            [
+              ["all", "전체"],
+              ["inactive", "미면접"],
+              ["no_consent", "미동의"],
+              ["declining", "향상↓"],
+              ["online", "접속 중"],
+              ["consent", "동의"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setFilter(id)}
+              className={`rounded-lg border px-2.5 py-1.5 font-medium transition ${
+                filter === id
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-card-border text-muted hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
           {s.unreadFeedbackCount > 0 ? (
             <span className="rounded-md bg-muted/15 px-2 py-1 text-muted">
               미열람 피드백 {s.unreadFeedbackCount}
@@ -189,9 +259,7 @@ export function OrgPeopleDashboardClient({
         </div>
 
         {members.length === 0 ? (
-          <p className="px-5 py-10 text-center text-sm text-muted sm:px-6">
-            아직 소속 계정이 없습니다. 「승인·좌석」 탭에서 가입을 승인해 주세요.
-          </p>
+          <p className="px-5 py-10 text-center text-sm text-muted sm:px-6">{emptyHint}</p>
         ) : (
           <>
             <div className="hidden overflow-x-auto lg:block">

@@ -2,6 +2,21 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 기관 콘솔 운영 고도화 (2026-07-20)
+
+통합 콘솔에 승인·좌석·코칭 루프를 보강.
+
+| 항목 | 내용 |
+|------|------|
+| 승인 배지 | 개요 QuickLink·사이드/모바일 탭에 pending 건수 |
+| 좌석 UX | reserved/cap 프로그레스·90%/상한 경고, 상한 시 승인 비활성 |
+| 역할 | ADMIN이 MEMBER↔STAFF PATCH (`/api/org/members/[userId]`) |
+| 리포트 딥링크 | 동의 시 `/interview/[id]/report` (org staff 열람 허용) |
+| 동의 요청 | 상세에서 피드백 템플릿으로 nudge |
+| CSV | `GET /api/org/people/export` |
+| People 필터 | 미면접·미동의·향상↓·접속·동의 + empty 카피 분리 |
+| 승인 UX | 일괄 승인/거절 모달, 승인 시 역할 선택 (`/api/org/membership-requests/bulk`) |
+
 ## 최근 작업 — 기관 운영 콘솔 통합 (2026-07-20)
 
 참여 현황 · 구성원 현황 · 멤버 승인을 **`/org/dashboard` 하나의 콘솔**(탭: 개요 / 구성원 / 승인·좌석)로 통합.

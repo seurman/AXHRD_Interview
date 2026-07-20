@@ -30,8 +30,8 @@ export function OrgMemberPeopleDetailClient({
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  async function sendFeedback() {
-    const body = draft.trim();
+  async function sendFeedback(overrideBody?: string) {
+    const body = (overrideBody ?? draft).trim();
     if (body.length < 2 || busy) return;
     setBusy(true);
     setError(null);
@@ -48,13 +48,19 @@ export function OrgMemberPeopleDetailClient({
       };
       if (!res.ok || !json.feedback) throw new Error(json.error ?? "전송 실패");
       setData((d) => ({ ...d, feedback: [json.feedback!, ...d.feedback] }));
-      setDraft("");
-      setMessage("피드백을 보냈습니다.");
+      if (!overrideBody) setDraft("");
+      setMessage(overrideBody ? "동의 요청을 보냈습니다." : "피드백을 보냈습니다.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "전송 실패");
     } finally {
       setBusy(false);
     }
+  }
+
+  async function requestConsent() {
+    await sendFeedback(
+      "상세 역량·면접 리포트 공유 동의를 요청합니다. 프로필에서 「기관 코칭 상세 공유」를 켜 주시면 담당자가 시계열·리포트를 보고 코칭할 수 있습니다.",
+    );
   }
 
   const m = data.member;
@@ -118,8 +124,22 @@ export function OrgMemberPeopleDetailClient({
 
       {consentRequired ? (
         <div className="rounded-2xl border border-warning/30 bg-warning/5 px-5 py-4 text-sm text-muted">
-          이 구성원은 상세 역량 공유에 아직 동의하지 않았습니다. 면접 횟수·접속·피드백은
-          가능하며, 역량 시계열·세부 점수는 동의 후 표시됩니다.
+          <p>
+            이 구성원은 상세 역량 공유에 아직 동의하지 않았습니다. 면접 횟수·접속·피드백은
+            가능하며, 역량 시계열·세부 점수는 동의 후 표시됩니다.
+          </p>
+          {canWriteFeedback ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void requestConsent()}
+              className="btn-secondary mt-3 px-3 py-2 text-sm disabled:opacity-50"
+            >
+              {busy ? "요청 중…" : "동의 요청 보내기"}
+            </button>
+          ) : null}
+          {error ? <p className="mt-2 text-xs text-warning">{error}</p> : null}
+          {message ? <p className="mt-2 text-xs text-success">{message}</p> : null}
         </div>
       ) : null}
 
@@ -214,7 +234,19 @@ export function OrgMemberPeopleDetailClient({
                     ? ` · ${competencyLabel(s.focusCompetency)}`
                     : ""}
                 </span>
-                <span className="text-xs text-muted">{formatWhen(s.completedAt)}</span>
+                <span className="flex items-center gap-3 text-xs text-muted">
+                  <span>{formatWhen(s.completedAt)}</span>
+                  {!consentRequired ? (
+                    <Link
+                      href={`/interview/${s.id}/report`}
+                      className="font-medium text-foreground underline-offset-2 hover:underline"
+                    >
+                      리포트
+                    </Link>
+                  ) : (
+                    <span className="rounded-md bg-background px-2 py-0.5">비공개</span>
+                  )}
+                </span>
               </li>
             ))}
           </ul>
@@ -248,8 +280,8 @@ export function OrgMemberPeopleDetailClient({
                 {busy ? "전송 중…" : "피드백 보내기"}
               </button>
             </div>
-            {error ? <p className="text-xs text-warning">{error}</p> : null}
-            {message ? <p className="text-xs text-success">{message}</p> : null}
+            {!consentRequired && error ? <p className="text-xs text-warning">{error}</p> : null}
+            {!consentRequired && message ? <p className="text-xs text-success">{message}</p> : null}
           </div>
         ) : null}
 

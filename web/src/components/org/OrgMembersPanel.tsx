@@ -1,7 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  MembershipReviewModal,
+  type MembershipReviewMode,
+} from "@/components/org/MembershipReviewModal";
 
 type Seats = {
   members: number;
@@ -54,6 +58,11 @@ export function OrgMembersPanel({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [modal, setModal] = useState<{
+    mode: MembershipReviewMode;
+    ids: string[];
+  } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -68,6 +77,7 @@ export function OrgMembersPanel({
       setJoinCode(data.organization?.joinCode ?? "");
       setRequireApproval(Boolean(data.organization?.requireMembershipApproval));
       if ((data.pending?.length ?? 0) === 0) setTab("members");
+      setSelected(new Set());
     } catch (e) {
       setError(e instanceof Error ? e.message : "오류");
     } finally {
@@ -79,40 +89,90 @@ export function OrgMembersPanel({
     void load();
   }, [load]);
 
-  const approve = async (id: string) => {
-    setBusyId(id);
+  const seatFull = seats?.cap != null && (seats.remaining ?? 0) <= 0;
+  const seatTight =
+    seats?.cap != null &&
+    seats.cap > 0 &&
+    seats.reserved / seats.cap >= 0.9 &&
+    !seatFull;
+
+  const seatPct = useMemo(() => {
+    if (!seats?.cap || seats.cap <= 0) return null;
+    return Math.min(100, Math.round((seats.reserved / seats.cap) * 100));
+  }, [seats]);
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selected.size === pending.length) setSelected(new Set());
+    else setSelected(new Set(pending.map((p) => p.id)));
+  };
+
+  const openModal = (mode: MembershipReviewMode, ids: string[]) => {
+    if (ids.length === 0) return;
+    if (mode === "approve" && seatFull) {
+      setError("좌석 상한에 도달해 승인할 수 없습니다.");
+      return;
+    }
+    setModal({ mode, ids });
+  };
+
+  const runReview = async (opts: {
+    orgRole: "MEMBER" | "STAFF";
+    rejectReason: string;
+  }) => {
+    if (!modal) return;
+    setBusyId("bulk");
     setError(null);
     setMessage(null);
     try {
-      const res = await fetch(`/api/org/membership-requests/${id}/approve`, { method: "POST" });
+      const res = await fetch("/api/org/membership-requests/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: modal.mode,
+          ids: modal.ids,
+          orgRole: modal.mode === "approve" ? opts.orgRole : undefined,
+          rejectReason: modal.mode === "reject" ? opts.rejectReason || null : undefined,
+        }),
+      });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "승인 실패");
+      if (!res.ok) throw new Error(data.error ?? "처리 실패");
       setMessage(data.message);
+      setModal(null);
       await load();
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "승인 오류");
+      setError(e instanceof Error ? e.message : "처리 오류");
     } finally {
       setBusyId(null);
     }
   };
 
-  const reject = async (id: string) => {
-    const reason = window.prompt("거절 사유 (선택)") ?? "";
-    setBusyId(id);
+  const changeRole = async (userId: string, orgRole: "MEMBER" | "STAFF") => {
+    setBusyId(userId);
     setError(null);
+    setMessage(null);
     try {
-      const res = await fetch(`/api/org/membership-requests/${id}/reject`, {
-        method: "POST",
+      const res = await fetch(`/api/org/members/${userId}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rejectReason: reason || null }),
+        body: JSON.stringify({ orgRole }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "거절 실패");
+      if (!res.ok) throw new Error(data.error ?? "역할 변경 실패");
       setMessage(data.message);
       await load();
+      router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "거절 오류");
+      setError(e instanceof Error ? e.message : "역할 변경 오류");
     } finally {
       setBusyId(null);
     }
@@ -208,6 +268,38 @@ export function OrgMembersPanel({
         </div>
       </div>
 
+      {seats?.cap != null ? (
+        <div className="rounded-xl border border-card-border bg-card p-4 sm:p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <p className="text-sm font-semibold text-foreground">좌석 사용량</p>
+            <p className="text-xs tabular-nums text-muted">
+              예약 {seats.reserved} / {seats.cap}
+              {seats.remaining != null ? ` · 잔여 ${seats.remaining}` : ""}
+            </p>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-background">
+            <div
+              className={`h-full rounded-full transition-[width] ${
+                seatFull ? "bg-danger" : seatTight ? "bg-warning" : "bg-foreground"
+              }`}
+              style={{ width: `${seatPct ?? 0}%` }}
+            />
+          </div>
+          <p className="mt-2 text-xs text-muted">
+            예약 = 소속 멤버 + 승인 대기. 대기 건도 좌석을 미리 점유합니다.
+          </p>
+          {seatFull ? (
+            <p className="mt-2 text-xs font-medium text-danger">
+              좌석 상한에 도달했습니다. 승인 전에 상한을 올리거나 멤버를 정리하세요.
+            </p>
+          ) : seatTight ? (
+            <p className="mt-2 text-xs font-medium text-warning">
+              좌석이 90% 이상 사용 중입니다. 상한 확장을 검토하세요.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       {isAdmin ? (
         <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-card-border bg-card p-4 text-sm sm:p-5">
           <input
@@ -270,43 +362,81 @@ export function OrgMembersPanel({
             대기 중인 가입 요청이 없습니다.
           </div>
         ) : (
-          <ul className="divide-y divide-card-border overflow-hidden rounded-xl border border-card-border">
-            {pending.map((p) => (
-              <li
-                key={p.id}
-                className="flex flex-col gap-3 bg-card px-5 py-4 sm:flex-row sm:items-center sm:px-6"
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="flex items-center gap-2 text-xs text-muted">
+                <input
+                  type="checkbox"
+                  checked={selected.size === pending.length && pending.length > 0}
+                  onChange={toggleSelectAll}
+                />
+                전체 선택
+              </label>
+              <button
+                type="button"
+                className="btn-primary px-3 py-1.5 text-xs disabled:opacity-50"
+                disabled={selected.size === 0 || seatFull || busyId === "bulk"}
+                onClick={() => openModal("approve", [...selected])}
               >
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-foreground">{p.user.name}</p>
-                  <p className="truncate text-xs text-muted">{p.user.email}</p>
-                  {p.message ? (
-                    <p className="mt-1 text-xs text-foreground/80">“{p.message}”</p>
-                  ) : null}
-                  <p className="mt-1 text-[11px] text-muted">
-                    신청 {new Date(p.createdAt).toLocaleString("ko-KR")}
-                  </p>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  <button
-                    type="button"
-                    className="btn-primary px-3 py-2 text-sm disabled:opacity-50"
-                    disabled={busyId === p.id}
-                    onClick={() => void approve(p.id)}
-                  >
-                    승인
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-secondary px-3 py-2 text-sm disabled:opacity-50"
-                    disabled={busyId === p.id}
-                    onClick={() => void reject(p.id)}
-                  >
-                    거절
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                선택 승인 ({selected.size})
+              </button>
+              <button
+                type="button"
+                className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
+                disabled={selected.size === 0 || busyId === "bulk"}
+                onClick={() => openModal("reject", [...selected])}
+              >
+                선택 거절
+              </button>
+            </div>
+            <ul className="divide-y divide-card-border overflow-hidden rounded-xl border border-card-border">
+              {pending.map((p) => (
+                <li
+                  key={p.id}
+                  className="flex flex-col gap-3 bg-card px-5 py-4 sm:flex-row sm:items-center sm:px-6"
+                >
+                  <label className="flex items-start gap-3 sm:items-center">
+                    <input
+                      type="checkbox"
+                      className="mt-1 sm:mt-0"
+                      checked={selected.has(p.id)}
+                      onChange={() => toggleSelect(p.id)}
+                    />
+                    <span className="min-w-0">
+                      <span className="block font-semibold text-foreground">{p.user.name}</span>
+                      <span className="block truncate text-xs text-muted">{p.user.email}</span>
+                      {p.message ? (
+                        <span className="mt-1 block text-xs text-foreground/80">
+                          “{p.message}”
+                        </span>
+                      ) : null}
+                      <span className="mt-1 block text-[11px] text-muted">
+                        신청 {new Date(p.createdAt).toLocaleString("ko-KR")}
+                      </span>
+                    </span>
+                  </label>
+                  <div className="flex shrink-0 gap-2 sm:ml-auto">
+                    <button
+                      type="button"
+                      className="btn-primary px-3 py-2 text-sm disabled:opacity-50"
+                      disabled={seatFull || busyId === "bulk"}
+                      onClick={() => openModal("approve", [p.id])}
+                    >
+                      승인
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-secondary px-3 py-2 text-sm disabled:opacity-50"
+                      disabled={busyId === "bulk"}
+                      onClick={() => openModal("reject", [p.id])}
+                    >
+                      거절
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         )
       ) : members.length === 0 ? (
         <div className="rounded-xl border border-dashed border-card-border px-5 py-10 text-center text-sm text-muted">
@@ -321,9 +451,23 @@ export function OrgMembersPanel({
             >
               <span className="min-w-[7rem] font-medium text-foreground">{m.name}</span>
               <span className="min-w-[10rem] flex-1 truncate text-muted">{m.email}</span>
-              <span className="rounded-md border border-card-border px-2 py-0.5 text-xs text-muted">
-                {ROLE_LABEL[m.orgRole] ?? m.orgRole}
-              </span>
+              {isAdmin && m.orgRole !== "ADMIN" ? (
+                <select
+                  value={m.orgRole === "STAFF" ? "STAFF" : "MEMBER"}
+                  disabled={busyId === m.id}
+                  onChange={(e) =>
+                    void changeRole(m.id, e.target.value === "STAFF" ? "STAFF" : "MEMBER")
+                  }
+                  className="min-h-9 rounded-md border border-card-border bg-background px-2 text-xs"
+                >
+                  <option value="MEMBER">구성원</option>
+                  <option value="STAFF">담당자</option>
+                </select>
+              ) : (
+                <span className="rounded-md border border-card-border px-2 py-0.5 text-xs text-muted">
+                  {ROLE_LABEL[m.orgRole] ?? m.orgRole}
+                </span>
+              )}
               {isAdmin && m.orgRole !== "ADMIN" ? (
                 <button
                   type="button"
@@ -338,6 +482,18 @@ export function OrgMembersPanel({
           ))}
         </ul>
       )}
+
+      <MembershipReviewModal
+        open={modal != null}
+        mode={modal?.mode ?? "approve"}
+        count={modal?.ids.length ?? 0}
+        isAdmin={isAdmin}
+        busy={busyId === "bulk"}
+        onClose={() => {
+          if (busyId !== "bulk") setModal(null);
+        }}
+        onConfirm={(opts) => void runReview(opts)}
+      />
     </div>
   );
 }

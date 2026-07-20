@@ -9,6 +9,7 @@ import {
   countActiveEntitlements,
   readOrgEntitlements,
 } from "@/lib/org/entitlements";
+import { countPendingMembershipRequests } from "@/lib/org/membership";
 import { OrgOpsConsole } from "@/components/org/OrgOpsConsole";
 
 export const dynamic = "force-dynamic";
@@ -73,9 +74,10 @@ export default async function OrgDashboardPage() {
   const activeCount = countActiveEntitlements(entitlements);
   void activeCount;
 
-  const [people, activityPreview] = await Promise.all([
+  const [people, activityPreview, pendingCount] = await Promise.all([
     getOrgPeopleDashboard(user.organizationId),
     getOrgActivityLog(user.organizationId, 8),
+    countPendingMembershipRequests(user.organizationId),
   ]);
 
   if (!people) {
@@ -91,6 +93,7 @@ export default async function OrgDashboardPage() {
         cohort={cohortMeta}
         people={people}
         activityPreview={activityPreview}
+        pendingCount={pendingCount}
       />
     </Suspense>
   );
