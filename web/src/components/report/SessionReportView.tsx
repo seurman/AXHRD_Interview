@@ -39,12 +39,22 @@ export function SessionReportView({
   backHref,
   backLabel,
   afterTimeline,
+  competencyFeedbackHref,
+  competencyFeedbackSummary,
 }: {
   session: SessionReportInclude;
   variant?: "applicant" | "org";
   backHref?: string;
   backLabel?: string;
   afterTimeline?: ReactNode;
+  /** COMPETENCY 세션에 SessionReport가 없을 때 역량 피드백으로 이어주는 링크 */
+  competencyFeedbackHref?: string;
+  /** 기관 열람 등 — 피드백 페이지 대신 요약만 표시 */
+  competencyFeedbackSummary?: {
+    summary: string;
+    strengths: string[];
+    improvements: string[];
+  };
 }) {
   const report = session.report?.summaryJson as SessionReportData | undefined;
   const evidence = parseEvidenceAssessmentReport(session.report?.evidenceJson);
@@ -116,6 +126,46 @@ export function SessionReportView({
           <p className="mt-3 text-sm text-muted report-prose">{delivery.note}</p>
         </section>
       )}
+    </div>
+  ) : competencyFeedbackSummary ? (
+    <div className="space-y-4">
+      <p className="leading-relaxed text-foreground report-prose">
+        {competencyFeedbackSummary.summary}
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <section className="rounded-2xl border border-success/20 bg-success/5 p-5">
+          <h3 className="mb-2 font-medium text-success">강점</h3>
+          <ul className="space-y-1 text-sm text-foreground">
+            {competencyFeedbackSummary.strengths.map((s) => (
+              <li key={s}>✓ {s}</li>
+            ))}
+          </ul>
+        </section>
+        <section className="rounded-2xl border border-warning/20 bg-warning/5 p-5">
+          <h3 className="mb-2 font-medium text-warning">개선점</h3>
+          <ul className="space-y-1 text-sm text-foreground">
+            {competencyFeedbackSummary.improvements.map((s) => (
+              <li key={s}>↑ {s}</li>
+            ))}
+          </ul>
+        </section>
+      </div>
+      <p className="text-xs text-muted">
+        이 세션은 역량 피드백 경로로 완료되었습니다. 상세 하이라이트는 지원자 본인 피드백
+        장표에 있습니다.
+      </p>
+    </div>
+  ) : competencyFeedbackHref ? (
+    <div className="rounded-2xl border border-accent/30 bg-accent/5 p-6 text-center">
+      <p className="text-sm font-semibold text-foreground">
+        이 세션의 본 결과는 역량 피드백에 있습니다
+      </p>
+      <p className="mt-2 text-sm text-muted">
+        역량별 코칭·하이라이트·다음 연습은 피드백 장표에서 확인할 수 있습니다.
+      </p>
+      <Link href={competencyFeedbackHref} className="btn-primary mt-4 inline-flex text-sm">
+        역량 피드백 보기
+      </Link>
     </div>
   ) : (
     <p className="text-muted">리포트 생성 중이거나 세션이 미완료입니다.</p>

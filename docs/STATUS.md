@@ -2,9 +2,23 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 면접 Stage 2 UX (2026-07-20)
+
+세션 품질·신뢰성. Stage 3(코칭 차별화)는 미착수.
+
+| 항목 | 내용 |
+|------|------|
+| 이어하기 | setup·dashboard `ResumeInterviewBanner` · `IN_PROGRESS` 세션 CTA |
+| 딥링크 | `interviewSessionHref` — COMPETENCY 완료 → 역량 피드백 · activity/accessLog 정렬 |
+| 리포트 스토리 | 소유자 `/report` → feedback 리다이렉트 · 기관은 CompetencyFeedback 요약 임베드 · `?stay=1` 세션 상세 |
+| 상태머신 | `ready` / `evaluating` / `reviewing` · TTS·피드백·다음 문항 충돌 방지 |
+| IRT 복구 | setup `/api/irt/warm` · 실패 시 재깨우기 · 답변 실패 재제출 CTA |
+| 페이스 | 문항당 권장 시간 · 80% toast(강제 종료 없음) |
+| 꼬리질문 | 배지·진행 라벨·카드 강조 |
+
 ## 최근 작업 — 면접 Stage 1 UX (2026-07-20)
 
-면접 설정·세션·킷·역량 피드백의 **카피·흐름 정합성**만. Stage 2(미완료 세션 재개 UI 등)는 미착수.
+면접 설정·세션·킷·역량 피드백의 **카피·흐름 정합성**만.
 
 | 항목 | 내용 |
 |------|------|

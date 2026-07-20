@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
 import { isOrgAdminUser, isOrgStaffUser, isSuperAdminUser } from "@/lib/auth/roles";
@@ -9,12 +9,13 @@ import {
   filterQueueByProgress,
   parseCompetencyQueue,
 } from "@/lib/interview/competency-round";
+import { competencyFeedbackHref } from "@/lib/interview/session-href";
 
 export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ sessionId: string }>;
-  searchParams: Promise<{ queue?: string }>;
+  searchParams: Promise<{ queue?: string; stay?: string }>;
 }
 
 async function canOrgStaffViewSessionReport(
@@ -45,7 +46,7 @@ async function canOrgStaffViewSessionReport(
 
 export default async function ReportPage({ params, searchParams }: PageProps) {
   const { sessionId } = await params;
-  const { queue: queueParam } = await searchParams;
+  const { queue: queueParam, stay } = await searchParams;
   const user = await requirePageUser(`/interview/${sessionId}/report`);
 
   const session = await prisma.interviewSession.findUnique({
@@ -69,6 +70,31 @@ export default async function ReportPage({ params, searchParams }: PageProps) {
 
   const isOwner = user.id === session.userId;
 
+  // COMPETENCY 완료본은 역량 피드백이 본 스토리 — 소유자가 /report 로 들어오면 리다이렉트
+  // (?stay=1 이면 타임라인 등 세션 상세를 보기 위해 유지)
+  const feedbackHref = competencyFeedbackHref(session);
+  if (isOwner && feedbackHref && !session.report && stay !== "1") {
+    redirect(feedbackHref);
+  }
+
+  // 기관 열람자용: SessionReport가 없으면 CompetencyFeedback 요약을 리포트 장표에 붙인다
+  let competencyFeedbackSummary:
+    | { summary: string; strengths: string[]; improvements: string[] }
+    | null = null;
+  if (!session.report && !isOwner && session.mode === "COMPETENCY") {
+    const fb = await prisma.competencyFeedback.findFirst({
+      where: { sessionId },
+      select: { summary: true, strengths: true, improvements: true },
+    });
+    if (fb) {
+      competencyFeedbackSummary = {
+        summary: fb.summary,
+        strengths: (fb.strengths as string[]) ?? [],
+        improvements: (fb.improvements as string[]) ?? [],
+      };
+    }
+  }
+
   let queue = queueParam ? queueParam.split(",").filter(Boolean) : [];
   if (queue.length === 0 && session.plan) {
     queue = filterQueueByProgress(
@@ -82,6 +108,10 @@ export default async function ReportPage({ params, searchParams }: PageProps) {
       <SessionReportView
         session={session}
         variant={isOwner ? "applicant" : "org"}
+        competencyFeedbackHref={
+          isOwner && !session.report && feedbackHref ? feedbackHref : undefined
+        }
+        competencyFeedbackSummary={competencyFeedbackSummary ?? undefined}
         afterTimeline={
           isOwner && queue.length > 0 && session.planId ? (
             <NextCompetencyButton

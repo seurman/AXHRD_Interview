@@ -8,6 +8,8 @@ import { WelcomeBanner } from "@/components/auth/WelcomeBanner";
 import { NarrativeLead } from "@/components/dashboard/NarrativeLead";
 import { getCompetencyDashboardData } from "@/lib/dashboard/get-competency-dashboard-data";
 import { buildDashboardNarrative } from "@/lib/dashboard/career-narrative";
+import { getResumeableInterviewSessions } from "@/lib/interview/get-resumeable-sessions";
+import { ResumeInterviewBanner } from "@/components/interview/ResumeInterviewBanner";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getDictionary } from "@/lib/i18n";
 import { COMPETENCY_CODES } from "@/types";
@@ -19,7 +21,10 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login?next=/dashboard");
 
-  const dashboard = await getCompetencyDashboardData(user.id);
+  const [dashboard, resumeable] = await Promise.all([
+    getCompetencyDashboardData(user.id),
+    getResumeableInterviewSessions(user.id),
+  ]);
   if (!dashboard) redirect("/auth/login");
 
   const locale = await getLocale();
@@ -37,10 +42,10 @@ export default async function DashboardPage() {
     .filter((r) => r.assessed)
     .sort((a, b) => a.percentile - b.percentile)[0];
   const deltas = dashboard.coachInsights.competencyDeltas
-    .map((d) => d.delta)
-    .filter((d): d is number => d != null);
+    .map((row) => row.delta)
+    .filter((delta): delta is number => delta != null);
   const growthDelta =
-    deltas.length > 0 ? deltas.reduce((s, d) => s + d, 0) / deltas.length : null;
+    deltas.length > 0 ? deltas.reduce((s, delta) => s + delta, 0) / deltas.length : null;
   const dashboardNarrative = buildDashboardNarrative({
     sessionCount: dashboard.sessionCount,
     assessedCount,
@@ -77,6 +82,19 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {resumeable.length > 0 ? (
+        <ResumeInterviewBanner
+          variant="dashboard"
+          sessions={resumeable.map((s) => ({
+            id: s.id,
+            focusCompetency: s.focusCompetency,
+            sessionNumber: s.sessionNumber,
+            startedAt: s.startedAt?.toISOString() ?? null,
+            timeBudgetMinutes: s.timeBudgetMinutes,
+          }))}
+        />
+      ) : null}
 
       <NarrativeLead text={dashboardNarrative} />
 

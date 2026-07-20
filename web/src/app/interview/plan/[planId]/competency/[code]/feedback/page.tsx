@@ -276,7 +276,7 @@ export default async function CompetencyFeedbackPage({
           </Link>
         )}
         {sessionId && (
-          <Link href={`/interview/${sessionId}`} className="btn-secondary">
+          <Link href={`/interview/${sessionId}/report?stay=1`} className="btn-secondary">
             세션 상세
           </Link>
         )}

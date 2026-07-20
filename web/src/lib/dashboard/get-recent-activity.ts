@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { competencyLabel } from "@/lib/labels";
+import { interviewSessionHref } from "@/lib/interview/session-href";
 import type { ActivityItem } from "@/components/dashboard/RecentActivityPanel";
 
 /**
@@ -25,6 +26,9 @@ export async function getRecentActivityItems(
           startedAt: true,
           createdAt: true,
           focusCompetency: true,
+          mode: true,
+          planId: true,
+          status: true,
         },
       },
       selfDiscoverySessions: {
@@ -47,14 +51,16 @@ export async function getRecentActivityItems(
     ...source.sessions.map((s) => {
       const startedAt = s.startedAt ?? s.createdAt;
       const completedAt = s.completedAt ?? startedAt;
+      const href = interviewSessionHref(s);
+      const toFeedback = href.includes("/feedback");
       return {
         id: s.id,
         kind: "interview" as const,
         title: s.focusCompetency
           ? `${competencyLabel(s.focusCompetency)} 모의면접 #${s.sessionNumber}`
           : `모의면접 #${s.sessionNumber}`,
-        subtitle: "면접 리포트 보기",
-        href: `/interview/${s.id}/report`,
+        subtitle: toFeedback ? "역량 피드백 보기" : "면접 리포트 보기",
+        href,
         competency: s.focusCompetency ? competencyLabel(s.focusCompetency) : undefined,
         startedAt: startedAt.toISOString(),
         completedAt: completedAt.toISOString(),
