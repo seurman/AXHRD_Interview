@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { applyClearSessionCookie, clearSessionCookie, getCurrentUser } from "@/lib/auth/session";
+import { recordUserLogout } from "@/lib/auth/presence";
 import {
   isPersonalTrialOnlyUser,
   loadPersonalAccessContext,
@@ -7,6 +8,8 @@ import {
 import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";
 
 export async function POST() {
+  const user = await getCurrentUser();
+  if (user) await recordUserLogout(user.id);
   const response = NextResponse.json({ ok: true });
   applyClearSessionCookie(response);
   await clearSessionCookie();

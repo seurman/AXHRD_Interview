@@ -217,6 +217,7 @@ model Organization {
   assessmentEnabled   Boolean                @default(false)
   assessmentScenarios AssessmentScenario[]
   assessmentShares    OrgAssessmentShare[]
+  memberFeedback      OrgMemberFeedback[]
 
   @@index([status])
   @@index([status, name(sort: Asc)])
@@ -284,6 +285,11 @@ model User {
   orgCoachingConsent   Boolean       @default(false)
   orgCoachingConsentAt DateTime?
   /**
+   * 최근 로그인·로그아웃 — 기관 어드민 멤버 현황용 (세션 쿠키 발급/폐기 시 갱신)
+   */
+  lastLoginAt          DateTime?
+  lastLogoutAt         DateTime?
+  /**
    * 대량 가입·체험 패턴 의심 시 관리자 검토 플래그
    */
   signupFlag           SignupFlag    @default(NONE)
@@ -316,6 +322,8 @@ model User {
   surveyResponses              SurveyResponse[]
   membershipRequests           OrgMembershipRequest[] @relation("MembershipRequests")
   membershipReviews            OrgMembershipRequest[] @relation("MembershipReviews")
+  orgMemberFeedbackAuthored    OrgMemberFeedback[]    @relation("OrgMemberFeedbackAuthor")
+  orgMemberFeedbackReceived    OrgMemberFeedback[]    @relation("OrgMemberFeedbackMember")
 
   @@index([organizationId])
   @@index([platformRole])
@@ -324,6 +332,31 @@ model User {
   @@index([createdAt(sort: Desc)])
   @@index([organizationId, orgRole])
   @@index([signupFlag, createdAt(sort: Desc)])
+  @@index([lastLoginAt(sort: Desc)])
+}
+
+/**
+ * 기관 담당자 → 구성원 코칭 피드백 (구성원이 프로필/대시보드에서 열람)
+ */
+model OrgMemberFeedback {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberUserId   String
+  member         User         @relation("OrgMemberFeedbackMember", fields: [memberUserId], references: [id], onDelete: Cascade)
+  authorUserId   String
+  author         User         @relation("OrgMemberFeedbackAuthor", fields: [authorUserId], references: [id], onDelete: Cascade)
+  body           String
+  /**
+   * 구성원이 읽은 시각 — null이면 미열람
+   */
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId, memberUserId, createdAt(sort: Desc)])
+  @@index([memberUserId, createdAt(sort: Desc)])
+  @@index([authorUserId])
 }
 
 /**

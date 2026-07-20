@@ -43,6 +43,18 @@ export async function OrgCohortDashboard({ user }: OrgCohortDashboardProps) {
 
       <div className="card-luxe flex flex-wrap items-center justify-between gap-4 p-5">
         <div>
+          <p className="text-sm font-medium text-foreground">구성원 현황 대시보드</p>
+          <p className="mt-1 text-xs text-muted">
+            면접 횟수·역량 시계열·로그인/로그아웃·코칭 피드백을 한곳에서 관리합니다.
+          </p>
+        </div>
+        <Link href="/org/people" className="btn-primary shrink-0 text-sm">
+          구성원 현황 열기
+        </Link>
+      </div>
+
+      <div className="card-luxe flex flex-wrap items-center justify-between gap-4 p-5">
+        <div>
           <p className="text-sm font-medium text-foreground">학생 가입 코드</p>
           <p className="mt-1 font-mono text-lg tracking-wider text-accent">{data.joinCode}</p>
           <p className="mt-1 text-xs text-muted">

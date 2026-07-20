@@ -11,6 +11,7 @@ import { buildDashboardNarrative } from "@/lib/dashboard/career-narrative";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getDictionary } from "@/lib/i18n";
 import { COMPETENCY_CODES } from "@/types";
+import { MemberFeedbackInbox } from "@/components/org/MemberFeedbackInbox";
 
 export const dynamic = "force-dynamic";
 
@@ -77,6 +78,8 @@ export default async function DashboardPage() {
       </div>
 
       <NarrativeLead text={dashboardNarrative} />
+
+      <MemberFeedbackInbox />
 
       <h2 className="text-lg font-semibold text-foreground">{d.competencySection}</h2>
       <CompetencyDashboard

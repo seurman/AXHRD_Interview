@@ -17,7 +17,7 @@ type SaasLinksConfig = {
   titleKey: "saas";
   links: {
     href: string;
-    labelKey: "cohortDashboard" | "diagnosticDashboard" | "candidateResults" | "members";
+    labelKey: "cohortDashboard" | "diagnosticDashboard" | "candidateResults" | "members" | "peopleDashboard";
   }[];
   settingsTitleKey: "settings";
   settingsLinks: {

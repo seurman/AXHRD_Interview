@@ -5,6 +5,7 @@ import { applySessionCookie } from "@/lib/auth/session";
 import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
 import { loadPersonalAccessContext } from "@/lib/auth/personal-access";
 import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";
+import { recordUserLogin } from "@/lib/auth/presence";
 
 export async function POST(req: Request) {
   try {
@@ -46,6 +47,7 @@ export async function POST(req: Request) {
     }
 
     await syncSuperadminPlatformRole(user.id, user.email);
+    await recordUserLogin(user.id);
     const accessContext = await loadPersonalAccessContext(user.id);
     const redirect = resolvePostLoginRedirect(user, accessContext, next);
 
