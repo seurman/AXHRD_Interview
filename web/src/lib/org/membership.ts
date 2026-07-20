@@ -211,7 +211,12 @@ export async function cancelMembershipRequest(requestId: string, userId: string)
   });
 }
 
-export async function approveMembershipRequest(requestId: string, reviewerId: string) {
+export async function approveMembershipRequest(
+  requestId: string,
+  reviewerId: string,
+  opts?: { orgRole?: Extract<OrgRole, "MEMBER" | "STAFF"> },
+) {
+  const nextRole: OrgRole = opts?.orgRole === "STAFF" ? "STAFF" : "MEMBER";
   const req = await prisma.orgMembershipRequest.findUnique({
     where: { id: requestId },
     include: {
@@ -270,7 +275,7 @@ export async function approveMembershipRequest(requestId: string, reviewerId: st
     }),
     prisma.user.update({
       where: { id: req.userId },
-      data: { organizationId: req.organizationId, orgRole: "MEMBER" satisfies OrgRole },
+      data: { organizationId: req.organizationId, orgRole: nextRole },
     }),
   ]);
 
@@ -278,6 +283,7 @@ export async function approveMembershipRequest(requestId: string, reviewerId: st
     request: updated,
     user: req.user,
     organization: { id: req.organization.id, name: req.organization.name },
+    orgRole: nextRole,
   };
 }
 
@@ -320,6 +326,32 @@ export async function removeOrgMember(organizationId: string, targetUserId: stri
   return prisma.user.update({
     where: { id: targetUserId },
     data: { organizationId: null, orgRole: "MEMBER" },
+  });
+}
+
+/** 기관 ADMIN이 MEMBER/STUDENT ↔ STAFF 역할만 변경 (ADMIN 지정·해제 불가) */
+export async function updateOrgMemberRole(
+  organizationId: string,
+  targetUserId: string,
+  actorId: string,
+  nextRole: Extract<OrgRole, "MEMBER" | "STAFF">,
+) {
+  if (targetUserId === actorId) {
+    throw new MembershipError("SELF", "자신의 역할은 이 화면에서 변경할 수 없습니다.");
+  }
+  const target = await prisma.user.findUnique({ where: { id: targetUserId } });
+  if (!target || target.organizationId !== organizationId) {
+    throw new MembershipError("NOT_FOUND", "소속 멤버를 찾을 수 없습니다.");
+  }
+  if (target.orgRole === "ADMIN") {
+    throw new MembershipError("ADMIN_PROTECTED", "기관 관리자 역할은 여기서 변경할 수 없습니다.");
+  }
+  if (nextRole !== "MEMBER" && nextRole !== "STAFF") {
+    throw new MembershipError("INVALID_ROLE", "구성원 또는 담당자만 지정할 수 있습니다.");
+  }
+  return prisma.user.update({
+    where: { id: targetUserId },
+    data: { orgRole: nextRole },
   });
 }
 

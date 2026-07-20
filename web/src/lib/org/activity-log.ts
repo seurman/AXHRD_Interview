@@ -11,7 +11,7 @@ export type OrgActivityRow = {
   competency?: string;
   startedAt?: string;
   completedAt: string;
-  /** 상세 코칭 리포트 링크 — 구성원이 상세 공유에 동의(orgCoachingConsent)했을 때만 존재 */
+  /** 상세 코칭 리포트 링크 — 동의 시 면접 리포트(또는 구성원 프로필) */
   detailHref: string | null;
 };
 
@@ -72,7 +72,9 @@ export async function getOrgActivityLog(
         competency: s.focusCompetency ? competencyLabel(s.focusCompetency) : undefined,
         startedAt: startedAt.toISOString(),
         completedAt: completedAt.toISOString(),
-        detailHref: member?.orgCoachingConsent ? `/org/dashboard/members/${s.userId}` : null,
+        detailHref: member?.orgCoachingConsent
+          ? `/interview/${s.id}/report`
+          : null,
       };
     }),
     ...discoverSessions.map((s) => {
@@ -85,7 +87,7 @@ export async function getOrgActivityLog(
         title: "자기발견 인터뷰",
         startedAt: s.startedAt.toISOString(),
         completedAt: (s.completedAt ?? s.startedAt).toISOString(),
-        detailHref: member?.orgCoachingConsent ? `/org/dashboard/members/${s.userId}` : null,
+        detailHref: member?.orgCoachingConsent ? `/org/people/${s.userId}` : null,
       };
     }),
   ];

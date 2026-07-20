@@ -7,5 +7,6 @@ describe("membershipErrorResponse", () => {
     expect(membershipErrorResponse(new MembershipError("SEAT_FULL", "x")).status).toBe(409);
     expect(membershipErrorResponse(new MembershipError("PENDING_EXISTS", "x")).status).toBe(409);
     expect(membershipErrorResponse(new MembershipError("NOT_PENDING", "x")).status).toBe(400);
+    expect(membershipErrorResponse(new MembershipError("ADMIN_PROTECTED", "x")).status).toBe(400);
   });
 });

@@ -90,6 +90,7 @@ export function OrgOpsConsole({
   cohort,
   people,
   activityPreview,
+  pendingCount = 0,
 }: {
   organizationName: string;
   orgRole: string;
@@ -97,6 +98,7 @@ export function OrgOpsConsole({
   cohort: CohortData;
   people: OrgPeopleDashboardData;
   activityPreview: OrgActivityRow[];
+  pendingCount?: number;
 }) {
   const searchParams = useSearchParams();
   const [tab, setTabState] = useState<OrgOpsTab>(() =>
@@ -172,9 +174,22 @@ export function OrgOpsConsole({
                         active ? "opacity-90" : "opacity-70 group-hover:opacity-100"
                       }`}
                     />
-                    <span className="min-w-0">
-                      <span className="block text-sm font-semibold tracking-tight">
-                        {item.label}
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2">
+                        <span className="block text-sm font-semibold tracking-tight">
+                          {item.label}
+                        </span>
+                        {item.id === "members" && pendingCount > 0 ? (
+                          <span
+                            className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
+                              active
+                                ? "bg-background/20 text-background"
+                                : "bg-warning/15 text-warning"
+                            }`}
+                          >
+                            {pendingCount}
+                          </span>
+                        ) : null}
                       </span>
                       <span
                         className={`block text-[11px] ${
@@ -223,13 +238,18 @@ export function OrgOpsConsole({
                     role="tab"
                     aria-selected={active}
                     onClick={() => setTab(item.id)}
-                    className={`min-h-11 touch-manipulation rounded-lg text-sm font-semibold transition ${
+                    className={`relative min-h-11 touch-manipulation rounded-lg text-sm font-semibold transition ${
                       active
                         ? "bg-foreground text-background"
                         : "text-muted hover:text-foreground"
                     }`}
                   >
                     {item.mobileLabel}
+                    {item.id === "members" && pendingCount > 0 ? (
+                      <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-warning px-1 text-[10px] font-bold text-white">
+                        {pendingCount}
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
@@ -260,6 +280,7 @@ export function OrgOpsConsole({
                 activityPreview={activityPreview}
                 isAdmin={isAdmin}
                 activeProducts={activeProducts}
+                pendingCount={pendingCount}
                 onOpenPeople={() => setTab("people")}
                 onOpenMembers={() => setTab("members")}
               />
@@ -283,6 +304,7 @@ function OverviewPane({
   activityPreview,
   isAdmin,
   activeProducts,
+  pendingCount,
   onOpenPeople,
   onOpenMembers,
 }: {
@@ -291,6 +313,7 @@ function OverviewPane({
   activityPreview: OrgActivityRow[];
   isAdmin: boolean;
   activeProducts: typeof ORG_PRODUCTS;
+  pendingCount: number;
   onOpenPeople: () => void;
   onOpenMembers: () => void;
 }) {
@@ -344,8 +367,13 @@ function OverviewPane({
           icon={ShieldCheck}
           kicker="Access"
           title="승인 · 좌석"
-          body="가입 요청 검토와 좌석 한도 관리"
+          body={
+            pendingCount > 0
+              ? `승인 대기 ${pendingCount}건 · 바로 검토하세요`
+              : "가입 요청 검토와 좌석 한도 관리"
+          }
           onClick={onOpenMembers}
+          badge={pendingCount > 0 ? pendingCount : undefined}
         />
       </section>
 
@@ -487,12 +515,14 @@ function QuickLink({
   title,
   body,
   onClick,
+  badge,
 }: {
   icon: typeof Users;
   kicker: string;
   title: string;
   body: string;
   onClick: () => void;
+  badge?: number;
 }) {
   return (
     <button
@@ -500,8 +530,13 @@ function QuickLink({
       onClick={onClick}
       className="group flex items-start gap-3 rounded-xl border border-card-border bg-card p-4 text-left transition hover:border-foreground/25 hover:bg-background/40"
     >
-      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-card-border bg-background text-foreground transition group-hover:border-foreground/30">
+      <span className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-card-border bg-background text-foreground transition group-hover:border-foreground/30">
         <Icon className="h-4 w-4" />
+        {badge != null && badge > 0 ? (
+          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-warning px-1 text-[10px] font-bold text-white">
+            {badge}
+          </span>
+        ) : null}
       </span>
       <span className="min-w-0 flex-1">
         <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold">
