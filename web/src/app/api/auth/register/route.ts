@@ -5,6 +5,7 @@ import { applySessionCookie } from "@/lib/auth/session";
 import { syncSuperadminPlatformRole } from "@/lib/auth/platform-role";
 import { loadPersonalAccessContext } from "@/lib/auth/personal-access";
 import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";
+import { recordUserLogin } from "@/lib/auth/presence";
 import { clientIpFromRequest, evaluateSignupAnomaly } from "@/lib/auth/signup-anomaly";
 
 export async function POST(req: Request) {
@@ -81,6 +82,7 @@ export async function POST(req: Request) {
       upgraded: Boolean(exists),
       redirect,
     });
+    await recordUserLogin(user.id);
     await applySessionCookie(response, user.id);
     return response;
   } catch (e) {

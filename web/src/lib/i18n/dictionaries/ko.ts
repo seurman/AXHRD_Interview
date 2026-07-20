@@ -77,6 +77,7 @@ export const dictionary: Dictionary = {
       title: "기관",
       settings: "설정",
       cohortDashboard: "참여 현황",
+      peopleDashboard: "구성원 현황",
       diagnosticDashboard: "조직진단",
       candidateResults: "지원자 결과",
       members: "멤버·승인",

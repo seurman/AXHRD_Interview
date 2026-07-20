@@ -18,6 +18,7 @@ export function buildSaasNavConfig(
     links.push({ href: cohortHref, labelKey: "cohortDashboard" });
   }
   if (caps.has("tenant.cohort")) {
+    links.push({ href: "/org/people", labelKey: "peopleDashboard" });
     links.push({ href: "/org/members", labelKey: "members" });
   }
   if (caps.has("tenant.interview_kit") && entitlements.competency) {

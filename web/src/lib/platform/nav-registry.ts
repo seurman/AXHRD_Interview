@@ -161,7 +161,7 @@ export type SaasNavConfig = {
   titleKey: "saas";
   links: {
     href: string;
-    labelKey: "cohortDashboard" | "diagnosticDashboard" | "candidateResults" | "members";
+    labelKey: "cohortDashboard" | "diagnosticDashboard" | "candidateResults" | "members" | "peopleDashboard";
   }[];
   settingsTitleKey: "settings";
   settingsLinks: { href: string; labelKey: "settingsHub" | "interviewKit" }[];

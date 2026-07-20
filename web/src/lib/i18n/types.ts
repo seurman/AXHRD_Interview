@@ -81,6 +81,7 @@ export type Dictionary = {
       title: string;
       settings: string;
       cohortDashboard: string;
+      peopleDashboard: string;
       diagnosticDashboard: string;
       candidateResults: string;
       members: string;

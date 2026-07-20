@@ -77,6 +77,7 @@ export const dictionary: Dictionary = {
       title: "Organization",
       settings: "Settings",
       cohortDashboard: "Participation",
+      peopleDashboard: "People",
       diagnosticDashboard: "Diagnostic",
       candidateResults: "Candidate results",
       members: "Members",
