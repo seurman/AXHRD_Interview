@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconLoader } from "@/components/ui/icons";
+import { LoadingRitual } from "@/components/ux/LoadingRitual";
 import { competencyLabel, jobRoleLabel } from "@/lib/labels";
 import { JOB_ROLES } from "@/types";
 import type { PublicKitShare } from "@/lib/org/kit-share";
@@ -45,12 +46,14 @@ export function KitStartClient({ slug, initialShare }: Props) {
       });
       const data = await res.json();
       if (res.status === 401) {
+        setLoading(false);
         router.push(`/auth/login?next=${encodeURIComponent(`/kit/${slug}`)}`);
         return;
       }
       if (!res.ok) {
         throw new Error(data.error ?? "면접을 시작하지 못했습니다.");
       }
+      // 성공 시에도 loading을 유지해 LoadingRitual이 라우트 전환까지 보이게 함
       router.push(`/interview/${data.sessionId}`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "면접을 시작하지 못했습니다.";
@@ -81,7 +84,7 @@ export function KitStartClient({ slug, initialShare }: Props) {
 
       <section className="card-luxe space-y-4 p-6">
         <h2 className="font-semibold text-foreground">직무</h2>
-        <Select value={jobRole} onValueChange={setJobRole}>
+        <Select value={jobRole} onValueChange={setJobRole} disabled={loading}>
           <SelectTrigger className="input-luxe h-auto w-full py-2.5">
             <SelectValue />
           </SelectTrigger>
@@ -107,8 +110,9 @@ export function KitStartClient({ slug, initialShare }: Props) {
               <button
                 key={c.code}
                 type="button"
+                disabled={loading}
                 onClick={() => setFocusCompetency(c.code)}
-                className={`rounded-xl border p-3 text-left text-sm transition ${
+                className={`rounded-xl border p-3 text-left text-sm transition disabled:opacity-60 ${
                   focusCompetency === c.code
                     ? "border-gold bg-gold/10 text-foreground ring-1 ring-gold/30"
                     : "border-card-border text-foreground hover:border-gold/40"
@@ -144,6 +148,12 @@ export function KitStartClient({ slug, initialShare }: Props) {
           "면접 시작하기"
         )}
       </button>
+
+      {loading && (
+        <div className="card-luxe border-t-[3px] border-t-gold/40 px-3">
+          <LoadingRitual variant="setup" competencyCode={focusCompetency} compact />
+        </div>
+      )}
     </div>
   );
 }

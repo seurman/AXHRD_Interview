@@ -47,6 +47,9 @@ const ACCEPT =
 const JD_ACCEPT =
   ".pdf,.doc,.docx,.txt,.md,.png,.jpg,.jpeg,.webp,.gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,image/png,image/jpeg,image/webp,image/gif";
 
+/** 파일 업로드·수동 CTA 공통 — 이보다 짧으면 공고 분석을 돌리지 않음 */
+const JD_ANALYZE_MIN_CHARS = 80;
+
 type CompetencyRow = {
   code: string;
   label: string;
@@ -376,7 +379,7 @@ export function SetupForm({
         setJdText(text.trim());
         setJdFileName(file.name);
         setShowJdEditor(false);
-        if (text.trim().length >= 15) await analyzeJdText(text.trim());
+        if (text.trim().length >= JD_ANALYZE_MIN_CHARS) await analyzeJdText(text.trim());
         return;
       }
 
@@ -398,7 +401,7 @@ export function SetupForm({
       if (data.ocrUsed) {
         setJdSourceNote(s.jd.imageOcrSuccess);
       }
-      if (text.trim().length >= 15) await analyzeJdText(text.trim());
+      if (text.trim().length >= JD_ANALYZE_MIN_CHARS) await analyzeJdText(text.trim());
     } catch (e) {
       setJdFileError(e instanceof Error ? e.message : "파일 업로드 실패");
       setJdFileName(null);
@@ -661,16 +664,28 @@ export function SetupForm({
                 placeholder={s.jd.placeholder}
                 className="input-luxe w-full text-sm"
               />
-              {jdDraft.length >= 80 && (
-                <button
-                  type="button"
-                  onClick={() => void analyzeJdText(jdDraft)}
-                  disabled={analyzingJd}
-                  className="btn-secondary px-4 py-2 text-sm disabled:opacity-50"
-                >
-                  {analyzingJd ? "공고 분석 중…" : "AI로 필요역량 분석"}
-                </button>
+              {jdDraft.length > 0 && jdDraft.length < JD_ANALYZE_MIN_CHARS && (
+                <p className="text-xs text-muted">
+                  {s.jd.needMoreChars
+                    .replace("{min}", String(JD_ANALYZE_MIN_CHARS))
+                    .replace("{current}", String(jdDraft.length))}
+                </p>
               )}
+              <button
+                type="button"
+                onClick={() => void analyzeJdText(jdDraft)}
+                disabled={analyzingJd || jdDraft.length < JD_ANALYZE_MIN_CHARS}
+                title={
+                  jdDraft.length < JD_ANALYZE_MIN_CHARS
+                    ? s.jd.needMoreChars
+                        .replace("{min}", String(JD_ANALYZE_MIN_CHARS))
+                        .replace("{current}", String(jdDraft.length))
+                    : undefined
+                }
+                className="btn-secondary px-4 py-2 text-sm disabled:opacity-50"
+              >
+                {analyzingJd ? s.jd.analyzing : s.jd.analyzeCta}
+              </button>
               {jdReflectLabel && (
                 <button
                   type="button"
@@ -826,9 +841,12 @@ export function SetupForm({
         </div>
         {focusCompetencies.length > 1 && (
           <p className="text-xs text-accent">
-            {locale === "ko"
-              ? `${competencyLabel(focusCompetencies[0])}부터 시작하고, 이번 차수에서 선택한 ${focusCompetencies.length}개 역량을 모두 물어봅니다.`
-              : `Starting with ${competencyLabel(focusCompetencies[0])} — all ${focusCompetencies.length} selected competencies in this round.`}
+            {(focusCompetencies.length === 2
+              ? s.competency.multiSessionHintOne
+              : s.competency.multiSessionHint
+            )
+              .replace("{first}", competencyLabel(focusCompetencies[0]))
+              .replace("{remaining}", String(focusCompetencies.length - 1))}
           </p>
         )}
 

@@ -10,6 +10,7 @@ import { ClaimVerificationSection } from "@/components/report/ClaimVerificationS
 import { computeDeliveryStats } from "@/lib/interview/feedback-helpers";
 import { NextCompetencyButton } from "@/components/interview/NextCompetencyButton";
 import { RoundBriefPanel } from "@/components/interview/RoundBriefPanel";
+import { PrintButton } from "@/components/ui/PrintButton";
 import {
   filterQueueByProgress,
   parseCompetencyQueue,
@@ -106,16 +107,21 @@ export default async function CompetencyFeedbackPage({
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 pb-16">
-      <div>
-        <p className="text-sm font-medium text-accent">
-          {user.name} ·{" "}
-          {roundCodes.length > 0
-            ? `이번 차수 ${roundDoneCount}/${roundCodes.length} 역량`
-            : `${doneCount}/${COMPETENCY_CODES.length} 역량 완료`}
-        </p>
-        <h1 className="mt-2 text-2xl font-bold text-foreground">
-          {competencyLabel(code)} 피드백
-        </h1>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-accent">
+            {user.name} ·{" "}
+            {roundCodes.length > 0
+              ? `이번 차수 ${roundDoneCount}/${roundCodes.length} 역량`
+              : `${doneCount}/${COMPETENCY_CODES.length} 역량 완료`}
+          </p>
+          <h1 className="mt-2 text-2xl font-bold text-foreground">
+            {competencyLabel(code)} 피드백
+          </h1>
+        </div>
+        <div className="print-hide">
+          <PrintButton />
+        </div>
       </div>
 
       <section className="card-luxe flex flex-col items-center gap-6 p-6 sm:flex-row sm:items-center">

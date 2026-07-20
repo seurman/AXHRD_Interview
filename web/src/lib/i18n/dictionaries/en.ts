@@ -815,7 +815,7 @@ export const dictionary: Dictionary = {
     title: "Mock interview setup",
     subtitle: "Competency set · time budget · saved feedback · resume optional",
     industry: {
-      title: "1. Industry",
+      title: "Industry",
       hint: "Pick industry and company size together for a more accurate interview tone.",
       placeholder: "Select",
       companyPlaceholder: "Target company (optional — reflected in questions)",
@@ -835,17 +835,24 @@ export const dictionary: Dictionary = {
       remove: "Remove",
       charsApplied: "{chars} chars applied",
       placeholder: "Paste job description or values keywords…",
+      analyzeCta: "Analyze competencies with AI",
+      analyzing: "Analyzing posting…",
+      needMoreChars: "Need at least {min} characters to analyze. (now {current})",
     },
-    job: { title: "2. Target role" },
+    job: { title: "Target role" },
     persona: { eyebrow: "Your interview persona" },
     competency: {
-      title: "3. Competency",
+      title: "Competency",
       hint: "Recommended competencies auto-check based on your industry/role · add or remove freely · choose question count below",
       plan: "Active plan",
       recommended: "Recommended",
       done: "Done",
       inProgress: "In progress",
       notStarted: "Not started",
+      multiSessionHint:
+        "Starting with {first}. This session covers one competency; after it ends you can continue with the remaining {remaining}.",
+      multiSessionHintOne:
+        "Starting with {first}. This session covers one competency; after it ends you can continue with the next selected one.",
     },
     prepMode: {
       title: "Prep mode",
@@ -855,7 +862,7 @@ export const dictionary: Dictionary = {
     },
     timeBudget: {
       title: "Interview time",
-      hint: "Total time for this round. Questions are auto-split across selected competencies.",
+      hint: "Total time for this round. Each selected competency is its own session; questions are split per competency.",
       unit: "min",
       perCompetency: "~{minutes} min · {questions} questions per competency",
     },
@@ -865,7 +872,7 @@ export const dictionary: Dictionary = {
       unit: "questions",
     },
     resume: {
-      title: "4. Resume (optional)",
+      title: "Resume (optional)",
       hint: "Upload to personalize opening questions. You can still practice without it.",
       upload: "Upload PDF · Word · TXT",
       parsing: "Extracting text…",

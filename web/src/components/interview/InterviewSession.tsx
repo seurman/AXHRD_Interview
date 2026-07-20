@@ -59,6 +59,9 @@ export function InterviewSession({
   const [state, setState] = useState(initialState);
   const [processing, setProcessing] = useState(false);
   const [lastFeedback, setLastFeedback] = useState<AnswerFeedback | null>(null);
+  const [pendingNextQuestion, setPendingNextQuestion] =
+    useState<InterviewQuestion | null>(null);
+  const [awaitingAdvance, setAwaitingAdvance] = useState(false);
   const [dimensionHistory, setDimensionHistory] = useState<AnswerDimensions[]>([]);
   const [ttsStatus, setTtsStatus] = useState<"idle" | "synthesizing" | "playing">("idle");
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(true);
@@ -174,7 +177,7 @@ export function InterviewSession({
 
   useEffect(() => {
     const q = state.currentQuestion;
-    if (!q || !voiceModeEnabled) return;
+    if (!q || !voiceModeEnabled || awaitingAdvance || processing) return;
     const text = displayQuestionText(q);
     if (text) void playQuestionTts(ttsCacheKeyForQuestion(q, text), text);
   }, [
@@ -182,15 +185,30 @@ export function InterviewSession({
     state.currentQuestion?.isFollowUp,
     state.currentQuestion?.personalizedText,
     voiceModeEnabled,
+    awaitingAdvance,
+    processing,
     playQuestionTts,
   ]);
 
   useEffect(() => () => stopActiveAudio(), [stopActiveAudio]);
 
+  const advanceToNextQuestion = useCallback(() => {
+    stopActiveAudio();
+    setLastFeedback(null);
+    setAwaitingAdvance(false);
+    setState((prev) => ({
+      ...prev,
+      currentQuestion: pendingNextQuestion,
+    }));
+    setPendingNextQuestion(null);
+  }, [pendingNextQuestion, stopActiveAudio]);
+
   const handleAnswer = async (transcript: string, durationSec?: number) => {
-    if (!state.currentQuestion || processing) return;
+    if (!state.currentQuestion || processing || awaitingAdvance) return;
     setProcessing(true);
     setLastFeedback(null);
+    setPendingNextQuestion(null);
+    setAwaitingAdvance(false);
 
     try {
       const res = await fetch("/api/interview/respond", {
@@ -221,13 +239,15 @@ export function InterviewSession({
         void prefetchQuestionTts(ttsCacheKeyForQuestion(nextQuestion, nextText), nextText);
       }
 
-      if (data.answerFeedback) {
-        const fb = data.answerFeedback as AnswerFeedback;
-        setLastFeedback(fb);
-        if (fb.dimensions && !fb.isInterim) {
-          setDimensionHistory((prev) => [...prev, fb.dimensions!]);
+      const feedback = (data.answerFeedback as AnswerFeedback | undefined) ?? null;
+      if (feedback) {
+        setLastFeedback(feedback);
+        if (feedback.dimensions && !feedback.isInterim) {
+          setDimensionHistory((prev) => [...prev, feedback.dimensions!]);
         }
       }
+
+      const holdForFeedback = Boolean(feedback) && !data.shouldTerminate;
 
       setState((prev) => ({
         ...prev,
@@ -238,9 +258,18 @@ export function InterviewSession({
         administeredIds: data.administeredIds,
         totalItems: data.totalItems,
         shouldTerminate: data.shouldTerminate,
-        currentQuestion: nextQuestion,
+        // 피드백을 읽는 동안에는 현재 질문을 유지하고, 다음 질문은 게이트 뒤로 미룸
+        currentQuestion: holdForFeedback ? prev.currentQuestion : nextQuestion,
         status: data.shouldTerminate ? "completed" : "in_progress",
       }));
+
+      if (holdForFeedback) {
+        setPendingNextQuestion(nextQuestion);
+        setAwaitingAdvance(true);
+      } else {
+        setPendingNextQuestion(null);
+        setAwaitingAdvance(false);
+      }
 
       if (data.shouldTerminate) {
         const base = data.redirectUrl ?? `/interview/${sessionId}/report`;
@@ -411,12 +440,28 @@ export function InterviewSession({
               variant={state.shouldTerminate ? "report" : "interview"}
               competencyCode={q?.competency ?? focusCompetency}
             />
+          ) : awaitingAdvance ? (
+            <div className="space-y-3 text-center">
+              <p className="text-sm text-muted">
+                아래 피드백을 확인한 뒤 다음 질문으로 넘어가세요.
+              </p>
+              <button
+                type="button"
+                className="btn-primary px-6 py-2.5 text-sm"
+                onClick={advanceToNextQuestion}
+              >
+                다음 질문으로
+              </button>
+            </div>
           ) : (
             <VoiceRecorder
               onTranscript={handleAnswer}
               disabled={!q}
               allowTextFallback
               voiceInputEnabled={voiceModeEnabled}
+              submitMode="draft"
+              confirmLabel="답변 제출"
+              idleHint="마이크를 눌러 답변을 녹음하세요. 정지 후 내용을 확인·수정할 수 있습니다."
               onPasteDetected={() => {
                 pasteDetectedRef.current = true;
               }}
@@ -474,9 +519,10 @@ export function InterviewSession({
       <LeaveConfirmDialog
         open={leaveOpen}
         onOpenChange={setLeaveOpen}
-        title="면접을 나가시겠습니까?"
-        description="진행 중인 세션은 중단되며, 설정 화면으로 돌아갑니다."
+        title="면접을 잠시 나가시겠습니까?"
+        description="진행 상태는 저장됩니다. 같은 세션 링크로 돌아오면 이어서 볼 수 있습니다. 설정 화면으로 나가도 세션은 삭제되지 않습니다."
         leaveHref="/interview/setup"
+        sessionUrl={`/interview/${sessionId}`}
       />
       </div>
     </div>
