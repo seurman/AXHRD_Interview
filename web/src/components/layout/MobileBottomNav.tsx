@@ -62,7 +62,11 @@ export function MobileBottomNav({
       href: "/org/dashboard",
       label: m.cohort,
       icon: Home,
-      match: (p) => p === "/org/dashboard" || p.startsWith("/org/dashboard/"),
+      match: (p) =>
+        p === "/org/dashboard" ||
+        p.startsWith("/org/dashboard/") ||
+        p.startsWith("/org/people") ||
+        p === "/org/members",
     },
     {
       href: "/org/diagnosis",

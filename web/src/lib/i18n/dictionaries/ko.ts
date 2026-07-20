@@ -76,7 +76,7 @@ export const dictionary: Dictionary = {
     saas: {
       title: "기관",
       settings: "설정",
-      cohortDashboard: "참여 현황",
+      cohortDashboard: "기관 대시보드",
       peopleDashboard: "구성원 현황",
       diagnosticDashboard: "조직진단",
       candidateResults: "지원자 결과",
@@ -111,7 +111,7 @@ export const dictionary: Dictionary = {
       practice: "연습",
       org: "기관",
       more: "더보기",
-      cohort: "참여 현황",
+      cohort: "기관",
       diagnostic: "진단",
       settings: "면접·역량",
     },
