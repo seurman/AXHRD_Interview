@@ -24,8 +24,10 @@ function formatRelative(iso: string | null): string {
 function PresenceDot({ online }: { online: boolean }) {
   return (
     <span
-      className={`inline-block h-2 w-2 rounded-full ${
-        online ? "bg-success shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-success)_25%,transparent)]" : "bg-muted/40"
+      className={`inline-block h-2 w-2 shrink-0 rounded-full ${
+        online
+          ? "bg-success ring-2 ring-success/25 ring-offset-1 ring-offset-card"
+          : "bg-muted/40"
       }`}
       title={online ? "최근 접속" : "오프라인"}
     />
@@ -123,7 +125,7 @@ export function OrgPeopleDashboardClient({
           />
         </section>
       ) : (
-        <section className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-card-border bg-card-border">
+        <section className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-card-border bg-card-border sm:grid-cols-3">
           <KpiStrip label="접속 중" value={String(s.onlineCount)} hint="최근 24시간" />
           <KpiStrip
             label="완료 면접"
@@ -138,15 +140,15 @@ export function OrgPeopleDashboardClient({
         </section>
       )}
 
-      <section className="overflow-hidden rounded-xl border border-card-border bg-card">
-        <div className="flex flex-col gap-3 border-b border-card-border px-4 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-5">
-          <div>
+      <section className="rounded-xl border border-card-border bg-card">
+        <div className="flex flex-col gap-3 border-b border-card-border px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-6">
+          <div className="min-w-0">
             <h2 className="text-sm font-semibold tracking-tight text-foreground">구성원 명단</h2>
             <p className="mt-0.5 text-xs text-muted">
               상세 시계열·코칭은 본인 동의 후 「상세」에서 확인합니다.
             </p>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
             <PeopleSearchField value={q} onChange={setQ} />
             <select
               value={sort}
@@ -162,7 +164,7 @@ export function OrgPeopleDashboardClient({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3 px-4 py-3 text-xs sm:px-5">
+        <div className="flex flex-wrap gap-3 px-5 py-3 text-xs sm:px-6">
           <label className="flex items-center gap-2 text-muted">
             <input
               type="checkbox"
@@ -187,21 +189,21 @@ export function OrgPeopleDashboardClient({
         </div>
 
         {members.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-muted sm:px-5">
+          <p className="px-5 py-10 text-center text-sm text-muted sm:px-6">
             아직 소속 계정이 없습니다. 「승인·좌석」 탭에서 가입을 승인해 주세요.
           </p>
         ) : (
           <>
             <div className="hidden overflow-x-auto lg:block">
-              <table className="w-full min-w-[720px] text-left text-sm">
+              <table className="w-full min-w-[760px] text-left text-sm">
                 <thead>
                   <tr className="border-y border-card-border bg-background/40 text-[11px] uppercase tracking-wide text-muted">
-                    <th className="px-5 py-2.5 font-medium">구성원</th>
-                    <th className="py-2.5 pr-3 font-medium">면접</th>
-                    <th className="py-2.5 pr-3 font-medium">역량</th>
-                    <th className="py-2.5 pr-3 font-medium">추이</th>
-                    <th className="py-2.5 pr-3 font-medium">접속</th>
-                    <th className="py-2.5 pr-5 font-medium" />
+                    <th className="py-2.5 pl-6 pr-4 font-medium">구성원</th>
+                    <th className="py-2.5 pr-4 font-medium">면접</th>
+                    <th className="py-2.5 pr-4 font-medium">역량</th>
+                    <th className="py-2.5 pr-4 font-medium">추이</th>
+                    <th className="py-2.5 pr-4 font-medium">접속</th>
+                    <th className="py-2.5 pl-2 pr-6 font-medium" />
                   </tr>
                 </thead>
                 <tbody>
@@ -211,7 +213,7 @@ export function OrgPeopleDashboardClient({
                 </tbody>
               </table>
             </div>
-            <ul className="space-y-0 divide-y divide-card-border px-4 py-1 lg:hidden sm:px-5">
+            <ul className="divide-y divide-card-border px-5 py-2 lg:hidden sm:px-6">
               {members.map((m) => (
                 <li key={m.id} className="py-3">
                   <MemberCard member={m} />
@@ -239,8 +241,8 @@ function Kpi({ label, value, hint }: { label: string; value: string; hint: strin
 
 function KpiStrip({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <div className="bg-card px-4 py-4 sm:px-5">
-      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted">{label}</p>
+    <div className="bg-card px-5 py-4 sm:px-6 sm:py-5">
+      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted">{label}</p>
       <p className="mt-2 font-[family-name:var(--font-ibm-plex)] text-2xl font-semibold tabular-nums text-foreground">
         {value}
       </p>
@@ -252,8 +254,8 @@ function KpiStrip({ label, value, hint }: { label: string; value: string; hint: 
 function MemberTableRow({ member: m }: { member: PeopleMemberRow }) {
   return (
     <tr className="border-b border-card-border/70 last:border-0">
-      <td className="py-3 pr-3">
-        <div className="flex items-center gap-2">
+      <td className="py-3.5 pl-6 pr-4">
+        <div className="flex items-center gap-2.5">
           <PresenceDot online={m.online} />
           <div className="min-w-0">
             <p className="truncate font-medium text-foreground">
@@ -266,14 +268,14 @@ function MemberTableRow({ member: m }: { member: PeopleMemberRow }) {
           </div>
         </div>
       </td>
-      <td className="py-3 pr-3 tabular-nums">
+      <td className="py-3.5 pr-4 tabular-nums">
         <span className="font-medium text-foreground">{m.completedInterviews}</span>
         <span className="text-muted">
           {" "}
           / 진행 {m.inProgressInterviews}
         </span>
       </td>
-      <td className="py-3 pr-3">
+      <td className="py-3.5 pr-4">
         <p className="tabular-nums font-medium">
           {m.avgPercentile != null ? formatPercentile(m.avgPercentile) : "—"}
           {m.deltaPercentile != null ? (
@@ -293,14 +295,14 @@ function MemberTableRow({ member: m }: { member: PeopleMemberRow }) {
             : "역량 데이터 없음"}
         </p>
       </td>
-      <td className="py-3 pr-3">
+      <td className="py-3.5 pr-4">
         <Sparkline values={m.sparkline} />
       </td>
-      <td className="py-3 pr-3 text-xs text-muted">
+      <td className="py-3.5 pr-4 text-xs text-muted">
         <p>IN {formatRelative(m.lastLoginAt)}</p>
         <p>OUT {formatRelative(m.lastLogoutAt)}</p>
       </td>
-      <td className="py-3 text-right">
+      <td className="py-3.5 pl-2 pr-6 text-right">
         <Link
           href={`/org/people/${m.id}`}
           className="inline-flex min-h-9 items-center rounded-lg border border-card-border px-3 text-xs font-medium text-foreground hover:bg-background"

@@ -205,11 +205,11 @@ export default async function AdminOrgHubPage({ params }: Props) {
         {hub.members.length === 0 ? (
           <p className="text-sm text-muted">소속 멤버가 없습니다.</p>
         ) : (
-          <ul className="-mx-6 -mb-4 border-t border-card-border">
+          <ul className="-mx-4 -mb-4 border-t border-card-border sm:-mx-5 sm:-mb-5 lg:-mx-6 lg:-mb-6">
             {hub.members.map((m) => (
               <li
                 key={m.id}
-                className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-card-border px-6 py-3 text-sm last:border-0"
+                className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-card-border px-4 py-3.5 text-sm last:border-0 sm:px-5 lg:px-6"
               >
                 <span className="min-w-[8rem] font-medium text-foreground">{m.name}</span>
                 <span className="min-w-[12rem] flex-1 text-muted">{m.email}</span>

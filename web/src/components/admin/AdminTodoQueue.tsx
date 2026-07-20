@@ -13,12 +13,12 @@ export function AdminTodoQueue({ items }: { items: PlatformTodoItem[] }) {
   }
 
   return (
-    <ul className="-mx-4 -mb-4 border-t border-[var(--platform-border)] sm:-mx-5">
+    <ul className="-mx-4 -mb-4 border-t border-[var(--platform-border)] sm:-mx-5 sm:-mb-5 lg:-mx-6 lg:-mb-6">
       {items.map((item) => (
         <li key={item.id} className="border-b border-[var(--platform-border)] last:border-0">
           <Link
             href={item.href}
-            className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-6 py-3 text-sm transition hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
+            className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-3.5 text-sm transition hover:bg-black/[0.03] sm:px-5 dark:hover:bg-white/[0.04] lg:px-6"
           >
             {item.urgent ? (
               <Badge tone="warning" className="w-16 shrink-0 justify-center">
