@@ -19,4 +19,17 @@ describe("buildMarketingHomeHtml", () => {
     expect(html).toContain('href="/dashboard"');
     expect(html).toContain('data-cta="start"');
   });
+
+  it("keeps a brand-first stage hero without pill/θ jargon", () => {
+    const html = buildMarketingHomeHtml();
+    const hero = html.slice(
+      html.indexOf('class="hero hero--stage"'),
+      html.indexOf('id="products"'),
+    );
+    expect(hero).toContain('class="hero-brand"');
+    expect(hero).toContain(">AXHRD<");
+    expect(hero).not.toContain("θ");
+    expect(hero).not.toContain('class="pill"');
+    expect(hero).not.toContain("hero-preview");
+  });
 });
