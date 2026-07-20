@@ -193,6 +193,7 @@ model Organization {
 
   members             User[]
   membershipRequests  OrgMembershipRequest[]
+  invitations         OrgInvitation[]
   subscriptions       Subscription[]
   interviewKits       OrgInterviewKit[]
   interviewKitShares  OrgInterviewKitShare[]
@@ -253,6 +254,37 @@ model OrgMembershipRequest {
 
   @@index([organizationId, status, createdAt])
   @@index([userId, status])
+}
+
+enum OrgInvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+/**
+ * B2B 초대 — 기관이 구매한 좌석을 이메일/링크로 배분.
+ * 수락 시 User.organizationId 배정(승인 정책 우회 — 초대 자체가 사전 승인).
+ */
+model OrgInvitation {
+  id             String             @id @default(cuid())
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  token          String             @unique
+  invitedById    String
+  invitedBy      User               @relation("OrgInvitationsSent", fields: [invitedById], references: [id], onDelete: Cascade)
+  orgRole        OrgRole            @default(MEMBER)
+  status         OrgInvitationStatus @default(PENDING)
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  acceptedUserId String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([organizationId, status, createdAt(sort: Desc)])
+  @@index([email, status])
 }
 
 // ── User ──
@@ -322,6 +354,7 @@ model User {
   surveyResponses              SurveyResponse[]
   membershipRequests           OrgMembershipRequest[] @relation("MembershipRequests")
   membershipReviews            OrgMembershipRequest[] @relation("MembershipReviews")
+  orgInvitationsSent           OrgInvitation[]        @relation("OrgInvitationsSent")
   orgMemberFeedbackAuthored    OrgMemberFeedback[]    @relation("OrgMemberFeedbackAuthor")
   orgMemberFeedbackReceived    OrgMemberFeedback[]    @relation("OrgMemberFeedbackMember")
 
@@ -1299,6 +1332,10 @@ model Subscription {
    * 토스 customerKey — 구매자 식별자(유니크)
    */
   customerKey        String             @unique
+  /**
+   * 기관 플랜 좌석 수량 — confirm 시 Organization.maxSeats에 반영
+   */
+  seatQuantity       Int?
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
   cancelAtPeriodEnd  Boolean            @default(false)

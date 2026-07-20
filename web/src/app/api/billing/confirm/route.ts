@@ -3,12 +3,18 @@ import type { PlanTier } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { chargeInitialSubscription } from "@/lib/billing/charge";
-import { ORG_PLAN_TIERS, PLANS, SELF_SERVE_PLAN_TIERS } from "@/lib/billing/plans";
+import {
+  ORG_PLAN_TIERS,
+  PLANS,
+  SELF_SERVE_PLAN_TIERS,
+  clampSeatQuantity,
+} from "@/lib/billing/plans";
 import {
   addBillingPeriod,
   generateCustomerKey,
 } from "@/lib/billing/subscription";
 import { issueBillingKey } from "@/lib/billing/toss";
+import { countOrgMembers } from "@/lib/org/contract";
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -20,6 +26,7 @@ export async function POST(req: Request) {
   const authKey = typeof body.authKey === "string" ? body.authKey.trim() : "";
   const customerKey = typeof body.customerKey === "string" ? body.customerKey.trim() : "";
   const planTier = body.planTier as PlanTier | undefined;
+  const rawSeats = body.seatQuantity != null ? Number(body.seatQuantity) : null;
 
   if (!authKey || !customerKey || !planTier) {
     return NextResponse.json({ error: "authKey, customerKey, planTier가 필요합니다." }, { status: 400 });
@@ -41,6 +48,21 @@ export async function POST(req: Request) {
   if (ORG_PLAN_TIERS.includes(planTier)) {
     if (!user.organizationId || user.orgRole !== "ADMIN") {
       return NextResponse.json({ error: "기관 관리자만 구독할 수 있습니다." }, { status: 403 });
+    }
+  }
+
+  let seatQuantity: number | null = null;
+  if (ORG_PLAN_TIERS.includes(planTier)) {
+    const members = await countOrgMembers(user.organizationId!);
+    seatQuantity = clampSeatQuantity(
+      planTier,
+      rawSeats ?? PLANS[planTier].limits.orgMemberCap ?? 10,
+    );
+    if (seatQuantity < members) {
+      return NextResponse.json(
+        { error: `현재 소속 ${members}명보다 적은 좌석으로 구독할 수 없습니다.` },
+        { status: 400 },
+      );
     }
   }
 
@@ -81,6 +103,7 @@ export async function POST(req: Request) {
         cancelAtPeriodEnd: false,
         currentPeriodStart: now,
         currentPeriodEnd: periodEnd,
+        seatQuantity,
       },
     });
     subscriptionId = updated.id;
@@ -96,6 +119,7 @@ export async function POST(req: Request) {
         status: "TRIALING",
         currentPeriodStart: now,
         currentPeriodEnd: periodEnd,
+        seatQuantity,
       },
     });
     subscriptionId = created.id;
@@ -108,8 +132,15 @@ export async function POST(req: Request) {
         error: charge.failReason ?? "첫 결제에 실패했습니다. 카드 정보를 확인해 주세요.",
         subscriptionId,
       },
-      { status: 402 }
+      { status: 402 },
     );
+  }
+
+  if (isOrg && user.organizationId && seatQuantity != null) {
+    await prisma.organization.update({
+      where: { id: user.organizationId },
+      data: { maxSeats: seatQuantity },
+    });
   }
 
   const sub = await prisma.subscription.findUnique({ where: { id: subscriptionId } });
@@ -120,8 +151,10 @@ export async function POST(req: Request) {
       id: sub!.id,
       planTier: sub!.planTier,
       status: sub!.status,
+      seatQuantity: sub!.seatQuantity,
       currentPeriodEnd: sub!.currentPeriodEnd.toISOString(),
     },
     planName: PLANS[planTier].nameKo,
+    maxSeats: seatQuantity,
   });
 }

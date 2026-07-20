@@ -24,13 +24,16 @@ export async function countPendingMembershipRequests(organizationId: string): Pr
   });
 }
 
-/** 승인 멤버 + 대기 요청 — 좌석 예약(over-approve 방지) */
+/** 승인 멤버 + 대기 요청 + 대기 초대 — 좌석 예약(over-approve 방지) */
 export async function countReservedSeats(organizationId: string): Promise<number> {
-  const [members, pending] = await Promise.all([
+  const [members, pending, invites] = await Promise.all([
     countOrgMembers(organizationId),
     countPendingMembershipRequests(organizationId),
+    prisma.orgInvitation.count({
+      where: { organizationId, status: "PENDING", expiresAt: { gt: new Date() } },
+    }),
   ]);
-  return members + pending;
+  return members + pending + invites;
 }
 
 export async function getOrgSeatUsage(organizationId: string) {
@@ -46,17 +49,22 @@ export async function getOrgSeatUsage(organizationId: string) {
     },
   });
   if (!org) return null;
-  const [members, pending] = await Promise.all([
+  const [members, pending, invites] = await Promise.all([
     countOrgMembers(organizationId),
     countPendingMembershipRequests(organizationId),
+    prisma.orgInvitation.count({
+      where: { organizationId, status: "PENDING", expiresAt: { gt: new Date() } },
+    }),
   ]);
   const cap = resolveOrgSeatCap(org, org.subscriptions[0] ?? null);
+  const reserved = members + pending + invites;
   return {
     members,
     pending,
-    reserved: members + pending,
+    invites,
+    reserved,
     cap,
-    remaining: cap == null ? null : Math.max(0, cap - members - pending),
+    remaining: cap == null ? null : Math.max(0, cap - reserved),
     requireMembershipApproval: org.requireMembershipApproval,
   };
 }
@@ -355,12 +363,37 @@ export async function updateOrgMemberRole(
   });
 }
 
+export async function leaveOrganization(userId: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || !user.organizationId) {
+    throw new MembershipError("NOT_FOUND", "소속된 기관이 없습니다.");
+  }
+  if (user.orgRole === "ADMIN") {
+    const adminCount = await prisma.user.count({
+      where: { organizationId: user.organizationId, orgRole: "ADMIN" },
+    });
+    if (adminCount <= 1) {
+      throw new MembershipError(
+        "LAST_ADMIN",
+        "마지막 기관 관리자는 탈퇴할 수 없습니다. 다른 관리자를 지정한 뒤 탈퇴하세요.",
+      );
+    }
+  }
+  return prisma.user.update({
+    where: { id: userId },
+    data: { organizationId: null, orgRole: "MEMBER" },
+  });
+}
+
 export function membershipErrorResponse(e: unknown) {
   if (e instanceof MembershipError) {
     const status =
       e.code === "NOT_FOUND"
         ? 404
-        : e.code === "SEAT_FULL" || e.code === "PENDING_EXISTS" || e.code === "ALREADY_MEMBER"
+        : e.code === "SEAT_FULL" ||
+            e.code === "PENDING_EXISTS" ||
+            e.code === "ALREADY_MEMBER" ||
+            e.code === "LAST_ADMIN"
           ? 409
           : 400;
     return { status, body: { error: e.message, code: e.code } };

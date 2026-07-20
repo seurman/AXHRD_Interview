@@ -2,6 +2,21 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — B2B 초대·좌석구매·탈퇴·원샷 가입 (2026-07-20)
+
+기관이 좌석을 사고 배분(B2B)하고, 개인이 코드/초대로 바로 붙는(B2B2C) 경로를 닫음.
+
+| 항목 | 내용 |
+|------|------|
+| `OrgInvitation` | 이메일/CSV 초대 · 14일 · 수락=사전승인(대기 큐 우회) · 대기 초대도 좌석 예약 |
+| 초대 UI | `/org/dashboard?tab=members` `OrgInvitePanel` · `/org/invite/[token]` |
+| 좌석 구매 | `ORG_STANDARD` 좌석×₩9,900 → `Subscription.seatQuantity` · `Organization.maxSeats` |
+| 탈퇴 | `POST /api/org/leave` · 프로필·기관 연결에 `LeaveOrgButton` (마지막 ADMIN 불가) |
+| 원샷 가입 | 회원가입 `joinCode`/`invite` · `/org/setup?joinCode=` 프리필 · OAuth next 전달 |
+| 이메일 | `RESEND_API_KEY` 있으면 Resend, 없으면 링크 복사만 |
+
+마이그레이션: `20260720180000_org_invitations_seat_quantity`
+
 ## 최근 작업 — 기관 콘솔 운영 고도화 (2026-07-20)
 
 통합 콘솔에 승인·좌석·코칭 루프를 보강.
