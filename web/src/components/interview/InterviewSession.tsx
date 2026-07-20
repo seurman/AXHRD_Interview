@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { LevelChip } from "./LevelChip";
 import { CompetencyBar } from "./CompetencyBar";
 import { VoiceRecorder } from "./VoiceRecorder";
@@ -10,7 +11,9 @@ import { ClaimVerificationFeedbackPanel } from "./ClaimVerificationFeedbackPanel
 import { TripleFeedbackPanel } from "./TripleFeedbackPanel";
 import { QuestionRationaleTooltip } from "./QuestionRationaleTooltip";
 import { LoadingRitual } from "@/components/ux/LoadingRitual";
+import { LeaveConfirmDialog } from "@/components/ux/LeaveConfirmDialog";
 import { ClipDynamic } from "@/components/ui/ClipDynamic";
+import { Progress } from "@/components/ui/progress";
 import { competencyLabel } from "@/lib/labels";
 import { displayQuestionText } from "@/lib/interview/build-question";
 import { COMPETENCY_SESSION_MAX_ITEMS } from "@/lib/interview/session-limits";
@@ -59,6 +62,7 @@ export function InterviewSession({
   const [dimensionHistory, setDimensionHistory] = useState<AnswerDimensions[]>([]);
   const [ttsStatus, setTtsStatus] = useState<"idle" | "synthesizing" | "playing">("idle");
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(true);
+  const [leaveOpen, setLeaveOpen] = useState(false);
 
   const ttsCacheRef = useRef<Map<string, string>>(new Map());
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -253,8 +257,8 @@ export function InterviewSession({
       }
     } catch (e) {
       console.error(e);
-      alert(
-        e instanceof Error ? e.message : "답변 처리 중 오류가 발생했습니다."
+      toast.error(
+        e instanceof Error ? e.message : "답변 처리 중 오류가 발생했습니다.",
       );
     } finally {
       setProcessing(false);
@@ -268,9 +272,40 @@ export function InterviewSession({
       ? averageDimensions(dimensionHistory.slice(0, -1))
       : null;
 
+  const itemProgress =
+    q?.isClaimVerification || q?.isBonusQuestion
+      ? Math.min(100, (state.totalItems / maxItems) * 100)
+      : Math.min(100, ((state.totalItems + 1) / maxItems) * 100);
+
   return (
     <div className="grid gap-5 sm:gap-8 lg:grid-cols-[1fr_320px]">
       <div className="space-y-4 sm:space-y-6">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="flex items-center justify-between gap-2 text-xs text-muted">
+              <span>
+                {q?.isClaimVerification
+                  ? `경험 확인 질문 (참고용)${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`
+                  : q?.isBonusQuestion
+                    ? `보너스 질문 (참고용)${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`
+                    : `문항 ${state.totalItems + 1}/${maxItems}${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`}
+              </span>
+              <span className="tabular-nums">{Math.round(itemProgress)}%</span>
+            </div>
+            <Progress
+              value={itemProgress}
+              className="h-1.5 bg-card-border"
+              aria-label="면접 문항 진행률"
+            />
+          </div>
+          <button
+            type="button"
+            className="shrink-0 text-xs text-muted underline-offset-2 hover:text-foreground hover:underline"
+            onClick={() => setLeaveOpen(true)}
+          >
+            나가기
+          </button>
+        </div>
         <div className="card-luxe p-4 sm:p-6">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted">
@@ -404,13 +439,6 @@ export function InterviewSession({
           )
         ) : null}
 
-        <p className="text-center text-xs text-muted">
-          {q?.isClaimVerification
-            ? `경험 확인 질문 (참고용)${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`
-            : q?.isBonusQuestion
-            ? `보너스 질문 (참고용)${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`
-            : `문항 ${state.totalItems + 1}/${maxItems}${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`}
-        </p>
       </div>
 
       <aside className="space-y-4 sm:space-y-6">
@@ -439,6 +467,13 @@ export function InterviewSession({
           </p>
         </div>
       </aside>
+      <LeaveConfirmDialog
+        open={leaveOpen}
+        onOpenChange={setLeaveOpen}
+        title="면접을 나가시겠습니까?"
+        description="진행 중인 세션은 중단되며, 설정 화면으로 돌아갑니다."
+        leaveHref="/interview/setup"
+      />
     </div>
   );
 }

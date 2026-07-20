@@ -1,4 +1,7 @@
-/** 클라이언트용 간단 className 병합 (clsx 미사용) */
-export function cn(...parts: (string | false | undefined | null)[]): string {
-  return parts.filter(Boolean).join(" ");
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+/** className 병합 — clsx + tailwind-merge (shadcn aliases.utils = @/lib/cn) */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
 }

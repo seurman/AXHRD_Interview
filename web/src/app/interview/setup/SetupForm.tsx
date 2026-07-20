@@ -18,6 +18,7 @@ import {
   TIME_BUDGET_MINUTES_OPTIONS,
   questionsPerCompetencyForRound,
 } from "@/lib/interview/session-limits";
+import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 const JOB_ROLES = [
@@ -399,11 +400,11 @@ export function SetupForm({
 
   const startInterview = async () => {
     if (!industry) {
-      alert(s.selectIndustry);
+      toast.error(s.selectIndustry);
       return;
     }
     if (!focusCompetency) {
-      alert(s.selectCompetency);
+      toast.error(s.selectCompetency);
       return;
     }
     setLoading(true);
@@ -456,7 +457,7 @@ export function SetupForm({
       // "준비 중…" 버튼이 원래 상태로 돌아왔다가 화면이 넘어가는 것처럼
       // 깜빡이는 문제가 있었다. 실패했을 때만 버튼을 원상복구한다.
     } catch (e) {
-      alert(e instanceof Error ? e.message : "면접 시작에 실패했습니다.");
+      toast.error(e instanceof Error ? e.message : "면접 시작에 실패했습니다.");
       setLoading(false);
     }
   };
@@ -464,11 +465,11 @@ export function SetupForm({
   const requestResumeReview = async () => {
     const trimmedResume = resumeText.trim();
     if (trimmedResume.length < 20) {
-      alert(s.resumeReview.needResume);
+      toast.error(s.resumeReview.needResume);
       return;
     }
     if (!industry) {
-      alert(s.selectIndustry);
+      toast.error(s.selectIndustry);
       return;
     }
 
@@ -492,7 +493,7 @@ export function SetupForm({
       }
       router.push(`/resume-review/${data.id}`);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "첨삭 생성에 실패했습니다.");
+      toast.error(e instanceof Error ? e.message : "첨삭 생성에 실패했습니다.");
       setReviewLoading(false);
     }
   };

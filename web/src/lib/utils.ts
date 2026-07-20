@@ -1,6 +1,4 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-
+/** 레거시 `@/lib/utils` — 라벨 헬퍼 + cn 재수출 */
 export {
   competencyLabel,
   jobRoleLabel,
@@ -10,6 +8,4 @@ export {
   dimensionLabel,
 } from "./labels";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+export { cn } from "@/lib/cn";

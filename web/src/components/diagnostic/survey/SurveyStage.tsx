@@ -1,7 +1,8 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
 import type { ReactNode } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Progress } from "@/components/ui/progress";
 import { ANONYMITY_BANNER } from "@/lib/diagnostic/constants";
 
 type Props = {
@@ -39,14 +40,10 @@ export function SurveyStage({ progress, stepLabel, brandTitle, meta, children }:
                 {Math.round(pct)}%
               </span>
             </div>
-            <div className="dx-progress__bar">
-              <motion.div
-                className="dx-progress__fill"
-                initial={false}
-                animate={{ width: `${pct}%` }}
-                transition={{ type: "spring", stiffness: 120, damping: 24 }}
-              />
-            </div>
+            <Progress
+              value={pct}
+              className="dx-progress__bar h-2 bg-[color-mix(in_srgb,var(--color-card-border)_80%,transparent)]"
+            />
           </div>
         </header>
 

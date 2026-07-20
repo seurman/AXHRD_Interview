@@ -11,6 +11,7 @@ import { NavSessionProvider } from "@/components/layout/NavSessionProvider";
 import { RouteTransitionProvider } from "@/components/layout/RouteTransitionProvider";
 import { I18nProvider } from "@/lib/i18n/I18nProvider";
 import { PwaRegister } from "@/components/PwaRegister";
+import { Toaster } from "@/components/ui/sonner";
 
 const themeInitScript = `(function(){try{var m=document.cookie.match(/(?:^|;\\s*)hr_in_theme=(\\w+)/);var t=m?m[1]:'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
 
@@ -59,6 +60,7 @@ export default async function RootLayout({
               <main className="min-w-0">
                 <AppShell>{children}</AppShell>
               </main>
+              <Toaster richColors closeButton position="top-center" />
             </NavSessionProvider>
           </RouteTransitionProvider>
         </I18nProvider>

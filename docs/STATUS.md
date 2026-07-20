@@ -2,6 +2,22 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 응시자·사용자 화면 shadcn/ui 도입 (2026-07-20)
+
+면접·진단 **응시자 대면** 화면에 Radix 기반 프리미티브만 추가. 관리자(`/admin/**`)는 다음 배치.
+
+| 항목 | 내용 |
+|------|------|
+| 토큰 브릿지 | `globals.css` — shadcn `--background`/`--primary` 등을 기존 `--color-*`에 매핑 (oklch 새 팔레트 폐기) |
+| `components.json` | `aliases.utils` → `@/lib/cn` · `cn()`은 clsx+twMerge |
+| 설치 | dialog · tooltip · progress · tabs · sonner · select · checkbox · radio-group · skeleton (`button`은 dialog 의존으로만 존재, 앱 `btn-*` 미교체) |
+| 툴팁 | `QuestionRationaleTooltip` → Radix Tooltip (금색 카드 룩 유지) |
+| 진단 폼 | `ScaleContinuum`·데모그래픽 chips → RadioGroup · 동의 → Checkbox · `SurveyStage` Progress |
+| 면접 | 문항 Progress · 나가기 Dialog · `alert`→sonner · `CompetencyBar`(IRT θ)는 유지 |
+| 토스트 | `app/layout.tsx` `<Toaster />` 1회 · SetupForm/세션/진단 저장 오류 |
+| Tabs | 면접 리포트·진단 팀 URL은 수동 탭 없음 → **미적용** (관리자 웨이브 대시보드는 다음 배치) |
+| 유지 | `LoadingRitual` · `btn-primary`/`card-luxe`/`input-luxe`/`dx-*` |
+
 ## 최근 작업 — B2B 초대·좌석구매·탈퇴·원샷 가입 (2026-07-20)
 
 기관이 좌석을 사고 배분(B2B)하고, 개인이 코드/초대로 바로 붙는(B2B2C) 경로를 닫음.
