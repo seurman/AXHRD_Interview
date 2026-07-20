@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 type Props = {
   organizationId: string;
@@ -26,11 +27,16 @@ export function OrgHubPersonalizationToggle({ organizationId, enabled, enabledAt
       });
       const json = await res.json();
       if (!res.ok) {
-        alert(json.error ?? "변경 실패");
+        toast.error(json.error ?? "변경 실패");
         return;
       }
       setOn(json.organization.saasPersonalizationEnabled);
       setAt(json.organization.saasPersonalizationEnabledAt);
+      toast.success(
+        json.organization.saasPersonalizationEnabled
+          ? "면접 맞춤 설정을 켰습니다."
+          : "면접 맞춤 설정을 껐습니다.",
+      );
       router.refresh();
     } finally {
       setBusy(false);

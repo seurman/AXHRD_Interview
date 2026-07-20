@@ -1,6 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type InviteRow = {
   id: string;
@@ -46,21 +54,24 @@ export function OrgInvitePanel({ isAdmin }: { isAdmin: boolean }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "초대 실패");
       setMessage(data.message);
+      toast.success(data.message ?? "초대를 발급했습니다.");
       setEmails("");
       await load();
       if (Array.isArray(data.invitations) && data.invitations[0]?.acceptUrl) {
-        // copy first link for convenience
         try {
           await navigator.clipboard.writeText(
             data.invitations.map((i: { acceptUrl: string }) => i.acceptUrl).join("\n"),
           );
           setMessage(`${data.message} (링크를 클립보드에 복사했습니다)`);
+          toast.success("초대 링크를 클립보드에 복사했습니다.");
         } catch {
           /* ignore */
         }
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "초대 오류");
+      const msg = e instanceof Error ? e.message : "초대 오류";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -73,9 +84,12 @@ export function OrgInvitePanel({ isAdmin }: { isAdmin: boolean }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "취소 실패");
       setMessage(data.message);
+      toast.success(data.message ?? "초대를 취소했습니다.");
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "취소 오류");
+      const msg = e instanceof Error ? e.message : "취소 오류";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -97,14 +111,18 @@ export function OrgInvitePanel({ isAdmin }: { isAdmin: boolean }) {
         className="w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
       />
       <div className="flex flex-wrap items-center gap-2">
-        <select
+        <Select
           value={orgRole}
-          onChange={(e) => setOrgRole(e.target.value === "STAFF" ? "STAFF" : "MEMBER")}
-          className="min-h-9 rounded-lg border border-card-border bg-background px-2 text-xs"
+          onValueChange={(v) => setOrgRole(v === "STAFF" ? "STAFF" : "MEMBER")}
         >
-          <option value="MEMBER">구성원</option>
-          <option value="STAFF">담당자</option>
-        </select>
+          <SelectTrigger className="h-9 w-[7.5rem] text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="MEMBER">구성원</SelectItem>
+            <SelectItem value="STAFF">담당자</SelectItem>
+          </SelectContent>
+        </Select>
         <button
           type="button"
           className="btn-primary px-3 py-2 text-sm disabled:opacity-50"
@@ -131,7 +149,12 @@ export function OrgInvitePanel({ isAdmin }: { isAdmin: boolean }) {
               <button
                 type="button"
                 className="text-xs text-accent hover:underline"
-                onClick={() => void navigator.clipboard.writeText(i.acceptUrl)}
+                onClick={() => {
+                  void navigator.clipboard.writeText(i.acceptUrl).then(
+                    () => toast.success("링크를 복사했습니다."),
+                    () => toast.error("복사에 실패했습니다."),
+                  );
+                }}
               >
                 링크 복사
               </button>

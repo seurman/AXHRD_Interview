@@ -21,6 +21,14 @@ import {
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { SetupSection } from "@/components/interview/SetupSection";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const JOB_ROLES = [
   "MARKETING",
@@ -534,20 +542,21 @@ export function SetupForm({
       </header>
 
       <SetupSection step={1} eyebrow="Industry" title={s.industry.title} hint={s.industry.hint}>
-        <select
-          value={industry}
-          onChange={(e) => handleIndustryChange(e.target.value)}
-          className="input-luxe w-full"
+        <Select
+          value={industry || undefined}
+          onValueChange={handleIndustryChange}
         >
-          <option value="" disabled>
-            {s.industry.placeholder}
-          </option>
-          {INDUSTRY_CODES.map((code) => (
-            <option key={code} value={code}>
-              {industryLabel(code)}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="input-luxe h-auto w-full py-2.5">
+            <SelectValue placeholder={s.industry.placeholder} />
+          </SelectTrigger>
+          <SelectContent>
+            {INDUSTRY_CODES.map((code) => (
+              <SelectItem key={code} value={code}>
+                {industryLabel(code)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-foreground">{s.companySize.title}</h3>
@@ -687,17 +696,18 @@ export function SetupForm({
       </SetupSection>
 
       <SetupSection step={2} eyebrow="Role" title={s.job.title}>
-        <select
-          value={jobRole}
-          onChange={(e) => setJobRole(e.target.value)}
-          className="input-luxe w-full"
-        >
-          {JOB_ROLES.map((r) => (
-            <option key={r} value={r}>
-              {jobRoleLabel(r)}
-            </option>
-          ))}
-        </select>
+        <Select value={jobRole} onValueChange={setJobRole}>
+          <SelectTrigger className="input-luxe h-auto w-full py-2.5">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {JOB_ROLES.map((r) => (
+              <SelectItem key={r} value={r}>
+                {jobRoleLabel(r)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </SetupSection>
 
       {persona && (
@@ -987,11 +997,10 @@ export function SetupForm({
       <SetupSection step={6} eyebrow="Options" title="추가 옵션">
         {featureFlags.tripleFeedbackMode && (
           <label className="flex cursor-pointer items-start gap-3">
-            <input
-              type="checkbox"
-              checked={tripleFeedbackMode}
-              onChange={(e) => setTripleFeedbackMode(e.target.checked)}
+            <Checkbox
               className="mt-1"
+              checked={tripleFeedbackMode}
+              onCheckedChange={(v) => setTripleFeedbackMode(v === true)}
             />
             <span>
               <span className="block font-semibold text-foreground">{s.tripleFeedback.title}</span>
@@ -1003,11 +1012,10 @@ export function SetupForm({
         )}
         {featureFlags.jdBonusQuestion && jdText.trim().length > 0 && (
           <label className="flex cursor-pointer gap-3 rounded-xl border border-border/60 bg-surface/40 p-4 transition hover:border-gold/40">
-            <input
-              type="checkbox"
-              checked={jdBonusEnabled}
-              onChange={(e) => setJdBonusEnabled(e.target.checked)}
+            <Checkbox
               className="mt-1"
+              checked={jdBonusEnabled}
+              onCheckedChange={(v) => setJdBonusEnabled(v === true)}
             />
             <span>
               <span className="block font-semibold text-foreground">{s.jdBonus.title}</span>
@@ -1019,11 +1027,10 @@ export function SetupForm({
         )}
         {featureFlags.resumeClaimVerification && resumeText.trim().length > 0 && (
           <label className="flex cursor-pointer gap-3 rounded-xl border border-border/60 bg-surface/40 p-4 transition hover:border-gold/40">
-            <input
-              type="checkbox"
-              checked={resumeClaimEnabled}
-              onChange={(e) => setResumeClaimEnabled(e.target.checked)}
+            <Checkbox
               className="mt-1"
+              checked={resumeClaimEnabled}
+              onCheckedChange={(v) => setResumeClaimEnabled(v === true)}
             />
             <span>
               <span className="block font-semibold text-foreground">{s.resumeClaim.title}</span>

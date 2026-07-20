@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link2, Plus, Power, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { competencyLabel } from "@/lib/labels";
+import { OrgConfirmDialog } from "@/components/org/OrgConfirmDialog";
 
 type ShareDto = {
   id: string;
@@ -61,6 +63,8 @@ export function KitShareManager({ organizationId }: Props) {
   const [creating, setCreating] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [newCompetencies, setNewCompetencies] = useState<Set<string>>(new Set());
+  const [deleteTarget, setDeleteTarget] = useState<ShareDto | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const kitBase = kitApiBase("/api/org/interview-kit", organizationId);
   const shareBase = kitApiBase("/api/org/interview-kit/share", organizationId);
@@ -148,18 +152,25 @@ export function KitShareManager({ organizationId }: Props) {
     setShares((prev) => prev.map((s) => (s.id === share.id ? (json.share as ShareDto) : s)));
   };
 
-  const deleteShare = async (share: ShareDto) => {
-    if (!confirm(`"${share.label}" 공유 링크를 삭제할까요? 이미 시작된 세션 기록은 유지됩니다.`)) {
-      return;
+  const deleteShare = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const url = kitApiBase(`/api/org/interview-kit/share/${deleteTarget.id}`, organizationId);
+    try {
+      const res = await fetch(url, { method: "DELETE" });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        const msg = (json as { error?: string }).error ?? "삭제 실패";
+        setError(msg);
+        toast.error(msg);
+        return;
+      }
+      setShares((prev) => prev.filter((s) => s.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      toast.success("공유 링크를 삭제했습니다.");
+    } finally {
+      setDeleting(false);
     }
-    const url = kitApiBase(`/api/org/interview-kit/share/${share.id}`, organizationId);
-    const res = await fetch(url, { method: "DELETE" });
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
-      setError(json.error ?? "삭제 실패");
-      return;
-    }
-    setShares((prev) => prev.filter((s) => s.id !== share.id));
   };
 
   const availableCodes = useMemo(() => competencyCodes, [competencyCodes]);
@@ -259,7 +270,7 @@ export function KitShareManager({ organizationId }: Props) {
               </button>
               <button
                 type="button"
-                onClick={() => void deleteShare(share)}
+                onClick={() => setDeleteTarget(share)}
                 className="flex items-center gap-1 rounded-lg border border-card-border px-2.5 py-1.5 text-xs font-medium text-muted hover:border-red-300 hover:text-red-600"
               >
                 <Trash2 className="h-3.5 w-3.5" /> 삭제
@@ -268,6 +279,23 @@ export function KitShareManager({ organizationId }: Props) {
           ))
         )}
       </div>
+
+      <OrgConfirmDialog
+        open={deleteTarget != null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setDeleteTarget(null);
+        }}
+        title="공유 링크 삭제"
+        description={
+          deleteTarget
+            ? `"${deleteTarget.label}" 공유 링크를 삭제할까요? 이미 시작된 세션 기록은 유지됩니다.`
+            : undefined
+        }
+        confirmLabel="삭제"
+        confirmTone="danger"
+        busy={deleting}
+        onConfirm={deleteShare}
+      />
     </div>
   );
 }

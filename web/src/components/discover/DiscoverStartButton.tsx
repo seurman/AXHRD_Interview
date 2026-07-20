@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { IconLoader } from "@/components/ui/icons";
 
 export function DiscoverStartButton({ label }: { label?: string }) {
@@ -19,7 +20,7 @@ export function DiscoverStartButton({ label }: { label?: string }) {
       const data = await res.json();
       router.push(`/discover/${data.sessionId}`);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "세션을 시작할 수 없습니다.");
+      toast.error(e instanceof Error ? e.message : "세션을 시작할 수 없습니다.");
     } finally {
       setLoading(false);
     }

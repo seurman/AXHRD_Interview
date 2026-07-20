@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ClipboardList, Shield } from "lucide-react";
+import { toast } from "sonner";
+import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 
 type OrgRow = {
   id: string;
@@ -19,6 +21,7 @@ export function OrgSaasPermissionPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [pending, setPending] = useState<{ org: OrgRow; next: boolean } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -42,15 +45,9 @@ export function OrgSaasPermissionPanel() {
     void load();
   }, [load]);
 
-  async function toggle(org: OrgRow) {
-    const next = !org.saasPersonalizationEnabled;
-    if (
-      !confirm(
-        `${org.name}의 「SaaS 개인화」 권한을 ${next ? "부여" : "회수"}할까요?`
-      )
-    ) {
-      return;
-    }
+  async function applyToggle() {
+    if (!pending) return;
+    const { org, next } = pending;
     setBusyId(org.id);
     try {
       const res = await fetch("/api/admin/organizations/saas", {
@@ -60,7 +57,7 @@ export function OrgSaasPermissionPanel() {
       });
       const json = await res.json();
       if (!res.ok) {
-        alert(json.error ?? "변경 실패");
+        toast.error(json.error ?? "변경 실패");
         return;
       }
       setOrgs((prev) =>
@@ -71,9 +68,11 @@ export function OrgSaasPermissionPanel() {
                 saasPersonalizationEnabled: json.organization.saasPersonalizationEnabled,
                 saasPersonalizationEnabledAt: json.organization.saasPersonalizationEnabledAt,
               }
-            : o
-        )
+            : o,
+        ),
       );
+      setPending(null);
+      toast.success(next ? "SaaS 개인화 권한을 부여했습니다." : "SaaS 개인화 권한을 회수했습니다.");
     } finally {
       setBusyId(null);
     }
@@ -115,7 +114,9 @@ export function OrgSaasPermissionPanel() {
               <button
                 type="button"
                 disabled={busyId === org.id}
-                onClick={() => void toggle(org)}
+                onClick={() =>
+                  setPending({ org, next: !org.saasPersonalizationEnabled })
+                }
                 className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
                   org.saasPersonalizationEnabled
                     ? "bg-gold/15 text-gold hover:bg-gold/25"
@@ -136,6 +137,25 @@ export function OrgSaasPermissionPanel() {
           </div>
         ))
       )}
+
+      <AdminConfirmDialog
+        open={pending != null}
+        onOpenChange={(open) => {
+          if (!open && !busyId) setPending(null);
+        }}
+        title="SaaS 개인화 권한"
+        description={
+          pending
+            ? `${pending.org.name}의 「SaaS 개인화」 권한을 ${
+                pending.next ? "부여" : "회수"
+              }할까요?`
+            : undefined
+        }
+        confirmLabel={pending?.next ? "부여" : "회수"}
+        confirmTone={pending?.next ? "primary" : "danger"}
+        busy={busyId != null}
+        onConfirm={applyToggle}
+      />
     </div>
   );
 }

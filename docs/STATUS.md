@@ -2,6 +2,19 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 잔여 인터랙티브 UI (Dialog/Select/Checkbox/toast) (2026-07-20)
+
+아직 전 구간이 신규 크롬은 아님(랜딩·대시보드 카드 레이아웃·딥 어드민 CMS는 유지). **인터랙티브** 경로는 가능한 곳부터 shadcn으로 맞춤.
+
+| 영역 | 적용 |
+|------|------|
+| 공용 | `ConfirmDialog` (`components/ux`) — confirm 대체 |
+| 면접 설정 | 업종·직무 Select · 옵션 Checkbox |
+| Org | 초대 Select/toast · 킷/공유 Dialog · 진단 웨이브 OrgStudioTabs+Select · 루브릭 Checkbox |
+| 프로필·결제 | 구독 해지 Dialog · 공유 링크 Dialog · 코칭 동의 toast · 결제 alert→toast |
+| 평가·탐색·인증 | 제출 ConfirmDialog · Discover toast · Auth Checkbox |
+| Admin 기관 | 진단/SaaS 토글·반려 → AdminConfirmDialog + toast |
+
 ## 최근 작업 — 기관 콘솔(/org) 보이는 shadcn 현대화 (2026-07-20)
 
 `/org/**` 운영 콘솔만. 검은 반전 탭 → **금색 Org Studio** 크롬이 한눈에 보이도록.

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import type { PlanTier } from "@prisma/client";
 import { planLabel } from "@/lib/billing/plans";
+import { ConfirmDialog } from "@/components/ux/ConfirmDialog";
 
 type BillingStatus = {
   planTier: PlanTier;
@@ -25,6 +27,7 @@ export function BillingManageCard() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [canceling, setCanceling] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -49,16 +52,16 @@ export function BillingManageCard() {
   }, []);
 
   const cancel = async () => {
-    if (!confirm("현재 결제 주기 종료 시 구독을 해지할까요?")) return;
     setCanceling(true);
     try {
       const res = await fetch("/api/billing/cancel", { method: "POST" });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "해지 실패");
-      alert(json.message ?? "해지 예약되었습니다.");
+      setCancelOpen(false);
+      toast.success(json.message ?? "해지 예약되었습니다.");
       await load();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "해지 실패");
+      toast.error(e instanceof Error ? e.message : "해지 실패");
     } finally {
       setCanceling(false);
     }
@@ -127,7 +130,7 @@ export function BillingManageCard() {
             data.subscription.status !== "CANCELED" && (
               <button
                 type="button"
-                onClick={cancel}
+                onClick={() => setCancelOpen(true)}
                 disabled={canceling}
                 className="text-xs text-muted underline disabled:opacity-50"
               >
@@ -136,6 +139,16 @@ export function BillingManageCard() {
             )}
         </div>
       </div>
+      <ConfirmDialog
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        title="구독 해지 예약"
+        description="현재 결제 주기 종료 시 구독을 해지할까요?"
+        confirmLabel="해지 예약"
+        confirmTone="danger"
+        busy={canceling}
+        onConfirm={cancel}
+      />
     </section>
   );
 }

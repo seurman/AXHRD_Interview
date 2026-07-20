@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { MotionReorderList } from "@/components/org/MotionReorderList";
 import { competencyLabel } from "@/lib/labels";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   KIT_RUBRIC_LEVELS,
   type ApiCompetency,
@@ -787,13 +788,12 @@ export function InterviewKitWorkspace(props: WorkspaceProps) {
                     key={line}
                     className="flex gap-2 rounded-lg border border-card-border/60 bg-background/50 px-2.5 py-2"
                   >
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       className="mt-0.5"
                       checked={levelState.checkedPlatform.has(line)}
-                      onChange={(e) => {
+                      onCheckedChange={(checked) => {
                         const next = new Set(levelState.checkedPlatform);
-                        if (e.target.checked) next.add(line);
+                        if (checked === true) next.add(line);
                         else next.delete(line);
                         onPatchDraft(activeCode, {
                           rubricByLevel: {
