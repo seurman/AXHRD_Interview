@@ -2,6 +2,18 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 인터랙티브 차트 · 개인/보고서/관리자 크롬 (2026-07-20)
+
+정적 CSS 바·무툴팁 레이더를 **recharts 호버 차트**로 올리고, 개인 허브 크롬을 `product-stage`로 맞춤.
+
+| 영역 | 내용 |
+|------|------|
+| 공통 차트 | `CohortCompetencyBarChart` · `InteractivePercentileBars` (툴팁·애니메이션) |
+| Org / Admin | 코호트 역량 분포 바 차트 · 관리자 cohort KPI 패널 |
+| 개인 | `/dashboard`·`/profile` `product-stage` · 코칭/6축 InteractivePercentileBars · 레이더 Tooltip |
+| 보고서 | 면접 역량 레이더 Tooltip · Discover 레이더 토큰+Tooltip · 세션 인사이트 레이더 |
+| Admin 홈 | `OverviewSparkline` Tooltip + 애니메이션 |
+
 ## 최근 작업 — Org Studio 위성 정렬·UI 폴리시 (2026-07-20)
 
 감사 후 **크롬 불일치**가 가장 큼. 진단/지원자/설정·웨이브를 Org Studio 셸로 맞춤.

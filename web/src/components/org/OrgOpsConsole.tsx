@@ -16,7 +16,7 @@ import type { OrgActivityRow } from "@/lib/org/activity-log";
 import type { OrgPeopleDashboardData } from "@/lib/org/people-dashboard";
 import type { OrgEntitlementSnapshot, OrgProductKey } from "@/lib/org/entitlements";
 import { ORG_PRODUCTS } from "@/lib/org/entitlements";
-import { competencyLabel, formatPercentile } from "@/lib/labels";
+import { CohortCompetencyBarChart } from "@/components/charts/CohortCompetencyBarChart";
 import { CopyCodeButton } from "@/components/org/CopyCodeButton";
 import { RegenerateCodeButton } from "@/components/org/RegenerateCodeButton";
 import { OrgActivityLogPanel } from "@/components/org/OrgActivityLogPanel";
@@ -357,29 +357,7 @@ function OverviewPane({
           {cohort.competencies.length === 0 ? (
             <p className="mt-6 text-sm text-muted">아직 면접 데이터가 없습니다.</p>
           ) : (
-            <ul className="mt-5 space-y-4">
-              {cohort.competencies.map((c) => (
-                <li key={c.competency}>
-                  <div className="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
-                    <span className="font-medium text-foreground">
-                      {competencyLabel(c.competency)}
-                    </span>
-                    <span className="shrink-0 tabular-nums text-muted">
-                      {formatPercentile(c.avgPercentile)}
-                      <span className="ml-2 text-[11px]">{c.memberCount}명</span>
-                    </span>
-                  </div>
-                  <div className="h-[3px] overflow-hidden rounded-full bg-background">
-                    <div
-                      className="h-full rounded-full bg-gold transition-[width] duration-500"
-                      style={{
-                        width: `${Math.max(3, Math.min(100, c.avgPercentile))}%`,
-                      }}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <CohortCompetencyBarChart items={cohort.competencies} />
           )}
         </div>
 

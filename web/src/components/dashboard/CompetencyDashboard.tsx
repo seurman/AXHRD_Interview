@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import type { DotProps } from "recharts";
 import { competencyLabel } from "@/lib/labels";
+import { chartTooltipStyle } from "@/components/charts/CohortCompetencyBarChart";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { compareDimensionHalves, type DimensionSessionPoint } from "@/lib/dashboard/dimension-timeline";
 import { QuestPanel } from "./QuestPanel";
@@ -169,6 +170,10 @@ export function CompetencyDashboard({
                     dataKey="competency"
                     tick={{ fill: "var(--color-muted)", fontSize: 10 }}
                   />
+                  <Tooltip
+                    contentStyle={chartTooltipStyle}
+                    formatter={(value: number) => [`${value}%`, "백분위"]}
+                  />
                   <Radar
                     dataKey="score"
                     stroke="var(--color-primary)"
@@ -176,6 +181,7 @@ export function CompetencyDashboard({
                     fillOpacity={assessedCount > 0 ? 0.3 : 0.08}
                     strokeOpacity={assessedCount > 0 ? 1 : 0.35}
                     dot={<AssessedRadarDot />}
+                    isAnimationActive
                   />
                 </RadarChart>
               </ResponsiveContainer>

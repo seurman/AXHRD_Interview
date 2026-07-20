@@ -7,12 +7,14 @@ import {
   Radar,
   RadarChart,
   ResponsiveContainer,
+  Tooltip,
 } from "recharts";
 import {
   ANSWER_DIMENSION_KEYS,
   type AnswerDimensions,
 } from "@/lib/interview/answer-dimensions";
 import { dimensionLabel } from "@/lib/labels";
+import { chartTooltipStyle } from "@/components/charts/CohortCompetencyBarChart";
 
 type RadarRow = {
   axis: string;
@@ -72,6 +74,10 @@ export function DimensionComparisonRadar({
               dataKey="axis"
               tick={{ fill: "var(--color-muted)", fontSize: 10 }}
             />
+            <Tooltip
+              contentStyle={chartTooltipStyle}
+              formatter={(value: number, name: string) => [`${value}%`, name]}
+            />
             <Radar
               name={previousLegend}
               dataKey="previous"
@@ -91,6 +97,7 @@ export function DimensionComparisonRadar({
               fill="url(#dashboardDimensionRecent)"
               fillOpacity={1}
               strokeOpacity={placeholder ? 0.35 : 1}
+              isAnimationActive
             />
           </RadarChart>
         </ResponsiveContainer>
