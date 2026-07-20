@@ -3,6 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type ScenarioOption = {
   id: string;
@@ -98,7 +106,8 @@ export function AssessmentShareManager({
       setCopiedId(share.id);
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
-      window.prompt("아래 링크를 복사하세요:", url);
+      toast.error("클립보드 복사에 실패했습니다. 주소를 수동으로 복사해 주세요.");
+      toast.message(url);
     }
   }
 
@@ -108,17 +117,18 @@ export function AssessmentShareManager({
       <section className="card-luxe space-y-4 p-6">
         <h2 className="text-lg font-semibold text-foreground">새 배포 링크 만들기</h2>
         <div className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_auto]">
-          <select
-            value={scenarioId}
-            onChange={(e) => setScenarioId(e.target.value)}
-            className="rounded-xl border border-card-border bg-background px-3 py-2.5 text-sm text-foreground"
-          >
-            {scenarios.map((s) => (
-              <option key={s.id} value={s.id}>
-                [{KIND_LABEL[s.kind]}] {s.titleKo}
-              </option>
-            ))}
-          </select>
+          <Select value={scenarioId} onValueChange={setScenarioId}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="시나리오 선택" />
+            </SelectTrigger>
+            <SelectContent>
+              {scenarios.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  [{KIND_LABEL[s.kind]}] {s.titleKo}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <input
             type="text"
             value={label}

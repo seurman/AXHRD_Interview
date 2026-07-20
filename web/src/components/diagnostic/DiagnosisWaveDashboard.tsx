@@ -24,6 +24,14 @@ import {
   ZAxis,
   Cell,
 } from "recharts";
+import { OrgStudioTabs } from "@/components/org/OrgStudioTabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Props = { waveId: string };
 
@@ -286,40 +294,15 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
         ) : null}
       </div>
 
-      <div
-        className="flex gap-1 overflow-x-auto overscroll-x-contain rounded-xl border border-card-border bg-card/40 p-1 [-webkit-overflow-scrolling:touch]"
-        role="tablist"
-        aria-label="리포트 보기"
-      >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "overview"}
-          className={`min-h-10 flex-1 rounded-lg px-3 py-2 text-sm font-medium transition sm:flex-none sm:px-4 ${
-            tab === "overview"
-              ? "bg-foreground text-background"
-              : "text-muted hover:text-foreground"
-          }`}
-          onClick={() => setTab("overview")}
-        >
-          종합
-        </button>
-        {showTeamsTab ? (
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "teams"}
-            className={`min-h-10 flex-1 rounded-lg px-3 py-2 text-sm font-medium transition sm:flex-none sm:px-4 ${
-              tab === "teams"
-                ? "bg-foreground text-background"
-                : "text-muted hover:text-foreground"
-            }`}
-            onClick={() => setTab("teams")}
-          >
-            조직별
-          </button>
-        ) : null}
-      </div>
+      <OrgStudioTabs
+        triggersOnly
+        value={tab}
+        onValueChange={(v) => setTab(v === "teams" ? "teams" : "overview")}
+        tabs={[
+          { id: "overview", label: "종합" },
+          ...(showTeamsTab ? [{ id: "teams", label: "조직별" }] : []),
+        ]}
+      />
 
       {tab === "overview" && (
         <>
@@ -327,27 +310,27 @@ export function DiagnosisWaveDashboard({ waveId }: Props) {
             <label className="sr-only" htmlFor="diagnosis-scope">
               집계 범위
             </label>
-            <select
-              id="diagnosis-scope"
-              className="min-h-11 w-full rounded-xl border border-card-border bg-background px-3 py-2.5 text-base sm:w-auto sm:min-w-[16rem] sm:text-sm"
-              value={selectedTeam}
-              onChange={(e) => setSelectedTeam(e.target.value)}
-            >
-              <option value="all">전사 종합</option>
-              {wave.hierarchy && wave.hierarchy.length > 0
-                ? flattenHierarchy(wave.hierarchy).map(({ node, depth }) => (
-                    <option key={node.id} value={node.id}>
-                      {"  ".repeat(depth)}
-                      {depth > 0 ? "› " : ""}
-                      {LEVEL_LABEL[node.level]} · {node.name}
-                    </option>
-                  ))
-                : wave.teams.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-            </select>
+            <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+              <SelectTrigger id="diagnosis-scope" className="min-h-11 w-full sm:w-auto sm:min-w-[16rem]">
+                <SelectValue placeholder="집계 범위" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전사 종합</SelectItem>
+                {wave.hierarchy && wave.hierarchy.length > 0
+                  ? flattenHierarchy(wave.hierarchy).map(({ node, depth }) => (
+                      <SelectItem key={node.id} value={node.id}>
+                        {"　".repeat(depth)}
+                        {depth > 0 ? "› " : ""}
+                        {LEVEL_LABEL[node.level]} · {node.name}
+                      </SelectItem>
+                    ))
+                  : wave.teams.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {activeScores?.hidden ? (

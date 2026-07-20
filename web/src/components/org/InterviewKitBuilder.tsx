@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { InterviewKitWorkspace } from "@/components/org/InterviewKitWorkspace";
+import { OrgConfirmDialog } from "@/components/org/OrgConfirmDialog";
 import {
   KIT_RUBRIC_LEVELS,
   type ApiCompetency,
@@ -144,6 +145,7 @@ export function InterviewKitBuilder({
   const [levelFilter, setLevelFilter] = useState<number | null>(null);
   const [gapRecs, setGapRecs] = useState<CompetencyGapRecommendationResult | null>(null);
   const [gapUnavailable, setGapUnavailable] = useState(false);
+  const [removeCode, setRemoveCode] = useState<string | null>(null);
 
   const apiBase = kitApiBase(organizationId);
   const gapUrl = gapRecommendationsUrl(organizationId);
@@ -260,13 +262,19 @@ export function InterviewKitBuilder({
   }
 
   function removeCompetencyFromKit(code: string) {
-    if (!confirm("이 역량을 킷에서 제거할까요?")) return;
+    setRemoveCode(code);
+  }
+
+  function confirmRemoveCompetency() {
+    if (!removeCode) return;
+    const code = removeCode;
     void resetCompetency(code);
     setKitCompetencies((prev) => prev.filter((c) => c !== code));
     if (activeCode === code) {
       const next = kitCompetencies.filter((c) => c !== code);
       setActiveCode(next[0] ?? paletteCode);
     }
+    setRemoveCode(null);
   }
 
   function addQuestionToKit(code: string, questionId: string) {
@@ -346,33 +354,46 @@ export function InterviewKitBuilder({
   if (!data) return null;
 
   return (
-    <InterviewKitWorkspace
-      data={data}
-      kitCompetencies={kitCompetencies}
-      paletteCode={paletteCode}
-      activeCode={activeCode}
-      drafts={drafts}
-      search={search}
-      levelFilter={levelFilter}
-      questionById={questionById}
-      questionsByComp={questionsByComp}
-      compByCode={compByCode}
-      onPaletteCode={setPaletteCode}
-      onActiveCode={setActiveCode}
-      onSearch={setSearch}
-      onLevelFilter={setLevelFilter}
-      onAddCompetency={addCompetencyToKit}
-      onRemoveCompetency={removeCompetencyFromKit}
-      onAddQuestion={addQuestionToKit}
-      onRemoveQuestion={(code, qid) => {
-        const draft = drafts[code];
-        if (!draft) return;
-        patchDraft(code, { selectedIds: draft.selectedIds.filter((id) => id !== qid) });
-      }}
-      onReorderQuestions={reorderQuestionsInKit}
-      onPatchDraft={patchDraft}
-      onSave={(code) => void saveCompetency(code)}
-      gapRecommendations={gapUnavailable ? null : gapRecs}
-    />
+    <>
+      <InterviewKitWorkspace
+        data={data}
+        kitCompetencies={kitCompetencies}
+        paletteCode={paletteCode}
+        activeCode={activeCode}
+        drafts={drafts}
+        search={search}
+        levelFilter={levelFilter}
+        questionById={questionById}
+        questionsByComp={questionsByComp}
+        compByCode={compByCode}
+        onPaletteCode={setPaletteCode}
+        onActiveCode={setActiveCode}
+        onSearch={setSearch}
+        onLevelFilter={setLevelFilter}
+        onAddCompetency={addCompetencyToKit}
+        onRemoveCompetency={removeCompetencyFromKit}
+        onAddQuestion={addQuestionToKit}
+        onRemoveQuestion={(code, qid) => {
+          const draft = drafts[code];
+          if (!draft) return;
+          patchDraft(code, { selectedIds: draft.selectedIds.filter((id) => id !== qid) });
+        }}
+        onReorderQuestions={reorderQuestionsInKit}
+        onPatchDraft={patchDraft}
+        onSave={(code) => void saveCompetency(code)}
+        gapRecommendations={gapUnavailable ? null : gapRecs}
+      />
+      <OrgConfirmDialog
+        open={removeCode != null}
+        onOpenChange={(open) => {
+          if (!open) setRemoveCode(null);
+        }}
+        title="역량 제거"
+        description="이 역량을 킷에서 제거할까요?"
+        confirmLabel="제거"
+        confirmTone="danger"
+        onConfirm={confirmRemoveCompetency}
+      />
+    </>
   );
 }

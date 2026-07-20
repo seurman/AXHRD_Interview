@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
+import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 
 type Props = {
   organizationId: string;
@@ -19,20 +21,9 @@ export function OrgDiagnosticToggle({
   const router = useRouter();
   const [on, setOn] = useState(enabled);
   const [busy, setBusy] = useState(false);
+  const [pendingNext, setPendingNext] = useState<boolean | null>(null);
 
-  async function toggle(e?: React.MouseEvent) {
-    e?.preventDefault();
-    e?.stopPropagation();
-    const next = !on;
-    if (
-      !confirm(
-        `${organizationName}의 「ARC Index 조직진단」을(를) ${next ? "활성화" : "비활성화"}할까요?${
-          next ? "" : "\n비활성화하면 기관 관리자에게 조직진단 메뉴가 즉시 숨겨집니다."
-        }`
-      )
-    ) {
-      return;
-    }
+  async function applyToggle(next: boolean) {
     setBusy(true);
     try {
       const res = await fetch("/api/admin/organizations/diagnostic", {
@@ -42,15 +33,51 @@ export function OrgDiagnosticToggle({
       });
       const json = await res.json();
       if (!res.ok) {
-        alert(json.error ?? "변경 실패");
+        toast.error(json.error ?? "변경 실패");
         return;
       }
       setOn(json.organization.diagnosticEnabled);
+      setPendingNext(null);
+      toast.success(next ? "조직진단을 활성화했습니다." : "조직진단을 비활성화했습니다.");
       router.refresh();
     } finally {
       setBusy(false);
     }
   }
+
+  function requestToggle(e?: React.MouseEvent) {
+    e?.preventDefault();
+    e?.stopPropagation();
+    setPendingNext(!on);
+  }
+
+  const dialog = (
+    <AdminConfirmDialog
+      open={pendingNext != null}
+      onOpenChange={(open) => {
+        if (!open && !busy) setPendingNext(null);
+      }}
+      title="조직진단 권한"
+      description={
+        pendingNext != null
+          ? `${organizationName}의 「ARC Index 조직진단」을(를) ${
+              pendingNext ? "활성화" : "비활성화"
+            }할까요?${
+              pendingNext
+                ? ""
+                : "\n비활성화하면 기관 관리자에게 조직진단 메뉴가 즉시 숨겨집니다."
+            }`
+          : undefined
+      }
+      confirmLabel={pendingNext ? "활성화" : "비활성화"}
+      confirmTone={pendingNext ? "primary" : "danger"}
+      busy={busy}
+      onConfirm={() => {
+        if (pendingNext == null) return;
+        return applyToggle(pendingNext);
+      }}
+    />
+  );
 
   if (compact) {
     return (
@@ -65,7 +92,7 @@ export function OrgDiagnosticToggle({
         <button
           type="button"
           disabled={busy}
-          onClick={(e) => void toggle(e)}
+          onClick={(e) => requestToggle(e)}
           className={`relative h-7 w-12 shrink-0 rounded-full transition ${
             on ? "bg-accent" : "bg-card-border"
           }`}
@@ -78,6 +105,7 @@ export function OrgDiagnosticToggle({
             }`}
           />
         </button>
+        {dialog}
       </div>
     );
   }
@@ -103,7 +131,7 @@ export function OrgDiagnosticToggle({
         <button
           type="button"
           disabled={busy}
-          onClick={() => void toggle()}
+          onClick={() => requestToggle()}
           className={`relative h-8 w-14 shrink-0 rounded-full transition ${
             on ? "bg-accent" : "bg-card-border"
           }`}
@@ -116,6 +144,7 @@ export function OrgDiagnosticToggle({
           />
         </button>
       </div>
+      {dialog}
     </div>
   );
 }
