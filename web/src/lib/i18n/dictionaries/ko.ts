@@ -79,6 +79,7 @@ export const dictionary: Dictionary = {
       cohortDashboard: "코호트",
       diagnosticDashboard: "조직진단",
       candidateResults: "지원자 결과",
+      members: "멤버·승인",
       settingsHub: "면접·역량 설정",
       interviewKit: "인터뷰 킷 스튜디오",
     },

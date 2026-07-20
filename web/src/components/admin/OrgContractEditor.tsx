@@ -20,12 +20,13 @@ type Props = {
     status: OrgStatus;
     validFrom: string | null;
     validUntil: string | null;
-    maxSeats: number | null;
-    adminNotes: string | null;
-    memberCount: number;
-    seatCap: number | null;
-    diagnosticPricing?: unknown;
-  };
+  maxSeats: number | null;
+  adminNotes: string | null;
+  memberCount: number;
+  seatCap: number | null;
+  diagnosticPricing?: unknown;
+  requireMembershipApproval?: boolean;
+};
 };
 
 function toDateInput(iso: string | null): string {
@@ -48,6 +49,9 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
   const [diagnosticPricing, setDiagnosticPricing] = useState<OrgDiagnosticPricing>(
     () => parseOrgDiagnosticPricing(initial.diagnosticPricing) ?? defaultOrgDiagnosticPricing(),
   );
+  const [requireMembershipApproval, setRequireMembershipApproval] = useState(
+    initial.requireMembershipApproval ?? true,
+  );
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -67,6 +71,7 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
           maxSeats: maxSeats.trim() ? Number(maxSeats) : null,
           adminNotes: adminNotes.trim() || null,
           diagnosticPricing,
+          requireMembershipApproval,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -230,6 +235,20 @@ export function OrgContractEditor({ organizationId, initial }: Props) {
             rows={3}
             className="input-luxe mt-1 w-full text-sm"
           />
+        </label>
+        <label className="flex items-start gap-3 text-sm sm:col-span-2">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={requireMembershipApproval}
+            onChange={(e) => setRequireMembershipApproval(e.target.checked)}
+          />
+          <span>
+            <span className="font-medium">가입 시 담당자 승인 필요</span>
+            <span className="mt-0.5 block text-xs text-muted">
+              켜 두면 개인이 기관 선택·코드 입력 후 담당자 승인 전까지 좌석에 집계되지 않습니다.
+            </span>
+          </span>
         </label>
       </div>
 

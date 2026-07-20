@@ -15,7 +15,10 @@ import type { NavLinkItem } from "@/lib/platform/nav-registry";
 
 type SaasLinksConfig = {
   titleKey: "saas";
-  links: { href: string; labelKey: "cohortDashboard" | "diagnosticDashboard" | "candidateResults" }[];
+  links: {
+    href: string;
+    labelKey: "cohortDashboard" | "diagnosticDashboard" | "candidateResults" | "members";
+  }[];
   settingsTitleKey: "settings";
   settingsLinks: {
     href: string;
