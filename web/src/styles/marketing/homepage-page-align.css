@@ -355,6 +355,10 @@ body.ax-home-page .ax-home .org-strip-desc {
 }
 
 /* Final CTA — ink studio, not coral unbox */
+body.ax-home-page .ax-home section.cta .cta-inner {
+  align-items: center;
+}
+
 body.ax-home-page .ax-home section.cta,
 body.ax-home-page .ax-home section.cta:not(.luxe-in),
 body.ax-home-page .ax-home section.cta.luxe-in,
