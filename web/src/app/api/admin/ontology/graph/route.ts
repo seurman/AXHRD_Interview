@@ -12,7 +12,7 @@ import {
 
 /**
  * GET ?userId= — 후보 자소서 증거 그래프 + 추천 역량
- * GET ?cohort=1 — 코호트 약점 DEMONSTRATED 집계
+ * GET ?cohort=1 — 참여 현황 약점 DEMONSTRATED 집계
  */
 export async function GET(req: Request) {
   const auth = await requireProductionContentApi();

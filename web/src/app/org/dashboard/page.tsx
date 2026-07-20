@@ -47,7 +47,7 @@ export default async function OrgDashboardPage() {
           </p>
           <p className="text-sm text-muted">
             {pending
-              ? "기관 생성 요청을 검토하고 있습니다. 승인되면 가입 코드로 학생을 받고 코호트 대시보드를 이용하실 수 있습니다."
+              ? "기관 생성 요청을 검토하고 있습니다. 승인되면 가입 코드로 학생을 받고 참여 현황을 이용하실 수 있습니다."
               : "이 기관 생성 요청은 승인되지 않았습니다. 문의사항이 있으시면 운영팀에 연락해 주세요."}
           </p>
           {pending && joinCode && (

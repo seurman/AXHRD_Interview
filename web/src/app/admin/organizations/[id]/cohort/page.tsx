@@ -33,11 +33,11 @@ export default async function AdminOrgCohortPage({ params }: Props) {
       <AdminPageHeader
         eyebrow={PLATFORM_EYEBROW.tenants}
         title={data.organizationName}
-        subtitle="기관 ADMIN 코호트 대시보드와 동일한 집계"
+        subtitle="기관 ADMIN 참여 현황과 동일한 집계"
         breadcrumb={[
           { label: "기관 관리", href: "/admin/organizations" },
           { label: hub.name, href: hubBase },
-          { label: "코호트" },
+          { label: "참여 현황" },
         ]}
         actions={
           <Link href={hubBase} className="btn-secondary inline-flex items-center gap-2 text-sm">

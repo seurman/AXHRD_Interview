@@ -156,7 +156,7 @@ export default async function ProfilePage() {
               ? `${user.organization?.name ?? "소속 기관"} · ${
                   user.orgRole === "MEMBER" || user.orgRole === "STUDENT"
                     ? "구성원"
-                    : "코호트 대시보드"
+                    : "참여 현황"
                 }`
               : "기관 연결하기"}
           </p>

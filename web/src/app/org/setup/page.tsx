@@ -41,7 +41,7 @@ export default async function OrgSetupPage() {
                 멤버 · 승인 →
               </Link>
               <Link href="/org/dashboard" className="btn-secondary inline-block">
-                코호트 대시보드
+                참여 현황
               </Link>
             </div>
           )}

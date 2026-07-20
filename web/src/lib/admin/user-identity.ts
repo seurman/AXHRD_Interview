@@ -20,7 +20,7 @@ export const USER_SEGMENT_OPTIONS: {
   { key: "all", label: "전체", hint: "모든 가입 사용자" },
   { key: "platform", label: "플랫폼 운영", hint: "수퍼어드민·비즈니스·데모·콘텐츠" },
   { key: "org_admin", label: "기관 관리자", hint: "고객사 테넌트 ADMIN" },
-  { key: "org_staff", label: "기관 담당", hint: "코호트·진단 조회 STAFF" },
+  { key: "org_staff", label: "기관 담당", hint: "참여 현황·진단 조회 STAFF" },
   { key: "member", label: "기관 구성원", hint: "학생·지원자 MEMBER" },
   { key: "personal", label: "개인", hint: "소속·플랫폼 권한 없음" },
   { key: "review", label: "REVIEW", hint: "가입 이상 패턴 검토" },

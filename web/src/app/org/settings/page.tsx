@@ -89,7 +89,7 @@ export default async function OrgSettingsPage() {
         </Link>
         <Link href="/org/dashboard" className="inline-flex items-center gap-1 text-accent hover:underline">
           <BarChart3 className="h-3.5 w-3.5" />
-          코호트 대시보드
+          참여 현황
         </Link>
       </p>
     </div>

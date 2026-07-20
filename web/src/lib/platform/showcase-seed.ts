@@ -341,7 +341,7 @@ async function seedDiagnosticWave(db: PrismaClient, organizationId: string) {
   return { waveId: wave.id, slug: wave.slug, responses: responseCount };
 }
 
-/** 고객 시연용 샘플 — 코호트·기관 비교·ARC Index 리포트 */
+/** 고객 시연용 샘플 — 참여 현황·기관 비교·ARC Index 리포트 */
 export async function seedShowcaseDemoData(client?: PrismaClient) {
   const db = client ?? (await import("@/lib/prisma")).prisma;
 

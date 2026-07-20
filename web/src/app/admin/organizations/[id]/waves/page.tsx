@@ -57,7 +57,7 @@ export default async function AdminOrgWavesPage({ params }: Props) {
       <AdminPageHeader
         eyebrow={PLATFORM_EYEBROW.tenants}
         title="조직진단 웨이브"
-        subtitle="기관 → 웨이브 → 사업부·팀 구조. 코호트·인터뷰 킷과 같은 기관 허브 진입 패턴입니다."
+        subtitle="기관 → 웨이브 → 사업부·팀 구조. 참여 현황·인터뷰 킷과 같은 기관 허브 진입 패턴입니다."
         breadcrumb={[
           { label: "기관 관리", href: "/admin/organizations" },
           { label: hub.name, href: hubBase },

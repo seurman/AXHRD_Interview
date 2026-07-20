@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCohortData } from "@/lib/org/cohort";
 
-/** 기관 담당자(STAFF/ADMIN)용 코호트 집계 조회. */
+/** 기관 담당자(STAFF/ADMIN)용 참여 집계 조회. */
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) {

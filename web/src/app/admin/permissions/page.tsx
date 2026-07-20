@@ -32,7 +32,7 @@ export default async function AdminPermissionsPage() {
       <section className="card-luxe p-4">
         <h2 className="text-sm font-semibold text-foreground">AX 차별점</h2>
         <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted">
-          <li>외부 ATS 역할명을 베끼지 않고, 제품 데이터 레이어(면접·역량·코호트)에 맞춘 6역할</li>
+          <li>외부 ATS 역할명을 베끼지 않고, 제품 데이터 레이어(면접·역량·참여 현황)에 맞춘 6역할</li>
           <li>수퍼/회사 어드민은 사용량 면제 · 데모 샌드박스는 영업 데이터 격리</li>
           <li>학생·기관 권한은 개인 원문 비공개 원칙과 함께 설계</li>
         </ul>

@@ -6,7 +6,7 @@ import { OrgCohortDashboard } from "@/components/org/OrgCohortDashboard";
 
 export const dynamic = "force-dynamic";
 
-/** 복합 SKU 기관 — 면접 코호트 대시보드 전체 화면 */
+/** 복합 SKU 기관 — 면접 참여 현황 전체 화면 */
 export default async function OrgCohortDashboardPage() {
   const user = await requireOrgStaff("/org/dashboard/cohort");
 

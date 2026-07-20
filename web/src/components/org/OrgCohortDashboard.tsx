@@ -17,7 +17,7 @@ type OrgCohortDashboardProps = {
   };
 };
 
-/** 면접(interview) SKU 전용 코호트 대시보드 — 기존 /org/dashboard 화면 */
+/** 면접(interview) SKU 전용 참여 현황 — 기존 /org/dashboard 화면 */
 export async function OrgCohortDashboard({ user }: OrgCohortDashboardProps) {
   const data = await getCohortData(user.organizationId);
   if (!data) {
@@ -33,7 +33,7 @@ export async function OrgCohortDashboard({ user }: OrgCohortDashboardProps) {
     <div className="mx-auto max-w-4xl space-y-8">
       <div>
         <p className="text-xs font-medium uppercase tracking-widest text-gold">
-          Cohort Dashboard
+          Participation
         </p>
         <h1 className="mt-1 text-2xl font-bold text-foreground">{data.organizationName}</h1>
         <p className="mt-1 text-sm text-muted">
@@ -99,7 +99,7 @@ export async function OrgCohortDashboard({ user }: OrgCohortDashboardProps) {
       <div className="card-luxe p-6">
         <h2 className="mb-1 font-semibold text-foreground">역량별 평균 수준</h2>
         <p className="mb-4 text-xs text-muted">
-          백분위가 낮은 역량부터 표시됩니다 — 코호트 전체가 취약한 영역입니다.
+          백분위가 낮은 역량부터 표시됩니다 — 참여자 전체가 취약한 영역입니다.
         </p>
         {data.competencies.length === 0 ? (
           <p className="text-sm text-muted">아직 완료된 면접 데이터가 없습니다.</p>

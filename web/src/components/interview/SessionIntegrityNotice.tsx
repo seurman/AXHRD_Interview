@@ -1,4 +1,4 @@
-/** 세션 리포트·코호트용 무결성 신호(채점과 무관) */
+/** 세션 리포트·참여 현황용 무결성 신호(채점과 무관) */
 export function SessionIntegrityNotice({
   pasteDetected,
   tabSwitchCount,

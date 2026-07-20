@@ -22,7 +22,7 @@ export default async function OrgDashboardActivityPage() {
       <div className="mx-auto max-w-lg space-y-4">
         <Link href="/org/dashboard" className="flex items-center gap-1 text-sm text-muted hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />
-          코호트 대시보드로
+          참여 현황으로
         </Link>
         <p className="text-sm text-muted">기관 승인 후 활동 로그를 확인하실 수 있습니다.</p>
       </div>
@@ -36,7 +36,7 @@ export default async function OrgDashboardActivityPage() {
       <div>
         <Link href="/org/dashboard" className="flex items-center gap-1 text-sm text-muted hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />
-          코호트 대시보드로
+          참여 현황으로
         </Link>
         <p className="mt-2 text-xs font-medium uppercase tracking-widest text-gold">Activity Log</p>
         <h1 className="mt-1 text-2xl font-bold text-foreground">{data.organizationName} · 활동 로그</h1>

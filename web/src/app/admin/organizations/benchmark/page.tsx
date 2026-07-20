@@ -15,7 +15,7 @@ export default async function AdminOrgBenchmarkPage() {
       <AdminPageHeader
         eyebrow={PLATFORM_EYEBROW.tenants}
         title="기관 간 퍼포먼스 비교"
-        subtitle="승인된 기관 전체를 평균 백분위 기준으로 정렬했습니다. 이 화면은 슈퍼어드민에게만 보이며, 기관 담당자 화면(코호트 대시보드)에는 다른 기관 이름이 노출되지 않습니다."
+        subtitle="승인된 기관 전체를 평균 백분위 기준으로 정렬했습니다. 이 화면은 슈퍼어드민에게만 보이며, 기관 담당자 화면(참여 현황)에는 다른 기관 이름이 노출되지 않습니다."
         backHref="/admin/organizations"
         backLabel="기관 승인 관리로 돌아가기"
       />

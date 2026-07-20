@@ -87,7 +87,7 @@ export function resolvePlatformPageTitle(pathname: string): string {
     if (/\/waves\/[^/]+\/report\/?$/.test(pathname)) return "진단 리포트";
     if (/\/waves\/[^/]+\/?$/.test(pathname)) return "웨이브 상세";
     if (/\/waves\/?$/.test(pathname)) return "조직진단 웨이브";
-    if (pathname.includes("/cohort")) return "코호트";
+    if (pathname.includes("/cohort")) return "참여 현황";
     if (pathname.includes("/interview-kit")) return "인터뷰 킷";
     return "기관 허브";
   }

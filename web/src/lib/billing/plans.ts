@@ -66,7 +66,7 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
     },
     features: [
       "소속 학생 무제한 모의면접",
-      "코호트 대시보드·벤치마크",
+      "참여 현황·벤치마크",
       "기관 관리자 50명 상한",
       "자기발견 인터뷰 무제한",
     ],

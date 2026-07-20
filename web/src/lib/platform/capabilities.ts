@@ -2,7 +2,7 @@
  * AXHRD 플랫폼 모듈(Capability) 레지스트리
  *
  * AX-native 권한 스트라이프: 페이지=모듈, 역할=capability 집합.
- * 외부 ATS를 복제하지 않고, 면접·역량·코호트를 한 데이터 레이어로 묶는다.
+ * 외부 ATS를 복제하지 않고, 면접·역량·참여 현황을 한 데이터 레이어로 묶는다.
  * 각 페이지는 독립 모듈로 등록되며, 네비·가드는 capability로 필터링한다.
  */
 
@@ -126,11 +126,11 @@ export const CAPABILITY_REGISTRY: Record<CapabilityId, CapabilityDef> = {
   "tenant.cohort": {
     id: "tenant.cohort",
     category: "tenant",
-    labelKo: "코호트 대시보드",
+    labelKo: "참여 현황",
     labelEn: "Cohort",
     descriptionKo: "기관 담당자용 학생·면접 현황",
     href: "/org/dashboard",
-    designNote: "코호트 완료율·역량 평균 — 개인 원문 비공개",
+    designNote: "참여 완료율·역량 평균 — 개인 원문 비공개",
   },
   "tenant.settings": {
     id: "tenant.settings",
@@ -391,12 +391,12 @@ export const PLATFORM_ROLE_ROWS: {
   {
     key: "ORG_ADMIN",
     labelKo: "기관 어드민",
-    scopeNote: "코호트·인터뷰 킷·기관 설정",
+    scopeNote: "참여 현황·인터뷰 킷·기관 설정",
   },
   {
     key: "ORG_STAFF",
     labelKo: "담당자",
-    scopeNote: "코호트 조회 · 제한된 설정",
+    scopeNote: "참여 현황 조회 · 제한된 설정",
   },
   {
     key: "MEMBER",

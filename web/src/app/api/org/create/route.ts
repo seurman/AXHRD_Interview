@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   }
 
   // status는 스키마 기본값(PENDING) 사용 — 슈퍼어드민 승인 전까지는
-  // 가입 코드로 학생을 받을 수 없고 코호트 대시보드도 열리지 않는다.
+  // 가입 코드로 학생을 받을 수 없고 참여 현황도 열리지 않는다.
   const org = await prisma.organization.create({ data: { name, joinCode } });
 
   await prisma.user.update({

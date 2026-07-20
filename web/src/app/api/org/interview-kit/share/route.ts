@@ -79,7 +79,7 @@ type PostBody = {
   expiresAt?: string | null;
 };
 
-/** 새 공유 링크 발급("킷 배포") — label(코호트명) + 허용 역량 목록(빈 배열=킷 전체) */
+/** 새 공유 링크 발급("킷 배포") — label(캠페인명) + 허용 역량 목록(빈 배열=킷 전체) */
 export async function POST(req: Request) {
   const resolved = await resolveAccessFromRequest(req);
   if ("error" in resolved && resolved.error) return resolved.error;
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as PostBody;
   const label = typeof body.label === "string" ? body.label.trim() : "";
   if (!label) {
-    return NextResponse.json({ error: "코호트/캠페인 이름을 입력해 주세요." }, { status: 400 });
+    return NextResponse.json({ error: "캠페인 이름을 입력해 주세요." }, { status: 400 });
   }
   if (label.length > 80) {
     return NextResponse.json({ error: "이름이 너무 깁니다." }, { status: 400 });
