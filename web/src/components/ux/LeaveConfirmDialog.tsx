@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { trackFunnel } from "@/lib/analytics/funnel";
 
 type Props = {
   open: boolean;
@@ -22,6 +23,7 @@ type Props = {
   sessionUrl?: string;
   copyLinkLabel?: string;
   copiedLabel?: string;
+  funnelSource?: string;
 };
 
 /** 면접·진단 응답 중도 이탈 확인 */
@@ -35,6 +37,7 @@ export function LeaveConfirmDialog({
   sessionUrl,
   copyLinkLabel = "세션 링크 복사",
   copiedLabel = "복사됨",
+  funnelSource = "interview",
 }: Props) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
@@ -89,6 +92,10 @@ export function LeaveConfirmDialog({
             type="button"
             className="btn-primary px-4 py-2 text-sm"
             onClick={() => {
+              trackFunnel("interview_leave", {
+                source: funnelSource,
+                sessionUrl: sessionUrl ?? null,
+              });
               onOpenChange(false);
               if (onConfirmLeave) onConfirmLeave();
               else router.push(leaveHref);

@@ -54,6 +54,7 @@ import {
   normalizeCompetencyDimensions,
   type AnswerDimensions,
 } from "@/lib/interview/answer-dimensions";
+import { competencyLabel } from "@/lib/labels";
 import type { CompetencyState, ItemParams, InterviewQuestion } from "@/types";
 
 /** Pro 채점·트리플 피드백 여유 */
@@ -321,8 +322,10 @@ async function handleRespond(req: Request, userId: string) {
             dimensions: rubric.dimensions,
             level: question.level,
             competency: question.competency.code,
+            competencyLabelText: competencyLabel(question.competency.code),
             isInterim: true,
             score: rubric.score,
+            pressureTier: currentTier,
           }),
           score: rubric.score,
           level: question.level,
@@ -611,7 +614,9 @@ async function handleRespond(req: Request, userId: string) {
         level: irtResult.chip_event.level,
         nextLevel: nextQuestion?.level,
         competency: irtResult.chip_event.competency,
+        competencyLabelText: competencyLabel(irtResult.chip_event.competency),
         score: rubric.score,
+        pressureTier: currentTier,
       }),
       score: rubric.score,
       chipType: irtResult.chip_event.chip_type,
@@ -962,6 +967,7 @@ async function handleBonusRespond(params: {
           dimensions: rubric.dimensions,
           level: 0,
           competency: focusCompetency,
+          competencyLabelText: competencyLabel(focusCompetency),
           score: rubric.score,
         }),
         score: rubric.score,
@@ -1018,6 +1024,7 @@ async function handleBonusRespond(params: {
         dimensions: rubric.dimensions,
         level: 0,
         competency: focusCompetency,
+          competencyLabelText: competencyLabel(focusCompetency),
         score: rubric.score,
       }),
       score: rubric.score,

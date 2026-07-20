@@ -8,6 +8,13 @@ import { competencyLabel, jobRoleLabel } from "@/lib/labels";
 import { JOB_ROLES } from "@/types";
 import type { PublicKitShare } from "@/lib/org/kit-share";
 import {
+  DEFAULT_TIME_BUDGET_MINUTES,
+  TIME_BUDGET_MINUTES_OPTIONS,
+  questionsPerCompetencyForRound,
+  type TimeBudgetMinutes,
+} from "@/lib/interview/session-limits";
+import { trackFunnel } from "@/lib/analytics/funnel";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -27,6 +34,10 @@ export function KitStartClient({ slug, initialShare }: Props) {
   const [focusCompetency, setFocusCompetency] = useState<string>(
     initialShare.competencies[0]?.code ?? ""
   );
+  const [timeBudgetMinutes, setTimeBudgetMinutes] =
+    useState<TimeBudgetMinutes>(DEFAULT_TIME_BUDGET_MINUTES);
+  const [resumeText, setResumeText] = useState("");
+  const [showResume, setShowResume] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,6 +53,8 @@ export function KitStartClient({ slug, initialShare }: Props) {
           companyName: initialShare.organizationName,
           jobRole,
           focusCompetency,
+          timeBudgetMinutes,
+          resumeText: resumeText.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -53,7 +66,12 @@ export function KitStartClient({ slug, initialShare }: Props) {
       if (!res.ok) {
         throw new Error(data.error ?? "면접을 시작하지 못했습니다.");
       }
-      // 성공 시에도 loading을 유지해 LoadingRitual이 라우트 전환까지 보이게 함
+      trackFunnel("interview_setup_done", {
+        source: "kit",
+        competency: focusCompetency,
+        timeBudgetMinutes,
+        hasResume: resumeText.trim().length > 0,
+      });
       router.push(`/interview/${data.sessionId}`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "면접을 시작하지 못했습니다.";
@@ -62,6 +80,8 @@ export function KitStartClient({ slug, initialShare }: Props) {
       setLoading(false);
     }
   };
+
+  const qCount = questionsPerCompetencyForRound(timeBudgetMinutes, 1);
 
   return (
     <div className="space-y-6">
@@ -126,6 +146,56 @@ export function KitStartClient({ slug, initialShare }: Props) {
             ))}
           </div>
         )}
+      </section>
+
+      <section className="card-luxe space-y-3 p-6">
+        <h2 className="font-semibold text-foreground">면접 시간</h2>
+        <p className="text-xs text-muted">설정 화면과 동일하게 문항 수가 배분됩니다.</p>
+        <div className="flex flex-wrap gap-2">
+          {TIME_BUDGET_MINUTES_OPTIONS.map((n) => (
+            <button
+              key={n}
+              type="button"
+              disabled={loading}
+              onClick={() => setTimeBudgetMinutes(n)}
+              className={`min-w-[4.5rem] rounded-xl border px-4 py-2.5 text-sm font-medium transition ${
+                timeBudgetMinutes === n
+                  ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/25"
+                  : "border-card-border text-foreground hover:border-primary/30"
+              }`}
+            >
+              {n}
+              <span className="ml-1 text-xs font-normal opacity-70">분</span>
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-muted">약 {timeBudgetMinutes}분 · {qCount}문항</p>
+      </section>
+
+      <section className="card-luxe space-y-3 p-6">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-semibold text-foreground">자기소개서 (선택)</h2>
+          <button
+            type="button"
+            className="text-xs text-muted underline hover:text-foreground"
+            onClick={() => setShowResume((v) => !v)}
+          >
+            {showResume ? "접기" : "텍스트 입력"}
+          </button>
+        </div>
+        <p className="text-xs text-muted">
+          넣으면 첫 질문에 내용이 반영됩니다. 없어도 일반 질문으로 진행합니다.
+        </p>
+        {showResume ? (
+          <textarea
+            value={resumeText}
+            onChange={(e) => setResumeText(e.target.value)}
+            rows={5}
+            disabled={loading}
+            placeholder="자기소개서 내용을 붙여넣으세요…"
+            className="input-luxe w-full text-sm"
+          />
+        ) : null}
       </section>
 
       {error && (

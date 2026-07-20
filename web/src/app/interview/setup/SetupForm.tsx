@@ -21,6 +21,8 @@ import {
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { SetupSection } from "@/components/interview/SetupSection";
+import { RoundPreviewCard } from "@/components/interview/RoundPreviewCard";
+import { trackFunnel } from "@/lib/analytics/funnel";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -489,6 +491,12 @@ export function SetupForm({
 
       const rest = focusCompetencies.slice(1);
       const queueQs = rest.length > 0 ? `?queue=${encodeURIComponent(rest.join(","))}` : "";
+      trackFunnel("interview_setup_done", {
+        competency: focusCompetency,
+        queueLen: rest.length,
+        timeBudgetMinutes,
+        prepMode,
+      });
       router.push(`/interview/${data.sessionId}${queueQs}`);
       // 성공 시에는 setLoading(false)를 호출하지 않는다.
       // router.push() 후에도 다음 페이지가 서버에서 렌더링을 마칠 때까지
@@ -940,6 +948,22 @@ export function SetupForm({
             </p>
           )}
         </div>
+
+        {focusCompetencies.length > 0 && (
+          <RoundPreviewCard
+            focusCompetencies={focusCompetencies}
+            timeBudgetMinutes={timeBudgetMinutes}
+            personaName={persona?.name}
+            personaFocus={(persona?.focusCompetencies as string[] | undefined) ?? []}
+            jdRecommended={jdAnalysis?.recommendedCompetency ?? null}
+            jdRationale={jdAnalysis?.competencyRationale ?? null}
+            weakCompetency={
+              [...competencies]
+                .filter((c) => c.levelEst != null && c.status === "COMPLETED")
+                .sort((a, b) => (a.levelEst ?? 99) - (b.levelEst ?? 99))[0]?.code ?? null
+            }
+          />
+        )}
       </SetupSection>
 
       <SetupSection step={5} eyebrow="Resume" title={s.resume.title}>

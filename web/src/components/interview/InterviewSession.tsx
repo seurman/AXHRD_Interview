@@ -23,6 +23,7 @@ import {
   writeVoiceModeEnabled,
 } from "@/lib/voice/voice-mode";
 import { cn } from "@/lib/cn";
+import { trackFunnel } from "@/lib/analytics/funnel";
 import {
   averageDimensions,
   type AnswerDimensions,
@@ -50,6 +51,13 @@ interface InterviewSessionProps {
    *  DB에 저장하지 않고 URL로만 들고 다니다가, 세션이 끝나면 리포트 페이지 URL에
    *  그대로 이어 붙여서 "다음 역량 이어서 시작" 버튼이 읽을 수 있게 한다. */
   queue?: string[];
+  /** 자소서·공고 등 세션 맥락 — 중간에 근거로 보여 줌 */
+  grounding?: {
+    companyName?: string | null;
+    hasResume?: boolean;
+    resumeFileName?: string | null;
+    hasJd?: boolean;
+  };
 }
 
 export function InterviewSession({
@@ -60,6 +68,7 @@ export function InterviewSession({
   timeBudgetMinutes,
   tripleFeedbackMode = false,
   queue = [],
+  grounding,
 }: InterviewSessionProps) {
   const router = useRouter();
   const [state, setState] = useState(initialState);
@@ -77,6 +86,7 @@ export function InterviewSession({
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [paceWarned, setPaceWarned] = useState(false);
+  const [mobileInsightsOpen, setMobileInsightsOpen] = useState(false);
 
   const ttsCacheRef = useRef<Map<string, string>>(new Map());
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -255,6 +265,12 @@ export function InterviewSession({
     setLastFeedback(null);
     setPendingNextQuestion(null);
     setLastFailedAnswer(null);
+    trackFunnel("interview_answer", {
+      sessionId,
+      competency: focusCompetency ?? state.currentQuestion.competency,
+      item: state.totalItems + 1,
+      isFollowUp: Boolean(state.currentQuestion.isFollowUp),
+    });
 
     try {
       const res = await fetch("/api/interview/respond", {
@@ -503,24 +519,55 @@ export function InterviewSession({
             </div>
           )}
           {q?.rationale && <QuestionRationaleTooltip rationale={q.rationale} />}
+          {(grounding?.hasResume || grounding?.hasJd || grounding?.companyName) && (
+            <div className="mt-3 rounded-xl border border-card-border bg-background/70 px-3 py-2 text-xs text-muted">
+              <span className="font-semibold text-foreground">세션 맥락 · </span>
+              {[
+                grounding.companyName ? `${grounding.companyName}` : null,
+                grounding.hasResume
+                  ? grounding.resumeFileName
+                    ? `자소서(${grounding.resumeFileName})`
+                    : "자소서 반영"
+                  : null,
+                grounding.hasJd ? "채용공고 반영" : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+              {isPersonalized ? " · 이 문항은 자소서 근거와 연결됩니다" : ""}
+            </div>
+          )}
         </div>
 
         {state.chipHistory.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {state.chipHistory.map((chip, i) => (
-              <LevelChip
-                key={`${chip.competency}-${i}`}
-                competency={chip.competency}
-                level={chip.level}
-                chipType={chip.chip_type}
-                feedback={chip.brief_feedback}
-                index={i}
-              />
-            ))}
+          <div className="space-y-2">
+            <button
+              type="button"
+              className="text-xs font-medium text-muted underline-offset-2 hover:underline lg:hidden"
+              onClick={() => setMobileInsightsOpen((v) => !v)}
+            >
+              {mobileInsightsOpen ? "레벨 칩 접기" : `레벨 칩 ${state.chipHistory.length}개 보기`}
+            </button>
+            <div
+              className={cn(
+                "flex flex-wrap gap-2",
+                !mobileInsightsOpen && "hidden lg:flex",
+              )}
+            >
+              {state.chipHistory.map((chip, i) => (
+                <LevelChip
+                  key={`${chip.competency}-${i}`}
+                  competency={chip.competency}
+                  level={chip.level}
+                  chipType={chip.chip_type}
+                  feedback={chip.brief_feedback}
+                  index={i}
+                />
+              ))}
+            </div>
           </div>
         )}
 
-        <div className="card-luxe card-luxe--session p-4 sm:p-8">
+        <div className="card-luxe card-luxe--session interview-answer-dock p-4 sm:p-8">
           {phase === "evaluating" ? (
             <LoadingRitual
               variant={state.shouldTerminate ? "report" : "interview"}
@@ -594,11 +641,22 @@ export function InterviewSession({
 
       <aside className="space-y-4 sm:space-y-6">
         <div className="card-luxe card-luxe--session p-4 sm:p-5">
-          <p className="section-eyebrow mb-3">실시간 추정</p>
-          <CompetencyBar
-            states={state.competencyStates as Record<string, CompetencyState>}
-            activeCompetency={q?.competency}
-          />
+          <button
+            type="button"
+            className="section-eyebrow mb-3 flex w-full items-center justify-between text-left lg:pointer-events-none"
+            onClick={() => setMobileInsightsOpen((v) => !v)}
+          >
+            <span>실시간 추정</span>
+            <span className="text-[10px] font-normal text-muted lg:hidden">
+              {mobileInsightsOpen ? "접기" : "펼치기"}
+            </span>
+          </button>
+          <div className={cn(!mobileInsightsOpen && "hidden lg:block")}>
+            <CompetencyBar
+              states={state.competencyStates as Record<string, CompetencyState>}
+              activeCompetency={q?.competency}
+            />
+          </div>
         </div>
 
         <div className="card-luxe card-luxe--session hidden p-5 text-sm text-muted lg:block">

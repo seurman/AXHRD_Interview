@@ -180,6 +180,12 @@ export default async function InterviewPage({ params, searchParams }: PageProps)
         timeBudgetMinutes={session.timeBudgetMinutes ?? undefined}
         tripleFeedbackMode={session.tripleFeedbackMode}
         queue={queue}
+        grounding={{
+          companyName: session.targetCompany?.name ?? null,
+          hasResume: Boolean(session.resume?.rawText?.trim()),
+          resumeFileName: session.resume?.fileName ?? null,
+          hasJd: Boolean(session.jdBonusEnabled || session.setupSelectionText),
+        }}
       />
     </div>
   );

@@ -10,7 +10,11 @@ import { ClaimVerificationSection } from "@/components/report/ClaimVerificationS
 import { computeDeliveryStats } from "@/lib/interview/feedback-helpers";
 import { NextCompetencyButton } from "@/components/interview/NextCompetencyButton";
 import { RoundBriefPanel } from "@/components/interview/RoundBriefPanel";
-import { PrintButton } from "@/components/ui/PrintButton";
+import { FeedbackShareControls } from "@/components/interview/FeedbackShareControls";
+import {
+  findWeakestDimension,
+  normalizeAnswerDimensions,
+} from "@/lib/interview/answer-dimensions";
 import {
   filterQueueByProgress,
   parseCompetencyQueue,
@@ -105,6 +109,22 @@ export default async function CompetencyFeedbackPage({
 
   const heroScore = Math.round(progress.percentile ?? 0);
 
+  const dimsForWeak =
+    dimensions && Object.values(dimensions).some((v) => typeof v === "number" && v > 1)
+      ? Object.fromEntries(
+          Object.entries(dimensions).map(([k, v]) => [k, (v as number) / 100]),
+        )
+      : dimensions;
+  const normalizedDims = normalizeAnswerDimensions(dimsForWeak);
+  const weakestAxis = normalizedDims ? findWeakestDimension(normalizedDims) : null;
+  const groundingBits: string[] = [];
+  if (session?.resume?.rawText) groundingBits.push("자소서 맞춤 질문이 반영되었습니다");
+  if (bonusResponse) groundingBits.push("공고 맞춤 보너스 질문까지 확인했습니다");
+  if (claimResponse) groundingBits.push("자소서 경험 확인 질문을 마쳤습니다");
+  if (session?.targetCompany?.name) {
+    groundingBits.push(`${session.targetCompany.name} 맥락으로 진행했습니다`);
+  }
+
   return (
     <div className="mx-auto max-w-2xl space-y-8 pb-16">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -119,9 +139,7 @@ export default async function CompetencyFeedbackPage({
             {competencyLabel(code)} 피드백
           </h1>
         </div>
-        <div className="print-hide">
-          <PrintButton />
-        </div>
+        <FeedbackShareControls />
       </div>
 
       <section className="card-luxe flex flex-col items-center gap-6 p-6 sm:flex-row sm:items-center">
@@ -135,8 +153,27 @@ export default async function CompetencyFeedbackPage({
             </p>
           )}
           <p className="mt-2 leading-relaxed text-foreground">{fb.summary}</p>
+          {groundingBits.length > 0 ? (
+            <p className="mt-3 text-xs leading-relaxed text-accent">
+              {groundingBits.join(" · ")}
+            </p>
+          ) : null}
         </div>
       </section>
+
+      {weakestAxis ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-accent/30 bg-accent/5 px-4 py-3">
+          <p className="text-sm text-foreground">
+            약한 답변 축: <strong>{dimensionLabel(weakestAxis)}</strong>
+          </p>
+          <Link
+            href={`/interview/setup?planId=${planId}&competency=${code}`}
+            className="btn-primary px-3 py-1.5 text-sm"
+          >
+            이 역량 다시 연습
+          </Link>
+        </div>
+      ) : null}
 
       {dimensions && (
         <section className="card-luxe p-6">

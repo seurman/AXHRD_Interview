@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { IconLoader } from "@/components/ui/icons";
 import { competencyLabel } from "@/lib/labels";
 
+import { trackFunnel } from "@/lib/analytics/funnel";
+
 interface NextCompetencyButtonProps {
   planId: string;
   /** 이어서 진행할 역량 코드들 — queue[0]이 다음에 시작할 역량 */
@@ -72,6 +74,11 @@ export function NextCompetencyButton({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "다음 역량 면접을 시작하지 못했습니다.");
+      trackFunnel("interview_next_competency", {
+        fromPlanId: planId,
+        next,
+        remaining: rest.length,
+      });
       const qs = rest.length > 0 ? `?queue=${encodeURIComponent(rest.join(","))}` : "";
       router.push(`/interview/${data.sessionId}${qs}`);
     } catch (e) {
