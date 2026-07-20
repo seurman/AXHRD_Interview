@@ -63,8 +63,8 @@ export function OrgMemberPeopleDetailClient({
   return (
     <div className="mx-auto max-w-5xl space-y-8">
       <div>
-        <Link href="/org/people" className="text-sm text-accent hover:underline">
-          ← 구성원 현황
+        <Link href="/org/dashboard?tab=people" className="text-sm text-accent hover:underline">
+          ← 구성원
         </Link>
       </div>
 

@@ -8,7 +8,7 @@ import {
 import type { OrgOverviewData } from "@/lib/org/overview-data";
 
 const PRODUCT_HREFS: Record<OrgProductKey, string> = {
-  interview: "/org/dashboard/cohort",
+  interview: "/org/dashboard",
   competency: "/org/candidates",
   diagnostic: "/org/diagnosis",
   assessment: "/org/settings/assessment",

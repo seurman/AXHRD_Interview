@@ -34,7 +34,13 @@ function PresenceDot({ online }: { online: boolean }) {
 
 type SortKey = "name" | "interviews" | "score" | "login" | "delta";
 
-export function OrgPeopleDashboardClient({ data }: { data: OrgPeopleDashboardData }) {
+export function OrgPeopleDashboardClient({
+  data,
+  embedded = false,
+}: {
+  data: OrgPeopleDashboardData;
+  embedded?: boolean;
+}) {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<SortKey>("score");
   const [onlyConsent, setOnlyConsent] = useState(false);
@@ -71,55 +77,73 @@ export function OrgPeopleDashboardClient({ data }: { data: OrgPeopleDashboardDat
   const s = data.summary;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
-      <header className="relative overflow-hidden rounded-[1.75rem] border border-card-border bg-card px-6 py-8 shadow-luxe sm:px-10">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-90"
-          style={{
-            background:
-              "radial-gradient(ellipse 80% 60% at 100% 0%, color-mix(in srgb, var(--color-gold) 22%, transparent), transparent 55%), radial-gradient(ellipse 70% 50% at 0% 100%, color-mix(in srgb, var(--color-primary) 18%, transparent), transparent 50%)",
-          }}
-        />
-        <div className="relative">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
-            People · Coaching
-          </p>
-          <h1 className="mt-2 font-[family-name:var(--font-ibm-plex)] text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            {data.organizationName}
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
-            구성원의 모의면접·역량 성장·접속 현황을 한곳에서 보고, 코칭 피드백을 남길 수 있습니다.
-          </p>
-        </div>
-      </header>
+    <div className={embedded ? "space-y-5" : "mx-auto max-w-6xl space-y-8"}>
+      {!embedded ? (
+        <header className="relative overflow-hidden rounded-[1.75rem] border border-card-border bg-card px-6 py-8 shadow-luxe sm:px-10">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-90"
+            style={{
+              background:
+                "radial-gradient(ellipse 80% 60% at 100% 0%, color-mix(in srgb, var(--color-gold) 22%, transparent), transparent 55%), radial-gradient(ellipse 70% 50% at 0% 100%, color-mix(in srgb, var(--color-primary) 18%, transparent), transparent 50%)",
+            }}
+          />
+          <div className="relative">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
+              People · Coaching
+            </p>
+            <h1 className="mt-2 font-[family-name:var(--font-ibm-plex)] text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+              {data.organizationName}
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
+              구성원의 모의면접·역량 성장·접속 현황을 한곳에서 보고, 코칭 피드백을 남길 수
+              있습니다.
+            </p>
+          </div>
+        </header>
+      ) : null}
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Kpi label="구성원" value={String(s.memberCount)} hint={`접속 중 ${s.onlineCount}`} />
-        <Kpi
-          label="이번 주 활동"
-          value={String(s.activeThisWeek)}
-          hint="로그인 또는 면접"
-        />
-        <Kpi
-          label="완료 면접"
-          value={String(s.totalCompletedInterviews)}
-          hint="누적 세션"
-        />
-        <Kpi
-          label="평균 백분위"
-          value={s.overallAvgPercentile != null ? String(s.overallAvgPercentile) : "—"}
-          hint={`상세 동의 ${s.consentCount}명`}
-        />
-      </section>
+      {!embedded ? (
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Kpi label="구성원" value={String(s.memberCount)} hint={`접속 중 ${s.onlineCount}`} />
+          <Kpi
+            label="이번 주 활동"
+            value={String(s.activeThisWeek)}
+            hint="로그인 또는 면접"
+          />
+          <Kpi
+            label="완료 면접"
+            value={String(s.totalCompletedInterviews)}
+            hint="누적 세션"
+          />
+          <Kpi
+            label="평균 백분위"
+            value={s.overallAvgPercentile != null ? String(s.overallAvgPercentile) : "—"}
+            hint={`상세 동의 ${s.consentCount}명`}
+          />
+        </section>
+      ) : (
+        <section className="grid gap-3 sm:grid-cols-3">
+          <Kpi label="접속 중" value={String(s.onlineCount)} hint="최근 24시간" />
+          <Kpi
+            label="완료 면접"
+            value={String(s.totalCompletedInterviews)}
+            hint="누적"
+          />
+          <Kpi
+            label="평균 백분위"
+            value={s.overallAvgPercentile != null ? String(s.overallAvgPercentile) : "—"}
+            hint={`동의 ${s.consentCount}명`}
+          />
+        </section>
+      )}
 
-      <section className="rounded-[1.5rem] border border-card-border bg-card/90 p-4 shadow-luxe sm:p-6">
+      <section className="rounded-2xl border border-card-border bg-card p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">구성원 명단</h2>
+            <h2 className="text-sm font-semibold text-foreground">구성원 명단</h2>
             <p className="text-xs text-muted">
-              기관에 소속된 모든 계정(구성원·담당자·관리자)을 표시합니다. 상세 시계열은 본인 동의
-              후 열립니다.
+              상세 시계열·코칭은 본인 동의 후 「상세」에서 확인합니다.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -127,7 +151,7 @@ export function OrgPeopleDashboardClient({ data }: { data: OrgPeopleDashboardDat
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as SortKey)}
-              className="min-h-11 rounded-xl border border-card-border bg-background px-3 text-sm"
+              className="min-h-10 rounded-lg border border-card-border bg-background px-3 text-sm"
             >
               <option value="score">백분위순</option>
               <option value="interviews">면접 횟수순</option>
@@ -156,7 +180,7 @@ export function OrgPeopleDashboardClient({ data }: { data: OrgPeopleDashboardDat
             최근 접속만
           </label>
           {s.unreadFeedbackCount > 0 ? (
-            <span className="rounded-lg bg-gold/15 px-2 py-1 text-gold">
+            <span className="rounded-md bg-muted/15 px-2 py-1 text-muted">
               미열람 피드백 {s.unreadFeedbackCount}
             </span>
           ) : null}
@@ -164,7 +188,7 @@ export function OrgPeopleDashboardClient({ data }: { data: OrgPeopleDashboardDat
 
         {members.length === 0 ? (
           <p className="mt-8 text-center text-sm text-muted">
-            아직 소속 계정이 없습니다. 「멤버·승인」에서 가입을 승인해 주세요.
+            아직 소속 계정이 없습니다. 「승인·좌석」 탭에서 가입을 승인해 주세요.
           </p>
         ) : (
           <>

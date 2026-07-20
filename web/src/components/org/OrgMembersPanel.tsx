@@ -35,7 +35,13 @@ const ROLE_LABEL: Record<string, string> = {
   STUDENT: "구성원",
 };
 
-export function OrgMembersPanel({ isAdmin }: { isAdmin: boolean }) {
+export function OrgMembersPanel({
+  isAdmin,
+  embedded = false,
+}: {
+  isAdmin: boolean;
+  embedded?: boolean;
+}) {
   const router = useRouter();
   const [tab, setTab] = useState<"pending" | "members">("pending");
   const [seats, setSeats] = useState<Seats | null>(null);
@@ -159,8 +165,14 @@ export function OrgMembersPanel({ isAdmin }: { isAdmin: boolean }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="card-luxe grid gap-3 p-5 sm:grid-cols-4">
+    <div className="space-y-5">
+      <div
+        className={`grid gap-3 sm:grid-cols-4 ${
+          embedded
+            ? "rounded-xl border border-card-border p-4"
+            : "card-luxe p-5"
+        }`}
+      >
         <div>
           <p className="text-xs text-muted">소속 멤버 (과금)</p>
           <p className="mt-1 text-xl font-bold tabular-nums">{seats?.members ?? 0}</p>
@@ -184,7 +196,11 @@ export function OrgMembersPanel({ isAdmin }: { isAdmin: boolean }) {
       </div>
 
       {isAdmin ? (
-        <label className="card-luxe flex cursor-pointer items-start gap-3 p-4 text-sm">
+        <label
+          className={`flex cursor-pointer items-start gap-3 p-4 text-sm ${
+            embedded ? "rounded-xl border border-card-border" : "card-luxe"
+          }`}
+        >
           <input
             type="checkbox"
             className="mt-1"
@@ -213,7 +229,9 @@ export function OrgMembersPanel({ isAdmin }: { isAdmin: boolean }) {
             type="button"
             onClick={() => setTab(id)}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-              tab === id ? "bg-accent text-white" : "text-muted hover:bg-card-border/40"
+              tab === id
+                ? "bg-foreground text-background"
+                : "text-muted hover:bg-background"
             }`}
           >
             {label}

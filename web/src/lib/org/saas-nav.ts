@@ -2,7 +2,7 @@ import type { OrgEntitlementSnapshot } from "@/lib/org/entitlements";
 import type { CapabilityId } from "@/lib/platform/capabilities";
 import type { SaasNavConfig } from "@/lib/platform/nav-registry";
 
-/** 기관 워크스페이스 메뉴 — capability + SKU(entitlement) 둘 다 만족할 때만 노출 */
+/** 기관 워크스페이스 메뉴 — 운영 콘솔은 하나로 통합 */
 export function buildSaasNavConfig(
   caps: Set<CapabilityId>,
   entitlements: OrgEntitlementSnapshot,
@@ -10,16 +10,8 @@ export function buildSaasNavConfig(
   const links: SaasNavConfig["links"] = [];
   const settingsLinks: SaasNavConfig["settingsLinks"] = [];
 
-  if (caps.has("tenant.cohort") && entitlements.interview) {
-    const cohortHref =
-      entitlements.competency || entitlements.diagnostic
-        ? "/org/dashboard/cohort"
-        : "/org/dashboard";
-    links.push({ href: cohortHref, labelKey: "cohortDashboard" });
-  }
   if (caps.has("tenant.cohort")) {
-    links.push({ href: "/org/people", labelKey: "peopleDashboard" });
-    links.push({ href: "/org/members", labelKey: "members" });
+    links.push({ href: "/org/dashboard", labelKey: "cohortDashboard" });
   }
   if (caps.has("tenant.interview_kit") && entitlements.competency) {
     links.push({ href: "/org/candidates", labelKey: "candidateResults" });
