@@ -2,7 +2,6 @@
  * 기관 어드민 — 구성원 현황·역량 시계열·피드백용 데이터 계층
  */
 import { prisma } from "@/lib/prisma";
-import { COHORT_MEMBER_ROLES } from "@/lib/auth/roles";
 import { isLikelyOnline } from "@/lib/auth/presence";
 import { buildDimensionTimeline } from "@/lib/dashboard/dimension-timeline";
 import type { DimensionSessionPoint } from "@/lib/dashboard/dimension-timeline";
@@ -125,7 +124,8 @@ export async function getOrgPeopleDashboard(
   if (!org) return null;
 
   const members = await prisma.user.findMany({
-    where: { organizationId, orgRole: { in: [...COHORT_MEMBER_ROLES] } },
+    // 멤버·승인 화면과 동일하게 기관 소속 전원 표시 (MEMBER/STUDENT만이 아니라 STAFF/ADMIN 포함)
+    where: { organizationId },
     select: {
       id: true,
       name: true,
@@ -136,7 +136,7 @@ export async function getOrgPeopleDashboard(
       lastLoginAt: true,
       lastLogoutAt: true,
     },
-    orderBy: [{ name: "asc" }],
+    orderBy: [{ orgRole: "asc" }, { name: "asc" }],
   });
   const memberIds = members.map((m) => m.id);
 

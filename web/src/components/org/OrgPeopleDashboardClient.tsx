@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { OrgPeopleDashboardData, PeopleMemberRow } from "@/lib/org/people-dashboard";
 import { competencyLabel, formatPercentile } from "@/lib/labels";
+import { ORG_ROLE_LABEL } from "@/lib/auth/roles";
 import { PeopleSearchField, Sparkline } from "@/components/org/CompetencyTrendChart";
 
 function formatRelative(iso: string | null): string {
@@ -117,7 +118,8 @@ export function OrgPeopleDashboardClient({ data }: { data: OrgPeopleDashboardDat
           <div>
             <h2 className="text-lg font-semibold text-foreground">구성원 명단</h2>
             <p className="text-xs text-muted">
-              미동의 구성원은 집계·접속·피드백만 가능합니다. 상세 시계열은 동의 후 열립니다.
+              기관에 소속된 모든 계정(구성원·담당자·관리자)을 표시합니다. 상세 시계열은 본인 동의
+              후 열립니다.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -161,7 +163,9 @@ export function OrgPeopleDashboardClient({ data }: { data: OrgPeopleDashboardDat
         </div>
 
         {members.length === 0 ? (
-          <p className="mt-8 text-center text-sm text-muted">조건에 맞는 구성원이 없습니다.</p>
+          <p className="mt-8 text-center text-sm text-muted">
+            아직 소속 계정이 없습니다. 「멤버·승인」에서 가입을 승인해 주세요.
+          </p>
         ) : (
           <>
             <div className="mt-4 hidden overflow-x-auto lg:block">
@@ -216,7 +220,12 @@ function MemberTableRow({ member: m }: { member: PeopleMemberRow }) {
         <div className="flex items-center gap-2">
           <PresenceDot online={m.online} />
           <div className="min-w-0">
-            <p className="truncate font-medium text-foreground">{m.name}</p>
+            <p className="truncate font-medium text-foreground">
+              {m.name}
+              <span className="ml-1.5 text-[10px] font-normal text-muted">
+                {ORG_ROLE_LABEL[m.orgRole] ?? m.orgRole}
+              </span>
+            </p>
             <p className="truncate text-xs text-muted">{m.email}</p>
           </div>
         </div>
@@ -277,7 +286,12 @@ function MemberCard({ member: m }: { member: PeopleMemberRow }) {
         <div className="flex min-w-0 items-center gap-2">
           <PresenceDot online={m.online} />
           <div className="min-w-0">
-            <p className="truncate font-medium text-foreground">{m.name}</p>
+            <p className="truncate font-medium text-foreground">
+              {m.name}
+              <span className="ml-1.5 text-[10px] font-normal text-muted">
+                {ORG_ROLE_LABEL[m.orgRole] ?? m.orgRole}
+              </span>
+            </p>
             <p className="truncate text-xs text-muted">{m.email}</p>
           </div>
         </div>
