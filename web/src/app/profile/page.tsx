@@ -59,11 +59,12 @@ export default async function ProfilePage() {
       : null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <header className="card-luxe overflow-hidden">
+    <div className="product-stage product-stage--wide mx-auto max-w-3xl space-y-8">
+      <div className="product-stage__inner !max-w-3xl space-y-8">
+      <header className="overflow-hidden rounded-2xl border border-card-border bg-card/80 shadow-luxe">
         <div className="bg-gradient-to-r from-primary/10 via-gold/10 to-transparent px-6 py-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Player Profile</p>
-          <h1 className="mt-1 text-2xl font-bold text-foreground">{user.name}</h1>
+          <p className="product-stage__kicker">Player Profile</p>
+          <h1 className="product-stage__title !text-2xl sm:!text-3xl">{user.name}</h1>
           <p className="mt-1 text-sm text-muted">{user.email}</p>
           <div className="mt-4 flex flex-wrap gap-3 text-sm">
             <Badge label="희망 직무" value={jobRoleLabel(user.profile?.desiredJobRole ?? "OTHER")} />
@@ -194,6 +195,7 @@ export default async function ProfilePage() {
           </ul>
         )}
       </section>
+      </div>
     </div>
   );
 }

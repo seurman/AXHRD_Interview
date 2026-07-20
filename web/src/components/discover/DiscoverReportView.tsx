@@ -6,12 +6,14 @@ import {
   PolarAngleAxis,
   Radar,
   ResponsiveContainer,
+  Tooltip,
 } from "recharts";
 import type { DiscoverProfileData } from "@/types/discover";
 import {
   InterviewAdviceSection,
   StrengthCompetencyMap,
 } from "@/components/discover/InterviewAdviceSection";
+import { chartTooltipStyle } from "@/components/charts/CohortCompetencyBarChart";
 
 interface DiscoverReportViewProps {
   profile: DiscoverProfileData;
@@ -26,12 +28,11 @@ export function DiscoverReportView({ profile, completedAt, jobRoleLabel }: Disco
   }));
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="product-stage product-stage--wide mx-auto max-w-3xl space-y-8">
+      <div className="product-stage__inner !max-w-3xl space-y-8">
       <header className="space-y-2 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">
-          Self-Discovery
-        </p>
-        <h1 className="text-2xl font-bold text-foreground">나를 발견한 이야기</h1>
+        <p className="product-stage__kicker">Self-Discovery</p>
+        <h1 className="product-stage__title !text-2xl sm:!text-3xl">나를 발견한 이야기</h1>
         {completedAt && (
           <p className="text-sm text-muted">
             {new Date(completedAt).toLocaleDateString("ko-KR")} 완료
@@ -108,14 +109,22 @@ export function DiscoverReportView({ profile, completedAt, jobRoleLabel }: Disco
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart data={radarData}>
-                  <PolarGrid stroke="#e5e7eb" />
-                  <PolarAngleAxis dataKey="competency" tick={{ fontSize: 11 }} />
+                  <PolarGrid stroke="var(--color-card-border)" />
+                  <PolarAngleAxis
+                    dataKey="competency"
+                    tick={{ fill: "var(--color-muted)", fontSize: 11 }}
+                  />
+                  <Tooltip
+                    contentStyle={chartTooltipStyle}
+                    formatter={(value: number) => [`신호 ${value}`, "연결 강도"]}
+                  />
                   <Radar
                     name="연결 신호"
                     dataKey="signal"
-                    stroke="#3d7ea6"
-                    fill="#3d7ea6"
-                    fillOpacity={0.35}
+                    stroke="var(--color-primary)"
+                    fill="var(--color-primary)"
+                    fillOpacity={0.32}
+                    isAnimationActive
                   />
                 </RadarChart>
               </ResponsiveContainer>
@@ -174,6 +183,7 @@ export function DiscoverReportView({ profile, completedAt, jobRoleLabel }: Disco
         >
           역량 트래킹으로
         </a>
+      </div>
       </div>
     </div>
   );

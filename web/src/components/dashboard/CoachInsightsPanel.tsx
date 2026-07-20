@@ -6,6 +6,7 @@ import { RoundBriefPanel } from "@/components/interview/RoundBriefPanel";
 import type { RoundBrief } from "@/lib/interview/competency-round";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { DimensionAxesPanel } from "./DimensionAxesPanel";
+import { InteractivePercentileBars } from "@/components/charts/InteractivePercentileBars";
 
 export type CompetencyDeltaRow = {
   competency: string;
@@ -45,37 +46,21 @@ export function CoachInsightsPanel({
         <section className="card-luxe p-6">
           <h3 className="font-semibold text-foreground">{ci.masteryTitle}</h3>
           <p className="mt-1 text-xs text-muted">{ci.masteryHint}</p>
-          <div className="mt-4 space-y-3">
-            {competencyDeltas.map((row) => (
-              <div key={row.competency} className="space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-foreground">
-                    {competencyLabel(row.competency)}
-                  </span>
-                  <span className="text-muted">
-                    {row.assessed ? `${Math.round(row.percentile)}%` : "—"}
-                    {row.delta != null && row.assessed && (
-                      <span
-                        className={
-                          row.delta >= 0 ? "ml-2 text-success" : "ml-2 text-warning"
-                        }
-                      >
-                        {row.delta >= 0 ? "+" : ""}
-                        {row.delta.toFixed(0)}%
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-background ring-1 ring-inset ring-card-border/50">
-                  <div
-                    className={`h-2 rounded-full ${row.assessed ? "bg-primary/70" : "bg-muted/25"}`}
-                    style={{
-                      width: `${row.assessed ? Math.min(100, row.percentile) : 0}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
+          <div className="mt-4">
+            <InteractivePercentileBars
+              fill="var(--color-primary)"
+              items={competencyDeltas.map((row) => ({
+                id: row.competency,
+                label: competencyLabel(row.competency),
+                value: row.percentile,
+                assessed: row.assessed,
+                deltaLabel:
+                  row.delta != null && row.assessed
+                    ? `${row.delta >= 0 ? "+" : ""}${row.delta.toFixed(0)}%`
+                    : undefined,
+                deltaPositive: row.delta != null ? row.delta >= 0 : undefined,
+              }))}
+            />
           </div>
         </section>
 

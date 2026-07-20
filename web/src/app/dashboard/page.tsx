@@ -51,15 +51,16 @@ export default async function DashboardPage() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="product-stage product-stage--wide space-y-8">
+      <div className="product-stage__inner !max-w-5xl space-y-8">
       <Suspense fallback={null}>
         <WelcomeBanner />
       </Suspense>
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">AX-HRD Career OS</p>
-          <h1 className="text-2xl font-bold text-foreground">{d.pageTitle}</h1>
-          <p className="mt-1 text-muted">
+          <p className="product-stage__kicker">AX-HRD Career OS</p>
+          <h1 className="product-stage__title !text-2xl sm:!text-3xl">{d.pageTitle}</h1>
+          <p className="product-stage__lead !mt-1">
             {locale === "ko"
               ? `${dashboard.userName}${userSuffix} · Lv.${dashboard.level} · ${d.pageSubtitle}`
               : `${dashboard.userName} · Lv.${dashboard.level} · ${d.pageSubtitle}`}
@@ -96,6 +97,7 @@ export default async function DashboardPage() {
 
       <h2 className="text-lg font-semibold text-foreground">{d.coachInsights.sectionTitle}</h2>
       <CoachInsightsPanel {...dashboard.coachInsights} />
+      </div>
     </div>
   );
 }

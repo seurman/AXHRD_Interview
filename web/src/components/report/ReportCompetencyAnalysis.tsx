@@ -9,9 +9,11 @@ import {
   PolarAngleAxis,
   Radar,
   ResponsiveContainer,
+  Tooltip,
 } from "recharts";
 import { competencyLabel } from "@/lib/utils";
 import type { ReportSection } from "@/types";
+import { chartTooltipStyle } from "@/components/charts/CohortCompetencyBarChart";
 
 export function ReportCompetencyAnalysis({ sections }: { sections: ReportSection[] }) {
   const radarData = sections.map((s) => ({
@@ -34,11 +36,16 @@ export function ReportCompetencyAnalysis({ sections }: { sections: ReportSection
                 dataKey="competency"
                 tick={{ fill: "var(--color-muted)", fontSize: 10 }}
               />
+              <Tooltip
+                contentStyle={chartTooltipStyle}
+                formatter={(value: number) => [`${value}%`, "점수"]}
+              />
               <Radar
                 dataKey="score"
                 stroke="var(--color-primary)"
                 fill="var(--color-primary)"
                 fillOpacity={0.28}
+                isAnimationActive
               />
             </RadarChart>
           </ResponsiveContainer>

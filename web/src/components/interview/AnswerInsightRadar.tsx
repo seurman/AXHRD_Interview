@@ -8,6 +8,7 @@ import {
   Radar,
   RadarChart,
   ResponsiveContainer,
+  Tooltip,
 } from "recharts";
 import {
   ANSWER_DIMENSION_KEYS,
@@ -15,6 +16,7 @@ import {
   type AnswerDimensions,
 } from "@/lib/interview/answer-dimensions";
 import { dimensionLabel } from "@/lib/labels";
+import { chartTooltipStyle } from "@/components/charts/CohortCompetencyBarChart";
 
 type RadarRow = {
   axis: string;
@@ -107,6 +109,10 @@ export function AnswerInsightRadar({
               <CustomAngleTick {...tickProps} weakestLabel={weakestLabel} />
             )}
           />
+          <Tooltip
+            contentStyle={chartTooltipStyle}
+            formatter={(value: number, name: string) => [`${value}%`, name]}
+          />
           {sessionAverage && (
             <Radar
               name="세션 평균"
@@ -126,6 +132,7 @@ export function AnswerInsightRadar({
             strokeWidth={2}
             fill="url(#answerInsightGradient)"
             fillOpacity={1}
+            isAnimationActive
           />
         </RadarChart>
       </ResponsiveContainer>
