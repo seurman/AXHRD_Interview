@@ -32,4 +32,16 @@ describe("buildMarketingHomeHtml", () => {
     expect(hero).not.toContain('class="pill"');
     expect(hero).not.toContain("hero-preview");
   });
+
+  it("aligns below-hero copy to Korean three-step flow", () => {
+    const html = buildMarketingHomeHtml();
+    expect(html).toContain("흐름 · 3단계");
+    expect(html).toContain("process-grid--three");
+    expect(html).toContain("01 · 면접");
+    expect(html).not.toContain("θ");
+    expect(html).not.toContain("JD");
+    expect(html).not.toContain("Discover");
+    expect(html).not.toContain("Growth loop");
+    expect(html).not.toContain("NCS");
+  });
 });
