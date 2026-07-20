@@ -37,11 +37,13 @@ const ROLE_LABEL: Record<string, string> = {
 
 export function OrgMembersPanel({
   isAdmin,
-  embedded = false,
+  embedded: _embedded = false,
 }: {
   isAdmin: boolean;
+  /** Kept for call-site compatibility when nested in the ops console. */
   embedded?: boolean;
 }) {
+  void _embedded;
   const router = useRouter();
   const [tab, setTab] = useState<"pending" | "members">("pending");
   const [seats, setSeats] = useState<Seats | null>(null);
@@ -166,41 +168,43 @@ export function OrgMembersPanel({
 
   return (
     <div className="space-y-5">
-      <div
-        className={`grid gap-3 sm:grid-cols-4 ${
-          embedded
-            ? "rounded-xl border border-card-border p-4"
-            : "card-luxe p-5"
-        }`}
-      >
-        <div>
-          <p className="text-xs text-muted">소속 멤버 (과금)</p>
-          <p className="mt-1 text-xl font-bold tabular-nums">{seats?.members ?? 0}</p>
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-card-border bg-card-border sm:grid-cols-4">
+        <div className="bg-card px-4 py-4">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted">
+            소속 멤버
+          </p>
+          <p className="mt-1.5 font-[family-name:var(--font-ibm-plex)] text-2xl font-semibold tabular-nums">
+            {seats?.members ?? 0}
+          </p>
         </div>
-        <div>
-          <p className="text-xs text-muted">승인 대기 (예약)</p>
-          <p className="mt-1 text-xl font-bold tabular-nums text-amber-700 dark:text-amber-300">
+        <div className="bg-card px-4 py-4">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted">
+            승인 대기
+          </p>
+          <p className="mt-1.5 font-[family-name:var(--font-ibm-plex)] text-2xl font-semibold tabular-nums text-warning">
             {seats?.pending ?? 0}
           </p>
         </div>
-        <div>
-          <p className="text-xs text-muted">좌석 상한</p>
-          <p className="mt-1 text-xl font-bold tabular-nums">
-            {seats?.cap == null ? "무제한" : seats.cap}
+        <div className="bg-card px-4 py-4">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted">
+            좌석 상한
+          </p>
+          <p className="mt-1.5 font-[family-name:var(--font-ibm-plex)] text-2xl font-semibold tabular-nums">
+            {seats?.cap == null ? "∞" : seats.cap}
           </p>
         </div>
-        <div>
-          <p className="text-xs text-muted">가입 코드</p>
-          <p className="mt-1 font-mono text-sm font-semibold tracking-wider">{joinCode || "—"}</p>
+        <div className="bg-card px-4 py-4">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted">
+            가입 코드
+          </p>
+          <p className="mt-2 font-mono text-sm font-semibold tracking-wider">
+            {joinCode || "—"}
+          </p>
         </div>
       </div>
 
       {isAdmin ? (
-        <label
-          className={`flex cursor-pointer items-start gap-3 p-4 text-sm ${
-            embedded ? "rounded-xl border border-card-border" : "card-luxe"
-          }`}
-        >
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-card-border bg-card p-4 text-sm">
           <input
             type="checkbox"
             className="mt-1"
@@ -211,13 +215,16 @@ export function OrgMembersPanel({
           <span>
             <span className="font-semibold text-foreground">가입 시 담당자 승인 필요</span>
             <span className="mt-0.5 block text-xs text-muted">
-              Slack Workspace 승인 패턴. 켜 두면 인별 좌석이 승인 후에만 배정됩니다.
+              켜 두면 인별 좌석이 승인 후에만 배정됩니다.
             </span>
           </span>
         </label>
       ) : null}
 
-      <div className="flex gap-2 border-b border-card-border pb-2">
+      <div
+        role="tablist"
+        className="grid grid-cols-2 gap-1 rounded-xl border border-card-border bg-background p-1"
+      >
         {(
           [
             ["pending", `승인 대기 (${pending.length})`],
@@ -227,11 +234,13 @@ export function OrgMembersPanel({
           <button
             key={id}
             type="button"
+            role="tab"
+            aria-selected={tab === id}
             onClick={() => setTab(id)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+            className={`min-h-10 rounded-lg text-sm font-semibold transition ${
               tab === id
                 ? "bg-foreground text-background"
-                : "text-muted hover:bg-background"
+                : "text-muted hover:text-foreground"
             }`}
           >
             {label}
@@ -252,13 +261,16 @@ export function OrgMembersPanel({
 
       {tab === "pending" ? (
         pending.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-card-border p-8 text-center text-sm text-muted">
+          <div className="rounded-xl border border-dashed border-card-border px-4 py-10 text-center text-sm text-muted">
             대기 중인 가입 요청이 없습니다.
           </div>
         ) : (
-          <ul className="space-y-3">
+          <ul className="divide-y divide-card-border overflow-hidden rounded-xl border border-card-border">
             {pending.map((p) => (
-              <li key={p.id} className="card-luxe flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+              <li
+                key={p.id}
+                className="flex flex-col gap-3 bg-card px-4 py-3.5 sm:flex-row sm:items-center"
+              >
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-foreground">{p.user.name}</p>
                   <p className="text-xs text-muted">{p.user.email}</p>
@@ -292,19 +304,19 @@ export function OrgMembersPanel({
           </ul>
         )
       ) : members.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-card-border p-8 text-center text-sm text-muted">
+        <div className="rounded-xl border border-dashed border-card-border px-4 py-10 text-center text-sm text-muted">
           소속 멤버가 없습니다.
         </div>
       ) : (
-        <ul className="divide-y divide-card-border rounded-xl border border-card-border">
+        <ul className="divide-y divide-card-border overflow-hidden rounded-xl border border-card-border">
           {members.map((m) => (
             <li
               key={m.id}
-              className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 text-sm"
+              className="flex flex-wrap items-center gap-x-4 gap-y-2 bg-card px-4 py-3 text-sm"
             >
               <span className="min-w-[7rem] font-medium text-foreground">{m.name}</span>
               <span className="min-w-[10rem] flex-1 text-muted">{m.email}</span>
-              <span className="rounded-md bg-background px-2 py-0.5 text-xs text-muted">
+              <span className="rounded-md border border-card-border px-2 py-0.5 text-xs text-muted">
                 {ROLE_LABEL[m.orgRole] ?? m.orgRole}
               </span>
               {isAdmin && m.orgRole !== "ADMIN" ? (
