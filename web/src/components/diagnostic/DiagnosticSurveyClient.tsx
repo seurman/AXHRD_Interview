@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { DIAGNOSTIC_CONSENT_TEXT } from "@/lib/diagnostic/constants";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { LeaveConfirmDialog } from "@/components/ux/LeaveConfirmDialog";
 import { QuestionFocus } from "./survey/QuestionFocus";
 import { SurveyCard, SurveyStage } from "./survey/SurveyStage";
 import {
@@ -15,6 +19,7 @@ import {
   type SurveyItem,
   type SurveyPayload,
 } from "./survey/types";
+import { cn } from "@/lib/cn";
 
 type Props = {
   waveSlug: string;
@@ -38,6 +43,7 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
 
   const [data, setData] = useState<SurveyPayload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [leaveOpen, setLeaveOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>({ kind: "welcome" });
   const [answers, setAnswers] = useState<AnswerMap>({});
@@ -243,7 +249,9 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
       await persist({ items: [q.item] });
       goToQuestion(qIndex + 1);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "저장 중 오류");
+      const msg = e instanceof Error ? e.message : "저장 중 오류";
+      setError(msg);
+      toast.error(msg);
     }
   };
 
@@ -257,7 +265,9 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
           await persist({ items: [item] });
           goToQuestion(qIndex + 1);
         } catch (e) {
-          setError(e instanceof Error ? e.message : "저장 중 오류");
+          const msg = e instanceof Error ? e.message : "저장 중 오류";
+          setError(msg);
+          toast.error(msg);
         }
       })();
     }, 380);
@@ -333,6 +343,17 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
     .join(" · ");
 
   return (
+    <>
+    <div className="relative">
+      {phase.kind !== "welcome" ? (
+        <button
+          type="button"
+          className="absolute right-3 top-3 z-20 text-xs text-muted underline-offset-2 hover:text-foreground hover:underline sm:right-6 sm:top-6"
+          onClick={() => setLeaveOpen(true)}
+        >
+          나가기
+        </button>
+      ) : null}
     <SurveyStage
       progress={progressPct}
       stepLabel={stepLabel}
@@ -493,10 +514,10 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
           <p className="dx-eyebrow">Almost done</p>
           <h2 className="dx-card__title">동의 후 제출</h2>
           <label className="dx-consent">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
+              onCheckedChange={(v) => setConsent(v === true)}
+              className="mt-0.5 size-5 rounded-[6px] border-card-border data-checked:border-primary data-checked:bg-primary"
             />
             <span>{DIAGNOSTIC_CONSENT_TEXT}</span>
           </label>
@@ -536,7 +557,9 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
                     );
                     setPhase({ kind: "done" });
                   } catch (e) {
-                    setError(e instanceof Error ? e.message : "제출 중 오류");
+                    const msg = e instanceof Error ? e.message : "제출 중 오류";
+                    setError(msg);
+                    toast.error(msg);
                   }
                 })();
               }}
@@ -547,6 +570,15 @@ export function DiagnosticSurveyClient({ waveSlug, teamSlug }: Props) {
         </SurveyCard>
       )}
     </SurveyStage>
+    </div>
+    <LeaveConfirmDialog
+      open={leaveOpen}
+      onOpenChange={setLeaveOpen}
+      title="진단을 나가시겠습니까?"
+      description="지금까지 저장된 응답은 유지되며, 같은 링크로 이어서 응답할 수 있습니다."
+      leaveHref="/diagnosis"
+    />
+    </>
   );
 }
 
@@ -564,20 +596,22 @@ function DemographicChips({
     <div className="dx-dm">
       <p className="dx-dm__label">{item.textKo}</p>
       {options.length > 0 ? (
-        <div className="dx-chips" role="listbox" aria-label={item.textKo}>
+        <RadioGroup
+          value={value || undefined}
+          onValueChange={onChange}
+          className="dx-chips gap-0"
+          aria-label={item.textKo}
+        >
           {options.map((o) => (
-            <button
+            <label
               key={o}
-              type="button"
-              role="option"
-              aria-selected={value === o}
-              className={`dx-chip ${value === o ? "dx-chip--on" : ""}`}
-              onClick={() => onChange(o)}
+              className={cn("dx-chip cursor-pointer", value === o && "dx-chip--on")}
             >
+              <RadioGroupItem value={o} className="sr-only" />
               {o}
-            </button>
+            </label>
           ))}
-        </div>
+        </RadioGroup>
       ) : (
         <input
           className="dx-textarea"

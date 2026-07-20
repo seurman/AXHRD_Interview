@@ -1,5 +1,9 @@
 @import "tailwindcss";
 @import "../components/brand/logo.css";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+/*---break--- */
+@custom-variant dark (&:is(.dark *));
 
 @theme {
   --color-background: #f7f8fc;
@@ -39,6 +43,55 @@ html.dark {
   --color-warning: #fbbf24;
   --color-danger: #f87171;
   --shadow-luxe: 0 4px 24px -4px rgb(0 0 0 / 0.45), 0 2px 8px -2px rgb(0 0 0 / 0.25);
+}
+
+/**
+ * shadcn/ui 토큰 브릿지 — 기존 --color-* 브랜드 값을 상속.
+ * 새 팔레트를 만들지 않는다. html.dark 의 --color-* 오버라이드를 그대로 탄다.
+ */
+:root,
+html.dark {
+  --background: var(--color-background);
+  --foreground: var(--color-foreground);
+  --card: var(--color-card);
+  --card-foreground: var(--color-foreground);
+  --popover: var(--color-card);
+  --popover-foreground: var(--color-foreground);
+  --primary: var(--color-primary);
+  --primary-foreground: #ffffff;
+  --secondary: var(--color-card);
+  --secondary-foreground: var(--color-foreground);
+  --muted: var(--color-card-border);
+  --muted-foreground: var(--color-muted);
+  --accent: var(--color-accent);
+  --accent-foreground: #ffffff;
+  --destructive: var(--color-danger);
+  --destructive-foreground: #ffffff;
+  --border: var(--color-card-border);
+  --input: var(--color-card-border);
+  --ring: var(--color-primary);
+  --radius: 0.75rem;
+}
+
+/* shadcn 유틸이 기대하는 추가 색 이름 → 브랜드 토큰 (기존 --color-primary 등은 덮지 않음) */
+@theme {
+  --color-border: var(--color-card-border);
+  --color-input: var(--color-card-border);
+  --color-ring: var(--color-primary);
+  --color-destructive: var(--color-danger);
+  --color-destructive-foreground: #ffffff;
+  --color-muted-foreground: var(--color-muted);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--color-card);
+  --color-secondary-foreground: var(--color-foreground);
+  --color-accent-foreground: #ffffff;
+  --color-card-foreground: var(--color-foreground);
+  --color-popover: var(--color-card);
+  --color-popover-foreground: var(--color-foreground);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
 }
 
 body {
@@ -5543,7 +5596,6 @@ html.dark .dx-textarea {
   opacity: 0.7;
 }
 
-
 @media print {
   @page {
     margin: 14mm 12mm;
@@ -5857,4 +5909,3 @@ body.has-mobile-bottom-nav main {
 body.has-mobile-bottom-nav main {
   padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
 }
-
