@@ -278,35 +278,34 @@ export function InterviewSession({
       : Math.min(100, ((state.totalItems + 1) / maxItems) * 100);
 
   return (
-    <div className="grid gap-5 sm:gap-8 lg:grid-cols-[1fr_320px]">
-      <div className="space-y-4 sm:space-y-6">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0 flex-1 space-y-1.5">
-            <div className="flex items-center justify-between gap-2 text-xs text-muted">
-              <span>
-                {q?.isClaimVerification
-                  ? `경험 확인 질문 (참고용)${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`
-                  : q?.isBonusQuestion
-                    ? `보너스 질문 (참고용)${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`
-                    : `문항 ${state.totalItems + 1}/${maxItems}${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`}
-              </span>
-              <span className="tabular-nums">{Math.round(itemProgress)}%</span>
+    <div className="product-stage product-stage--wide">
+      <div className="product-stage__inner !max-w-5xl space-y-5">
+        <div className="interview-progress">
+          <div className="interview-progress__row">
+            <span className="interview-progress__label">
+              {q?.isClaimVerification
+                ? `경험 확인 질문 (참고용)${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`
+                : q?.isBonusQuestion
+                  ? `보너스 질문 (참고용)${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`
+                  : `문항 ${state.totalItems + 1}/${maxItems}${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`}
+            </span>
+            <div className="flex items-center gap-3">
+              <span className="interview-progress__pct">{Math.round(itemProgress)}%</span>
+              <button
+                type="button"
+                className="shrink-0 text-xs text-muted underline-offset-2 hover:text-foreground hover:underline"
+                onClick={() => setLeaveOpen(true)}
+              >
+                나가기
+              </button>
             </div>
-            <Progress
-              value={itemProgress}
-              className="h-1.5 bg-card-border"
-              aria-label="면접 문항 진행률"
-            />
           </div>
-          <button
-            type="button"
-            className="shrink-0 text-xs text-muted underline-offset-2 hover:text-foreground hover:underline"
-            onClick={() => setLeaveOpen(true)}
-          >
-            나가기
-          </button>
+          <Progress value={itemProgress} aria-label="면접 문항 진행률" />
         </div>
-        <div className="card-luxe p-4 sm:p-6">
+
+        <div className="grid gap-5 sm:gap-8 lg:grid-cols-[1fr_320px]">
+          <div className="space-y-4 sm:space-y-6">
+        <div className="card-luxe card-luxe--session p-4 sm:p-6">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted">
             {voiceModeEnabled && ttsStatus !== "idle" && (
@@ -373,7 +372,7 @@ export function InterviewSession({
               {voiceModeEnabled ? "보이스 모드 켜짐" : "보이스 모드 꺼짐"}
             </button>
           </div>
-          <h2 className="text-lg font-semibold leading-relaxed text-foreground sm:text-xl">
+          <h2 className="font-[family-name:var(--font-outfit)] text-lg font-bold leading-relaxed tracking-tight text-foreground sm:text-xl">
             {q ? displayQuestionText(q) : "질문을 불러오는 중…"}
           </h2>
           {isPersonalized && q?.resumeAnchors && q.resumeAnchors.length > 0 && (
@@ -406,7 +405,7 @@ export function InterviewSession({
           </div>
         )}
 
-        <div className="card-luxe p-4 sm:p-8">
+        <div className="card-luxe card-luxe--session p-4 sm:p-8">
           {processing ? (
             <LoadingRitual
               variant={state.shouldTerminate ? "report" : "interview"}
@@ -442,15 +441,18 @@ export function InterviewSession({
       </div>
 
       <aside className="space-y-4 sm:space-y-6">
-        <div className="card-luxe p-4 sm:p-5">
+        <div className="card-luxe card-luxe--session p-4 sm:p-5">
+          <p className="section-eyebrow mb-3">실시간 추정</p>
           <CompetencyBar
             states={state.competencyStates as Record<string, CompetencyState>}
             activeCompetency={q?.competency}
           />
         </div>
 
-        <div className="card-luxe hidden p-5 text-sm text-muted lg:block">
-          <p className="mb-2 font-medium text-foreground">IRT 적응형 안내</p>
+        <div className="card-luxe card-luxe--session hidden p-5 text-sm text-muted lg:block">
+          <p className="mb-2 font-[family-name:var(--font-outfit)] font-bold text-foreground">
+            IRT 적응형 안내
+          </p>
           <ul className="space-y-1 text-xs">
             <li>
               <span className="text-success">♩</span> 통과 → 더 높은 난이도 문항
@@ -467,6 +469,8 @@ export function InterviewSession({
           </p>
         </div>
       </aside>
+        </div>
+
       <LeaveConfirmDialog
         open={leaveOpen}
         onOpenChange={setLeaveOpen}
@@ -474,6 +478,7 @@ export function InterviewSession({
         description="진행 중인 세션은 중단되며, 설정 화면으로 돌아갑니다."
         leaveHref="/interview/setup"
       />
+      </div>
     </div>
   );
 }

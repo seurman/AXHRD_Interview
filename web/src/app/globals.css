@@ -4951,6 +4951,180 @@ html.dark .lp-faq-question {
   margin-bottom: 0.5rem;
 }
 
+
+/* ── Candidate product stage (interview setup/session + report 장표) ── */
+.product-stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  padding: 1.25rem 1rem 2rem;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, color-mix(in srgb, var(--color-primary) 18%, transparent), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 0%, color-mix(in srgb, var(--color-gold) 16%, transparent), transparent 50%),
+    linear-gradient(165deg, color-mix(in srgb, var(--color-background) 88%, var(--color-primary) 12%) 0%, var(--color-background) 55%, color-mix(in srgb, var(--color-background) 92%, var(--color-accent) 8%) 100%);
+}
+.product-stage__inner {
+  position: relative;
+  z-index: 1;
+  margin-inline: auto;
+  max-width: 42rem;
+}
+.product-stage--wide .product-stage__inner {
+  max-width: 48rem;
+}
+.product-stage__kicker {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+.locale-ko .product-stage__kicker {
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-size: 0.8rem;
+}
+.product-stage__title {
+  margin-top: 0.35rem;
+  font-family: var(--font-outfit), var(--font-sans);
+  font-size: clamp(1.65rem, 3.5vw, 2.15rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-foreground);
+  line-height: 1.2;
+}
+.product-stage__lead {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--color-muted);
+  max-width: 36rem;
+}
+.setup-section {
+  position: relative;
+  border-radius: 1.25rem;
+  border: 1px solid var(--color-card-border);
+  border-top: 3px solid color-mix(in srgb, var(--color-gold) 55%, var(--color-card-border));
+  background: var(--color-card);
+  box-shadow: var(--shadow-luxe);
+  padding: 1.35rem 1.25rem 1.25rem;
+}
+.setup-section__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+.setup-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.setup-section__title {
+  font-family: var(--font-outfit), var(--font-sans);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  letter-spacing: -0.01em;
+}
+.interview-progress {
+  border-radius: 1rem;
+  border: 1px solid var(--color-card-border);
+  background: color-mix(in srgb, var(--color-card) 90%, transparent);
+  padding: 0.75rem 1rem;
+  box-shadow: var(--shadow-luxe);
+}
+.interview-progress__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
+}
+.interview-progress__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+.interview-progress__pct {
+  font-family: var(--font-outfit), var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-gold);
+  font-variant-numeric: tabular-nums;
+}
+.interview-progress [data-slot="progress"] {
+  height: 0.4rem;
+  background: color-mix(in srgb, var(--color-card-border) 85%, transparent);
+}
+.interview-progress [data-slot="progress-indicator"] {
+  background: linear-gradient(90deg, var(--color-gold) 0%, var(--color-primary) 100%);
+}
+.card-luxe--session {
+  border-top: 3px solid color-mix(in srgb, var(--color-gold) 45%, var(--color-card-border));
+}
+.report-jangpyo-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  width: 100%;
+  height: auto !important;
+  padding: 0.35rem;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--color-card) 80%, var(--color-card-border));
+  border: 1px solid var(--color-card-border);
+}
+.report-jangpyo-tab {
+  flex: 1 1 auto;
+  min-height: 2.4rem;
+  border-radius: 9999px !important;
+  padding: 0.45rem 0.9rem !important;
+  font-size: 0.8rem !important;
+  font-weight: 650 !important;
+}
+.report-jangpyo-tab[data-state="active"],
+.report-jangpyo-tab[data-active] {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+  box-shadow: 0 6px 16px -8px rgb(47 95 238 / 0.55);
+}
+.report-slide-head {
+  margin-bottom: 1rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-gold) 28%, transparent);
+}
+.report-slide-head__eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+.locale-ko .report-slide-head__eyebrow {
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-size: 0.8rem;
+}
+.report-slide-head__title {
+  margin-top: 0.25rem;
+  font-family: var(--font-outfit), var(--font-sans);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+@media print {
+  .report-jangpyo-tabs {
+    display: none !important;
+  }
+  .report-jangpyo-print-all > * {
+    display: block !important;
+    page-break-after: always;
+  }
+  .report-jangpyo-print-all > *:last-child {
+    page-break-after: auto;
+  }
+}
+
 /* ── ARC Focus Survey (Gallup-grade immersion) ── */
 .dx-page {
   min-height: calc(100vh - 4rem);
