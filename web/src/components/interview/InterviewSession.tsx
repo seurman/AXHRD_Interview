@@ -523,13 +523,13 @@ export function InterviewSession({
             <div className="mt-3 rounded-xl border border-card-border bg-background/70 px-3 py-2 text-xs text-muted">
               <span className="font-semibold text-foreground">세션 맥락 · </span>
               {[
-                grounding.companyName ? `${grounding.companyName}` : null,
-                grounding.hasResume
+                grounding?.companyName ? `${grounding.companyName}` : null,
+                grounding?.hasResume
                   ? grounding.resumeFileName
                     ? `자소서(${grounding.resumeFileName})`
                     : "자소서 반영"
                   : null,
-                grounding.hasJd ? "채용공고 반영" : null,
+                grounding?.hasJd ? "채용공고 반영" : null,
               ]
                 .filter(Boolean)
                 .join(" · ")}

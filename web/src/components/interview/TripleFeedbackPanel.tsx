@@ -56,6 +56,7 @@ export function TripleFeedbackPanel({
       <div className="grid gap-3 sm:grid-cols-3">
         {LENS_ORDER.map((lens) => {
           const card = tripleFeedback[lens];
+          if (!card) return null;
           return (
             <article
               key={lens}
