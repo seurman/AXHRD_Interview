@@ -18,7 +18,7 @@ export type OrgActivityRow = {
 /**
  * 기관 소속 구성원 전체의 활동(모의면접·자기발견 인터뷰 완료)을 최신순으로 합쳐서 반환한다.
  * 답변 원문·점수 상세는 노출하지 않는다 — "누가 언제 어떤 역량으로 무엇을 했는지"만 보여준다
- * (기존 코호트 대시보드의 학생 요약 테이블과 동일한 공개 범위).
+ * (기존 참여 현황의 학생 요약 테이블과 동일한 공개 범위).
  */
 export async function getOrgActivityLog(
   organizationId: string,

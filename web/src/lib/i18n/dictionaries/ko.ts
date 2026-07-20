@@ -76,7 +76,7 @@ export const dictionary: Dictionary = {
     saas: {
       title: "기관",
       settings: "설정",
-      cohortDashboard: "코호트",
+      cohortDashboard: "참여 현황",
       diagnosticDashboard: "조직진단",
       candidateResults: "지원자 결과",
       members: "멤버·승인",
@@ -110,7 +110,7 @@ export const dictionary: Dictionary = {
       practice: "연습",
       org: "기관",
       more: "더보기",
-      cohort: "코호트",
+      cohort: "참여 현황",
       diagnostic: "진단",
       settings: "면접·역량",
     },
@@ -280,7 +280,7 @@ export const dictionary: Dictionary = {
       },
       org: {
         label: "Organization",
-        headline: "킷 · 진단 · 코호트",
+        headline: "킷 · 진단 · 참여 현황",
         cta: "기관 시작",
       },
     },
@@ -304,7 +304,7 @@ export const dictionary: Dictionary = {
     proof: {
       eyebrow: "Platform",
       title: "개인 성장과 기관 운영, 같은 데이터 위에서",
-      items: ["취업준비생", "대학 취업센터", "기업 채용·HR", "조직 진단·코호트"],
+      items: ["취업준비생", "대학 취업센터", "기업 채용·HR", "조직 진단·참여 현황"],
     },
     painPoints: {
       eyebrow: "Problem",
@@ -320,7 +320,7 @@ export const dictionary: Dictionary = {
           desc: "자소서 첨삭, 모의면접, 역량 관리가 각각 다른 도구에 있어 데이터가 쌓이지 않습니다.",
         },
         {
-          title: "기관 코호트 성과 측정의 어려움",
+          title: "기관 참여 현황 성과 측정의 어려움",
           desc: "완료율·역량 평균·팀별 격차를 한눈에 보기 어렵고, 리포트 작성에 시간이 듭니다.",
         },
         {
@@ -339,7 +339,7 @@ export const dictionary: Dictionary = {
           num: "1",
           title: "시작",
           desc: "개인은 가입 후 바로, 기관은 킷·진단 웨이브를 설계해 응시자를 초대합니다.",
-          points: ["회원가입 후 월 3회 무료 면접", "기관 킷·공유 링크 배포", "규모 상관없이 코호트 운영"],
+          points: ["회원가입 후 월 3회 무료 면접", "기관 킷·공유 링크 배포", "규모 상관없이 참여 현황 운영"],
         },
         {
           num: "2",
@@ -362,8 +362,8 @@ export const dictionary: Dictionary = {
         {
           num: "5",
           title: "리포트",
-          desc: "개인은 성장 곡선과 인증서를, 기관은 코호트·벤치마크 리포트를 받습니다.",
-          points: ["θ·스킬 트리·성장 곡선", "코호트 완료율·역량 평균", "웨이브 간 추이 비교"],
+          desc: "개인은 성장 곡선과 인증서를, 기관은 참여 현황·벤치마크 리포트를 받습니다.",
+          points: ["θ·스킬 트리·성장 곡선", "참여 완료율·역량 평균", "웨이브 간 추이 비교"],
         },
       ],
     },
@@ -402,7 +402,7 @@ export const dictionary: Dictionary = {
         {
           id: "org",
           label: "기관 · 대학·기업",
-          headline: "킷 설계부터 코호트·진단까지, 한 콘솔에서",
+          headline: "킷 설계부터 참여 현황·진단까지, 한 콘솔에서",
           cta: "기관 플랫폼 보기",
           steps: [
             {
@@ -412,7 +412,7 @@ export const dictionary: Dictionary = {
             },
             {
               step: "STEP 2",
-              title: "코호트 운영",
+              title: "참여 현황 운영",
               desc: "완료율·역량 평균·취약 역량을 실시간으로 봅니다.",
             },
             {
@@ -445,11 +445,11 @@ export const dictionary: Dictionary = {
       },
       org: {
         label: "기관 · 대학·기업",
-        desc: "킷 설계부터 조직 진단·코호트 지표까지",
+        desc: "킷 설계부터 조직 진단·참여 지표까지",
         items: [
           { title: "인터뷰 킷 스튜디오", desc: "문항·루브릭·공유 링크" },
           { title: "ARC Index 진단", desc: "웨이브·팀별 조직 역량 리포트" },
-          { title: "코호트 대시보드", desc: "완료율·역량 평균·취약 역량" },
+          { title: "참여 현황", desc: "완료율·역량 평균·취약 역량" },
           { title: "기관 비교", desc: "벤치마크·트렌드 (익명 집계)" },
         ],
       },
@@ -495,10 +495,10 @@ export const dictionary: Dictionary = {
     spotlight: {
       eyebrow: "Connected growth",
       title: "탐색에서 면접까지, 끊기지 않는 여정",
-      desc: "발견한 강점이 자소서와 면접 질문으로 이어지고, 답변은 역량 점수와 코호트 지표로 쌓입니다. 개인과 기관이 같은 역량 언어를 씁니다.",
+      desc: "발견한 강점이 자소서와 면접 질문으로 이어지고, 답변은 역량 점수와 참여 지표로 쌓입니다. 개인과 기관이 같은 역량 언어를 씁니다.",
       points: [
         "자소서 리뷰 → 면접 질문 → 역량 트래킹이 한 계정에 연결됩니다",
-        "기관 킷·진단 결과는 코호트·벤치마크로 집계됩니다",
+        "기관 킷·진단 결과는 참여 현황·벤치마크로 집계됩니다",
         "답변 원문은 개인에게만, 기관에는 집계 지표만 제공합니다",
       ],
       cta: "성장 여정 보기",
@@ -519,7 +519,7 @@ export const dictionary: Dictionary = {
       },
       growth: {
         title: "성장이 남습니다",
-        desc: "개인 역량 점수와 기관 코호트 지표를 숫자로 남깁니다.",
+        desc: "개인 역량 점수와 기관 참여 지표를 숫자로 남깁니다.",
       },
       ncs: {
         title: "NCS 공식 역량",
@@ -533,10 +533,10 @@ export const dictionary: Dictionary = {
     },
     enterprise: {
       eyebrow: "For universities & orgs",
-      title: "면접 킷·조직 진단·코호트를 한곳에서",
+      title: "면접 킷·조직 진단·참여 현황을 한곳에서",
       desc: "취업센터와 HR팀은 인터뷰 킷과 ARC Index 진단을 설계하고, 학생·구성원은 웹에서 연습·응답합니다. 완료율·역량 평균·팀별 리포트만 모으고, 개인 답변 원문은 지킵니다.",
       cta: "기관으로 시작하기",
-      imageAlt: "기관 코호트·진단 대시보드",
+      imageAlt: "기관 참여 현황·진단 대시보드",
     },
     cta: {
       title: "지금, 시작.",
@@ -563,7 +563,7 @@ export const dictionary: Dictionary = {
         {
           icon: "university",
           title: "대학 취업센터",
-          desc: "코호트 완료율 · 역량 히트맵 리포트",
+          desc: "참여 완료율 · 역량 히트맵 리포트",
           href: "/org/setup",
         },
         {
@@ -611,7 +611,7 @@ export const dictionary: Dictionary = {
         },
         {
           q: "기관 도입 절차와 기간은 어떻게 되나요?",
-          a: "도입 문의 후 인터뷰 킷 설정, 코호트 등록, 학습자 배포까지 통상 1~2주 내에 진행됩니다.",
+          a: "도입 문의 후 인터뷰 킷 설정, 참여 등록, 학습자 배포까지 통상 1~2주 내에 진행됩니다.",
         },
         {
           q: "채점 기준이 공정한가요?",
@@ -734,14 +734,14 @@ export const dictionary: Dictionary = {
       organizations: {
         eyebrow: "Organizations",
         headline: "기관 플랫폼",
-        subtitle: "인터뷰 킷, 코호트, 조직 진단을 한 콘솔에서 운영합니다.",
+        subtitle: "인터뷰 킷, 참여 현황, 조직 진단을 한 콘솔에서 운영합니다.",
         highlights: [
           { title: "인터뷰 킷", desc: "문항·루브릭·공유 링크를 설계합니다." },
-          { title: "코호트", desc: "완료율·역량 평균을 집계합니다." },
+          { title: "참여 현황", desc: "완료율·역량 평균을 집계합니다." },
           { title: "프라이버시", desc: "개인 답변 원문은 보호, 집계만 공유합니다." },
         ],
         capabilitiesTitle: "포함 모듈",
-        capabilities: ["인터뷰 킷 스튜디오", "코호트 대시보드", "ARC Index 진단", "기관 벤치마크"],
+        capabilities: ["인터뷰 킷 스튜디오", "참여 현황", "ARC Index 진단", "기관 벤치마크"],
         ctaPrimary: "기관 시작",
         ctaSecondaryLabel: "요금제",
         ctaSecondaryHref: "/pricing",

@@ -34,7 +34,7 @@ export default async function OrgMemberDetailPage({
     return (
       <div className="mx-auto max-w-2xl space-y-6">
         <Link href="/org/dashboard" className="text-sm text-accent hover:underline">
-          ← 코호트 대시보드
+          ← 참여 현황
         </Link>
         <div className="card-luxe p-8 text-center text-muted">
           <p className="font-medium text-foreground">{member.name}</p>
@@ -51,7 +51,7 @@ export default async function OrgMemberDetailPage({
     <div className="mx-auto max-w-5xl space-y-8">
       <div>
         <Link href="/org/dashboard" className="text-sm text-accent hover:underline">
-          ← 코호트 대시보드
+          ← 참여 현황
         </Link>
         <p className="mt-4 text-xs font-medium uppercase tracking-widest text-gold">
           Coaching view · read-only

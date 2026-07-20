@@ -134,7 +134,7 @@ export function AdminDiagnosticCmsPanel({
           <>
             Instrument · 크로스-기관 Campaign 목록 · Report Studio. 일상 운영은{" "}
             <strong className="font-medium text-foreground">기관 → 조직진단 웨이브</strong>에서
-            합니다(코호트·인터뷰 킷과 동일).
+            합니다(참여 현황·인터뷰 킷과 동일).
           </>
         }
         actions={
@@ -225,7 +225,7 @@ export function AdminDiagnosticCmsPanel({
       {tab === "campaign" && (
       <AdminSection
         title="진단 캠페인 (크로스-기관)"
-        description="전체 기관 웨이브 목록. 클릭하면 기관 → 웨이브 상세로 이동합니다. 생성은 모달 마법사, 상세·리포트는 별도 페이지(코호트·킷과 동일)."
+        description="전체 기관 웨이브 목록. 클릭하면 기관 → 웨이브 상세로 이동합니다. 생성은 모달 마법사, 상세·리포트는 별도 페이지(참여 현황·킷과 동일)."
         actions={
           <div className="flex flex-wrap gap-2">
             <button

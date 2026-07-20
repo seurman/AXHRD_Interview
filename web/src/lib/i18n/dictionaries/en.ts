@@ -76,7 +76,7 @@ export const dictionary: Dictionary = {
     saas: {
       title: "Organization",
       settings: "Settings",
-      cohortDashboard: "Cohort",
+      cohortDashboard: "Participation",
       diagnosticDashboard: "Diagnostic",
       candidateResults: "Candidate results",
       members: "Members",
@@ -110,7 +110,7 @@ export const dictionary: Dictionary = {
       practice: "Practice",
       org: "Org",
       more: "More",
-      cohort: "Cohort",
+      cohort: "Participation",
       diagnostic: "Diagnostic",
       settings: "Settings",
     },

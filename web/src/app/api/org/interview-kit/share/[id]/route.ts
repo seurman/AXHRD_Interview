@@ -68,7 +68,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (typeof body.label === "string") {
     const label = body.label.trim();
     if (!label) {
-      return NextResponse.json({ error: "코호트/캠페인 이름을 입력해 주세요." }, { status: 400 });
+      return NextResponse.json({ error: "캠페인 이름을 입력해 주세요." }, { status: 400 });
     }
     if (label.length > 80) {
       return NextResponse.json({ error: "이름이 너무 깁니다." }, { status: 400 });

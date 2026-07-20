@@ -29,7 +29,7 @@ export default async function OrgInterviewKitPage() {
         </Link>
         {" · "}
         <Link href="/org/dashboard" className="text-accent hover:underline">
-          코호트 대시보드
+          참여 현황
         </Link>
       </p>
     </div>

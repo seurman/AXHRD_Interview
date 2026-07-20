@@ -177,7 +177,7 @@ export function KitShareManager({ organizationId }: Props) {
       <div>
         <h2 className="font-semibold text-foreground">공유 링크로 배포</h2>
         <p className="mt-1 text-xs leading-relaxed text-muted">
-          코호트/캠페인 이름과 포함할 역량을 정하면 전용 링크가 생성됩니다. 이 링크를
+          캠페인 이름과 포함할 역량을 정하면 전용 링크가 생성됩니다. 이 링크를
           받은 사람은 기관 가입 코드 없이(로그인만 하면) 이 킷 설정으로 면접을 시작할 수
           있습니다. 킷 내용을 이후에 수정해도 이미 발급된 링크에 그대로 반영됩니다.
         </p>
@@ -193,7 +193,7 @@ export function KitShareManager({ organizationId }: Props) {
         <input
           value={newLabel}
           onChange={(e) => setNewLabel(e.target.value)}
-          placeholder="코호트/캠페인 이름 (예: 2026 상반기 신입 공채)"
+          placeholder="캠페인 이름 (예: 2026 상반기 신입 공채)"
           className="input-luxe w-full text-sm"
         />
         <div className="flex flex-wrap gap-1.5">

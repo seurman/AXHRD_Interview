@@ -160,7 +160,7 @@ export default async function AdminOrgHubPage({ params }: Props) {
             {hub.entitlements.interview && (
               <AdminHubTile
                 href={`${hubBase}/cohort`}
-                title="코호트 대시보드"
+                title="참여 현황"
                 description="학생 면접 현황·역량 집계"
                 meta={
                   hub.cohort?.overallAvgPercentile != null
@@ -184,7 +184,7 @@ export default async function AdminOrgHubPage({ params }: Props) {
                 href={`${hubBase}/waves`}
                 title="조직진단 웨이브"
                 description="기관 → 웨이브 → 사업부·팀 구조 · 응답 링크 · 리포트"
-                meta="코호트·인터뷰 킷과 같은 기관 허브 진입"
+                meta="참여 현황·인터뷰 킷과 같은 기관 허브 진입"
                 icon={Activity}
                 className="md:col-span-2"
               />

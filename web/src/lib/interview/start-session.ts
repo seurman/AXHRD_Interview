@@ -88,7 +88,7 @@ export type StartSessionOpts = {
   kitOrganizationId?: string | null;
   /** 선택 가능한 역량 코드(NCS·Global·데모 재료화 코드 모두 허용) */
   allowedCompetencies?: readonly string[];
-  /** 이 세션이 어느 공유 링크를 통해 시작됐는지 기록(코호트 집계용) */
+  /** 이 세션이 어느 공유 링크를 통해 시작됐는지 기록(참여 집계용) */
   orgKitShareId?: string | null;
   /**
    * true면 CompetencyProgress가 없어도 upsert하고,

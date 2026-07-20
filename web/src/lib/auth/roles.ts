@@ -11,7 +11,7 @@
  *
  * 기관(orgRole) — 고객사 테넌트 (Salesforce Standard User / Manager 유사)
  *   MEMBER   구성원 — 학생·직장인·지원자
- *   STAFF    담당자 — 코호트 조회
+ *   STAFF    담당자 — 참여 현황 조회
  *   ADMIN    기관 관리자
  */
 
@@ -113,5 +113,5 @@ export function describeUserRoles(user: RoleUser): string {
   return parts.join(" · ");
 }
 
-/** 코호트 집계 대상 orgRole 값 */
+/** 참여 집계 대상 orgRole 값 */
 export const COHORT_MEMBER_ROLES = ["MEMBER", "STUDENT"] as const;

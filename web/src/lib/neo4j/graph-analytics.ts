@@ -1,5 +1,5 @@
 /**
- * 그래프 확장 질의 — 역량 추천, JD↔claim 매칭, 후보 증거 탐색, 코호트 약점 집계.
+ * 그래프 확장 질의 — 역량 추천, JD↔claim 매칭, 후보 증거 탐색, 참여 현황 약점 집계.
  */
 
 import { queryCypher } from "@/lib/neo4j/client";
@@ -210,7 +210,7 @@ export async function fetchCandidateGraphFromNeo4j(params: {
   };
 }
 
-/** 코호트 진단용 — Neo4j에서 역량별 SUPPORT 대비 약한 DEMONSTRATED 비율 */
+/** 참여 현황 진단용 — Neo4j에서 역량별 SUPPORT 대비 약한 DEMONSTRATED 비율 */
 export async function fetchCohortWeakDemoStats(): Promise<
   Array<{ code: string; label: string; claimCount: number; weakDemoCount: number; ratio: number }>
 > {

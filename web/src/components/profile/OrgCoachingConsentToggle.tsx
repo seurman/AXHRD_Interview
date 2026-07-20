@@ -43,7 +43,7 @@ export function OrgCoachingConsentToggle({ organizationName, enabled }: Props) {
             {organizationName}이 내 상세 역량 리포트를 볼 수 있도록 허용
           </p>
           <p className="mt-2 text-xs leading-relaxed text-muted">
-            기관 담당자는 코호트 평균 통계는 항상 볼 수 있어요. 이 토글을 켜면 담당자가 내
+            기관 담당자는 참여 평균 통계는 항상 볼 수 있어요. 이 토글을 켜면 담당자가 내
             개인 리포트(역량별 점수, 답변 피드백)까지 볼 수 있어요. 언제든 끌 수 있습니다.
           </p>
         </div>

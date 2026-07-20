@@ -18,8 +18,8 @@ export const ORG_PRODUCTS: OrgProductEntitlement[] = [
     key: "interview",
     label: "면접",
     shortLabel: "면접",
-    description: "코호트 대시보드·모의면접 세션·학생 가입 코드",
-    tenantMenu: "코호트 · 면접 기록",
+    description: "참여 현황·모의면접 세션·학생 가입 코드",
+    tenantMenu: "참여 현황 · 면접 기록",
   },
   {
     key: "competency",

@@ -26,7 +26,7 @@ export function OrgCandidateScreeningGate({
             조직진단으로 이동
           </Link>
           <Link href="/org/dashboard" className="text-sm text-accent hover:underline">
-            코호트 대시보드
+            참여 현황
           </Link>
         </div>
       </div>

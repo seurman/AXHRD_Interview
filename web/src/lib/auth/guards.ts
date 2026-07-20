@@ -30,7 +30,7 @@ export function assertResourceOwner(resourceUserId: string, currentUserId: strin
   if (resourceUserId !== currentUserId) notFound();
 }
 
-/** 코호트 대시보드 등 기관 담당자 전용 화면 */
+/** 참여 현황 등 기관 담당자 전용 화면 */
 export async function requireOrgStaff(nextPath?: string) {
   const user = await requirePageUser(nextPath);
   if (isOrgMemberUser(user) || !user.organizationId) notFound();

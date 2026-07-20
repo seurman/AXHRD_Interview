@@ -18,7 +18,7 @@ import {
 import { isBusinessAdminUser } from "@/lib/auth/platform-ops";
 
 export type AccessContext = {
-  /** 면접·코호트 SKU */
+  /** 면접·참여 현황 SKU */
   interviewEnabled?: boolean;
   /** 역량평가·맞춤 역량(saasPersonalizationEnabled) */
   tenantPersonalizationEnabled?: boolean;

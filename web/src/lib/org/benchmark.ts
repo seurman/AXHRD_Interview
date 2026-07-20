@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 /**
  * 기관(학교) 간 퍼포먼스 비교.
  *
- * 프라이버시 원칙(코호트 대시보드와 동일): 개인 답변 원문은 절대 다루지 않고
+ * 프라이버시 원칙(참여 현황과 동일): 개인 답변 원문은 절대 다루지 않고
  * 집계 수치만 사용한다. 추가로 여기서는 "기관 간" 비교이므로 한 단계 더 —
  * 담당자(ADMIN/STAFF) 화면에서는 다른 학교의 이름을 노출하지 않고 익명화된
  * 평균/순위만 보여준다. 실명이 붙은 전체 비교표는 슈퍼어드민 전용 화면에서만 제공한다.
@@ -36,7 +36,7 @@ function average(nums: number[]): number | null {
   return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null;
 }
 
-/** 기관 하나의 집계 통계 — 코호트 대시보드(lib/org/cohort.ts)와 별개로,
+/** 기관 하나의 집계 통계 — 참여 현황(lib/org/cohort.ts)와 별개로,
  *  전체 기관을 순회하며 가볍게 계산하기 위한 최소 쿼리 버전. */
 export async function computeOrgAggregate(organizationId: string): Promise<OrgAggregate> {
   const students = await prisma.user.findMany({
@@ -77,7 +77,7 @@ export async function computeOrgAggregate(organizationId: string): Promise<OrgAg
       )
     : null;
 
-  // 학생별 최신 역량 스냅샷만 남긴다 (코호트 대시보드와 동일한 방식)
+  // 학생별 최신 역량 스냅샷만 남긴다 (참여 현황과 동일한 방식)
   const latestByUserCompetency = new Map<
     string,
     { competency: string; theta: number; percentile: number }
