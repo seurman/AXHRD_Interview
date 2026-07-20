@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { canOrgAcceptMember } from "@/lib/org/contract";
+import {
+  createMembershipRequest,
+  membershipErrorResponse,
+} from "@/lib/org/membership";
 
-/** 학생/구직자가 가입 코드를 입력해 기관에 소속된다 (STUDENT 권한). */
+/**
+ * 가입 코드로 소속 요청 — 승인 필수 기관은 PENDING, 아니면 즉시 소속.
+ * (하위호환: 기존 /api/org/join 유지)
+ */
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) {
@@ -15,14 +20,7 @@ export async function POST(req: Request) {
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } }
-    );
-  }
-
-  if (user.organizationId) {
-    return NextResponse.json(
-      { error: "이미 소속된 기관이 있습니다." },
-      { status: 409 }
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
     );
   }
 
@@ -32,30 +30,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "가입 코드를 입력해 주세요." }, { status: 400 });
   }
 
-  const org = await prisma.organization.findUnique({
-    where: { joinCode: rawCode },
-    include: {
-      subscriptions: {
-        where: { status: { not: "CANCELED" } },
-        select: { planTier: true },
-        take: 1,
-        orderBy: { updatedAt: "desc" },
-      },
-    },
-  });
-  if (!org) {
-    return NextResponse.json({ error: "유효하지 않은 가입 코드입니다." }, { status: 404 });
+  try {
+    const result = await createMembershipRequest({
+      userId: user.id,
+      joinCode: rawCode,
+      message: typeof body.message === "string" ? body.message : null,
+    });
+    if (result.mode === "joined") {
+      return NextResponse.json({
+        organizationName: result.organization.name,
+        mode: "joined",
+      });
+    }
+    return NextResponse.json({
+      organizationName: result.organization.name,
+      mode: "pending",
+      requestId: result.request.id,
+      message: "담당자 승인 대기 중입니다. 승인되면 좌석이 배정됩니다.",
+    });
+  } catch (e) {
+    const err = membershipErrorResponse(e);
+    return NextResponse.json(err.body, { status: err.status });
   }
-
-  const accept = await canOrgAcceptMember(org);
-  if (!accept.ok) {
-    return NextResponse.json({ error: accept.reason }, { status: 409 });
-  }
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { organizationId: org.id, orgRole: "MEMBER" },
-  });
-
-  return NextResponse.json({ organizationName: org.name });
 }

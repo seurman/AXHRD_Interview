@@ -175,6 +175,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
   }
 
+  if (typeof body.requireMembershipApproval === "boolean") {
+    data.requireMembershipApproval = body.requireMembershipApproval;
+  }
+
   if (typeof body.saasPersonalizationEnabled === "boolean") {
     data.saasPersonalizationEnabled = body.saasPersonalizationEnabled;
     data.saasPersonalizationEnabledAt = body.saasPersonalizationEnabled ? new Date() : null;

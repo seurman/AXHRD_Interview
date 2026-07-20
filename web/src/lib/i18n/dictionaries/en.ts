@@ -79,6 +79,7 @@ export const dictionary: Dictionary = {
       cohortDashboard: "Cohort",
       diagnosticDashboard: "Diagnostic",
       candidateResults: "Candidate results",
+      members: "Members",
       settingsHub: "Interview & competency",
       interviewKit: "Interview kit",
     },

@@ -2,6 +2,18 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 기관 멤버 승인 · 인별 좌석 (2026-07-20)
+
+Slack/Notion 패턴: 개인이 기관 선택·코드 입력 → **담당자 승인** 후에만 `organizationId` 배정·좌석 집계.
+기본값 `requireMembershipApproval=true`.
+
+| 경로 | 역할 |
+|------|------|
+| `/org/setup` | 기관 검색·코드·승인 대기 |
+| `/org/members` | 승인 큐 · 멤버 · 좌석 사용량 |
+| `OrgMembershipRequest` | PENDING→APPROVED/REJECTED |
+| 좌석 | 멤버 + 대기 = 예약 · 승인 후 과금 인원 |
+
 ## 최근 작업 — ARC Index 조직진단 단가 (2026-07-19)
 
 글로벌 EX(Culture Amp/Qualtrics PEPM·연간) + 국내 진단(웨이브 패키지·응답 단가) 벤치마크로

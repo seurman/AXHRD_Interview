@@ -84,6 +84,9 @@ export default async function OrgSettingsPage() {
       )}
 
       <p className="text-center text-xs text-muted">
+        <Link href="/org/members" className="mr-4 inline-flex items-center gap-1 text-accent hover:underline">
+          멤버 · 승인
+        </Link>
         <Link href="/org/dashboard" className="inline-flex items-center gap-1 text-accent hover:underline">
           <BarChart3 className="h-3.5 w-3.5" />
           코호트 대시보드

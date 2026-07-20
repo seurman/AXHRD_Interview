@@ -180,6 +180,11 @@ model Organization {
    */
   maxSeats                     Int?
   /**
+   * true면 가입 코드/기관 선택 시 즉시 소속되지 않고 담당자 승인 대기(인별 좌석 과금).
+   * Slack Workspace "Require admin approval" 패턴.
+   */
+  requireMembershipApproval    Boolean   @default(true)
+  /**
    * 슈퍼어드민 메모
    */
   adminNotes                   String?
@@ -187,6 +192,7 @@ model Organization {
   updatedAt                    DateTime  @updatedAt
 
   members             User[]
+  membershipRequests  OrgMembershipRequest[]
   subscriptions       Subscription[]
   interviewKits       OrgInterviewKit[]
   interviewKitShares  OrgInterviewKitShare[]
@@ -215,6 +221,37 @@ model Organization {
   @@index([status])
   @@index([status, name(sort: Asc)])
   @@index([status, createdAt(sort: Asc)])
+}
+
+enum OrgMembershipRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELED
+  EXPIRED
+}
+
+/**
+ * 개인 → 기관 소속 요청. 승인 전에는 User.organizationId를 건드리지 않아
+ * 인별 좌석(과금)은 승인된 멤버만 집계한다. (Slack/Notion 승인 큐 패턴)
+ */
+model OrgMembershipRequest {
+  id             String                      @id @default(cuid())
+  organizationId String
+  organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User                        @relation("MembershipRequests", fields: [userId], references: [id], onDelete: Cascade)
+  status         OrgMembershipRequestStatus  @default(PENDING)
+  message        String?
+  rejectReason   String?
+  reviewedById   String?
+  reviewedBy     User?                       @relation("MembershipReviews", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt     DateTime?
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
+
+  @@index([organizationId, status, createdAt])
+  @@index([userId, status])
 }
 
 // ── User ──
@@ -277,6 +314,8 @@ model User {
   orgAssessmentSharesCreated   OrgAssessmentShare[]   @relation("OrgAssessmentShareCreatedBy")
   assessmentTaskSourcesCreated AssessmentTaskSource[] @relation("AssessmentTaskSourceCreatedBy")
   surveyResponses              SurveyResponse[]
+  membershipRequests           OrgMembershipRequest[] @relation("MembershipRequests")
+  membershipReviews            OrgMembershipRequest[] @relation("MembershipReviews")
 
   @@index([organizationId])
   @@index([platformRole])

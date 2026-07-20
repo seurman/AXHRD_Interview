@@ -159,7 +159,10 @@ function filterNavLinks<T extends { capability: CapabilityId; href: string; labe
 
 export type SaasNavConfig = {
   titleKey: "saas";
-  links: { href: string; labelKey: "cohortDashboard" | "diagnosticDashboard" | "candidateResults" }[];
+  links: {
+    href: string;
+    labelKey: "cohortDashboard" | "diagnosticDashboard" | "candidateResults" | "members";
+  }[];
   settingsTitleKey: "settings";
   settingsLinks: { href: string; labelKey: "settingsHub" | "interviewKit" }[];
 };

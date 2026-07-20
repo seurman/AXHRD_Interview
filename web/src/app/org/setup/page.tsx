@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requirePageUser } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { OrgSetupForm } from "@/components/org/OrgSetupForm";
+import { getPendingRequestForUser } from "@/lib/org/membership";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export default async function OrgSetupPage() {
           </p>
           {isStaff && org?.status === "PENDING" && (
             <p className="mt-2 text-sm text-muted">
-              기관 생성 요청이 승인 대기 중입니다. 승인 후 코호트 대시보드를 이용하실 수 있습니다.
+              기관 생성 요청이 승인 대기 중입니다. 승인 후 멤버·승인 메뉴를 이용할 수 있습니다.
             </p>
           )}
           {isStaff && org?.status === "REJECTED" && (
@@ -35,25 +36,43 @@ export default async function OrgSetupPage() {
             </p>
           )}
           {isStaff && (
-            <Link href="/org/dashboard" className="btn-primary mt-4 inline-block">
-              코호트 대시보드 보기 →
-            </Link>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link href="/org/members" className="btn-primary inline-block">
+                멤버 · 승인 →
+              </Link>
+              <Link href="/org/dashboard" className="btn-secondary inline-block">
+                코호트 대시보드
+              </Link>
+            </div>
           )}
         </div>
       </div>
     );
   }
 
+  const pending = await getPendingRequestForUser(user.id);
+
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">기관 연결</h1>
         <p className="mt-2 text-sm text-muted">
-          대학 취업센터 등 소속 기관이 있으신가요? 학생이라면 코드로 가입하시고,
-          담당자시라면 기관을 새로 만들어 코호트 현황을 확인하세요.
+          회원가입 후 소속 기관을 선택하세요. 담당자 승인이 끝나면 좌석이 배정되어 인별 과금
+          대상이 됩니다.
         </p>
       </div>
-      <OrgSetupForm />
+      <OrgSetupForm
+        initialPending={
+          pending
+            ? {
+                id: pending.id,
+                organization: pending.organization,
+                createdAt: pending.createdAt.toISOString(),
+                message: pending.message,
+              }
+            : null
+        }
+      />
     </div>
   );
 }

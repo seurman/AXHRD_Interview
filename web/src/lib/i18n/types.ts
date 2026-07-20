@@ -83,6 +83,7 @@ export type Dictionary = {
       cohortDashboard: string;
       diagnosticDashboard: string;
       candidateResults: string;
+      members: string;
       settingsHub: string;
       interviewKit: string;
     };
