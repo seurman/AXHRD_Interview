@@ -123,14 +123,14 @@ export function OrgPeopleDashboardClient({
           />
         </section>
       ) : (
-        <section className="grid gap-3 sm:grid-cols-3">
-          <Kpi label="접속 중" value={String(s.onlineCount)} hint="최근 24시간" />
-          <Kpi
+        <section className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-card-border bg-card-border">
+          <KpiStrip label="접속 중" value={String(s.onlineCount)} hint="최근 24시간" />
+          <KpiStrip
             label="완료 면접"
             value={String(s.totalCompletedInterviews)}
             hint="누적"
           />
-          <Kpi
+          <KpiStrip
             label="평균 백분위"
             value={s.overallAvgPercentile != null ? String(s.overallAvgPercentile) : "—"}
             hint={`동의 ${s.consentCount}명`}
@@ -138,11 +138,11 @@ export function OrgPeopleDashboardClient({
         </section>
       )}
 
-      <section className="rounded-2xl border border-card-border bg-card p-4 sm:p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+      <section className="overflow-hidden rounded-xl border border-card-border bg-card">
+        <div className="flex flex-col gap-3 border-b border-card-border px-4 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-5">
           <div>
-            <h2 className="text-sm font-semibold text-foreground">구성원 명단</h2>
-            <p className="text-xs text-muted">
+            <h2 className="text-sm font-semibold tracking-tight text-foreground">구성원 명단</h2>
+            <p className="mt-0.5 text-xs text-muted">
               상세 시계열·코칭은 본인 동의 후 「상세」에서 확인합니다.
             </p>
           </div>
@@ -162,7 +162,7 @@ export function OrgPeopleDashboardClient({
           </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-3 text-xs">
+        <div className="flex flex-wrap gap-3 px-4 py-3 text-xs sm:px-5">
           <label className="flex items-center gap-2 text-muted">
             <input
               type="checkbox"
@@ -187,21 +187,21 @@ export function OrgPeopleDashboardClient({
         </div>
 
         {members.length === 0 ? (
-          <p className="mt-8 text-center text-sm text-muted">
+          <p className="px-4 py-10 text-center text-sm text-muted sm:px-5">
             아직 소속 계정이 없습니다. 「승인·좌석」 탭에서 가입을 승인해 주세요.
           </p>
         ) : (
           <>
-            <div className="mt-4 hidden overflow-x-auto lg:block">
+            <div className="hidden overflow-x-auto lg:block">
               <table className="w-full min-w-[720px] text-left text-sm">
                 <thead>
-                  <tr className="border-b border-card-border text-[11px] uppercase tracking-wide text-muted">
-                    <th className="py-2 pr-3 font-medium">구성원</th>
-                    <th className="py-2 pr-3 font-medium">면접</th>
-                    <th className="py-2 pr-3 font-medium">역량</th>
-                    <th className="py-2 pr-3 font-medium">추이</th>
-                    <th className="py-2 pr-3 font-medium">접속</th>
-                    <th className="py-2 font-medium" />
+                  <tr className="border-y border-card-border bg-background/40 text-[11px] uppercase tracking-wide text-muted">
+                    <th className="px-5 py-2.5 font-medium">구성원</th>
+                    <th className="py-2.5 pr-3 font-medium">면접</th>
+                    <th className="py-2.5 pr-3 font-medium">역량</th>
+                    <th className="py-2.5 pr-3 font-medium">추이</th>
+                    <th className="py-2.5 pr-3 font-medium">접속</th>
+                    <th className="py-2.5 pr-5 font-medium" />
                   </tr>
                 </thead>
                 <tbody>
@@ -211,9 +211,9 @@ export function OrgPeopleDashboardClient({
                 </tbody>
               </table>
             </div>
-            <ul className="mt-4 space-y-3 lg:hidden">
+            <ul className="space-y-0 divide-y divide-card-border px-4 py-1 lg:hidden sm:px-5">
               {members.map((m) => (
-                <li key={m.id}>
+                <li key={m.id} className="py-3">
                   <MemberCard member={m} />
                 </li>
               ))}
@@ -230,6 +230,18 @@ function Kpi({ label, value, hint }: { label: string; value: string; hint: strin
     <div className="rounded-2xl border border-card-border bg-card p-5 shadow-luxe">
       <p className="text-[11px] font-medium uppercase tracking-wider text-muted">{label}</p>
       <p className="mt-2 font-[family-name:var(--font-ibm-plex)] text-3xl font-semibold tabular-nums text-foreground">
+        {value}
+      </p>
+      <p className="mt-1 text-xs text-muted">{hint}</p>
+    </div>
+  );
+}
+
+function KpiStrip({ label, value, hint }: { label: string; value: string; hint: string }) {
+  return (
+    <div className="bg-card px-4 py-4 sm:px-5">
+      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted">{label}</p>
+      <p className="mt-2 font-[family-name:var(--font-ibm-plex)] text-2xl font-semibold tabular-nums text-foreground">
         {value}
       </p>
       <p className="mt-1 text-xs text-muted">{hint}</p>
@@ -304,7 +316,7 @@ function MemberCard({ member: m }: { member: PeopleMemberRow }) {
   return (
     <Link
       href={`/org/people/${m.id}`}
-      className="block rounded-2xl border border-card-border bg-background/60 p-4 transition hover:border-primary/30"
+      className="block rounded-xl border border-card-border bg-background/40 p-3.5 transition hover:border-foreground/20"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
