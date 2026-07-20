@@ -55,7 +55,13 @@ export function ArcRadar({
             />
             <Tooltip
               formatter={(v: number) => [formatScore(v), "점수"]}
-              contentStyle={{ fontSize: 12 }}
+              contentStyle={{
+                background: "var(--color-card)",
+                border: "1px solid var(--color-card-border)",
+                borderRadius: 12,
+                fontSize: 12,
+                color: "var(--color-foreground)",
+              }}
             />
             <Radar
               dataKey="value"
@@ -63,7 +69,8 @@ export function ArcRadar({
               fill={fill}
               fillOpacity={fillOpacity}
               strokeWidth={2}
-              isAnimationActive={false}
+              isAnimationActive
+              animationDuration={700}
             />
           </RadarChart>
         </ResponsiveContainer>
