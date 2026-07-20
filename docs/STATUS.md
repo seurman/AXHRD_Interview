@@ -2,6 +2,18 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 웹 런타임 오류 방어 (2026-07-20)
+
+역량 피드백·답변 코칭 화면의 null/비배열 payload로 인한 크래시 방어.
+
+| 항목 | 내용 |
+|------|------|
+| 역량 피드백 JSON | Gemini 부분 응답도 `strengths`/`improvements`/`suggestions`/`highlights` 정규화 |
+| 피드백 페이지 | 배열 가드 + 빈 목록 폴백 |
+| 답변 코칭 | `AnswerFeedbackPanel` `keyPoints` null-safe · claimVerification 응답 스키마 보완 |
+| Setup | `SetupForm` Suspense (`useSearchParams`) |
+| 차수 요약 | `RoundBriefPanel` / `buildRoundNarrative` 부분 객체 안전 |
+
 ## 최근 작업 — 면접 Stage 3·4 UX (2026-07-20)
 
 코칭 차별화 + 성장·플랫폼. 

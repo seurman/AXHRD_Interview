@@ -61,7 +61,7 @@ export function TrialFeedbackPanel({
 
       <p className="text-sm leading-relaxed text-foreground">{feedback.coaching}</p>
 
-      {feedback.keyPoints.length > 0 && (
+      {Array.isArray(feedback.keyPoints) && feedback.keyPoints.length > 0 && (
         <ul className="space-y-1.5 rounded-xl border border-card-border bg-background/40 p-4 text-sm text-muted">
           {feedback.keyPoints.map((point) => (
             <li key={point} className="leading-relaxed">
@@ -71,7 +71,7 @@ export function TrialFeedbackPanel({
         </ul>
       )}
 
-      {feedback.evidence.length > 0 && (
+      {Array.isArray(feedback.evidence) && feedback.evidence.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">답변 근거</p>
           {feedback.evidence.slice(0, 2).map((item) => (

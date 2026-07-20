@@ -56,11 +56,20 @@ export default async function CompetencyFeedbackPage({
 
   const fb = progress.feedback;
   const dimensions = fb.dimensions as Record<string, number> | null;
-  const strengths = fb.strengths as string[];
-  const improvements = fb.improvements as string[];
-  const suggestions = fb.suggestions as string[];
-  const highlights =
-    (fb.highlights as Array<{ quote: string; note: string; type?: "strength" | "growth" }> | null) ?? [];
+  const asStringList = (value: unknown): string[] =>
+    Array.isArray(value)
+      ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+      : typeof value === "string" && value.trim()
+        ? [value.trim()]
+        : [];
+  const strengths = asStringList(fb.strengths);
+  const improvements = asStringList(fb.improvements);
+  const suggestions = asStringList(fb.suggestions);
+  const highlights = Array.isArray(fb.highlights)
+    ? (fb.highlights as Array<{ quote: string; note: string; type?: "strength" | "growth" }>).filter(
+        (h) => h && typeof h.quote === "string" && typeof h.note === "string",
+      )
+    : [];
   const rewriteExample = fb.rewriteExample;
   const personaAlignmentNote = fb.personaAlignmentNote;
 
@@ -259,15 +268,20 @@ export default async function CompetencyFeedbackPage({
         <section className="rounded-2xl border border-success/20 bg-success/5 p-5">
           <h3 className="mb-2 font-medium text-success">강점</h3>
           <ul className="space-y-1 text-sm text-foreground">
-            {strengths.map((s) => (
+            {(strengths.length > 0 ? strengths : ["이번 세션에서 확인된 강점을 더 쌓아 보세요."]).map(
+              (s) => (
               <li key={s}>✓ {s}</li>
-            ))}
+              ),
+            )}
           </ul>
         </section>
         <section className="rounded-2xl border border-warning/20 bg-warning/5 p-5">
           <h3 className="mb-2 font-medium text-warning">개선점</h3>
           <ul className="space-y-1 text-sm text-foreground">
-            {improvements.map((s) => (
+            {(improvements.length > 0
+              ? improvements
+              : ["다음 답변에서 수치·본인 행동·결과를 한 문장씩 더 넣어 보세요."]
+            ).map((s) => (
               <li key={s}>↑ {s}</li>
             ))}
           </ul>
@@ -281,7 +295,10 @@ export default async function CompetencyFeedbackPage({
       <section className="card-luxe p-5">
         <h3 className="mb-2 font-medium text-foreground">다음 연습</h3>
         <ul className="space-y-1 text-sm text-muted">
-          {suggestions.map((s) => (
+          {(suggestions.length > 0
+            ? suggestions
+            : ["같은 역량을 한 번 더 연습하며 STAR로 90초 안에 말해 보세요."]
+          ).map((s) => (
             <li key={s}>→ {s}</li>
           ))}
         </ul>

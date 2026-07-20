@@ -46,10 +46,23 @@ export function buildDashboardNarrative(input: {
 }
 
 export function buildRoundNarrative(brief: RoundBrief): string {
-  const comps = brief.competencies.map((c) => competencyLabel(c)).join(" · ");
-  const strength = brief.strengthBullets[0]?.replace(/^\[[^\]]+\]\s*/, "") ?? brief.strengthsText;
+  const competencies = Array.isArray(brief.competencies) ? brief.competencies : [];
+  const strengthBullets = Array.isArray(brief.strengthBullets) ? brief.strengthBullets : [];
+  const improvementBullets = Array.isArray(brief.improvementBullets)
+    ? brief.improvementBullets
+    : [];
+  const comps =
+    competencies.map((c) => competencyLabel(c)).join(" · ") || "이번";
+  const strengthsText =
+    typeof brief.strengthsText === "string" ? brief.strengthsText : "강점 패턴을 더 쌓아 보세요";
+  const improvementsText =
+    typeof brief.improvementsText === "string"
+      ? brief.improvementsText
+      : "수치·본인 행동을 더 분명히 말해 보세요";
+  const strength =
+    strengthBullets[0]?.replace(/^\[[^\]]+\]\s*/, "") ?? strengthsText;
   const improve =
-    brief.improvementBullets[0]?.replace(/^\[[^\]]+\]\s*/, "") ?? brief.improvementsText;
+    improvementBullets[0]?.replace(/^\[[^\]]+\]\s*/, "") ?? improvementsText;
   return `${comps} 차수를 마쳤습니다. 강점은 「${truncate(strength, 48)}」, 다음엔 「${truncate(improve, 48)}」에 집중해 보세요.`;
 }
 

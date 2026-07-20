@@ -30,7 +30,15 @@ export default async function InterviewSetupPage() {
           />
         </div>
       ) : null}
-      <SetupForm user={{ id: user.id, name: user.name, email: user.email }} featureFlags={featureFlags} />
+      <Suspense
+        fallback={
+          <div className="mx-auto max-w-2xl px-4 py-12 text-sm text-muted sm:px-0">
+            면접 설정을 불러오는 중…
+          </div>
+        }
+      >
+        <SetupForm user={{ id: user.id, name: user.name, email: user.email }} featureFlags={featureFlags} />
+      </Suspense>
     </div>
   );
 }

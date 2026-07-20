@@ -110,14 +110,60 @@ export async function generateCompetencyFeedback(params: {
     if (text) {
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]) as CompetencyFeedbackData & {
+        const parsed = JSON.parse(jsonMatch[0]) as Partial<CompetencyFeedbackData> & {
           dimensions?: unknown;
         };
+        const fallback = mockCompetencyFeedback(params);
         const normalizedDims = normalizeCompetencyDimensions(parsed.dimensions);
+        const asStringList = (value: unknown, backup: string[]): string[] => {
+          if (Array.isArray(value)) {
+            return value
+              .filter((item): item is string => typeof item === "string")
+              .map((item) => item.trim())
+              .filter(Boolean);
+          }
+          if (typeof value === "string" && value.trim()) return [value.trim()];
+          return backup;
+        };
+        const highlights = Array.isArray(parsed.highlights)
+          ? parsed.highlights
+              .filter(
+                (h): h is { quote: string; note: string; type?: "strength" | "growth" } =>
+                  !!h &&
+                  typeof h === "object" &&
+                  typeof (h as { quote?: unknown }).quote === "string" &&
+                  typeof (h as { note?: unknown }).note === "string",
+              )
+              .map((h) => ({
+                quote: h.quote.trim(),
+                note: h.note.trim(),
+                type: h.type === "growth" ? ("growth" as const) : ("strength" as const),
+              }))
+              .filter((h) => h.quote && h.note)
+          : [];
         return {
-          ...parsed,
-          dimensions: normalizedDims ?? mockCompetencyFeedback(params).dimensions,
-          personaAlignmentNote: parsed.personaAlignmentNote?.trim() || null,
+          summary:
+            typeof parsed.summary === "string" && parsed.summary.trim()
+              ? parsed.summary.trim()
+              : fallback.summary,
+          strengths: asStringList(parsed.strengths, fallback.strengths),
+          improvements: asStringList(parsed.improvements, fallback.improvements),
+          suggestions: asStringList(parsed.suggestions, fallback.suggestions),
+          dimensions: normalizedDims ?? fallback.dimensions,
+          score:
+            typeof parsed.score === "number" && Number.isFinite(parsed.score)
+              ? Math.round(Math.min(100, Math.max(0, parsed.score)))
+              : fallback.score,
+          highlights: highlights.length > 0 ? highlights : fallback.highlights,
+          rewriteExample:
+            typeof parsed.rewriteExample === "string" && parsed.rewriteExample.trim()
+              ? parsed.rewriteExample.trim()
+              : fallback.rewriteExample,
+          personaAlignmentNote:
+            typeof parsed.personaAlignmentNote === "string" &&
+            parsed.personaAlignmentNote.trim()
+              ? parsed.personaAlignmentNote.trim()
+              : null,
         };
       }
     }

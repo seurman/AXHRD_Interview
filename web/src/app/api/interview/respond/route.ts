@@ -859,6 +859,9 @@ async function handleClaimVerificationRespond(params: {
     competencyStates: stored.competencies,
     chipEvent: null,
     answerFeedback: {
+      summary: result.reasoning,
+      keyPoints: [],
+      irtNote: "자소서 경험 확인 질문 — 점수·θ에는 반영되지 않습니다.",
       claimVerification: {
         label: result.label,
         displayLabel: CLAIM_LABEL_DISPLAY[result.label],

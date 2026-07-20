@@ -33,6 +33,7 @@ export function AnswerFeedbackPanel({
   const [expanded, setExpanded] = useState(!compact);
   const scorePct =
     typeof feedback.score === "number" ? Math.round(feedback.score * 100) : null;
+  const keyPoints = Array.isArray(feedback.keyPoints) ? feedback.keyPoints : [];
   const evidence =
     feedback.evidence && feedback.evidence.length > 0
       ? feedback.evidence
@@ -42,8 +43,9 @@ export function AnswerFeedbackPanel({
 
   const improvement =
     feedback.primaryImprovement ??
-    feedback.keyPoints.find((p) => p.startsWith("보완")) ??
-    feedback.summary;
+    keyPoints.find((p) => typeof p === "string" && p.startsWith("보완")) ??
+    feedback.summary ??
+    "다음 답변에서 상황·본인 행동·결과를 한 문장씩 더 구체적으로 말해 보세요.";
   const starRewrite =
     feedback.starRewrite ??
     `"(상황) … (과제) … (행동) … (결과) …" 순으로 ${feedback.competency ? competencyLabel(feedback.competency) : "이 역량"} 경험을 다시 말해 보세요.`;
@@ -78,7 +80,9 @@ export function AnswerFeedbackPanel({
         )}
       </div>
 
-      <p className="text-sm leading-relaxed text-foreground">{feedback.summary}</p>
+      {feedback.summary ? (
+        <p className="text-sm leading-relaxed text-foreground">{feedback.summary}</p>
+      ) : null}
 
       {!feedback.isInterim && (
         <div className="space-y-3">
@@ -159,9 +163,9 @@ export function AnswerFeedbackPanel({
             </div>
           )}
 
-          {feedback.keyPoints.length > 0 && (
+          {keyPoints.length > 0 && (
             <ul className="space-y-1.5">
-              {feedback.keyPoints.map((point) => (
+              {keyPoints.map((point) => (
                 <li key={point} className="flex gap-2 text-sm text-foreground">
                   <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                   <span>{point}</span>
