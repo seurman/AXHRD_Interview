@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 type Props = {
   organizationName: string;
@@ -24,10 +25,15 @@ export function OrgCoachingConsentToggle({ organizationName, enabled }: Props) {
       });
       const json = await res.json();
       if (!res.ok) {
-        alert(json.error ?? "변경에 실패했습니다.");
+        toast.error(json.error ?? "변경에 실패했습니다.");
         return;
       }
       setOn(json.orgCoachingConsent);
+      toast.success(
+        json.orgCoachingConsent
+          ? "기관 코칭 리포트 공유를 켰습니다."
+          : "기관 코칭 리포트 공유를 껐습니다.",
+      );
       router.refresh();
     } finally {
       setBusy(false);

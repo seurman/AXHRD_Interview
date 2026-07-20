@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CandidateScenarioPayload } from "@/lib/assessment/load-scenario-context";
 import { VoiceRecorder } from "@/components/interview/VoiceRecorder";
+import { ConfirmDialog } from "@/components/ux/ConfirmDialog";
 import {
   readVoiceModeEnabled,
   writeVoiceModeEnabled,
@@ -62,6 +63,7 @@ export function InBasketRunner({
     return map;
   });
   const [submitting, setSubmitting] = useState(false);
+  const [submitOpen, setSubmitOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(true);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -145,9 +147,11 @@ export function InBasketRunner({
       );
       return;
     }
-    if (!window.confirm("모든 항목을 제출할까요? 제출 후에는 수정할 수 없습니다.")) {
-      return;
-    }
+    setSubmitOpen(true);
+  }
+
+  async function doSubmit() {
+    if (submitting) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -159,6 +163,7 @@ export function InBasketRunner({
         setError(data.error ?? "제출에 실패했습니다.");
         return;
       }
+      setSubmitOpen(false);
       router.push(`/assessment/attempt/${attemptId}/report`);
     } catch {
       setError("네트워크 오류가 발생했습니다.");
@@ -410,6 +415,16 @@ export function InBasketRunner({
           </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={submitOpen}
+        onOpenChange={setSubmitOpen}
+        title="제출 확인"
+        description="모든 항목을 제출할까요? 제출 후에는 수정할 수 없습니다."
+        confirmLabel="제출하기"
+        busy={submitting}
+        onConfirm={doSubmit}
+      />
     </div>
   );
 }

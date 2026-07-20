@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { IconLoader } from "@/components/ui/icons";
+import { Checkbox } from "@/components/ui/checkbox";
 import { buildAuthRedirect, parseApiResponse } from "@/lib/auth/client";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
@@ -196,12 +197,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
           {mode === "register" && (
             <label className="flex items-start gap-2 text-xs leading-relaxed text-muted">
-              <input
-                type="checkbox"
+              <Checkbox
+                className="mt-0.5"
                 checked={dataUseConsent}
-                onChange={(e) => setDataUseConsent(e.target.checked)}
-                required
-                className="mt-0.5 rounded border-card-border"
+                onCheckedChange={(v) => setDataUseConsent(v === true)}
               />
               <span>
                 답변 내용은 익명·집계 형태로 문항 개선과 산업별 인사이트 리포트 생성에 활용될 수

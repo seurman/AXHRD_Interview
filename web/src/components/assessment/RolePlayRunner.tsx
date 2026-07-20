@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { CandidateScenarioPayload } from "@/lib/assessment/load-scenario-context";
 import type { DialogueTurn } from "@/lib/assessment/role-play-engine";
 import { VoiceRecorder } from "@/components/interview/VoiceRecorder";
+import { ConfirmDialog } from "@/components/ux/ConfirmDialog";
 import {
   readVoiceModeEnabled,
   writeVoiceModeEnabled,
@@ -28,6 +29,7 @@ export function RolePlayRunner({
   const [dialogue, setDialogue] = useState<DialogueTurn[]>(initialDialogue);
   const [sending, setSending] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitOpen, setSubmitOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [briefOpen, setBriefOpen] = useState(dialogue.length <= 1);
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(true);
@@ -176,12 +178,15 @@ export function RolePlayRunner({
       setError("최소 1회 이상 발화한 뒤 제출할 수 있습니다.");
       return;
     }
-    if (
-      canContinue &&
-      !window.confirm("대화를 종료하고 제출할까요? 제출 후에는 수정할 수 없습니다.")
-    ) {
+    if (canContinue) {
+      setSubmitOpen(true);
       return;
     }
+    await doSubmit();
+  }
+
+  async function doSubmit() {
+    if (submitting) return;
     setSubmitting(true);
     setError(null);
     stopActiveAudio();
@@ -194,6 +199,7 @@ export function RolePlayRunner({
         setError(data.error ?? "제출에 실패했습니다.");
         return;
       }
+      setSubmitOpen(false);
       router.push(`/assessment/attempt/${attemptId}/report`);
     } catch {
       setError("네트워크 오류가 발생했습니다.");
@@ -356,6 +362,16 @@ export function RolePlayRunner({
           </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={submitOpen}
+        onOpenChange={setSubmitOpen}
+        title="제출 확인"
+        description="대화를 종료하고 제출할까요? 제출 후에는 수정할 수 없습니다."
+        confirmLabel="제출하기"
+        busy={submitting}
+        onConfirm={doSubmit}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { IconLoader } from "@/components/ui/icons";
 import { VoiceRecorder } from "@/components/interview/VoiceRecorder";
 import { LoadingRitual } from "@/components/ux/LoadingRitual";
@@ -64,7 +65,7 @@ export function DiscoverSession({
       setTextAnswer("");
     } catch (e) {
       console.error(e);
-      alert(e instanceof Error ? e.message : "답변 저장 중 오류가 발생했습니다.");
+      toast.error(e instanceof Error ? e.message : "답변 저장 중 오류가 발생했습니다.");
     } finally {
       setProcessing(false);
     }

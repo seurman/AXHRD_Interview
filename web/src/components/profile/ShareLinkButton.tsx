@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { IconLoader } from "@/components/ui/icons";
+import { ConfirmDialog } from "@/components/ux/ConfirmDialog";
 
 export function ShareLinkButton({ initialSlug }: { initialSlug: string | null }) {
   const [slug, setSlug] = useState(initialSlug);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [revokeOpen, setRevokeOpen] = useState(false);
 
   const url = slug && typeof window !== "undefined" ? `${window.location.origin}/c/${slug}` : "";
 
@@ -16,18 +19,18 @@ export function ShareLinkButton({ initialSlug }: { initialSlug: string | null })
       const res = await fetch("/api/profile/certificate-link", { method: "POST" });
       const data = await res.json();
       if (res.ok) setSlug(data.slug);
-      else alert(data.error ?? "링크 생성에 실패했습니다.");
+      else toast.error(data.error ?? "링크 생성에 실패했습니다.");
     } finally {
       setLoading(false);
     }
   };
 
   const revoke = async () => {
-    if (!confirm("공유 링크를 비활성화할까요? 기존에 공유한 링크는 더 이상 열리지 않습니다.")) return;
     setLoading(true);
     try {
       await fetch("/api/profile/certificate-link", { method: "DELETE" });
       setSlug(null);
+      setRevokeOpen(false);
     } finally {
       setLoading(false);
     }
@@ -62,12 +65,22 @@ export function ShareLinkButton({ initialSlug }: { initialSlug: string | null })
       </button>
       <button
         type="button"
-        onClick={revoke}
+        onClick={() => setRevokeOpen(true)}
         disabled={loading}
         className="shrink-0 text-xs text-danger hover:underline"
       >
         공유 중단
       </button>
+      <ConfirmDialog
+        open={revokeOpen}
+        onOpenChange={setRevokeOpen}
+        title="공유 링크 비활성화"
+        description="공유 링크를 비활성화할까요? 기존에 공유한 링크는 더 이상 열리지 않습니다."
+        confirmLabel="공유 중단"
+        confirmTone="danger"
+        busy={loading}
+        onConfirm={revoke}
+      />
     </div>
   );
 }

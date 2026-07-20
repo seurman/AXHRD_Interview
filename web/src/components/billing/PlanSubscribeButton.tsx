@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
+import { toast } from "sonner";
 import type { PlanTier } from "@prisma/client";
 import {
   PLANS,
@@ -103,7 +104,7 @@ export function PlanSubscribeButton({
         customerName: undefined,
       });
     } catch (e) {
-      alert(e instanceof Error ? e.message : "카드 등록을 시작할 수 없습니다.");
+      toast.error(e instanceof Error ? e.message : "카드 등록을 시작할 수 없습니다.");
     } finally {
       setLoading(false);
     }
