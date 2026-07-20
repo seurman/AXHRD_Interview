@@ -2,7 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { DEFAULT_DEMOGRAPHIC_CODES } from "@/lib/diagnostic/section-filter";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Org = { id: string; name: string };
 type Instrument = {
@@ -170,35 +186,36 @@ export function AdminDiagnosticWizard({
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "생성 실패");
       const waveId = json.wave.id as string;
+      toast.success("진단 웨이브가 생성되었습니다.");
       onCreated(waveId, organizationId);
       router.push(`/admin/organizations/${organizationId}/waves/${waveId}?created=1`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "생성 중 오류");
+      const msg = e instanceof Error ? e.message : "생성 중 오류";
+      setError(msg);
+      toast.error(msg);
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-3 sm:items-center sm:p-4">
-      <div className="card-luxe max-h-[90vh] w-full max-w-lg overflow-y-auto p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-foreground">새 진단 시작</h2>
-          <button type="button" onClick={onClose} className="text-sm text-muted hover:text-foreground">
-            닫기
-          </button>
-        </div>
-
-        <p className="mb-4 text-xs text-muted">
-          {lockedOrganizationId ? `기관 고정 · Step ${step} / 3` : `Step ${step} / 3`}
-        </p>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent
+        showCloseButton
+        className="max-h-[90vh] overflow-y-auto border-[var(--platform-border)] bg-[var(--platform-surface)] shadow-luxe sm:max-w-lg"
+      >
+        <DialogHeader>
+          <DialogTitle className="text-[var(--platform-text)]">새 진단 시작</DialogTitle>
+          <DialogDescription className="text-[var(--platform-text-muted)]">
+            {lockedOrganizationId ? `기관 고정 · Step ${step} / 3` : `Step ${step} / 3`}
+          </DialogDescription>
+        </DialogHeader>
 
         {step === 1 && !lockedOrganizationId && (
           <div className="space-y-4">
             <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={newOrgMode}
-                onChange={(e) => setNewOrgMode(e.target.checked)}
+                onCheckedChange={(v) => setNewOrgMode(v === true)}
               />
               신규 기관 등록
             </label>
@@ -210,48 +227,50 @@ export function AdminDiagnosticWizard({
                 onChange={(e) => setNewOrgName(e.target.value)}
               />
             ) : (
-              <select
-                className="input-luxe w-full text-sm"
-                value={orgId}
-                onChange={(e) => setOrgId(e.target.value)}
-              >
-                <option value="">기관 선택…</option>
-                {orgs.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.name}
-                  </option>
-                ))}
-              </select>
+              <Select value={orgId || undefined} onValueChange={setOrgId}>
+                <SelectTrigger className="input-luxe h-10 w-full text-sm">
+                  <SelectValue placeholder="기관 선택…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {orgs.map((o) => (
+                    <SelectItem key={o.id} value={o.id}>
+                      {o.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
         )}
 
         {step === 2 && selectedInstrument && (
           <div className="space-y-4">
-            <select
-              className="input-luxe w-full text-sm"
-              value={instrumentId}
-              onChange={(e) => {
-                const id = e.target.value;
+            <Select
+              value={instrumentId || undefined}
+              onValueChange={(id) => {
                 setInstrumentId(id);
                 const inst = instruments.find((i) => i.id === id);
                 if (inst) setEnabledSections(inst.sections.map((s) => s.code));
               }}
             >
-              {instruments.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.nameKo} ({i.code})
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="input-luxe h-10 w-full text-sm">
+                <SelectValue placeholder="Instrument 선택…" />
+              </SelectTrigger>
+              <SelectContent>
+                {instruments.map((i) => (
+                  <SelectItem key={i.id} value={i.id}>
+                    {i.nameKo} ({i.code})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <div className="space-y-2">
               <p className="text-sm font-medium text-foreground">활성 섹션</p>
               {selectedInstrument.sections.map((sec) => (
                 <label key={sec.code} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={enabledSections.includes(sec.code)}
-                    onChange={() => toggleSection(sec.code)}
+                    onCheckedChange={() => toggleSection(sec.code)}
                   />
                   {sec.code} — {sec.nameKo}
                 </label>
@@ -280,10 +299,9 @@ export function AdminDiagnosticWizard({
                     </p>
                     {items.map((item) => (
                       <label key={item.code} className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={enabledDemographicItems.includes(item.code)}
-                          onChange={() => toggleDemographic(item.code)}
+                          onCheckedChange={() => toggleDemographic(item.code)}
                         />
                         {item.code} — {item.label}
                       </label>
@@ -390,7 +408,7 @@ export function AdminDiagnosticWizard({
             </button>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

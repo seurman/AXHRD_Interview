@@ -2,6 +2,21 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 관리자 모드(/admin) shadcn UI 현대화 (2026-07-20)
+
+Platform Console(`/admin/**`)만 대상. `/org` 기관 콘솔은 별도.
+
+| 항목 | 내용 |
+|------|------|
+| 공통 | `AdminStudioTabs` · `AdminConfirmDialog` (platform 토큰 + shadcn) |
+| Diagnostic Studio | Instrument/Campaign/Report → Tabs · 시드 confirm Dialog · toast |
+| Content Studio | Framework/NCS/… → AdminStudioTabs |
+| 기관 계약 | `OrgContractEditor` platform-panel · Select/Checkbox · Dialog · toast |
+| 제품 권한·플래그 | `OrgEntitlementsPanel` · `FeatureFlagsPanel` confirm Dialog + toast |
+| 웨이브 마법사 | `AdminDiagnosticWizard` → Dialog + Select/Checkbox |
+| ARC 보고서 | 섹션 탭 → shadcn Tabs + `nav-pill` 룩 유지 |
+| 유지 | `btn-primary`/`platform-btn-*` · `--platform-*` · 사이드바 셸 |
+
 ## 최근 작업 — 응시자 화면 보이는 현대화 · 리포트 장표 (2026-07-20)
 
 이전 shadcn 배치는 프리미티브만 바꿔 **겉모습이 거의 같았음**. 이번엔 눈에 보이는 크롬·장표를 교체.
