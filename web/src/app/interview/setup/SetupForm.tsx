@@ -20,6 +20,7 @@ import {
 } from "@/lib/interview/session-limits";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/I18nProvider";
+import { SetupSection } from "@/components/interview/SetupSection";
 
 const JOB_ROLES = [
   "MARKETING",
@@ -522,17 +523,17 @@ export function SetupForm({
     !parsingFile;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">{s.title}</h1>
-        <p className="mt-2 text-muted">
+    <div className="product-stage">
+    <div className="product-stage__inner space-y-6">
+      <header>
+        <p className="product-stage__kicker">AXHRD Interview Setup</p>
+        <h1 className="product-stage__title">{s.title}</h1>
+        <p className="product-stage__lead">
           {locale === "ko" ? `${user.name}님 · ${s.subtitle}` : `${user.name} · ${s.subtitle}`}
         </p>
-      </div>
+      </header>
 
-      <section className="card-luxe space-y-4 p-6">
-        <h2 className="font-semibold text-foreground">{s.industry.title}</h2>
-        <p className="text-xs leading-relaxed text-muted">{s.industry.hint}</p>
+      <SetupSection step={1} eyebrow="Industry" title={s.industry.title} hint={s.industry.hint}>
         <select
           value={industry}
           onChange={(e) => handleIndustryChange(e.target.value)}
@@ -683,10 +684,9 @@ export function SetupForm({
             )
           )}
         </div>
-      </section>
+      </SetupSection>
 
-      <section className="card-luxe space-y-4 p-6">
-        <h2 className="font-semibold text-foreground">{s.job.title}</h2>
+      <SetupSection step={2} eyebrow="Role" title={s.job.title}>
         <select
           value={jobRole}
           onChange={(e) => setJobRole(e.target.value)}
@@ -698,7 +698,7 @@ export function SetupForm({
             </option>
           ))}
         </select>
-      </section>
+      </SetupSection>
 
       {persona && (
         <section className="band-periwinkle animate-note-pop space-y-2 p-6 text-center">
@@ -708,9 +708,7 @@ export function SetupForm({
         </section>
       )}
 
-      <section className="card-luxe space-y-4 p-6">
-        <h2 className="font-semibold text-foreground">{s.prepMode.title}</h2>
-        <p className="text-xs leading-relaxed text-muted">{s.prepMode.hint}</p>
+      <SetupSection step={3} eyebrow="Prep" title={s.prepMode.title} hint={s.prepMode.hint}>
         <div className="flex flex-wrap gap-2">
           {(["COMPETENCY_SET", "COMPANY_TARGET"] as const).map((mode) => (
             <button
@@ -727,14 +725,14 @@ export function SetupForm({
             </button>
           ))}
         </div>
-      </section>
+      </SetupSection>
 
-      <section className="card-luxe space-y-4 p-6">
-        <h2 className="font-semibold text-foreground">{s.competency.title}</h2>
-        <p className="text-xs leading-relaxed text-muted">
-          {s.competency.hint}
-          {persona && ` · ⭐ ${s.competency.recommended}`}
-        </p>
+      <SetupSection
+        step={4}
+        eyebrow="Competency"
+        title={s.competency.title}
+        hint={`${s.competency.hint}${persona ? ` · ⭐ ${s.competency.recommended}` : ""}`}
+      >
         {planId && (
           <p className="text-sm text-accent">
             {s.competency.plan} · {completedCount}/{COMPETENCY_CODES.length}
@@ -857,10 +855,9 @@ export function SetupForm({
             </p>
           )}
         </div>
-      </section>
+      </SetupSection>
 
-      <section className="card-luxe space-y-4 p-6">
-        <h2 className="font-semibold text-foreground">{s.resume.title}</h2>
+      <SetupSection step={5} eyebrow="Resume" title={s.resume.title}>
         <p className="text-xs leading-relaxed text-muted">{s.resume.hint}</p>
         <label
           className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed p-6 transition ${
@@ -982,12 +979,12 @@ export function SetupForm({
             </p>
           )}
         </div>
-      </section>
+      </SetupSection>
 
       {(featureFlags.tripleFeedbackMode ||
         featureFlags.jdBonusQuestion ||
         featureFlags.resumeClaimVerification) && (
-      <section className="card-luxe space-y-2 p-5">
+      <SetupSection step={6} eyebrow="Options" title="추가 옵션">
         {featureFlags.tripleFeedbackMode && (
           <label className="flex cursor-pointer items-start gap-3">
             <input
@@ -1036,7 +1033,7 @@ export function SetupForm({
             </span>
           </label>
         )}
-      </section>
+      </SetupSection>
       )}
 
       <button
@@ -1059,10 +1056,11 @@ export function SetupForm({
       </button>
 
       {loading && (
-        <div className="card-luxe mt-4 px-3">
+        <div className="card-luxe mt-4 border-t-[3px] border-t-gold/40 px-3">
           <LoadingRitual variant="setup" competencyCode={focusCompetency} compact />
         </div>
       )}
+    </div>
     </div>
   );
 }

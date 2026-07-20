@@ -153,28 +153,28 @@ export default async function InterviewPage({ params, searchParams }: PageProps)
   } | null;
 
   return (
-    <div>
-      <h1 className="mb-2 text-xl font-bold text-foreground">
-        {session.focusCompetency
-          ? `${competencyLabel(session.focusCompetency)} 역량 면접`
-          : `${session.sessionNumber}차 모의 면접`}
-      </h1>
-      {persona && (
-        <p className="mb-2">
-          <span
-            className="rounded-full bg-accent/15 px-2.5 py-1 text-xs font-medium text-accent"
-            title={persona.description}
-          >
-            🎭 페르소나: {persona.name}
+    <div className="space-y-4">
+      {(persona || session.timeBudgetMinutes || questionCount) && (
+        <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
+          {persona && (
+            <span
+              className="rounded-full bg-accent/15 px-2.5 py-1 text-xs font-medium text-accent"
+              title={persona.description}
+            >
+              🎭 {persona.name}
+            </span>
+          )}
+          <span className="text-xs">
+            {session.focusCompetency
+              ? `${competencyLabel(session.focusCompetency)} 역량 면접`
+              : `${session.sessionNumber}차 모의 면접`}
+            {" · "}
+            {session.timeBudgetMinutes
+              ? `약 ${session.timeBudgetMinutes}분 · 역량당 ${questionCount}문항`
+              : `역량당 ${questionCount}문항`}
           </span>
-        </p>
+        </div>
       )}
-      <p className="mb-6 text-sm text-muted">
-        {session.timeBudgetMinutes
-          ? `약 ${session.timeBudgetMinutes}분 · 역량당 ${questionCount}문항`
-          : `역량당 ${questionCount}문항`}
-        {" · "}자소서·공고 맞춤 · 완료 후 피드백
-      </p>
       <InterviewSession
         sessionId={sessionId}
         initialState={initialState}
