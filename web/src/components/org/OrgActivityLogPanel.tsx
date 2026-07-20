@@ -78,11 +78,11 @@ export function OrgActivityLogPanel({
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-card-border text-[11px] uppercase tracking-wide text-muted">
-                <th className="py-2 pr-4 font-medium">이름</th>
+                <th className="py-2 pl-1 pr-4 font-medium">이름</th>
                 <th className="py-2 pr-4 font-medium">활동</th>
                 <th className="py-2 pr-4 font-medium">역량</th>
                 <th className="py-2 pr-4 font-medium">시각</th>
-                <th className="py-2 font-medium">상세</th>
+                <th className="py-2 pr-1 font-medium">상세</th>
               </tr>
             </thead>
             <tbody>
@@ -93,7 +93,7 @@ export function OrgActivityLogPanel({
                     key={`${row.kind}-${row.id}`}
                     className="border-b border-card-border/80 transition hover:bg-background/50 last:border-0"
                   >
-                    <td className="py-2.5 pr-4 font-medium text-foreground">
+                    <td className="py-2.5 pl-1 pr-4 font-medium text-foreground">
                       {row.memberName}
                     </td>
                     <td className="py-2.5 pr-4 text-muted">
@@ -114,7 +114,7 @@ export function OrgActivityLogPanel({
                     <td className="whitespace-nowrap py-2.5 pr-4 text-muted">
                       {formatDateTime(row.completedAt)}
                     </td>
-                    <td className="py-2.5">
+                    <td className="py-2.5 pr-1">
                       {row.detailHref ? (
                         <Link
                           href={row.detailHref}

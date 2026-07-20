@@ -135,11 +135,11 @@ export function OrgOpsConsole({
 
   return (
     <div
-      className={`mx-auto max-w-6xl pb-10 transition duration-500 ease-out ${
+      className={`mx-auto max-w-7xl pb-10 transition duration-500 ease-out ${
         entered ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
       }`}
     >
-      <div className="lg:grid lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:gap-8">
+      <div className="lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-6 xl:gap-8">
         {/* ── Sidebar (desktop) — Linear / Vercel rail ── */}
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-6">
@@ -268,9 +268,7 @@ export function OrgOpsConsole({
               <OrgPeopleDashboardClient data={people} embedded />
             ) : null}
             {tab === "members" ? (
-              <div className="rounded-xl border border-card-border bg-card p-4 sm:p-5">
-                <OrgMembersPanel isAdmin={isAdmin} embedded />
-              </div>
+              <OrgMembersPanel isAdmin={isAdmin} embedded />
             ) : null}
           </div>
         </div>
@@ -437,8 +435,8 @@ function OverviewPane({
         </section>
       ) : null}
 
-      <section className="rounded-xl border border-card-border bg-card p-4 sm:p-5">
-        <div className="mb-3 flex items-center justify-between">
+      <section className="rounded-xl border border-card-border bg-card p-5 sm:p-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <h3 className="text-sm font-semibold tracking-tight">최근 활동</h3>
           <Link
             href="/org/dashboard/activity"
@@ -465,8 +463,8 @@ function MetricCell({
   tone?: "ok" | "warn";
 }) {
   return (
-    <div className="bg-card px-4 py-4 sm:px-5 sm:py-5">
-      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted">
+    <div className="bg-card px-5 py-4 sm:px-6 sm:py-5">
+      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted">
         {label}
       </p>
       <p className="mt-2 font-[family-name:var(--font-ibm-plex)] text-[1.75rem] font-semibold leading-none tracking-tight tabular-nums text-foreground sm:text-[2rem]">
