@@ -22,6 +22,7 @@ import { RegenerateCodeButton } from "@/components/org/RegenerateCodeButton";
 import { OrgActivityLogPanel } from "@/components/org/OrgActivityLogPanel";
 import { OrgPeopleDashboardClient } from "@/components/org/OrgPeopleDashboardClient";
 import { OrgMembersPanel } from "@/components/org/OrgMembersPanel";
+import { OrgStudioTabs } from "@/components/org/OrgStudioTabs";
 
 /**
  * 기관 운영 콘솔 UI — Stripe / Linear / Vercel 대시보드 벤치마크
@@ -141,156 +142,124 @@ export function OrgOpsConsole({
         entered ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
       }`}
     >
-      <div className="lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-6 xl:gap-8">
-        {/* ── Sidebar (desktop) — Linear / Vercel rail ── */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-24 space-y-6">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gold">
-                Workspace
-              </p>
-              <h1 className="mt-2 font-[family-name:var(--font-ibm-plex)] text-lg font-semibold leading-snug tracking-tight text-foreground">
-                {organizationName}
-              </h1>
-            </div>
-
-            <nav aria-label="기관 콘솔" className="space-y-0.5">
-              {NAV.map((item) => {
-                const Icon = item.icon;
-                const active = tab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setTab(item.id)}
-                    className={`group flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left transition ${
-                      active
-                        ? "bg-foreground text-background"
-                        : "text-muted hover:bg-card hover:text-foreground"
-                    }`}
-                  >
-                    <Icon
-                      className={`h-4 w-4 shrink-0 ${
-                        active ? "opacity-90" : "opacity-70 group-hover:opacity-100"
-                      }`}
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-2">
-                        <span className="block text-sm font-semibold tracking-tight">
-                          {item.label}
-                        </span>
-                        {item.id === "members" && pendingCount > 0 ? (
-                          <span
-                            className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
-                              active
-                                ? "bg-background/20 text-background"
-                                : "bg-warning/15 text-warning"
-                            }`}
-                          >
-                            {pendingCount}
-                          </span>
-                        ) : null}
-                      </span>
-                      <span
-                        className={`block text-[11px] ${
-                          active ? "text-background/70" : "text-muted"
-                        }`}
-                      >
-                        {item.description}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
-            </nav>
-
-            {isAdmin ? (
-              <Link
-                href="/org/settings"
-                className="inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-muted transition hover:bg-card hover:text-foreground"
-              >
-                <Settings2 className="h-4 w-4" />
-                설정
-              </Link>
-            ) : null}
-          </div>
-        </aside>
-
-        {/* ── Main ── */}
-        <div className="min-w-0 space-y-5">
-          <div className="lg:hidden">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-gold">
-              Organization
+      <div className="org-ops-shell">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-card-border pb-4">
+          <div>
+            <p className="font-[family-name:var(--font-outfit)] text-[10px] font-bold uppercase tracking-[0.22em] text-gold">
+              Org Studio
             </p>
-            <h1 className="mt-1 font-[family-name:var(--font-ibm-plex)] text-2xl font-semibold tracking-tight">
+            <h1 className="mt-1 font-[family-name:var(--font-ibm-plex)] text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
               {organizationName}
             </h1>
-            <div
-              role="tablist"
-              className="mt-4 grid grid-cols-3 gap-1 rounded-xl border border-card-border bg-card p-1"
-            >
-              {NAV.map((item) => {
-                const active = tab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() => setTab(item.id)}
-                    className={`relative min-h-11 touch-manipulation rounded-lg text-sm font-semibold transition ${
-                      active
-                        ? "bg-foreground text-background"
-                        : "text-muted hover:text-foreground"
-                    }`}
-                  >
-                    {item.mobileLabel}
-                    {item.id === "members" && pendingCount > 0 ? (
-                      <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-warning px-1 text-[10px] font-bold text-white">
-                        {pendingCount}
+            <p className="mt-1 text-sm text-muted">운영 콘솔 · 금색 스튜디오 내비</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-md border border-gold/30 bg-gold/10 px-2.5 py-1 font-mono text-xs tracking-wider text-foreground">
+              {cohort.joinCode}
+            </span>
+            <CopyCodeButton code={cohort.joinCode} />
+            {isAdmin ? <RegenerateCodeButton /> : null}
+          </div>
+        </div>
+
+        <div className="lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-6 xl:gap-8">
+          <aside className="hidden lg:block">
+            <div className="sticky top-24 space-y-5">
+              <nav aria-label="기관 콘솔" className="space-y-1">
+                {NAV.map((item) => {
+                  const Icon = item.icon;
+                  const active = tab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setTab(item.id)}
+                      className={`org-ops-rail-item group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
+                        active
+                          ? "org-ops-rail-item--active"
+                          : "text-muted hover:bg-background/70 hover:text-foreground"
+                      }`}
+                    >
+                      <Icon
+                        className={`h-4 w-4 shrink-0 ${
+                          active ? "text-gold" : "opacity-70 group-hover:opacity-100"
+                        }`}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-2">
+                          <span className="block text-sm font-semibold tracking-tight">
+                            {item.label}
+                          </span>
+                          {item.id === "members" && pendingCount > 0 ? (
+                            <span className="rounded-md bg-warning/15 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-warning">
+                              {pendingCount}
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className="mt-0.5 block text-[11px] text-muted">
+                          {item.description}
+                        </span>
                       </span>
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+                    </button>
+                  );
+                })}
+              </nav>
 
-          <div className="hidden items-end justify-between gap-4 border-b border-card-border pb-4 lg:flex">
-            <div>
-              <h2 className="font-[family-name:var(--font-ibm-plex)] text-2xl font-semibold tracking-tight text-foreground">
-                {title}
-              </h2>
-              <p className="mt-1 text-sm text-muted">{subtitle}</p>
+              {isAdmin ? (
+                <Link
+                  href="/org/settings"
+                  className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-background/70 hover:text-foreground"
+                >
+                  <Settings2 className="h-4 w-4" />
+                  설정
+                </Link>
+              ) : null}
             </div>
-            <div className="flex items-center gap-2">
-              <span className="rounded-md border border-card-border bg-card px-2.5 py-1 font-mono text-xs tracking-wider text-foreground">
-                {cohort.joinCode}
-              </span>
-              <CopyCodeButton code={cohort.joinCode} />
-              {isAdmin ? <RegenerateCodeButton /> : null}
-            </div>
-          </div>
+          </aside>
 
-          <div key={tab} className="org-ops-pane-in">
-            {tab === "overview" ? (
-              <OverviewPane
-                cohort={cohort}
-                people={people}
-                activityPreview={activityPreview}
-                isAdmin={isAdmin}
-                activeProducts={activeProducts}
-                pendingCount={pendingCount}
-                onOpenPeople={() => setTab("people")}
-                onOpenMembers={() => setTab("members")}
+          <div className="min-w-0 space-y-5">
+            <div className="lg:hidden">
+              <OrgStudioTabs
+                triggersOnly
+                value={tab}
+                onValueChange={(v) => setTab(parseTab(v))}
+                tabs={NAV.map((item) => ({
+                  id: item.id,
+                  label: item.mobileLabel,
+                  badge: item.id === "members" ? pendingCount : undefined,
+                }))}
               />
-            ) : null}
-            {tab === "people" ? (
-              <OrgPeopleDashboardClient data={people} embedded />
-            ) : null}
-            {tab === "members" ? (
-              <OrgMembersPanel isAdmin={isAdmin} embedded />
-            ) : null}
+            </div>
+
+            <div className="hidden items-end justify-between gap-4 border-b border-card-border pb-4 lg:flex">
+              <div>
+                <h2 className="font-[family-name:var(--font-ibm-plex)] text-2xl font-semibold tracking-tight text-foreground">
+                  {title}
+                </h2>
+                <p className="mt-1 text-sm text-muted">{subtitle}</p>
+              </div>
+            </div>
+
+            <div key={tab} className="org-ops-pane-in">
+              {tab === "overview" ? (
+                <OverviewPane
+                  cohort={cohort}
+                  people={people}
+                  activityPreview={activityPreview}
+                  isAdmin={isAdmin}
+                  activeProducts={activeProducts}
+                  pendingCount={pendingCount}
+                  onOpenPeople={() => setTab("people")}
+                  onOpenMembers={() => setTab("members")}
+                />
+              ) : null}
+              {tab === "people" ? (
+                <OrgPeopleDashboardClient data={people} embedded />
+              ) : null}
+              {tab === "members" ? (
+                <OrgMembersPanel isAdmin={isAdmin} embedded />
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
@@ -402,7 +371,7 @@ function OverviewPane({
                   </div>
                   <div className="h-[3px] overflow-hidden rounded-full bg-background">
                     <div
-                      className="h-full rounded-full bg-foreground transition-[width] duration-500"
+                      className="h-full rounded-full bg-gold transition-[width] duration-500"
                       style={{
                         width: `${Math.max(3, Math.min(100, c.avgPercentile))}%`,
                       }}
@@ -491,7 +460,7 @@ function MetricCell({
   tone?: "ok" | "warn";
 }) {
   return (
-    <div className="bg-card px-5 py-4 sm:px-6 sm:py-5">
+    <div className="org-ops-kpi bg-card px-5 py-4 sm:px-6 sm:py-5">
       <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted">
         {label}
       </p>

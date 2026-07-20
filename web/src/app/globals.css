@@ -4953,6 +4953,45 @@ html.dark .lp-faq-question {
 
 
 
+
+/* ── Org studio tabs (gold active) ── */
+.org-studio-tabs [data-slot="tabs-trigger"] {
+  color: var(--color-muted);
+}
+.org-studio-tabs [data-slot="tabs-trigger"]:hover {
+  color: var(--color-foreground);
+  background: color-mix(in srgb, var(--color-card-border) 70%, transparent);
+}
+.org-studio-tabs [data-slot="tabs-trigger"][data-state="active"],
+.org-studio-tabs [data-slot="tabs-trigger"][data-active] {
+  background: var(--color-gold) !important;
+  color: #fff !important;
+}
+.org-ops-shell {
+  border-radius: 1.5rem;
+  border: 1px solid var(--color-card-border);
+  border-top: 3px solid color-mix(in srgb, var(--color-gold) 65%, var(--color-card-border));
+  background:
+    radial-gradient(ellipse 70% 45% at 0% 0%, color-mix(in srgb, var(--color-gold) 14%, transparent), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 0%, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent 50%),
+    var(--color-card);
+  box-shadow: var(--shadow-luxe);
+  padding: 1.25rem 1rem 1.5rem;
+}
+@media (min-width: 640px) {
+  .org-ops-shell {
+    padding: 1.5rem 1.35rem 1.75rem;
+  }
+}
+.org-ops-rail-item--active {
+  background: color-mix(in srgb, var(--color-gold) 18%, transparent) !important;
+  color: var(--color-foreground) !important;
+  box-shadow: inset 3px 0 0 var(--color-gold);
+}
+.org-ops-kpi {
+  border-top: 3px solid color-mix(in srgb, var(--color-gold) 50%, transparent);
+}
+
 /* ── Admin studio tabs (shadcn + platform tokens) ── */
 .admin-studio-tabs [data-slot="tabs-trigger"] {
   color: var(--platform-text-muted);
