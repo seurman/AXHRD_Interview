@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LevelChip } from "./LevelChip";
@@ -35,11 +35,16 @@ import type {
   InterviewSessionState,
 } from "@/types";
 
+/** 답변 → 코칭 → 다음 문항 흐름 */
+type SessionPhase = "ready" | "evaluating" | "reviewing";
+
 interface InterviewSessionProps {
   sessionId: string;
   initialState: InterviewSessionState;
   focusCompetency?: string;
   maxItems?: number;
+  /** 세션 시간 예산(분) — 문항당 권장 시간·페이스 경고에 사용 */
+  timeBudgetMinutes?: number;
   tripleFeedbackMode?: boolean;
   /** 설정 화면에서 여러 역량을 골랐을 때, 이 세션 다음에 이어갈 나머지 역량 코드들.
    *  DB에 저장하지 않고 URL로만 들고 다니다가, 세션이 끝나면 리포트 페이지 URL에
@@ -52,25 +57,37 @@ export function InterviewSession({
   initialState,
   focusCompetency,
   maxItems = COMPETENCY_SESSION_MAX_ITEMS,
+  timeBudgetMinutes,
   tripleFeedbackMode = false,
   queue = [],
 }: InterviewSessionProps) {
   const router = useRouter();
   const [state, setState] = useState(initialState);
-  const [processing, setProcessing] = useState(false);
+  const [phase, setPhase] = useState<SessionPhase>("ready");
   const [lastFeedback, setLastFeedback] = useState<AnswerFeedback | null>(null);
   const [pendingNextQuestion, setPendingNextQuestion] =
     useState<InterviewQuestion | null>(null);
-  const [awaitingAdvance, setAwaitingAdvance] = useState(false);
+  const [lastFailedAnswer, setLastFailedAnswer] = useState<{
+    transcript: string;
+    durationSec?: number;
+  } | null>(null);
   const [dimensionHistory, setDimensionHistory] = useState<AnswerDimensions[]>([]);
   const [ttsStatus, setTtsStatus] = useState<"idle" | "synthesizing" | "playing">("idle");
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(true);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const [paceWarned, setPaceWarned] = useState(false);
 
   const ttsCacheRef = useRef<Map<string, string>>(new Map());
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
   const pasteDetectedRef = useRef(false);
   const tabSwitchCountRef = useRef(0);
+  const questionStartedAtRef = useRef<number>(Date.now());
+
+  const recommendedSec = useMemo(() => {
+    if (!timeBudgetMinutes || maxItems <= 0) return null;
+    return Math.max(45, Math.round((timeBudgetMinutes * 60) / maxItems));
+  }, [timeBudgetMinutes, maxItems]);
 
   useEffect(() => {
     setVoiceModeEnabled(readVoiceModeEnabled());
@@ -105,6 +122,33 @@ export function InterviewSession({
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
+
+  // 문항이 바뀔 때마다 페이스 타이머 리셋
+  useEffect(() => {
+    questionStartedAtRef.current = Date.now();
+    setElapsedSec(0);
+    setPaceWarned(false);
+  }, [state.currentQuestion?.id, state.currentQuestion?.isFollowUp]);
+
+  useEffect(() => {
+    if (phase === "evaluating" || phase === "reviewing") return;
+    const id = window.setInterval(() => {
+      setElapsedSec(Math.floor((Date.now() - questionStartedAtRef.current) / 1000));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [phase, state.currentQuestion?.id]);
+
+  useEffect(() => {
+    if (!recommendedSec || paceWarned || phase === "evaluating" || phase === "reviewing") {
+      return;
+    }
+    if (elapsedSec >= Math.round(recommendedSec * 0.8)) {
+      setPaceWarned(true);
+      toast.message("권장 답변 시간의 80%를 지났습니다", {
+        description: `이 문항은 약 ${Math.round(recommendedSec / 60)}분 안팎을 권장합니다. 강제 종료는 없습니다.`,
+      });
+    }
+  }, [elapsedSec, recommendedSec, paceWarned, phase]);
 
   const prefetchQuestionTts = useCallback(async (cacheKey: string, text: string) => {
     if (!text.trim() || ttsCacheRef.current.has(cacheKey)) return;
@@ -177,7 +221,8 @@ export function InterviewSession({
 
   useEffect(() => {
     const q = state.currentQuestion;
-    if (!q || !voiceModeEnabled || awaitingAdvance || processing) return;
+    // reviewing/evaluating 중에는 TTS·다음 질문 음성이 겹치지 않게
+    if (!q || !voiceModeEnabled || phase === "evaluating" || phase === "reviewing") return;
     const text = displayQuestionText(q);
     if (text) void playQuestionTts(ttsCacheKeyForQuestion(q, text), text);
   }, [
@@ -185,8 +230,7 @@ export function InterviewSession({
     state.currentQuestion?.isFollowUp,
     state.currentQuestion?.personalizedText,
     voiceModeEnabled,
-    awaitingAdvance,
-    processing,
+    phase,
     playQuestionTts,
   ]);
 
@@ -195,20 +239,22 @@ export function InterviewSession({
   const advanceToNextQuestion = useCallback(() => {
     stopActiveAudio();
     setLastFeedback(null);
-    setAwaitingAdvance(false);
+    setLastFailedAnswer(null);
     setState((prev) => ({
       ...prev,
       currentQuestion: pendingNextQuestion,
     }));
     setPendingNextQuestion(null);
+    setPhase("ready");
   }, [pendingNextQuestion, stopActiveAudio]);
 
   const handleAnswer = async (transcript: string, durationSec?: number) => {
-    if (!state.currentQuestion || processing || awaitingAdvance) return;
-    setProcessing(true);
+    if (!state.currentQuestion || phase === "evaluating" || phase === "reviewing") return;
+    stopActiveAudio();
+    setPhase("evaluating");
     setLastFeedback(null);
     setPendingNextQuestion(null);
-    setAwaitingAdvance(false);
+    setLastFailedAnswer(null);
 
     try {
       const res = await fetch("/api/interview/respond", {
@@ -258,23 +304,20 @@ export function InterviewSession({
         administeredIds: data.administeredIds,
         totalItems: data.totalItems,
         shouldTerminate: data.shouldTerminate,
-        // 피드백을 읽는 동안에는 현재 질문을 유지하고, 다음 질문은 게이트 뒤로 미룸
         currentQuestion: holdForFeedback ? prev.currentQuestion : nextQuestion,
         status: data.shouldTerminate ? "completed" : "in_progress",
       }));
 
       if (holdForFeedback) {
         setPendingNextQuestion(nextQuestion);
-        setAwaitingAdvance(true);
+        setPhase("reviewing");
       } else {
         setPendingNextQuestion(null);
-        setAwaitingAdvance(false);
+        setPhase("ready");
       }
 
       if (data.shouldTerminate) {
         const base = data.redirectUrl ?? `/interview/${sessionId}/report`;
-        // 남은 역량 큐가 있으면 리포트 페이지 URL에 그대로 이어 붙인다(DB 미저장,
-        // URL로만 전달) — 커스텀 redirectUrl에 이미 쿼리스트링이 있어도 안전하게 합친다.
         if (queue.length > 0) {
           const [path, existingQs] = base.split("?");
           const params = new URLSearchParams(existingQs ?? "");
@@ -286,25 +329,39 @@ export function InterviewSession({
       }
     } catch (e) {
       console.error(e);
+      setLastFailedAnswer({ transcript, durationSec });
+      setPhase("ready");
       toast.error(
         e instanceof Error ? e.message : "답변 처리 중 오류가 발생했습니다.",
+        {
+          action: {
+            label: "다시 제출",
+            onClick: () => {
+              void handleAnswer(transcript, durationSec);
+            },
+          },
+        },
       );
-    } finally {
-      setProcessing(false);
     }
   };
 
   const q = state.currentQuestion;
   const isPersonalized = !!q?.resumePersonalized;
+  const isFollowUp = Boolean(q?.isFollowUp);
   const sessionAverage =
     dimensionHistory.length > 1
       ? averageDimensions(dimensionHistory.slice(0, -1))
       : null;
 
   const itemProgress =
-    q?.isClaimVerification || q?.isBonusQuestion
+    q?.isClaimVerification || q?.isBonusQuestion || isFollowUp
       ? Math.min(100, (state.totalItems / maxItems) * 100)
       : Math.min(100, ((state.totalItems + 1) / maxItems) * 100);
+
+  const paceRatio =
+    recommendedSec && recommendedSec > 0
+      ? Math.min(1, elapsedSec / recommendedSec)
+      : null;
 
   return (
     <div className="product-stage product-stage--wide">
@@ -316,7 +373,9 @@ export function InterviewSession({
                 ? `경험 확인 질문 (참고용)${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`
                 : q?.isBonusQuestion
                   ? `보너스 질문 (참고용)${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`
-                  : `문항 ${state.totalItems + 1}/${maxItems}${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`}
+                  : isFollowUp
+                    ? `꼬리질문 · 직전 답변 심화${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`
+                    : `문항 ${state.totalItems + 1}/${maxItems}${focusCompetency ? ` · ${competencyLabel(focusCompetency)}` : ""}`}
             </span>
             <div className="flex items-center gap-3">
               <span className="interview-progress__pct">{Math.round(itemProgress)}%</span>
@@ -330,16 +389,37 @@ export function InterviewSession({
             </div>
           </div>
           <Progress value={itemProgress} aria-label="면접 문항 진행률" />
+          {recommendedSec && phase !== "reviewing" && phase !== "evaluating" ? (
+            <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-muted">
+              <span>
+                이 문항 권장 {Math.round(recommendedSec / 60)}분 · 경과{" "}
+                {Math.floor(elapsedSec / 60)}:{String(elapsedSec % 60).padStart(2, "0")}
+              </span>
+              {paceRatio != null && paceRatio >= 0.8 ? (
+                <span className="font-medium text-warning">페이스 안내 (강제 종료 없음)</span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         <div className="grid gap-5 sm:gap-8 lg:grid-cols-[1fr_320px]">
           <div className="space-y-4 sm:space-y-6">
-        <div className="card-luxe card-luxe--session p-4 sm:p-6">
+        <div
+          className={cn(
+            "card-luxe card-luxe--session p-4 sm:p-6",
+            isFollowUp && "border-accent/40 ring-1 ring-accent/20",
+          )}
+        >
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted">
-            {voiceModeEnabled && ttsStatus !== "idle" && (
+            {voiceModeEnabled && ttsStatus !== "idle" && phase === "ready" && (
               <span className="sr-only">
                 {ttsStatus === "synthesizing" ? "음성 준비 중" : "질문 재생 중"}
+              </span>
+            )}
+            {isFollowUp && (
+              <span className="keep-one-line rounded-full bg-accent/15 px-2 py-0.5 font-semibold text-accent">
+                꼬리질문
               </span>
             )}
             {isPersonalized && (
@@ -401,6 +481,12 @@ export function InterviewSession({
               {voiceModeEnabled ? "보이스 모드 켜짐" : "보이스 모드 꺼짐"}
             </button>
           </div>
+          {isFollowUp ? (
+            <p className="mb-2 text-xs font-medium text-accent">
+              직전 답변을 더 구체적으로 확인하는 꼬리질문입니다. 진행률에는 별도 문항으로
+              잡히지 않습니다.
+            </p>
+          ) : null}
           <h2 className="font-[family-name:var(--font-outfit)] text-lg font-bold leading-relaxed tracking-tight text-foreground sm:text-xl">
             {q ? displayQuestionText(q) : "질문을 불러오는 중…"}
           </h2>
@@ -435,12 +521,12 @@ export function InterviewSession({
         )}
 
         <div className="card-luxe card-luxe--session p-4 sm:p-8">
-          {processing ? (
+          {phase === "evaluating" ? (
             <LoadingRitual
               variant={state.shouldTerminate ? "report" : "interview"}
               competencyCode={q?.competency ?? focusCompetency}
             />
-          ) : awaitingAdvance ? (
+          ) : phase === "reviewing" ? (
             <div className="space-y-3 text-center">
               <p className="text-sm text-muted">
                 아래 피드백을 확인한 뒤 다음 질문으로 넘어가세요.
@@ -454,22 +540,43 @@ export function InterviewSession({
               </button>
             </div>
           ) : (
-            <VoiceRecorder
-              onTranscript={handleAnswer}
-              disabled={!q}
-              allowTextFallback
-              voiceInputEnabled={voiceModeEnabled}
-              submitMode="draft"
-              confirmLabel="답변 제출"
-              idleHint="마이크를 눌러 답변을 녹음하세요. 정지 후 내용을 확인·수정할 수 있습니다."
-              onPasteDetected={() => {
-                pasteDetectedRef.current = true;
-              }}
-            />
+            <div className="space-y-4">
+              <VoiceRecorder
+                onTranscript={handleAnswer}
+                disabled={!q}
+                allowTextFallback
+                voiceInputEnabled={voiceModeEnabled}
+                submitMode="draft"
+                confirmLabel="답변 제출"
+                idleHint="마이크를 눌러 답변을 녹음하세요. 정지 후 내용을 확인·수정할 수 있습니다."
+                onPasteDetected={() => {
+                  pasteDetectedRef.current = true;
+                }}
+              />
+              {lastFailedAnswer ? (
+                <div className="rounded-xl border border-danger/30 bg-danger/5 p-3 text-center">
+                  <p className="text-xs text-danger">
+                    직전 답변 제출에 실패했습니다. 진행 상태는 유지됩니다.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn-secondary mt-2 px-4 py-1.5 text-sm"
+                    onClick={() =>
+                      void handleAnswer(
+                        lastFailedAnswer.transcript,
+                        lastFailedAnswer.durationSec,
+                      )
+                    }
+                  >
+                    같은 답변 다시 제출
+                  </button>
+                </div>
+              ) : null}
+            </div>
           )}
         </div>
 
-        {lastFeedback && !processing ? (
+        {lastFeedback && phase === "reviewing" ? (
           lastFeedback.claimVerification ? (
             <ClaimVerificationFeedbackPanel feedback={lastFeedback} />
           ) : tripleFeedbackMode && lastFeedback.tripleFeedback ? (

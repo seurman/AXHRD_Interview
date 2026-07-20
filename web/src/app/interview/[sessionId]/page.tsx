@@ -15,6 +15,7 @@ import { getOrgKitCustomRubric } from "@/lib/org/interview-kit";
 import { buildQuestionRationale } from "@/lib/interview/rationale";
 import { pressureTierFromLevel } from "@/lib/interview/persona";
 import { competencyLabel } from "@/lib/labels";
+import { interviewSessionHref } from "@/lib/interview/session-href";
 import type { InterviewSessionState } from "@/types";
 import { COMPETENCY_CODES } from "@/types";
 
@@ -133,18 +134,12 @@ export default async function InterviewPage({ params, searchParams }: PageProps)
   };
 
   if (session.status === "COMPLETED") {
-    const reportQs = queue.length > 0 ? `?queue=${encodeURIComponent(queue.join(","))}` : "";
-    return (
-      <div className="text-center">
-        <p className="text-muted">이 세션은 완료되었습니다.</p>
-        <a
-          href={`/interview/${sessionId}/report${reportQs}`}
-          className="mt-4 inline-block text-primary hover:underline"
-        >
-          리포트 보기 →
-        </a>
-      </div>
-    );
+    const doneHref = interviewSessionHref(session);
+    const withQueue =
+      queue.length > 0 && doneHref.includes("/report")
+        ? `${doneHref}${doneHref.includes("?") ? "&" : "?"}queue=${encodeURIComponent(queue.join(","))}`
+        : doneHref;
+    redirect(withQueue);
   }
 
   const persona = session.targetCompany?.persona as {
@@ -182,6 +177,7 @@ export default async function InterviewPage({ params, searchParams }: PageProps)
         maxItems={
           session.mode === "COMPETENCY" ? questionCount : FULL_SESSION_MAX_ITEMS
         }
+        timeBudgetMinutes={session.timeBudgetMinutes ?? undefined}
         tripleFeedbackMode={session.tripleFeedbackMode}
         queue={queue}
       />

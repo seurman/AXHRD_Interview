@@ -141,6 +141,8 @@ export function SetupForm({
   const [resumeClaimEnabled, setResumeClaimEnabled] = useState(false);
   const [timeBudgetMinutes, setTimeBudgetMinutes] = useState(DEFAULT_TIME_BUDGET_MINUTES);
   const [prepMode, setPrepMode] = useState<PrepMode>("COMPETENCY_SET");
+  const [irtWarming, setIrtWarming] = useState(false);
+  const [irtUnavailable, setIrtUnavailable] = useState(false);
   // 역량 카드를 직접 클릭했는지 여부 — 산업/직무를 고를 때 자동으로 역량을 바꿔주되,
   // 사용자가 이미 직접 골랐다면(또는 URL의 ?competency=로 왔다면) 덮어쓰지 않기 위한 플래그.
   const competencyManuallyChanged = useRef(false);
@@ -191,6 +193,26 @@ export function SetupForm({
     }
     loadProgress(pid, Boolean(comp));
   }, [searchParams, loadProgress]);
+
+  useEffect(() => {
+    // Render Free IRT 슬립 해소 — 설정 화면 진입 시 미리 깨워 둔다
+    let cancelled = false;
+    setIrtWarming(true);
+    void fetch("/api/irt/warm", { credentials: "include" })
+      .then(async (res) => {
+        if (cancelled) return;
+        setIrtUnavailable(!res.ok);
+      })
+      .catch(() => {
+        if (!cancelled) setIrtUnavailable(true);
+      })
+      .finally(() => {
+        if (!cancelled) setIrtWarming(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (companyName.trim() || jdText.trim()) {
@@ -457,8 +479,13 @@ export function SetupForm({
           router.push(`/interview/plan/${data.planId}`);
           return; // 다음 화면으로 이동 중 — 버튼 상태를 되돌리지 않는다
         }
+        if (data.code === "IRT_UNAVAILABLE") {
+          setIrtUnavailable(true);
+          void fetch("/api/irt/warm", { credentials: "include" });
+        }
         throw new Error(data.error ?? "Failed to start");
       }
+      setIrtUnavailable(false);
 
       const rest = focusCompetencies.slice(1);
       const queueQs = rest.length > 0 ? `?queue=${encodeURIComponent(rest.join(","))}` : "";
@@ -543,6 +570,36 @@ export function SetupForm({
           {locale === "ko" ? `${user.name}님 · ${s.subtitle}` : `${user.name} · ${s.subtitle}`}
         </p>
       </header>
+
+      {(irtWarming || irtUnavailable) && (
+        <div
+          className={`rounded-xl border px-4 py-3 text-sm ${
+            irtUnavailable
+              ? "border-warning/40 bg-warning/10 text-foreground"
+              : "border-card-border bg-background/60 text-muted"
+          }`}
+        >
+          {irtWarming && !irtUnavailable
+            ? "적응형 면접 엔진을 깨우는 중입니다. 첫 시작이 조금 더 빨라집니다."
+            : "적응형 면접 엔진이 아직 준비되지 않았을 수 있습니다. 잠시 후 다시 시도해 주세요."}
+          {irtUnavailable ? (
+            <button
+              type="button"
+              className="ml-2 text-accent underline-offset-2 hover:underline"
+              onClick={() => {
+                setIrtWarming(true);
+                setIrtUnavailable(false);
+                void fetch("/api/irt/warm", { credentials: "include" })
+                  .then((res) => setIrtUnavailable(!res.ok))
+                  .catch(() => setIrtUnavailable(true))
+                  .finally(() => setIrtWarming(false));
+              }}
+            >
+              엔진 다시 깨우기
+            </button>
+          ) : null}
+        </div>
+      )}
 
       <SetupSection step={1} eyebrow="Industry" title={s.industry.title} hint={s.industry.hint}>
         <Select

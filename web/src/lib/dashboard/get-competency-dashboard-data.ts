@@ -10,6 +10,7 @@ import {
   normalizeAnswerDimensions,
 } from "@/lib/interview/answer-dimensions";
 import type { RoundBrief } from "@/lib/interview/competency-round";
+import { interviewSessionHref } from "@/lib/interview/session-href";
 import type { QuestItem } from "@/components/dashboard/QuestPanel";
 import type { CoachInsightsPayload } from "@/components/dashboard/CoachInsightsPanel";
 import type { DiscoverInterviewAdvice, DiscoverStrengthItem } from "@/types/discover";
@@ -201,6 +202,9 @@ export async function getCompetencyDashboardData(
       startedAt: true,
       completedAt: true,
       createdAt: true,
+      mode: true,
+      planId: true,
+      status: true,
     },
   });
 
@@ -211,7 +215,7 @@ export async function getCompetencyDashboardData(
       label: s.focusCompetency
         ? `${competencyLabel(s.focusCompetency)} 면접 #${s.sessionNumber}`
         : `모의면접 #${s.sessionNumber}`,
-      href: s.completedAt ? `/interview/${s.id}/report` : `/interview/${s.id}`,
+      href: interviewSessionHref(s),
       at: (s.startedAt ?? s.createdAt).toISOString(),
     })),
     ...full.selfDiscoverySessions.map((s) => ({
