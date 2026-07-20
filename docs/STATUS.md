@@ -141,6 +141,20 @@ B2B 견적 엔진을 추가. 접근은 여전히 `diagnosticEnabled` SKU, 결제
 배포 후: `npx prisma migrate deploy` + `npm run db:seed:arc`(또는 instrument sync)로
 신규 문항을 DB에 반영.
 
+## 최근 작업 — 음성 중심 역량평가 + 과제 CMS (2026-07-20 보완)
+
+기존 스키마·API·음성 러너 위에 계획 갭을 닫았습니다.
+
+| 영역 | 변경 |
+|------|------|
+| Studio | 서류함 항목 편집, 긍정/부정 행동지표 추가·수정·삭제, 미연결 초안→플랫폼 역량 매핑 |
+| 게시 | 1~5점 루브릭 전부 필수, 긍정·부정 지표 각각 필수. 행동지표/페르소나 자동 날조 제거(역량·루브릭 코드 매칭만 보정) |
+| 채점 | 시도 `frameworkSnapshot` + 루브릭/행동지표 분리 페이로드 유지 |
+| 음성 | 역할연기 TTS mute와 입력 모드 분리, 서류함 받아쓰기→텍스트 수정·1.5초 자동저장 |
+| 검증 | publish/parse/TTS API·단위 테스트, `tsc`·Vitest·`next build` 통과 |
+
+경로: `/admin/content/assessment` · `/assessment/*` 역할연기·서류함
+
 ## 최근 작업 — 음성 중심 역량평가 + 과제 CMS (2026-07-18)
 
 - 역할연기·서류함 응시 UX를 **음성 우선 + 텍스트 대체**로 전환.

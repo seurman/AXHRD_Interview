@@ -31,6 +31,7 @@ export function RolePlayRunner({
   const [error, setError] = useState<string | null>(null);
   const [briefOpen, setBriefOpen] = useState(dialogue.length <= 1);
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(true);
+  const [ttsMuted, setTtsMuted] = useState(false);
   const [ttsStatus, setTtsStatus] = useState<"idle" | "synthesizing" | "playing">("idle");
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const ttsCacheRef = useRef<Map<string, string>>(new Map());
@@ -69,9 +70,20 @@ export function RolePlayRunner({
     });
   }, [stopActiveAudio]);
 
+  const toggleTtsMute = useCallback(() => {
+    setTtsMuted((prev) => {
+      const next = !prev;
+      if (next) {
+        stopActiveAudio();
+        setTtsStatus("idle");
+      }
+      return next;
+    });
+  }, [stopActiveAudio]);
+
   const playPersonaTts = useCallback(
     async (text: string, turnKey: string) => {
-      if (!voiceModeEnabled || !text.trim()) return;
+      if (!voiceModeEnabled || ttsMuted || !text.trim()) return;
       const cacheKey = ttsCacheKey(turnKey, text);
       if (lastSpokenKeyRef.current === cacheKey && ttsStatus === "playing") return;
 
@@ -117,18 +129,18 @@ export function RolePlayRunner({
         setTtsStatus("idle");
       }
     },
-    [attemptId, stopActiveAudio, ttsStatus, voiceModeEnabled],
+    [attemptId, stopActiveAudio, ttsMuted, ttsStatus, voiceModeEnabled],
   );
 
   // 최신 PERSONA 턴 자동 재생
   useEffect(() => {
-    if (!voiceModeEnabled) return;
+    if (!voiceModeEnabled || ttsMuted) return;
     const last = dialogue[dialogue.length - 1];
     if (!last || last.role !== "PERSONA") return;
     const key = `persona-${dialogue.length - 1}`;
     void playPersonaTts(last.text, key);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 새 PERSONA 턴에만 재생
-  }, [dialogue.length, voiceModeEnabled]);
+  }, [dialogue.length, voiceModeEnabled, ttsMuted]);
 
   async function sendMessage(message: string) {
     const trimmed = message.trim();
@@ -210,8 +222,17 @@ export function RolePlayRunner({
             onClick={toggleVoiceMode}
             className="min-h-9 rounded-full border border-card-border bg-card px-3 py-1.5 text-xs font-medium text-muted transition hover:text-foreground"
           >
-            {voiceModeEnabled ? "음성 ON" : "텍스트 모드"}
+            {voiceModeEnabled ? "입력: 음성" : "입력: 텍스트"}
           </button>
+          {voiceModeEnabled ? (
+            <button
+              type="button"
+              onClick={toggleTtsMute}
+              className="min-h-9 rounded-full border border-card-border bg-card px-3 py-1.5 text-xs font-medium text-muted transition hover:text-foreground"
+            >
+              {ttsMuted ? "상대역 음성 끔" : "상대역 음성 켬"}
+            </button>
+          ) : null}
           <span className="min-h-9 inline-flex items-center rounded-full bg-card px-3 py-1.5 text-xs font-medium text-muted">
             발화 {turnsUsed} / {scenario.maxTurns}턴
           </span>
@@ -275,7 +296,7 @@ export function RolePlayRunner({
 
         <div className="mt-3 shrink-0 border-t border-card-border pt-3">
           {error ? <p className="mb-2 text-xs text-warning">{error}</p> : null}
-          {ttsStatus !== "idle" && voiceModeEnabled ? (
+          {ttsStatus !== "idle" && voiceModeEnabled && !ttsMuted ? (
             <p className="mb-2 text-center text-xs text-muted">
               {ttsStatus === "synthesizing"
                 ? `${personaName} 음성 준비 중…`
@@ -284,7 +305,7 @@ export function RolePlayRunner({
           ) : null}
           {canContinue ? (
             <div className="space-y-2">
-              {lastPersona && voiceModeEnabled ? (
+              {lastPersona && voiceModeEnabled && !ttsMuted ? (
                 <button
                   type="button"
                   onClick={() =>
@@ -296,12 +317,21 @@ export function RolePlayRunner({
                   상대역 다시 듣기
                 </button>
               ) : null}
+              {lastPersona && voiceModeEnabled && ttsMuted ? (
+                <p className="text-center text-xs text-muted">
+                  상대역 음성이 꺼져 있습니다. 화면 텍스트로 대화를 이어가세요.
+                </p>
+              ) : null}
               <VoiceRecorder
                 voiceInputEnabled={voiceModeEnabled}
                 allowTextFallback
                 submitMode="draft"
                 confirmLabel="전송"
-                idleHint={`${personaName}에게 말하기 — 마이크를 누르세요`}
+                idleHint={
+                  voiceModeEnabled
+                    ? `${personaName}에게 말하기 — 마이크를 누르세요`
+                    : "음성이 안 될 때 직접 입력"
+                }
                 disabled={sending || submitting}
                 onTranscript={(text) => void sendMessage(text)}
               />
