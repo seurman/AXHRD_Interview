@@ -64,6 +64,13 @@ function baseScenario(
               behavioralIndicator: "기준1",
             },
             {
+              id: "d2",
+              rubricSetId: "rs1",
+              scoreLevel: 2,
+              levelName: "부족",
+              behavioralIndicator: "기준2",
+            },
+            {
               id: "d3",
               rubricSetId: "rs1",
               scoreLevel: 3,
@@ -71,10 +78,17 @@ function baseScenario(
               behavioralIndicator: "기준3",
             },
             {
+              id: "d4",
+              rubricSetId: "rs1",
+              scoreLevel: 4,
+              levelName: "우수",
+              behavioralIndicator: "기준4",
+            },
+            {
               id: "d5",
               rubricSetId: "rs1",
               scoreLevel: 5,
-              levelName: "우수",
+              levelName: "탁월",
               behavioralIndicator: "기준5",
             },
           ],
@@ -95,6 +109,14 @@ function baseScenario(
                 polarity: "POSITIVE",
                 textKo: "요약한다",
                 sortOrder: 0,
+              },
+              {
+                id: "i2",
+                subskillId: "sub1",
+                code: "N1",
+                polarity: "NEGATIVE_OR_MISSING",
+                textKo: "끊는다",
+                sortOrder: 1,
               },
             ],
           },
@@ -143,5 +165,29 @@ describe("validateScenarioForPublish", () => {
     expect(issues.some((i) => i.field.includes("competencies.COMMUNICATION"))).toBe(
       true,
     );
+  });
+
+  it("rejects incomplete 1-5 rubric (missing levels)", () => {
+    const scenario = baseScenario();
+    scenario.competencies[0].rubricSet!.details =
+      scenario.competencies[0].rubricSet!.details.filter((d) =>
+        [1, 3, 5].includes(d.scoreLevel),
+      );
+    const issues = validateScenarioForPublish(scenario);
+    expect(
+      issues.some((i) => i.field === "competencies.COMMUNICATION.rubric"),
+    ).toBe(true);
+  });
+
+  it("rejects missing negative behavior indicator", () => {
+    const scenario = baseScenario();
+    scenario.competencies[0].subskills[0].indicators =
+      scenario.competencies[0].subskills[0].indicators.filter(
+        (i) => i.polarity === "POSITIVE",
+      );
+    const issues = validateScenarioForPublish(scenario);
+    expect(
+      issues.some((i) => i.field === "competencies.COMMUNICATION.indicators"),
+    ).toBe(true);
   });
 });

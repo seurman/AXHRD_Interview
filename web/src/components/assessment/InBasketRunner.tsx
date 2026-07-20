@@ -343,7 +343,7 @@ export function InBasketRunner({
                         allowTextFallback
                         submitMode="draft"
                         confirmLabel="텍스트에 반영"
-                        idleHint="처리 내용을 말씀하세요 — 반영 후 수정할 수 있습니다"
+                        idleHint="처리 내용을 말씀하세요 — 반영 후 아래에서 수정할 수 있습니다"
                         disabled={submitting}
                         onTranscript={(text) => {
                           setDrafts((d) => {
@@ -375,12 +375,17 @@ export function InBasketRunner({
                     onBlur={() => void saveItem(selected.id)}
                     rows={7}
                     maxLength={4000}
-                    placeholder="이 항목을 실제로 어떻게 처리할지 구체적으로 작성하세요. 음성으로도 받아쓸 수 있습니다."
+                    placeholder={
+                      voiceModeEnabled
+                        ? "음성으로 받아쓴 내용이 여기에 쌓입니다. 제출 전 자유롭게 수정하세요."
+                        : "이 항목을 실제로 어떻게 처리할지 구체적으로 작성하세요."
+                    }
                     className="mt-1.5 w-full resize-y rounded-xl border border-card-border bg-background px-3 py-2 text-base leading-relaxed text-foreground focus:outline-none focus:ring-1 focus:ring-accent sm:text-sm"
                     disabled={submitting}
                   />
                   <p className="mt-1 text-right text-xs text-muted">
                     {selectedDraft.responseText.length} / 4000자
+                    {voiceModeEnabled ? " · 1.5초 후 자동저장" : ""}
                   </p>
                 </div>
               </div>

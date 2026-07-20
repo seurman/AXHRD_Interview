@@ -338,13 +338,21 @@ export function AssessmentScenarioStudio() {
     });
     rows.push({
       ok: selected.competencies.every((c) => Boolean(c.competencyId)),
-      label: "플랫폼 역량 연결 (게시 시 자동 보정 가능)",
+      label: "플랫폼 역량 연결",
     });
     rows.push({
-      ok: selected.competencies.every(
-        (c) => c.subskills.reduce((n, s) => n + s.indicators.length, 0) > 0,
-      ),
-      label: "행동지표 (게시 시 자동 보정 가능)",
+      ok: selected.competencies.every((c) => {
+        const inds = c.subskills.flatMap((s) => s.indicators);
+        return (
+          inds.some((i) => i.polarity === "POSITIVE") &&
+          inds.some((i) => i.polarity === "NEGATIVE_OR_MISSING")
+        );
+      }),
+      label: "긍정·부정 행동지표",
+    });
+    rows.push({
+      ok: selected.competencies.every((c) => Boolean(c.rubricSetId)),
+      label: "1~5점 루브릭 선택",
     });
     if (selected.kind === "ROLE_PLAY") {
       rows.push({
@@ -364,19 +372,81 @@ export function AssessmentScenarioStudio() {
         ok: selected.items.length >= 3,
         label: `서류함 항목 ${selected.items.length}/3+`,
       });
+      rows.push({
+        ok: selected.items.every(
+          (i) => i.fromLabel.trim() && i.subject.trim() && i.body.trim(),
+        ),
+        label: "서류함 본문 완성",
+      });
     }
     return rows;
   }, [selected]);
 
-  async function linkCompetency(competencyId: string) {
+  function competencyTreePayload(scenario: AdminScenario) {
+    return scenario.competencies.map((c) => ({
+      competencyCode: c.competencyCode,
+      nameKo: c.nameKo,
+      definition: c.definition,
+      competencyId: c.competencyId,
+      rubricSetId: c.rubricSetId,
+      subskills: c.subskills,
+    }));
+  }
+
+  async function linkCompetency(competencyId: string, replaceRowId?: string) {
     if (!selected) return;
     const bank = bankCompetencies.find((c) => c.id === competencyId);
     if (!bank) return;
-    const existing = selected.competencies.map((c) => ({
-      competencyId: c.competencyId ?? "",
-      rubricSetId: c.rubricSetId,
-      subskills: c.subskills,
-    })).filter((c) => c.competencyId);
+
+    if (replaceRowId) {
+      const next: AdminScenario = {
+        ...selected,
+        competencies: selected.competencies.map((c) =>
+          c.id === replaceRowId
+            ? {
+                ...c,
+                competencyId: bank.id,
+                competencyCode: bank.code,
+                nameKo: bank.nameKo,
+                definition: bank.description ?? c.definition,
+                rubricSetId: c.rubricSetId,
+                subskills:
+                  c.subskills.length > 0
+                    ? c.subskills
+                    : [
+                        {
+                          code: "CORE",
+                          nameKo: "핵심 행동",
+                          definition: `${bank.nameKo} 핵심 관찰 영역`,
+                          indicators: [
+                            {
+                              code: "P1",
+                              polarity: "POSITIVE" as const,
+                              textKo: `${bank.nameKo} 관련 긍정 행동이 명확히 나타난다.`,
+                            },
+                            {
+                              code: "N1",
+                              polarity: "NEGATIVE_OR_MISSING" as const,
+                              textKo: `${bank.nameKo} 관련 행동이 관찰되지 않거나 부정적으로 나타난다.`,
+                            },
+                          ],
+                        },
+                      ],
+              }
+            : c,
+        ),
+      };
+      await persistCompetencyTree(next);
+      return;
+    }
+
+    const existing = selected.competencies
+      .map((c) => ({
+        competencyId: c.competencyId ?? "",
+        rubricSetId: c.rubricSetId,
+        subskills: c.subskills,
+      }))
+      .filter((c) => c.competencyId);
     if (!existing.some((c) => c.competencyId === competencyId)) {
       existing.push({
         competencyId,
@@ -389,12 +459,12 @@ export function AssessmentScenarioStudio() {
             indicators: [
               {
                 code: "P1",
-                polarity: "POSITIVE",
+                polarity: "POSITIVE" as const,
                 textKo: `${bank.nameKo} 관련 긍정 행동이 명확히 나타난다.`,
               },
               {
                 code: "N1",
-                polarity: "NEGATIVE_OR_MISSING",
+                polarity: "NEGATIVE_OR_MISSING" as const,
                 textKo: `${bank.nameKo} 관련 행동이 관찰되지 않거나 부정적으로 나타난다.`,
               },
             ],
@@ -407,14 +477,176 @@ export function AssessmentScenarioStudio() {
 
   async function setRubricForCompetency(competencyId: string, rubricSetId: string) {
     if (!selected) return;
-    const links = selected.competencies
-      .filter((c) => c.competencyId)
-      .map((c) => ({
-        competencyId: c.competencyId!,
-        rubricSetId: c.competencyId === competencyId ? rubricSetId : c.rubricSetId,
-        subskills: c.subskills,
-      }));
-    await saveSelected({ competencyLinks: links });
+    const next = {
+      ...selected,
+      competencies: selected.competencies.map((c) =>
+        c.competencyId === competencyId ? { ...c, rubricSetId } : c,
+      ),
+    };
+    setScenarios((list) =>
+      list.map((s) => (s.id === selected.id ? next : s)),
+    );
+    await saveSelected({ competencies: competencyTreePayload(next) });
+  }
+
+  async function persistCompetencyTree(next: AdminScenario) {
+    setScenarios((list) =>
+      list.map((s) => (s.id === next.id ? next : s)),
+    );
+    await saveSelected({ competencies: competencyTreePayload(next) });
+  }
+
+  function updateLocalCompetency(
+    competencyRowId: string,
+    updater: (c: AdminScenario["competencies"][number]) => AdminScenario["competencies"][number],
+  ) {
+    if (!selected) return;
+    setScenarios((list) =>
+      list.map((s) =>
+        s.id !== selected.id
+          ? s
+          : {
+              ...s,
+              competencies: s.competencies.map((c) =>
+                c.id === competencyRowId ? updater(c) : c,
+              ),
+            },
+      ),
+    );
+  }
+
+  function updateLocalItem(
+    itemId: string,
+    patch: Partial<AdminScenario["items"][number]>,
+  ) {
+    if (!selected) return;
+    setScenarios((list) =>
+      list.map((s) =>
+        s.id !== selected.id
+          ? s
+          : {
+              ...s,
+              items: s.items.map((item) =>
+                item.id === itemId ? { ...item, ...patch } : item,
+              ),
+            },
+      ),
+    );
+  }
+
+  async function saveItems() {
+    if (!selected || selected.kind !== "IN_BASKET") return;
+    await saveSelected({
+      items: selected.items.map((item) => ({
+        fromLabel: item.fromLabel,
+        subject: item.subject,
+        body: item.body,
+        urgency: item.urgency as "LOW" | "MEDIUM" | "HIGH",
+        importance: item.importance as "LOW" | "MEDIUM" | "HIGH",
+        isDistractor: item.isDistractor,
+        targetCompetencyCode: item.targetCompetencyCode,
+      })),
+    });
+  }
+
+  function addInBasketItem() {
+    if (!selected) return;
+    const id = `tmp-${Date.now()}`;
+    setScenarios((list) =>
+      list.map((s) =>
+        s.id !== selected.id
+          ? s
+          : {
+              ...s,
+              items: [
+                ...s.items,
+                {
+                  id,
+                  fromLabel: "",
+                  subject: "",
+                  body: "",
+                  urgency: "MEDIUM",
+                  importance: "MEDIUM",
+                  isDistractor: false,
+                  targetCompetencyCode: null,
+                },
+              ],
+            },
+      ),
+    );
+  }
+
+  function removeInBasketItem(itemId: string) {
+    if (!selected) return;
+    setScenarios((list) =>
+      list.map((s) =>
+        s.id !== selected.id
+          ? s
+          : { ...s, items: s.items.filter((i) => i.id !== itemId) },
+      ),
+    );
+  }
+
+  function addIndicator(
+    competencyRowId: string,
+    polarity: "POSITIVE" | "NEGATIVE_OR_MISSING",
+  ) {
+    if (!selected) return;
+    const next = {
+      ...selected,
+      competencies: selected.competencies.map((c) => {
+        if (c.id !== competencyRowId) return c;
+        const subskills =
+          c.subskills.length > 0
+            ? c.subskills
+            : [
+                {
+                  code: "CORE",
+                  nameKo: "핵심 행동",
+                  definition: `${c.nameKo} 핵심 관찰 영역`,
+                  indicators: [] as AdminScenario["competencies"][number]["subskills"][number]["indicators"],
+                },
+              ];
+        const target = { ...subskills[0] };
+        const prefix = polarity === "POSITIVE" ? "P" : "N";
+        const code = `${prefix}${target.indicators.length + 1}`;
+        target.indicators = [
+          ...target.indicators,
+          {
+            code,
+            polarity,
+            textKo: "",
+          },
+        ];
+        return { ...c, subskills: [target, ...subskills.slice(1)] };
+      }),
+    };
+    void persistCompetencyTree(next);
+  }
+
+  function removeIndicator(competencyRowId: string, indicatorCode: string) {
+    if (!selected) return;
+    const next = {
+      ...selected,
+      competencies: selected.competencies.map((c) => {
+        if (c.id !== competencyRowId) return c;
+        return {
+          ...c,
+          subskills: c.subskills.map((s) => ({
+            ...s,
+            indicators: s.indicators.filter((i) => i.code !== indicatorCode),
+          })),
+        };
+      }),
+    };
+    void persistCompetencyTree(next);
+  }
+
+  async function saveCompetencyIndicators(competencyRowId: string) {
+    if (!selected) return;
+    const row = selected.competencies.find((c) => c.id === competencyRowId);
+    if (!row) return;
+    await persistCompetencyTree(selected);
   }
 
   async function duplicateSelected() {
@@ -870,8 +1102,8 @@ export function AssessmentScenarioStudio() {
                   </ul>
                   {selected.status === "DRAFT" ? (
                     <p className="mt-2 text-[11px] text-muted">
-                      「드래프트 게시」를 누르면 미연결 역량·루브릭·기본 행동지표를 자동 보정한 뒤
-                      게시합니다.
+                      게시 시 플랫폼 역량·루브릭 코드 매칭만 자동 연결합니다. 행동지표·페르소나·서류함
+                      본문은 직접 작성해야 합니다.
                     </p>
                   ) : null}
                 </div>
@@ -967,19 +1199,152 @@ export function AssessmentScenarioStudio() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <h3 className="text-xs font-semibold">서류함 항목 ({selected.items.length})</h3>
-                  <ul className="max-h-64 space-y-2 overflow-y-auto">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-xs font-semibold">
+                      서류함 항목 ({selected.items.length})
+                    </h3>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => addInBasketItem()}
+                        className="rounded-lg border border-card-border px-2 py-1 text-[11px]"
+                      >
+                        항목 추가
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void saveItems()}
+                        className="rounded-lg border border-card-border px-2 py-1 text-[11px]"
+                      >
+                        항목 저장
+                      </button>
+                    </div>
+                  </div>
+                  <ul className="max-h-[28rem] space-y-3 overflow-y-auto">
                     {selected.items.map((item, idx) => (
                       <li
                         key={item.id}
-                        className="rounded-lg border border-card-border bg-background/60 p-3 text-xs"
+                        className="space-y-2 rounded-lg border border-card-border bg-background/60 p-3 text-xs"
                       >
-                        <p className="font-medium">
-                          {idx + 1}. {item.subject}
-                          {item.isDistractor ? " · 미끼" : ""}
-                        </p>
-                        <p className="mt-1 text-muted">{item.fromLabel}</p>
-                        <p className="mt-1 line-clamp-3 text-muted">{item.body}</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-medium">항목 {idx + 1}</p>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => removeInBasketItem(item.id)}
+                            className="text-[11px] text-warning"
+                          >
+                            삭제
+                          </button>
+                        </div>
+                        <label className="block">
+                          보낸 사람
+                          <input
+                            className="mt-1 w-full rounded-lg border border-card-border bg-background px-2 py-1.5"
+                            value={item.fromLabel}
+                            onChange={(e) =>
+                              updateLocalItem(item.id, { fromLabel: e.target.value })
+                            }
+                          />
+                        </label>
+                        <label className="block">
+                          제목
+                          <input
+                            className="mt-1 w-full rounded-lg border border-card-border bg-background px-2 py-1.5"
+                            value={item.subject}
+                            onChange={(e) =>
+                              updateLocalItem(item.id, { subject: e.target.value })
+                            }
+                          />
+                        </label>
+                        <label className="block">
+                          본문
+                          <textarea
+                            className="mt-1 w-full rounded-lg border border-card-border bg-background px-2 py-1.5"
+                            rows={3}
+                            value={item.body}
+                            onChange={(e) =>
+                              updateLocalItem(item.id, { body: e.target.value })
+                            }
+                          />
+                        </label>
+                        <div className="grid gap-2 sm:grid-cols-3">
+                          <label className="block">
+                            긴급도
+                            <select
+                              className="mt-1 w-full rounded-lg border border-card-border bg-background px-2 py-1.5"
+                              value={item.urgency}
+                              onChange={(e) =>
+                                updateLocalItem(item.id, { urgency: e.target.value })
+                              }
+                            >
+                              <option value="LOW">LOW</option>
+                              <option value="MEDIUM">MEDIUM</option>
+                              <option value="HIGH">HIGH</option>
+                            </select>
+                          </label>
+                          <label className="block">
+                            중요도
+                            <select
+                              className="mt-1 w-full rounded-lg border border-card-border bg-background px-2 py-1.5"
+                              value={item.importance}
+                              onChange={(e) =>
+                                updateLocalItem(item.id, {
+                                  importance: e.target.value,
+                                })
+                              }
+                            >
+                              <option value="LOW">LOW</option>
+                              <option value="MEDIUM">MEDIUM</option>
+                              <option value="HIGH">HIGH</option>
+                            </select>
+                          </label>
+                          <label className="mt-5 flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={item.isDistractor}
+                              onChange={(e) =>
+                                updateLocalItem(item.id, {
+                                  isDistractor: e.target.checked,
+                                })
+                              }
+                            />
+                            미끼 항목
+                          </label>
+                        </div>
+                        <label className="block">
+                          목표 역량 코드
+                          <select
+                            className="mt-1 w-full rounded-lg border border-card-border bg-background px-2 py-1.5"
+                            value={item.targetCompetencyCode ?? ""}
+                            onChange={(e) =>
+                              updateLocalItem(item.id, {
+                                targetCompetencyCode: e.target.value || null,
+                              })
+                            }
+                          >
+                            <option value="">미지정</option>
+                            {selected.competencies.map((c) => (
+                              <option key={c.id} value={c.competencyCode}>
+                                {c.competencyCode} · {c.nameKo}
+                              </option>
+                            ))}
+                            {bankCompetencies
+                              .filter(
+                                (b) =>
+                                  !selected.competencies.some(
+                                    (c) => c.competencyCode === b.code,
+                                  ),
+                              )
+                              .map((b) => (
+                                <option key={b.id} value={b.code}>
+                                  {b.code} · {b.nameKo}
+                                </option>
+                              ))}
+                          </select>
+                        </label>
                       </li>
                     ))}
                   </ul>
@@ -988,7 +1353,7 @@ export function AssessmentScenarioStudio() {
 
               <div className="space-y-2 border-t border-card-border pt-4">
                 <h3 className="text-xs font-semibold">역량 · 루브릭 · 행동지표</h3>
-                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                   <select
                     className="min-h-11 w-full rounded-lg border border-card-border bg-background px-2 py-2 text-sm sm:min-h-0 sm:w-auto sm:py-1.5 sm:text-xs"
                     defaultValue=""
@@ -1005,43 +1370,153 @@ export function AssessmentScenarioStudio() {
                       </option>
                     ))}
                   </select>
+                  <a
+                    href="/admin/content"
+                    className="text-[11px] text-accent hover:underline"
+                  >
+                    새 역량이 없으면 콘텐츠 뱅크에서 추가 →
+                  </a>
                 </div>
-                <ul className="space-y-2">
-                  {selected.competencies.map((c) => (
-                    <li
-                      key={c.id}
-                      className="rounded-lg border border-card-border bg-background/60 p-3 text-xs"
-                    >
-                      <p className="font-medium">
-                        {c.competencyCode} · {c.nameKo}
-                        {!c.competencyId ? " (미연결)" : ""}
-                        {c.rubricSetId ? " · 루브릭 연결됨" : " · 루브릭 미지정"}
-                      </p>
-                      <p className="mt-1 text-muted">
-                        하위역량 {c.subskills.length} · 행동지표{" "}
-                        {c.subskills.reduce((n, s) => n + s.indicators.length, 0)}
-                      </p>
-                      {c.competencyId ? (
-                        <select
-                          className="mt-2 min-h-10 w-full rounded-lg border border-card-border bg-background px-2 py-1.5 text-xs"
-                          value={c.rubricSetId ?? ""}
-                          onChange={(e) => {
-                            if (e.target.value) {
-                              void setRubricForCompetency(c.competencyId!, e.target.value);
-                            }
-                          }}
-                        >
-                          <option value="">이 역량 루브릭 선택…</option>
-                          {(rubricOptionsByCompetency[c.competencyId] ?? []).map((r) => (
-                            <option key={r.id} value={r.id}>
-                              {r.rubricName}
-                              {r.isDefault ? " (기본)" : ""}
-                            </option>
-                          ))}
-                        </select>
-                      ) : null}
-                    </li>
-                  ))}
+                <ul className="space-y-3">
+                  {selected.competencies.map((c) => {
+                    const indicators = c.subskills.flatMap((s) =>
+                      s.indicators.map((ind) => ({ ...ind, subCode: s.code })),
+                    );
+                    return (
+                      <li
+                        key={c.id}
+                        className="space-y-2 rounded-lg border border-card-border bg-background/60 p-3 text-xs"
+                      >
+                        <p className="font-medium">
+                          {c.competencyCode} · {c.nameKo}
+                          {!c.competencyId ? " (미연결)" : ""}
+                          {c.rubricSetId ? " · 루브릭 연결됨" : " · 루브릭 미지정"}
+                        </p>
+                        {c.competencyId ? (
+                          <select
+                            className="min-h-10 w-full rounded-lg border border-card-border bg-background px-2 py-1.5 text-xs"
+                            value={c.rubricSetId ?? ""}
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                void setRubricForCompetency(
+                                  c.competencyId!,
+                                  e.target.value,
+                                );
+                              }
+                            }}
+                          >
+                            <option value="">이 역량 루브릭 선택…</option>
+                            {(rubricOptionsByCompetency[c.competencyId] ?? []).map(
+                              (r) => (
+                                <option key={r.id} value={r.id}>
+                                  {r.rubricName}
+                                  {r.isDefault ? " (기본)" : ""}
+                                </option>
+                              ),
+                            )}
+                          </select>
+                        ) : (
+                          <select
+                            className="min-h-10 w-full rounded-lg border border-card-border bg-background px-2 py-1.5 text-xs"
+                            defaultValue=""
+                            onChange={(e) => {
+                              const id = e.target.value;
+                              if (id) void linkCompetency(id, c.id);
+                              e.target.value = "";
+                            }}
+                          >
+                            <option value="">이 초안 역량을 플랫폼 역량에 연결…</option>
+                            {bankCompetencies.map((b) => (
+                              <option key={b.id} value={b.id}>
+                                {b.code} · {b.nameKo}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+
+                        <div className="space-y-2 border-t border-card-border/60 pt-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="font-medium text-muted">과제별 행동지표</p>
+                            <div className="flex flex-wrap gap-1">
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => addIndicator(c.id, "POSITIVE")}
+                                className="rounded border border-card-border px-2 py-0.5 text-[10px]"
+                              >
+                                + 긍정
+                              </button>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() =>
+                                  addIndicator(c.id, "NEGATIVE_OR_MISSING")
+                                }
+                                className="rounded border border-card-border px-2 py-0.5 text-[10px]"
+                              >
+                                + 부정/결여
+                              </button>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => void saveCompetencyIndicators(c.id)}
+                                className="rounded border border-card-border px-2 py-0.5 text-[10px]"
+                              >
+                                지표 저장
+                              </button>
+                            </div>
+                          </div>
+                          {indicators.length === 0 ? (
+                            <p className="text-[11px] text-warning">
+                              긍정·부정 지표를 각각 최소 1개 추가하세요.
+                            </p>
+                          ) : (
+                            <ul className="space-y-2">
+                              {indicators.map((ind) => (
+                                <li key={`${c.id}-${ind.code}`} className="space-y-1">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[10px] text-muted">
+                                      {ind.polarity === "POSITIVE"
+                                        ? "긍정"
+                                        : "부정/결여"}{" "}
+                                      · {ind.code}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      disabled={busy}
+                                      onClick={() => removeIndicator(c.id, ind.code)}
+                                      className="text-[10px] text-warning"
+                                    >
+                                      삭제
+                                    </button>
+                                  </div>
+                                  <textarea
+                                    className="w-full rounded-lg border border-card-border bg-background px-2 py-1.5 text-xs"
+                                    rows={2}
+                                    value={ind.textKo}
+                                    onChange={(e) => {
+                                      const textKo = e.target.value;
+                                      updateLocalCompetency(c.id, (row) => ({
+                                        ...row,
+                                        subskills: row.subskills.map((s) => ({
+                                          ...s,
+                                          indicators: s.indicators.map((i) =>
+                                            i.code === ind.code
+                                              ? { ...i, textKo }
+                                              : i,
+                                          ),
+                                        })),
+                                      }));
+                                    }}
+                                  />
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             </div>

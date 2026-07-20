@@ -32,20 +32,32 @@ export function validateScenarioForPublish(
         message: `${fw.nameKo}: 플랫폼 역량에 연결해야 합니다.`,
       });
     }
-    if (fw.scoringLevels.length < 3) {
+    const scoreLevels = new Set(
+      fw.scoringLevels
+        .map((l) => Number(l.scoreLevel))
+        .filter((n) => Number.isFinite(n)),
+    );
+    const hasFullFiveScale = [1, 2, 3, 4, 5].every((n) => scoreLevels.has(n));
+    if (!hasFullFiveScale) {
       issues.push({
         field: `competencies.${fw.code}.rubric`,
-        message: `${fw.nameKo}: 1~5점 루브릭(최소 3레벨)이 필요합니다.`,
+        message: `${fw.nameKo}: 1~5점 루브릭(1·2·3·4·5 레벨 모두)이 필요합니다.`,
       });
     }
     const indicatorCount = fw.subskills.reduce(
       (n, s) => n + s.indicators.length,
       0,
     );
-    if (indicatorCount < 1) {
+    const hasPositive = fw.subskills.some((s) =>
+      s.indicators.some((i) => i.polarity === "POSITIVE"),
+    );
+    const hasNegative = fw.subskills.some((s) =>
+      s.indicators.some((i) => i.polarity === "NEGATIVE_OR_MISSING"),
+    );
+    if (indicatorCount < 2 || !hasPositive || !hasNegative) {
       issues.push({
         field: `competencies.${fw.code}.indicators`,
-        message: `${fw.nameKo}: 과제별 행동지표가 최소 1개 필요합니다.`,
+        message: `${fw.nameKo}: 과제별 긍정·부정 행동지표가 각각 최소 1개 필요합니다.`,
       });
     }
   }
