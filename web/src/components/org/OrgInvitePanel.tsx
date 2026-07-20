@@ -25,8 +25,6 @@ export function OrgInvitePanel({ isAdmin }: { isAdmin: boolean }) {
   const [emails, setEmails] = useState("");
   const [orgRole, setOrgRole] = useState<"MEMBER" | "STAFF">("MEMBER");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!isAdmin) return;
@@ -43,8 +41,6 @@ export function OrgInvitePanel({ isAdmin }: { isAdmin: boolean }) {
 
   const create = async () => {
     setBusy(true);
-    setError(null);
-    setMessage(null);
     try {
       const res = await fetch("/api/org/invitations", {
         method: "POST",
@@ -53,25 +49,22 @@ export function OrgInvitePanel({ isAdmin }: { isAdmin: boolean }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "초대 실패");
-      setMessage(data.message);
-      toast.success(data.message ?? "초대를 발급했습니다.");
       setEmails("");
       await load();
+      let msg = data.message ?? "초대를 발급했습니다.";
       if (Array.isArray(data.invitations) && data.invitations[0]?.acceptUrl) {
         try {
           await navigator.clipboard.writeText(
             data.invitations.map((i: { acceptUrl: string }) => i.acceptUrl).join("\n"),
           );
-          setMessage(`${data.message} (링크를 클립보드에 복사했습니다)`);
-          toast.success("초대 링크를 클립보드에 복사했습니다.");
+          msg = `${msg} · 링크 복사됨`;
         } catch {
           /* ignore */
         }
       }
+      toast.success(msg);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "초대 오류";
-      setError(msg);
-      toast.error(msg);
+      toast.error(e instanceof Error ? e.message : "초대 오류");
     } finally {
       setBusy(false);
     }
@@ -83,13 +76,10 @@ export function OrgInvitePanel({ isAdmin }: { isAdmin: boolean }) {
       const res = await fetch(`/api/org/invitations/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "취소 실패");
-      setMessage(data.message);
       toast.success(data.message ?? "초대를 취소했습니다.");
       await load();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "취소 오류";
-      setError(msg);
-      toast.error(msg);
+      toast.error(e instanceof Error ? e.message : "취소 오류");
     } finally {
       setBusy(false);
     }
@@ -132,8 +122,6 @@ export function OrgInvitePanel({ isAdmin }: { isAdmin: boolean }) {
           초대 발급
         </button>
       </div>
-      {error ? <p className="text-xs text-danger">{error}</p> : null}
-      {message ? <p className="text-xs text-success">{message}</p> : null}
 
       {invites.length > 0 ? (
         <ul className="divide-y divide-card-border overflow-hidden rounded-lg border border-card-border">

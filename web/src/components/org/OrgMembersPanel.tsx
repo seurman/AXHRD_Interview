@@ -70,8 +70,6 @@ export function OrgMembersPanel({
   const [requireApproval, setRequireApproval] = useState(true);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [modal, setModal] = useState<{
     mode: MembershipReviewMode;
@@ -84,7 +82,6 @@ export function OrgMembersPanel({
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const res = await fetch("/api/org/members");
       const data = await res.json();
@@ -97,7 +94,7 @@ export function OrgMembersPanel({
       if ((data.pending?.length ?? 0) === 0) setTab("members");
       setSelected(new Set());
     } catch (e) {
-      setError(e instanceof Error ? e.message : "오류");
+      toast.error(e instanceof Error ? e.message : "오류");
     } finally {
       setLoading(false);
     }
@@ -137,7 +134,6 @@ export function OrgMembersPanel({
     if (ids.length === 0) return;
     if (mode === "approve" && seatFull) {
       toast.error("좌석 상한에 도달해 승인할 수 없습니다.");
-      setError("좌석 상한에 도달해 승인할 수 없습니다.");
       return;
     }
     setModal({ mode, ids });
@@ -149,9 +145,7 @@ export function OrgMembersPanel({
   }) => {
     if (!modal) return;
     setBusyId("bulk");
-    setError(null);
-    setMessage(null);
-    try {
+        try {
       const res = await fetch("/api/org/membership-requests/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -164,14 +158,12 @@ export function OrgMembersPanel({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "처리 실패");
-      setMessage(data.message);
       toast.success(data.message ?? "처리했습니다.");
       setModal(null);
       await load();
       router.refresh();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "처리 오류";
-      setError(msg);
       toast.error(msg);
     } finally {
       setBusyId(null);
@@ -180,9 +172,7 @@ export function OrgMembersPanel({
 
   const changeRole = async (userId: string, orgRole: "MEMBER" | "STAFF") => {
     setBusyId(userId);
-    setError(null);
-    setMessage(null);
-    try {
+        try {
       const res = await fetch(`/api/org/members/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -190,13 +180,11 @@ export function OrgMembersPanel({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "역할 변경 실패");
-      setMessage(data.message);
       toast.success(data.message ?? "역할을 변경했습니다.");
       await load();
       router.refresh();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "역할 변경 오류";
-      setError(msg);
       toast.error(msg);
     } finally {
       setBusyId(null);
@@ -206,21 +194,18 @@ export function OrgMembersPanel({
   const removeMember = async () => {
     if (!removeTarget) return;
     setBusyId(removeTarget.id);
-    setError(null);
     try {
       const res = await fetch(`/api/org/members/${removeTarget.id}`, {
         method: "DELETE",
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "해제 실패");
-      setMessage(data.message);
       toast.success(data.message ?? "소속을 해제했습니다.");
       setRemoveTarget(null);
       await load();
       router.refresh();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "해제 오류";
-      setError(msg);
       toast.error(msg);
     } finally {
       setBusyId(null);
@@ -242,12 +227,10 @@ export function OrgMembersPanel({
       const msg = next
         ? "가입 시 담당자 승인이 필요합니다. 승인된 인원만 좌석에 집계됩니다."
         : "가입 코드·기관 선택 시 즉시 소속됩니다.";
-      setMessage(msg);
       toast.success(msg);
       await load();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "설정 오류";
-      setError(msg);
       toast.error(msg);
     } finally {
       setBusyId(null);
@@ -255,7 +238,17 @@ export function OrgMembersPanel({
   };
 
   if (loading) {
-    return <p className="text-sm text-muted">멤버·승인 대기 불러오는 중…</p>;
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-card-border sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-20 animate-pulse bg-muted/20" />
+          ))}
+        </div>
+        <div className="h-12 animate-pulse rounded-xl bg-muted/20" />
+        <div className="h-40 animate-pulse rounded-xl bg-muted/20" />
+      </div>
+    );
   }
 
   return (
@@ -380,17 +373,6 @@ export function OrgMembersPanel({
           { id: "members", label: `멤버 (${members.length})` },
         ]}
       />
-
-      {error ? (
-        <p className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
-      {message ? (
-        <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200">
-          {message}
-        </p>
-      ) : null}
 
       {tab === "pending" ? (
         pending.length === 0 ? (
