@@ -63,7 +63,7 @@ export function GameCourseList({ courses }: { courses: CourseSummary[] }) {
       </ul>
 
       <p className="text-center text-xs text-muted">
-        Phase A: 의사소통 · 기법당 문항 3개 · 규칙은 맞힌 뒤에 공개
+        Phase A: 의사소통 2유닛 · 레벨↑ 난이도↑ · 후반 혼합 라운드
       </p>
     </div>
   );

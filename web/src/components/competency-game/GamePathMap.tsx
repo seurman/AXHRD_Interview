@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import type { CourseProgressView } from "@/lib/competency-game/progress";
+import { DIFFICULTY_LABEL_KO } from "@/lib/competency-game/types";
 
 export function GamePathMap({ view }: { view: CourseProgressView }) {
   return (
@@ -40,6 +41,8 @@ export function GamePathMap({ view }: { view: CourseProgressView }) {
               {unit.levels.map((level, i) => {
                 const locked = !level.unlocked;
                 const href = `/practice/game/${view.competency.toLowerCase()}/${level.id}`;
+                const mixHint =
+                  level.gameType === "mixed" ? "혼합 라운드" : "연습";
                 return (
                   <motion.li
                     key={level.id}
@@ -57,12 +60,17 @@ export function GamePathMap({ view }: { view: CourseProgressView }) {
                             : "bg-primary text-primary-foreground"
                       }`}
                     >
-                      {level.cleared ? "✓" : level.index + 1}
+                      {level.cleared ? "✓" : level.pathIndex + 1}
                     </span>
                     {locked ? (
                       <div className="card-luxe opacity-60 p-4">
-                        <p className="text-sm font-semibold text-muted">{level.titleKo}</p>
-                        <p className="text-xs text-muted">이전 레벨을 클리어하면 열려요</p>
+                        <p className="text-sm font-semibold text-muted">
+                          {level.titleKo}
+                        </p>
+                        <p className="text-xs text-muted">
+                          이전 레벨을 클리어하면 열려요 ·{" "}
+                          {DIFFICULTY_LABEL_KO[level.difficulty]}
+                        </p>
                       </div>
                     ) : (
                       <Link
@@ -75,13 +83,18 @@ export function GamePathMap({ view }: { view: CourseProgressView }) {
                               {level.titleKo}
                             </p>
                             <p className="mt-0.5 text-xs text-muted">
-                              문항 3 · +{level.xpReward} XP
+                              {DIFFICULTY_LABEL_KO[level.difficulty]} · {mixHint} ·
+                              문항 {level.itemCount} · +{level.xpReward} XP
                             </p>
                           </div>
                           {level.cleared ? (
-                            <span className="text-xs font-semibold text-gold">클리어</span>
+                            <span className="text-xs font-semibold text-gold">
+                              클리어
+                            </span>
                           ) : (
-                            <span className="text-xs font-semibold text-accent">플레이</span>
+                            <span className="text-xs font-semibold text-accent">
+                              플레이
+                            </span>
                           )}
                         </div>
                       </Link>
@@ -94,7 +107,10 @@ export function GamePathMap({ view }: { view: CourseProgressView }) {
         </section>
       ))}
 
-      <Link href="/practice/game" className="inline-flex min-h-11 items-center text-sm text-accent hover:underline">
+      <Link
+        href="/practice/game"
+        className="inline-flex min-h-11 items-center text-sm text-accent hover:underline"
+      >
         ← 역량게임 코스
       </Link>
     </div>
