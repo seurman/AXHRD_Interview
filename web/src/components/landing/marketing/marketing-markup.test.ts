@@ -33,6 +33,15 @@ describe("buildMarketingHomeHtml", () => {
     expect(hero).not.toContain("hero-preview");
   });
 
+  it("shows a concrete 자소서-grounded sample question in the stage", () => {
+    const html = buildMarketingHomeHtml();
+    expect(html).toContain("hero-stage-q");
+    expect(html).toContain("역할 재분배와 일일 체크인");
+    expect(html).not.toContain(
+      "자소서에서 말씀하신 협업 갈등 상황, 그때 본인이 먼저 제안한 해결책은 무엇이었나요?",
+    );
+  });
+
   it("aligns below-hero copy to Korean three-step flow", () => {
     const html = buildMarketingHomeHtml();
     expect(html).toContain("흐름 · 3단계");

@@ -92,7 +92,7 @@ body.ax-home-page .ax-home .hero-stage-scene {
   right: max(2rem, calc((100vw - 1120px) / 2));
   top: 52%;
   transform: translateY(-42%);
-  width: min(34rem, 42vw);
+  width: min(38rem, 46vw);
   max-width: calc(100vw - 3rem);
 }
 
@@ -109,9 +109,10 @@ body.ax-home-page .ax-home .hero-stage-kicker {
 body.ax-home-page .ax-home .hero-stage-q {
   margin: 0;
   font-family: var(--font-pretendard), var(--font-ibm-plex), sans-serif;
-  font-size: clamp(1.15rem, 1.7vw, 1.55rem);
+  /* Longer grounded quotes need a touch more room than one-liners */
+  font-size: clamp(1.05rem, 1.45vw, 1.4rem);
   font-weight: 500;
-  line-height: 1.55;
+  line-height: 1.58;
   letter-spacing: -0.02em;
   color: rgb(238 243 246 / 0.92);
   text-wrap: pretty;
