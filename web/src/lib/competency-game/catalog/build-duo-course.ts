@@ -23,6 +23,11 @@ import type {
 import { level } from "./helpers";
 import { shuffleBlankOptions, shuffleChoices } from "./content-shuffle";
 import { UNIQUE_BANKS } from "./unique-banks";
+import {
+  lexiconMatchItems,
+  lexiconOrgLensChoices,
+  lexiconTrueFalseItems,
+} from "./lexicon-banks";
 
 export type DuoPack = {
   competency: CompetencyCode;
@@ -111,14 +116,17 @@ export function buildDuoCourse(pack: DuoPack): GameCourse {
   const u2 = unitId(c, 2);
   const banks = UNIQUE_BANKS[c];
 
-  const trueFalse = (pack.trueFalse ?? banks.trueFalse).map((o, i) => ({
-    id: id(k, 1, 2, i + 1),
-    gameType: "true_false" as const,
-    skillRule: "good_vs_bad" as const,
-    ...o,
-  }));
+  // 단어장(SSoT) 우선 — 영어앱 단어/숙어 드릴에 대응
+  const trueFalse = (pack.trueFalse ?? lexiconTrueFalseItems(c) ?? banks.trueFalse).map(
+    (o, i) => ({
+      id: id(k, 1, 2, i + 1),
+      gameType: "true_false" as const,
+      skillRule: "good_vs_bad" as const,
+      ...o,
+    }),
+  );
 
-  const matches = (pack.matches ?? banks.matches).map((o, i) => ({
+  const matches = (pack.matches ?? lexiconMatchItems(c) ?? banks.matches).map((o, i) => ({
     id: id(k, 1, 6, i + 1),
     gameType: "match_pairs" as const,
     skillRule: "star_order" as const,
@@ -267,13 +275,18 @@ export function buildDuoCourse(pack: DuoPack): GameCourse {
         id: `${c.toLowerCase()}-u2-l1`,
         unitId: u2,
         index: 0,
-        titleKo: "아슬아슬한 판단",
-        skillRule: "conclusion_first",
+        titleKo: "조직 렌즈로 읽기",
+        skillRule: "question_intent",
         difficulty: 4,
         xpReward: 55,
-        items: pack.traps.map((o, i) =>
-          choiceItem(id(k, 2, 1, i + 1), o, "conclusion_first"),
-        ),
+        // 대기업·공공·스타트업 렌즈 독해 (담당자 어필 신호)
+        items: (() => {
+          const lensItems = lexiconOrgLensChoices(c);
+          const source = lensItems.length >= 3 ? lensItems : pack.traps;
+          return source.map((o, i) =>
+            choiceItem(id(k, 2, 1, i + 1), o, "question_intent"),
+          );
+        })(),
       }),
       level({
         id: `${c.toLowerCase()}-u2-l2`,

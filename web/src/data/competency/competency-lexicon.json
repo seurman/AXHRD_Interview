@@ -1,0 +1,398 @@
+{
+  "version": 1,
+  "description": "NCS 직업기초능력·역량사전 관행을 반영한 신호어/숙어 사전. 영어앱 단어장처럼 게임·학습·면접 트리플 렌즈에 공유.",
+  "sources": [
+    "NCS 직업기초능력(의사소통·문제해결·조직이해·자기개발 등) — ncs.go.kr",
+    "공공·대기업 구조화 면접·행동지표(BARS) 관행",
+    "스타트업 오너십·속도·임팩트 채용 관행",
+    "IRCC/SHL류 역량사전: definition + behavioral indicators"
+  ],
+  "orgLenses": {
+    "LARGE": {
+      "labelKo": "대기업",
+      "looksFor": ["구조화 답변", "역할 경계", "프로세스·리스크", "이해관계자 정렬", "재현 가능한 성과"]
+    },
+    "PUBLIC": {
+      "labelKo": "공공기관",
+      "looksFor": ["NCS 행동지표", "공정·투명", "규정·절차", "공익·책임", "근거 문서화"]
+    },
+    "STARTUP": {
+      "labelKo": "스타트업",
+      "looksFor": ["오너십", "속도·학습", "모호함 속 결정", "직접 실행", "임팩트 수치"]
+    }
+  },
+  "competencies": {
+    "COMMUNICATION": {
+      "nameKo": "의사소통",
+      "ncsAnchor": "NCS 의사소통능력 — 문서이해·경청·의사표현",
+      "definition": "상대 의도를 정확히 파악하고, 결론부터 명확히 전달하며, 상황에 맞게 설득·조율하는 능력",
+      "subskills": [
+        { "code": "INTENT", "nameKo": "의도 파악", "ncs": "경청·문서이해" },
+        { "code": "CLARITY", "nameKo": "명확한 전달", "ncs": "의사표현" },
+        { "code": "PERSUADE", "nameKo": "설득·조율", "ncs": "의사표현·경청" }
+      ],
+      "terms": [
+        {
+          "id": "comm-conclusion-first",
+          "kind": "phrase",
+          "termKo": "결론 먼저",
+          "meaningKo": "첫 문장에 핵심 행동을 두는 전달 습관",
+          "goodExample": "갈등에서 제가 한 일은 우선순위 합의였습니다.",
+          "badExample": "사실 그때 분위기가 좀 복잡했어요.",
+          "preferredBy": ["LARGE", "PUBLIC", "STARTUP"]
+        },
+        {
+          "id": "comm-listen-back",
+          "kind": "phrase",
+          "termKo": "의도 되받기",
+          "meaningKo": "질문·상대 핵심 단어를 첫 문장에 반영",
+          "goodExample": "의견이 달랐을 때, 저는 일정 리스크를 수치로 공유해 설득했습니다.",
+          "badExample": "평소 소통을 잘하는 편이라 자연스럽게 풀었습니다.",
+          "preferredBy": ["PUBLIC", "LARGE"]
+        },
+        {
+          "id": "comm-stakeholder",
+          "kind": "word",
+          "termKo": "이해관계자",
+          "meaningKo": "결정에 영향받는 사람·팀을 명시하고 메시지를 조정",
+          "goodExample": "개발·영업 각각에 다른 한 줄로 합의안을 공유했습니다.",
+          "badExample": "다들 알아서 맞춰 주셨습니다.",
+          "preferredBy": ["LARGE", "PUBLIC"]
+        },
+        {
+          "id": "comm-evidence",
+          "kind": "word",
+          "termKo": "근거",
+          "meaningKo": "주장 뒤에 데이터·사례·절차를 붙임",
+          "goodExample": "문의 건수가 주 25→8로 줄어 합의가 유지됐습니다.",
+          "badExample": "분위기가 좋아져 소통이 잘 된 것 같습니다.",
+          "preferredBy": ["PUBLIC", "LARGE", "STARTUP"]
+        },
+        {
+          "id": "comm-channel",
+          "kind": "phrase",
+          "termKo": "채널 맞추기",
+          "meaningKo": "보고·슬랙·회의 등 상황에 맞는 전달 방식 선택",
+          "goodExample": "급한 리스크는 슬랙, 결정은 짧은 문서로 남겼습니다.",
+          "badExample": "중요한 내용도 구두로만 맞춰 두었습니다.",
+          "preferredBy": ["LARGE", "PUBLIC"]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": ["구조화된 한 줄 결론", "이해관계자별 메시지", "리스크·합의 기록"],
+        "PUBLIC": ["경청·의도 확인", "근거·절차 명시", "공정한 공유"],
+        "STARTUP": ["짧은 결론", "바로 실행 가능한 합의", "속도 있는 피드백"]
+      }
+    },
+    "PROBLEM_SOLVING": {
+      "nameKo": "문제해결",
+      "ncsAnchor": "NCS 문제해결능력 — 사고력·문제처리",
+      "definition": "문제를 정의하고, 가설을 검증하며, 대안을 비교·실행·평가하는 능력",
+      "subskills": [
+        { "code": "DEFINE", "nameKo": "문제 정의", "ncs": "문제처리" },
+        { "code": "ANALYZE", "nameKo": "원인 분석", "ncs": "사고력" },
+        { "code": "DECIDE", "nameKo": "대안 선택", "ncs": "문제처리" }
+      ],
+      "terms": [
+        {
+          "id": "ps-define",
+          "kind": "phrase",
+          "termKo": "문제 정의",
+          "meaningKo": "영향 범위·지표로 문제를 한 줄로 고정",
+          "goodExample": "결제 전환율이 이틀째 1.8%로 떨어진 것이 문제입니다.",
+          "badExample": "뭔가 이상해서 일단 서버를 재시작했습니다.",
+          "preferredBy": ["PUBLIC", "LARGE", "STARTUP"]
+        },
+        {
+          "id": "ps-hypothesis",
+          "kind": "word",
+          "termKo": "가설",
+          "meaningKo": "원인 후보를 검증 가능한 형태로 세움",
+          "goodExample": "타임아웃·UI 변경·로그 누락 세 가설을 영향도 순으로 검증했습니다.",
+          "badExample": "직감으로 서버가 문제라고 봤습니다.",
+          "preferredBy": ["LARGE", "STARTUP"]
+        },
+        {
+          "id": "ps-tradeoff",
+          "kind": "word",
+          "termKo": "트레이드오프",
+          "meaningKo": "무엇을 포기하고 무엇을 지켰는지 명시",
+          "goodExample": "비핵심 기능을 빼고 성능 SLA를 지켰습니다.",
+          "badExample": "둘 다 지키려다 일정이 밀렸습니다.",
+          "preferredBy": ["LARGE", "STARTUP"]
+        },
+        {
+          "id": "ps-rootcause",
+          "kind": "phrase",
+          "termKo": "근본 원인",
+          "meaningKo": "증상 대응을 넘어 재발 방지까지 연결",
+          "goodExample": "알림 규칙을 바꿔 같은 장애가 다음 피크에서 재발하지 않았습니다.",
+          "badExample": "야근으로 일단 막았습니다.",
+          "preferredBy": ["PUBLIC", "LARGE"]
+        },
+        {
+          "id": "ps-metric",
+          "kind": "word",
+          "termKo": "검증 지표",
+          "meaningKo": "성공/실패를 판정할 수치·기준",
+          "goodExample": "전환율 1.8%→2.4%로 회복되며 가설이 맞았습니다.",
+          "badExample": "체감으로 훨씬 나아진 것 같습니다.",
+          "preferredBy": ["STARTUP", "LARGE", "PUBLIC"]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": ["영향도·우선순위", "재발 방지", "승인·리스크 문서"],
+        "PUBLIC": ["문제 인식·정의", "대안 비교 근거", "결과 평가·기록"],
+        "STARTUP": ["빠른 가설 검증", "트레이드오프", "임팩트 수치"]
+      }
+    },
+    "JOB_FIT": {
+      "nameKo": "직무적합",
+      "ncsAnchor": "직무수행능력 — 정보·기술·자원과 직무 과업의 정합",
+      "definition": "직무 요구와 내 증거(도구·산출·성과)를 연결해 기여를 증명하는 능력",
+      "subskills": [
+        { "code": "MATCH", "nameKo": "과업 매칭", "ncs": "정보·기술" },
+        { "code": "TOOL", "nameKo": "도구·스킬", "ncs": "기술선택·적용" },
+        { "code": "GAP", "nameKo": "갭 메우기", "ncs": "정보처리·자기개발" }
+      ],
+      "terms": [
+        {
+          "id": "jf-task-match",
+          "kind": "phrase",
+          "termKo": "과업 매칭",
+          "meaningKo": "공고의 주 과업 ↔ 내 행동·산출을 바로 잇기",
+          "goodExample": "주간 실험이 주 과업이라, 유사 퍼널에서 CAC를 개선한 경험을 연결했습니다.",
+          "badExample": "성장 가능성이 큰 회사라 지원했습니다.",
+          "preferredBy": ["LARGE", "STARTUP", "PUBLIC"]
+        },
+        {
+          "id": "jf-deliverable",
+          "kind": "word",
+          "termKo": "산출물",
+          "meaningKo": "보드·리포트·데모 등 직무 결과물",
+          "goodExample": "실험 보드를 정착시켜 주간 리뷰에 붙였습니다.",
+          "badExample": "열심히 배우며 적응하겠습니다.",
+          "preferredBy": ["STARTUP", "LARGE"]
+        },
+        {
+          "id": "jf-stack",
+          "kind": "word",
+          "termKo": "요구 스택",
+          "meaningKo": "공고가 요구하는 도구·기술 목록",
+          "goodExample": "요구 도구 중 둘은 현업, 하나는 사이드 파이프라인으로 보완했습니다.",
+          "badExample": "관심과 열정으로 부족함을 메우겠습니다.",
+          "preferredBy": ["STARTUP", "LARGE"]
+        },
+        {
+          "id": "jf-transfer",
+          "kind": "phrase",
+          "termKo": "전이 가능한 방법",
+          "meaningKo": "경험 갭을 유사 맥락의 학습·실험으로 메움",
+          "goodExample": "대규모 브랜드는 없지만 유사 퍼널 실험으로 갭을 메우겠습니다.",
+          "badExample": "관련 업계 관심만으로 충분하다고 봅니다.",
+          "preferredBy": ["PUBLIC", "STARTUP"]
+        },
+        {
+          "id": "jf-90day",
+          "kind": "phrase",
+          "termKo": "90일 계획",
+          "meaningKo": "입사 초 직무 산출물 중심 목표",
+          "goodExample": "90일 안에 실험 보드와 CAC 주간 리뷰를 정착시키겠습니다.",
+          "badExample": "먼저 문화에 적응한 뒤 목표를 잡겠습니다.",
+          "preferredBy": ["LARGE", "STARTUP"]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": ["직무 기술서 정합", "프로세스 기여", "확장 가능한 산출"],
+        "PUBLIC": ["직무기술서·능력단위", "정보·기술 활용 근거", "공정한 성과 설명"],
+        "STARTUP": ["즉시 투입 가능한 스킬", "데모·산출물", "갭을 실험으로 메움"]
+      }
+    },
+    "ORG_FIT": {
+      "nameKo": "조직적합",
+      "ncsAnchor": "NCS 조직이해능력·직업윤리 — 체제·업무·가치 정렬",
+      "definition": "조직 목표·문화·규범을 이해하고, 협력·윤리에 맞게 기여하는 능력",
+      "subskills": [
+        { "code": "ALIGN", "nameKo": "목표 정렬", "ncs": "경영·업무이해" },
+        { "code": "NORM", "nameKo": "규범·절차", "ncs": "근로·공동체윤리" },
+        { "code": "COLLAB", "nameKo": "협력", "ncs": "대인관계·팀워크" }
+      ],
+      "terms": [
+        {
+          "id": "of-align",
+          "kind": "phrase",
+          "termKo": "목표 정렬",
+          "meaningKo": "개인 역할과 조직·팀 목표를 연결",
+          "goodExample": "팀 OKR에 맞춰 제 실험을 주간 지표에 붙였습니다.",
+          "badExample": "제가 하고 싶은 일 위주로 우선순위를 잡았습니다.",
+          "preferredBy": ["LARGE", "PUBLIC"]
+        },
+        {
+          "id": "of-process",
+          "kind": "word",
+          "termKo": "절차",
+          "meaningKo": "합의·문서·승인 등 조직이 정한 방식",
+          "goodExample": "결정은 짧은 문서로 남겨 비동기 공유 문화에 맞췄습니다.",
+          "badExample": "문서 부담을 줄이려 구두로만 합의했습니다.",
+          "preferredBy": ["PUBLIC", "LARGE"]
+        },
+        {
+          "id": "of-ethics",
+          "kind": "word",
+          "termKo": "공정성",
+          "meaningKo": "편애·은닉 없이 기준을 공개",
+          "goodExample": "우선순위 기준표를 공개해 요청을 같은 규칙으로 받았습니다.",
+          "badExample": "목소리가 큰 쪽 요청만 먼저 받았습니다.",
+          "preferredBy": ["PUBLIC"]
+        },
+        {
+          "id": "of-culture",
+          "kind": "word",
+          "termKo": "문화 신호",
+          "meaningKo": "조직이 실제로 보상하는 행동 패턴",
+          "goodExample": "합의 중시 문화라 반대도 수치 근거와 대안을 함께 냈습니다.",
+          "badExample": "내 방식이 맞으니 팀이 적응하게 밀었습니다.",
+          "preferredBy": ["STARTUP", "LARGE"]
+        },
+        {
+          "id": "of-sla",
+          "kind": "phrase",
+          "termKo": "공유 SLA",
+          "meaningKo": "공유·응답의 기한을 약속하고 지킴",
+          "goodExample": "피드백 후 공유 SLA를 만들고 실제로 지켰습니다.",
+          "badExample": "성격 차이라며 공유 지연을 넘겼습니다.",
+          "preferredBy": ["LARGE", "PUBLIC", "STARTUP"]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": ["조직 목표 정렬", "절차·거버넌스", "크로스팀 협력"],
+        "PUBLIC": ["공직가치·윤리", "규정 준수", "투명한 공유"],
+        "STARTUP": ["문화 핏", "자율과 책임", "빠른 합의"]
+      }
+    },
+    "LEADERSHIP": {
+      "nameKo": "리더십",
+      "ncsAnchor": "NCS 대인관계·리더십 — 팀워크·갈등관리·협상",
+      "definition": "직책 없이도 방향을 맞추고, 결정을 내리며, 사람을 자립하도록 돕는 영향력",
+      "subskills": [
+        { "code": "ALIGN_DIR", "nameKo": "방향 정렬", "ncs": "리더십·팀웍" },
+        { "code": "DECIDE", "nameKo": "결정", "ncs": "갈등관리·협상" },
+        { "code": "ENABLE", "nameKo": "자립 지원", "ncs": "고객서비스·팀웍" }
+      ],
+      "terms": [
+        {
+          "id": "ld-align-device",
+          "kind": "phrase",
+          "termKo": "정렬 장치",
+          "meaningKo": "목표·지표·보드처럼 팀을 같은 방향으로 묶는 도구",
+          "goodExample": "주간 목표 3개를 고정해 팀이 같은 지표를 보게 했습니다.",
+          "badExample": "성격이 리더형이라 자연스럽게 이끌었습니다.",
+          "preferredBy": ["LARGE", "STARTUP", "PUBLIC"]
+        },
+        {
+          "id": "ld-without-title",
+          "kind": "phrase",
+          "termKo": "직책 없는 영향력",
+          "meaningKo": "공식 권한 없이 합의·기준으로 움직이기",
+          "goodExample": "직함 없이 공통 성공 지표로 세 팀 출시일을 맞췄습니다.",
+          "badExample": "조장·반장 경험이 많아 리더십이 익숙합니다.",
+          "preferredBy": ["STARTUP", "LARGE"]
+        },
+        {
+          "id": "ld-decision-rule",
+          "kind": "phrase",
+          "termKo": "결정 기준표",
+          "meaningKo": "선택 기준과 기한을 미리 고정",
+          "goodExample": "기준표를 만들어 30분 안에 고르도록 바꿨습니다.",
+          "badExample": "합의가 될 때까지 논의를 열어 두었습니다.",
+          "preferredBy": ["LARGE", "PUBLIC"]
+        },
+        {
+          "id": "ld-enable",
+          "kind": "phrase",
+          "termKo": "자립 장치",
+          "meaningKo": "단기 도움 후 혼자 할 체크리스트·루브릭을 남김",
+          "goodExample": "페어로 풀고 다음엔 혼자 쓸 체크리스트를 남겼습니다.",
+          "badExample": "막힐 때마다 제가 대신 다 처리했습니다.",
+          "preferredBy": ["LARGE", "STARTUP"]
+        },
+        {
+          "id": "ld-leadtime",
+          "kind": "word",
+          "termKo": "리드타임",
+          "meaningKo": "결정·전달에 걸리는 시간 — 리더십 성과 지표",
+          "goodExample": "결정 리드타임이 3일에서 반나절로 줄었습니다.",
+          "badExample": "팀 분위기가 좋아져 결속이 단단해졌습니다.",
+          "preferredBy": ["STARTUP", "LARGE"]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": ["정렬·거버넌스", "이해관계자 설득", "위임과 자립"],
+        "PUBLIC": ["공정한 조율", "책임·기록", "갈등 원만 해결"],
+        "STARTUP": ["직책 없는 리드", "빠른 결정", "실행 속도"]
+      }
+    },
+    "GROWTH": {
+      "nameKo": "성장",
+      "ncsAnchor": "NCS 자기개발능력 — 자아인식·자기관리·경력개발",
+      "definition": "피드백과 실패를 행동 변화로 바꾸고, 학습을 성과로 전이하는 능력",
+      "subskills": [
+        { "code": "AWARE", "nameKo": "자아인식", "ncs": "자아인식" },
+        { "code": "LOOP", "nameKo": "피드백 루프", "ncs": "자기관리" },
+        { "code": "TRANSFER", "nameKo": "학습 전이", "ncs": "경력개발" }
+      ],
+      "terms": [
+        {
+          "id": "gr-feedback-loop",
+          "kind": "phrase",
+          "termKo": "피드백 루프",
+          "meaningKo": "피드백→행동 변경→효과 측정",
+          "goodExample": "리뷰 피드백을 템플릿에 반영해 미팅 시간을 줄였습니다.",
+          "badExample": "평생 학습형이라 성장에 자신 있습니다.",
+          "preferredBy": ["STARTUP", "LARGE", "PUBLIC"]
+        },
+        {
+          "id": "gr-transfer",
+          "kind": "word",
+          "termKo": "전이",
+          "meaningKo": "배운 내용을 다음 티켓·산출에 연결",
+          "goodExample": "스파이크로 배운 뒤 작은 기능에 이식했습니다.",
+          "badExample": "강의를 여러 개 수강했습니다.",
+          "preferredBy": ["STARTUP", "LARGE"]
+        },
+        {
+          "id": "gr-system",
+          "kind": "word",
+          "termKo": "시스템화",
+          "meaningKo": "반복 실수를 체크리스트·규칙으로 바꿈",
+          "goodExample": "같은 코멘트가 줄도록 PR 템플릿을 바꿨습니다.",
+          "badExample": "실패해도 괜찮다고 스스로를 다독였습니다.",
+          "preferredBy": ["PUBLIC", "LARGE"]
+        },
+        {
+          "id": "gr-gap-plan",
+          "kind": "phrase",
+          "termKo": "갭→계획→확장",
+          "meaningKo": "약점을 장면으로 말하고 학습 경로를 이음",
+          "goodExample": "설명 과다라는 약점을 템플릿으로 고치고 미팅을 줄였습니다.",
+          "badExample": "강점만 말하고 약점은 짧게 넘겼습니다.",
+          "preferredBy": ["PUBLIC", "LARGE"]
+        },
+        {
+          "id": "gr-measure",
+          "kind": "phrase",
+          "termKo": "성장 지표",
+          "meaningKo": "배움을 시간·오류·자립 기간 등으로 측정",
+          "goodExample": "온보딩 자립 4주→2주로 앞당겼습니다.",
+          "badExample": "자신감이 많이 붙었습니다.",
+          "preferredBy": ["STARTUP", "LARGE", "PUBLIC"]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": ["체계적 자기개발", "피드백 반영 기록", "조직 기여로 확장"],
+        "PUBLIC": ["자아인식", "개선 의지·실행", "윤리와 성장의 균형"],
+        "STARTUP": ["빠른 학습 루프", "전이·실행", "실패를 시스템으로"]
+      }
+    }
+  }
+}

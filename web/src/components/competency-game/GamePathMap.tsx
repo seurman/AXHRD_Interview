@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import type { CourseProgressView } from "@/lib/competency-game/progress";
 import { DIFFICULTY_LABEL_KO } from "@/lib/competency-game/types";
+import { LexiconStrip } from "./LexiconStrip";
 
 export function GamePathMap({ view }: { view: CourseProgressView }) {
   const flat = view.units.flatMap((u) => u.levels);
@@ -52,6 +53,8 @@ export function GamePathMap({ view }: { view: CourseProgressView }) {
           <p className="text-sm font-semibold text-gold">이 코스를 모두 클리어했습니다!</p>
         )}
       </header>
+
+      <LexiconStrip competency={view.competency} />
 
       {view.units.map((unit) => (
         <section key={unit.id} className="space-y-4">

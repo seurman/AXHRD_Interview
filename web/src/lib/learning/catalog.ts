@@ -10,6 +10,7 @@
 import type { CareerTrack, LessonKind } from "@prisma/client";
 import { COMPETENCY_CODES, type CompetencyCode } from "@/types";
 import type { AnswerDimensionKey } from "@/lib/interview/answer-dimensions";
+import { getLexicon } from "@/lib/competency/lexicon";
 
 export type LessonQuiz = {
   questions: Array<{
@@ -46,15 +47,16 @@ export type CompetencyLearningMeta = {
   /** 인증(CERTIFY) 자가점검 기준 */
   certifyChecks: string[];
   sampleQuestion: string;
+  /** 역량 단어장 신호어·숙어 (영어앱 단어에 대응) */
+  vocabTerms: string[];
 };
 
-export const COMPETENCY_LEARNING_META: Record<
+const LEARNING_META_BASE: Record<
   CompetencyCode,
-  CompetencyLearningMeta
+  Omit<CompetencyLearningMeta, "ncsAnchor" | "vocabTerms">
 > = {
   COMMUNICATION: {
     title: "의사소통",
-    ncsAnchor: "NCS 의사소통능력 — 명확한 표현·경청·상대 관점",
     principle:
       "면접관은 ‘말을 잘하는지’보다 **상대가 이해했는지·핵심이 전달됐는지**를 봅니다. 결론→근거→예시 순이 기본입니다.",
     frame:
@@ -75,7 +77,6 @@ export const COMPETENCY_LEARNING_META: Record<
   },
   PROBLEM_SOLVING: {
     title: "문제해결",
-    ncsAnchor: "NCS 문제해결능력 — 원인 파악·대안·실행계획",
     principle:
       "결과는 결과이고, 면접은 **문제를 어떻게 정의·분해·검증했는지**를 봅니다. 원인 가설→실험→지표가 핵심입니다.",
     frame:
@@ -96,7 +97,6 @@ export const COMPETENCY_LEARNING_META: Record<
   },
   JOB_FIT: {
     title: "직무적합",
-    ncsAnchor: "직무수행능력 — 공고 요구↔내 행동·산출물 정합",
     principle:
       "직무적합은 열정이 아니라 **그 일에서 쓰는 행동·도구·성과**가 자소서·경험과 맞는지입니다.",
     frame:
@@ -117,7 +117,6 @@ export const COMPETENCY_LEARNING_META: Record<
   },
   ORG_FIT: {
     title: "조직적합",
-    ncsAnchor: "NCS 조직이해·대인관계 — 규범·갈등 조율·협업",
     principle:
       "조직적합은 착한 사람이 아니라 **갈등·우선순위·협업 규칙을 어떻게 다루는지**입니다.",
     frame:
@@ -138,7 +137,6 @@ export const COMPETENCY_LEARNING_META: Record<
   },
   LEADERSHIP: {
     title: "리더십",
-    ncsAnchor: "리더십·영향력 (직무 수행 태도) — 방향·위임·책임 (직책 불문)",
     principle:
       "리더십은 직책이 아니라 **방향 제시·위임·책임 소유**입니다. 신입은 ‘제안·솔선’, 경력은 ‘의사결정·트레이드오프’가 중심입니다.",
     frame:
@@ -159,7 +157,6 @@ export const COMPETENCY_LEARNING_META: Record<
   },
   GROWTH: {
     title: "성장",
-    ncsAnchor: "NCS 자기개발능력 — 피드백→행동 변화→재측정",
     principle:
       "성장은 실패 자랑이 아니라 **피드백을 행동으로 바꿨는지**입니다. Before→After가 보여야 합니다.",
     frame:
@@ -178,6 +175,33 @@ export const COMPETENCY_LEARNING_META: Record<
     ],
     sampleQuestion: "피드백을 받고 실제로 바꾼 행동과, 그 결과를 말해 주세요.",
   },
+};
+
+function enrichWithLexicon(
+  code: CompetencyCode,
+  base: Omit<CompetencyLearningMeta, "ncsAnchor" | "vocabTerms">,
+): CompetencyLearningMeta {
+  const lex = getLexicon(code);
+  const vocabTerms = lex.terms.map((t) => t.termKo);
+  return {
+    ...base,
+    ncsAnchor: lex.ncsAnchor,
+    vocabTerms,
+    principle: `${base.principle}\n\n**신호어·숙어:** ${vocabTerms.join(" · ")}`,
+    frame: `${base.frame}\n\n단어장 연습: ${vocabTerms.slice(0, 3).join(", ")}`,
+  };
+}
+
+export const COMPETENCY_LEARNING_META: Record<
+  CompetencyCode,
+  CompetencyLearningMeta
+> = {
+  COMMUNICATION: enrichWithLexicon("COMMUNICATION", LEARNING_META_BASE.COMMUNICATION),
+  PROBLEM_SOLVING: enrichWithLexicon("PROBLEM_SOLVING", LEARNING_META_BASE.PROBLEM_SOLVING),
+  JOB_FIT: enrichWithLexicon("JOB_FIT", LEARNING_META_BASE.JOB_FIT),
+  ORG_FIT: enrichWithLexicon("ORG_FIT", LEARNING_META_BASE.ORG_FIT),
+  LEADERSHIP: enrichWithLexicon("LEADERSHIP", LEARNING_META_BASE.LEADERSHIP),
+  GROWTH: enrichWithLexicon("GROWTH", LEARNING_META_BASE.GROWTH),
 };
 
 function quizFor(

@@ -2,6 +2,16 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 역량 단어장 + 조직 렌즈 (완료)
+
+| 항목 | 내용 |
+|------|------|
+| 소스 | `competency-lexicon.json` — NCS 앵커·신호어/숙어·좋/나쁜 예·LARGE/PUBLIC/STARTUP 렌즈 |
+| 게임 | 참거짓·짝맞추기=단어장 · 유닛2 「조직 렌즈로 읽기」=3관점 SJT |
+| 학습 | `COMPETENCY_LEARNING_META`에 vocabTerms·NCS 앵커 주입 |
+| 면접 | 트리플 피드백 프롬프트에 렌즈별 신호어 힌트 |
+| API | `GET /api/admin/competency-lexicon` |
+
 ## 최근 작업 — 역량게임 SJT 객관식 (진행 중)
 
 | 항목 | 내용 |
