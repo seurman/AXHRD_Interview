@@ -63,7 +63,7 @@ export function GameCourseList({ courses }: { courses: CourseSummary[] }) {
       </ul>
 
       <p className="text-center text-xs text-muted">
-        Phase A: 의사소통 유닛1(미니게임 5종) · 이후 역량·유닛 확장
+        Phase A: 의사소통 · 기법당 문항 3개 · 규칙은 맞힌 뒤에 공개
       </p>
     </div>
   );

@@ -3,7 +3,7 @@ import { findGameLevel, getGameCourse, listGameCourses } from "./catalog";
 import { gradeItem, gradeLevel, isLevelUnlocked } from "./engine";
 
 describe("competency-game catalog", () => {
-  it("ships communication unit 1 with five game types", () => {
+  it("ships communication unit 1 with five levels and three items each", () => {
     const course = getGameCourse("COMMUNICATION");
     expect(course.units[0].levels).toHaveLength(5);
     const types = course.units[0].levels.map((l) => l.gameType);
@@ -14,6 +14,23 @@ describe("competency-game catalog", () => {
       "swipe_judge",
       "speak_along",
     ]);
+    for (const level of course.units[0].levels) {
+      expect(level.items).toHaveLength(3);
+    }
+  });
+
+  it("keeps play titles free of technique spoilers", () => {
+    const course = getGameCourse("COMMUNICATION");
+    const unit = course.units[0];
+    const blob = [
+      unit.titleKo,
+      unit.subtitleKo,
+      ...unit.levels.map((l) => l.titleKo),
+      ...unit.levels.flatMap((l) =>
+        l.items.map((item) => ("prompt" in item ? item.prompt : "")),
+      ),
+    ].join("\n");
+    expect(blob).not.toMatch(/STAR|결론이 먼저|결론 고르기|따라 말하기/);
   });
 
   it("lists six courses", () => {
@@ -53,10 +70,12 @@ describe("competency-game engine", () => {
 
   it("awards level bonus when all items correct", () => {
     const level = findGameLevel("communication-u1-l5")!.level;
-    const item = level.items[0];
-    const graded = gradeLevel(level, [
-      { gameType: "speak_along", itemId: item.id, completed: true },
-    ]);
+    const answers = level.items.map((item) => ({
+      gameType: "speak_along" as const,
+      itemId: item.id,
+      completed: true as const,
+    }));
+    const graded = gradeLevel(level, answers);
     expect(graded.allCorrect).toBe(true);
     expect(graded.xpTotal).toBeGreaterThanOrEqual(level.xpReward);
   });
