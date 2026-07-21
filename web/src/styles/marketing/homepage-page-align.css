@@ -43,11 +43,86 @@ body.ax-home-page .marketing-home::before {
   opacity: 0.03;
 }
 
-/* Keep header ink while on home */
+/* Header on ink hero — beat integrate/luxe light-ink !important colors */
 body.ax-home-page .header-premium {
-  background: rgb(16 24 32 / 0.78);
-  border-bottom-color: rgb(238 243 246 / 0.1);
+  background: rgb(16 24 32 / 0.82);
+  border-bottom-color: rgb(238 243 246 / 0.12);
   color: #eef3f6;
+  box-shadow: none;
+}
+
+body.ax-home-page .header-premium .axhrd-logo {
+  color: #eef3f6 !important;
+}
+
+body.ax-home-page .header-premium a,
+body.ax-home-page .header-premium button {
+  color: #eef3f6;
+}
+
+body.ax-home-page .header-premium .nav-pill,
+body.ax-home-page .header-premium .user-greeting,
+body.ax-home-page .header-premium .lang-switch button,
+body.ax-home-page .header-premium .avatar-menu-trigger {
+  color: #eef3f6 !important;
+  border-color: rgb(238 243 246 / 0.32);
+}
+
+body.ax-home-page .header-premium .nav-pill:hover,
+body.ax-home-page .header-premium .nav-pill-active {
+  border-color: rgb(238 243 246 / 0.55) !important;
+  background: rgb(238 243 246 / 0.1) !important;
+  color: #fff !important;
+}
+
+body.ax-home-page .header-premium .nav-pill-gold {
+  background: #eef3f6 !important;
+  border-color: #eef3f6 !important;
+  color: #101820 !important;
+  box-shadow: none;
+}
+
+body.ax-home-page .header-premium .nav-pill-gold:hover {
+  background: #fff !important;
+  border-color: #fff !important;
+  color: #101820 !important;
+}
+
+body.ax-home-page .header-premium .lang-switch {
+  border-color: rgb(238 243 246 / 0.28);
+  background: rgb(238 243 246 / 0.08);
+}
+
+body.ax-home-page .header-premium .lang-switch button[data-active="true"] {
+  background: rgb(238 243 246 / 0.18) !important;
+  color: #fff !important;
+}
+
+body.ax-home-page .header-premium .lang-switch button[data-active="false"] {
+  color: #9aafbd !important;
+}
+
+body.ax-home-page .header-premium .workspace-switcher {
+  border-color: rgb(238 243 246 / 0.28);
+  background: rgb(238 243 246 / 0.08);
+}
+
+body.ax-home-page .header-premium .workspace-switcher__btn {
+  color: #9aafbd !important;
+}
+
+body.ax-home-page .header-premium .workspace-switcher__btn--active {
+  background: rgb(61 155 143 / 0.35) !important;
+  color: #eef3f6 !important;
+}
+
+body.ax-home-page .header-premium .avatar-menu-trigger:hover {
+  border-color: rgb(238 243 246 / 0.5);
+  background: rgb(238 243 246 / 0.1);
+}
+
+body.ax-home-page .header-premium svg {
+  color: inherit;
 }
 
 /* Site canvas */
