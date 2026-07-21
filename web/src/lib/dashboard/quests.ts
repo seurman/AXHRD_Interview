@@ -4,6 +4,7 @@ export function buildCareerQuests(params: {
   sessionCount: number;
   hasDiscover: boolean;
   hasSwipeToday?: boolean;
+  hasPathDrillToday?: boolean;
   weakestCompetency?: string;
 }): { quests: QuestItem[]; totalXp: number; level: number } {
   const quests: QuestItem[] = [
@@ -33,7 +34,7 @@ export function buildCareerQuests(params: {
       description: "개념·원리 레슨으로 오늘 드릴 이어가기",
       href: "/practice/path",
       xp: 60,
-      done: false,
+      done: !!params.hasPathDrillToday,
       icon: "🧭",
     },
     {
@@ -59,6 +60,7 @@ export function buildCareerQuests(params: {
   const totalXp =
     (params.hasDiscover ? 150 : 0) +
     Math.min(params.sessionCount, 10) * 200 +
+    (params.hasPathDrillToday ? 60 : 0) +
     (params.hasSwipeToday ? 80 : 0) +
     (params.sessionCount >= 3 ? 100 : 0);
 

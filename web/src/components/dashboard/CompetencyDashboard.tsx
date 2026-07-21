@@ -23,8 +23,11 @@ import { QuestPanel } from "./QuestPanel";
 import { StrengthCardDeck } from "@/components/profile/StrengthCardDeck";
 import { DimensionComparisonRadar } from "./DimensionComparisonRadar";
 import { DimensionTimeSeriesChart } from "./DimensionTimeSeriesChart";
+import { LearningPathCard } from "./LearningPathCard";
 import type { QuestItem } from "./QuestPanel";
 import type { DiscoverInterviewAdvice, DiscoverStrengthItem } from "@/types/discover";
+import type { PathCompetencySummary } from "@/lib/learning/path";
+import type { WeaknessRecommendation } from "@/lib/learning/weakness";
 
 interface Snapshot {
   competency: string;
@@ -55,6 +58,10 @@ interface DashboardProps {
     totalDiscovered: number;
     reportHref: string;
   } | null;
+  learningPath?: {
+    weakness: WeaknessRecommendation;
+    competencies: PathCompetencySummary[];
+  } | null;
   readOnly?: boolean;
   showOnboardingBanner?: boolean;
 }
@@ -77,6 +84,7 @@ export function CompetencyDashboard({
   totalXp,
   level,
   strengthDeck,
+  learningPath = null,
   readOnly = false,
   showOnboardingBanner = false,
 }: DashboardProps) {
@@ -296,6 +304,12 @@ export function CompetencyDashboard({
 
         {!readOnly && (
           <div className="space-y-6">
+            {learningPath ? (
+              <LearningPathCard
+                weakness={learningPath.weakness}
+                pathSummary={learningPath.competencies}
+              />
+            ) : null}
             <QuestPanel quests={quests} totalXp={totalXp} level={level} />
 
             <div className="card-luxe p-5">

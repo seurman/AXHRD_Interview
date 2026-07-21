@@ -15,6 +15,10 @@ import type { QuestItem } from "@/components/dashboard/QuestPanel";
 import type { CoachInsightsPayload } from "@/components/dashboard/CoachInsightsPanel";
 import type { DiscoverInterviewAdvice, DiscoverStrengthItem } from "@/types/discover";
 import type { DimensionSessionPoint } from "@/lib/dashboard/dimension-timeline";
+import type { PathCompetencySummary } from "@/lib/learning/path";
+import type { WeaknessRecommendation } from "@/lib/learning/weakness";
+import { listPathOverview, resolveUserTrack } from "@/lib/learning/path";
+import { recommendWeaknessDrill } from "@/lib/learning/weakness";
 
 export type CompetencyLatest = {
   theta: number;
@@ -48,6 +52,10 @@ export type CompetencyDashboardPayload = {
   } | null;
   hasDashboardContent: boolean;
   coachInsights: CoachInsightsPayload;
+  learningPath: {
+    weakness: WeaknessRecommendation;
+    competencies: PathCompetencySummary[];
+  };
 };
 
 /** 개인 홈 대시보드·기관 코칭 뷰가 공유하는 역량 데이터 조회 */
@@ -148,9 +156,31 @@ export async function getCompetencyDashboardData(
   const assessedEntries = Object.entries(latestByCompetency).filter(([, v]) => v.assessed);
   const weakest = assessedEntries.sort((a, b) => a[1].percentile - b[1].percentile)[0];
 
+  const startOfUtcDay = new Date();
+  startOfUtcDay.setUTCHours(0, 0, 0, 0);
+  const [swipeToday, pathDrillToday, track, weakness] = await Promise.all([
+    prisma.swipeAction.count({
+      where: {
+        userId,
+        updatedAt: { gte: startOfUtcDay },
+      },
+    }),
+    prisma.drillAttempt.count({
+      where: {
+        userId,
+        createdAt: { gte: startOfUtcDay },
+      },
+    }),
+    resolveUserTrack(userId),
+    recommendWeaknessDrill(userId),
+  ]);
+  const pathCompetencies = await listPathOverview(userId, track);
+
   const { quests, totalXp, level } = buildCareerQuests({
     sessionCount: full.sessions.length,
     hasDiscover: full.selfDiscoverySessions.length > 0,
+    hasSwipeToday: swipeToday > 0,
+    hasPathDrillToday: pathDrillToday > 0,
     weakestCompetency: weakest ? competencyLabel(weakest[0]) : undefined,
   });
 
@@ -246,7 +276,11 @@ export async function getCompetencyDashboardData(
           reportHref: `/discover/${strengthDeck.sessionId}/report`,
         }
       : null,
-    hasDashboardContent: full.sessions.length > 0 || !!strengthDeck,
+    hasDashboardContent: full.sessions.length > 0 || !!strengthDeck || pathDrillToday > 0,
+    learningPath: {
+      weakness,
+      competencies: pathCompetencies,
+    },
     coachInsights: {
       competencyDeltas,
       latestDimensions: latestDimensions as Record<string, number> | null,
