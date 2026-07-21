@@ -203,7 +203,9 @@ function LessonPanel({
         toast.success(
           quizScore != null && quizScore < 0.7
             ? "기록했어요. 70% 이상이면 다음 단계가 열려요."
-            : "다음 단계가 열렸습니다.",
+            : lesson.kind === "CERTIFY"
+              ? "인증 완료! 인증서에 뱃지가 표시됩니다."
+              : "다음 단계가 열렸습니다.",
         );
         onCompleted();
       } catch (e) {
@@ -250,6 +252,15 @@ function LessonPanel({
             플랜 업그레이드 →
           </Link>
         </div>
+      ) : null}
+
+      {lesson.kind === "CERTIFY" && lesson.completed ? (
+        <Link
+          href="/profile/certificate"
+          className="btn-secondary inline-flex text-sm"
+        >
+          인증서에서 뱃지 보기 →
+        </Link>
       ) : null}
 
       {quiz ? (

@@ -5,8 +5,10 @@ export function buildCareerQuests(params: {
   hasDiscover: boolean;
   hasSwipeToday?: boolean;
   hasPathDrillToday?: boolean;
+  pathCertifiedCount?: number;
   weakestCompetency?: string;
 }): { quests: QuestItem[]; totalXp: number; level: number } {
+  const certified = params.pathCertifiedCount ?? 0;
   const quests: QuestItem[] = [
     {
       id: "discover",
@@ -49,10 +51,13 @@ export function buildCareerQuests(params: {
     {
       id: "certificate",
       title: "역량 인증서 공유",
-      description: "포트폴리오 링크로 역량 프로필보내기",
+      description:
+        certified > 0
+          ? `학습 패스 인증 ${certified}개 · 인증서에 뱃지 표시`
+          : "포트폴리오 링크로 역량 프로필보내기",
       href: "/profile/certificate",
       xp: 100,
-      done: params.sessionCount >= 3,
+      done: params.sessionCount >= 3 || certified > 0,
       icon: "📜",
     },
   ];
@@ -62,7 +67,8 @@ export function buildCareerQuests(params: {
     Math.min(params.sessionCount, 10) * 200 +
     (params.hasPathDrillToday ? 60 : 0) +
     (params.hasSwipeToday ? 80 : 0) +
-    (params.sessionCount >= 3 ? 100 : 0);
+    (params.sessionCount >= 3 || certified > 0 ? 100 : 0) +
+    Math.min(certified, 6) * 20;
 
   const level = Math.floor(totalXp / 500) + 1;
 

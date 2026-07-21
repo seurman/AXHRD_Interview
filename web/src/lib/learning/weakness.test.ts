@@ -9,6 +9,7 @@ describe("weakness mapping", () => {
       expect(meta.certifyChecks.length).toBeGreaterThanOrEqual(3);
       expect(meta.ncsAnchor).toMatch(/NCS|직무/);
       expect(Object.keys(meta.dimensionTips).length).toBeGreaterThan(0);
+      expect(meta.sampleQuestion.length).toBeGreaterThan(10);
     }
   });
 

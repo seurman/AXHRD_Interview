@@ -23,6 +23,9 @@ export function CertificateView({ data }: { data: CertificateData }) {
         </h1>
         <p className="mt-2 text-sm text-muted">
           발급일 {formatDate(data.issuedAt)} · 완료 세션 {data.sessionCount}회
+          {data.pathBadges.length > 0
+            ? ` · 학습 패스 인증 ${data.pathBadges.length}개`
+            : ""}
         </p>
       </div>
 
@@ -33,6 +36,27 @@ export function CertificateView({ data }: { data: CertificateData }) {
           label="종합 백분위"
         />
       </div>
+
+      {data.pathBadges.length > 0 ? (
+        <div className="mb-8">
+          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-gold">
+            Learning Path Certified
+          </p>
+          <ul className="mt-3 flex flex-wrap justify-center gap-2">
+            {data.pathBadges.map((b) => (
+              <li
+                key={b.competency}
+                className="rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-medium text-foreground"
+              >
+                {b.titleKo} · {formatDate(b.certifiedAt)}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-center text-[11px] text-muted">
+            학습 패스 인증은 개념·원리·드릴·자가점검 완료 표시이며, IRT θ와는 별개입니다.
+          </p>
+        </div>
+      ) : null}
 
       {data.competencies.length === 0 ? (
         <p className="text-center text-sm text-muted">

@@ -97,7 +97,7 @@ export const dictionary: Dictionary = {
       discover: "Self-discovery",
       resume: "Resume review",
       interview: "Structured AI interview",
-      practice: "Question deck",
+      practice: "Learning path",
       growth: "Competency tracking",
       orgDiagnosis: "Org diagnostic",
       forOrganizations: "Org platform",
@@ -208,7 +208,7 @@ export const dictionary: Dictionary = {
         { kicker: "Discover", title: "Self-discovery", desc: "Strengths · values", mock: ["Cards", "Story"] },
         { kicker: "Resume", title: "Resume review", desc: "JD-aligned", mock: ["82 pts", "Keywords"] },
         { kicker: "Interview", title: "AI interview", desc: "Evidence · IRT", mock: ["Voice", "Follow-up"] },
-        { kicker: "Practice", title: "Question deck", desc: "Swipe practice", mock: ["Role", "Save"] },
+        { kicker: "Practice", title: "Learning path", desc: "Lessons · speak · certify", mock: ["Path", "Drill"] },
         { kicker: "Growth", title: "Competency tracking", desc: "θ · skill tree", mock: ["NCS", "Certificate"] },
         { kicker: "Diagnostic", title: "Org diagnostic", desc: "ARC Index", mock: ["Wave", "Teams"] },
       ],
@@ -317,8 +317,8 @@ export const dictionary: Dictionary = {
         {
           num: "2",
           title: "Prepare",
-          desc: "Discovery, resume review, and question decks sharpen stories before the session.",
-          points: ["Strength & value cards", "JD-aligned resume coaching", "Role-based swipe practice"],
+          desc: "Discovery, resume review, and competency paths sharpen stories before the session.",
+          points: ["Strength & value cards", "JD-aligned resume coaching", "Per-competency path & speaking drills"],
         },
         {
           num: "3",
@@ -367,8 +367,8 @@ export const dictionary: Dictionary = {
             },
             {
               step: "STEP 4",
-              title: "Deck & tracking",
-              desc: "Swipe practice and θ tracking make growth visible.",
+              title: "Learning path & tracking",
+              desc: "Concept drills, speaking practice, and θ tracking make growth visible.",
             },
           ],
         },
@@ -564,8 +564,8 @@ export const dictionary: Dictionary = {
         },
         {
           badge: "NEW",
-          title: "Industry-specific question deck",
-          desc: "Practice questions tailored to your role and industry by swiping",
+          title: "Competency learning path",
+          desc: "Master one competency stage by stage—basics, speaking, certify",
         },
         {
           badge: "UPDATE",
@@ -681,10 +681,10 @@ export const dictionary: Dictionary = {
         highlights: [
           { title: "Skill tree", desc: "NCS competencies at a glance." },
           { title: "Growth curve", desc: "Track change session over session." },
-          { title: "Certificate", desc: "Shareable competency credential." },
+          { title: "Certificate", desc: "Share CERTIFY badges and θ on one credential." },
         ],
         capabilitiesTitle: "Capabilities",
-        capabilities: ["θ & percentile tracking", "Per-competency charts", "Public certificate link"],
+        capabilities: ["θ & percentile tracking", "Path certify badges", "Public certificate link"],
         ctaPrimary: "View my growth",
         closingTitle: "Growth you can show",
       },

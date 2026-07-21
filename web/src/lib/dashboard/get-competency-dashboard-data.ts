@@ -25,6 +25,9 @@ export type CompetencyLatest = {
   percentile: number;
   levelEst: number;
   assessed: boolean;
+  unlockedStage: number;
+  masteryScore: number;
+  pathCertified: boolean;
 };
 
 export type CompetencySnapshotRow = {
@@ -138,6 +141,9 @@ export async function getCompetencyDashboardData(
         percentile: log.percentile,
         levelEst: log.levelEst,
         assessed: true,
+        unlockedStage: 0,
+        masteryScore: 0,
+        pathCertified: false,
       };
     }
   }
@@ -149,6 +155,9 @@ export async function getCompetencyDashboardData(
         percentile: 0,
         levelEst: 0,
         assessed: false,
+        unlockedStage: 0,
+        masteryScore: 0,
+        pathCertified: false,
       };
     }
   }
@@ -158,7 +167,7 @@ export async function getCompetencyDashboardData(
 
   const startOfUtcDay = new Date();
   startOfUtcDay.setUTCHours(0, 0, 0, 0);
-  const [swipeToday, pathDrillToday, track, weakness] = await Promise.all([
+  const [swipeToday, pathDrillToday, track, weakness, certifyCount] = await Promise.all([
     prisma.swipeAction.count({
       where: {
         userId,
@@ -173,14 +182,30 @@ export async function getCompetencyDashboardData(
     }),
     resolveUserTrack(userId),
     recommendWeaknessDrill(userId),
+    prisma.lessonCompletion.count({
+      where: {
+        userId,
+        score: { gte: 0.7 },
+        lesson: { kind: "CERTIFY" },
+      },
+    }),
   ]);
   const pathCompetencies = await listPathOverview(userId, track);
+  const pathByCode = new Map(pathCompetencies.map((c) => [c.competency, c]));
+  for (const code of COMPETENCY_CODES) {
+    const path = pathByCode.get(code);
+    const row = latestByCompetency[code];
+    row.unlockedStage = path?.unlockedStage ?? 0;
+    row.masteryScore = path?.masteryScore ?? 0;
+    row.pathCertified = (path?.unlockedStage ?? 0) >= 5;
+  }
 
   const { quests, totalXp, level } = buildCareerQuests({
     sessionCount: full.sessions.length,
     hasDiscover: full.selfDiscoverySessions.length > 0,
     hasSwipeToday: swipeToday > 0,
     hasPathDrillToday: pathDrillToday > 0,
+    pathCertifiedCount: certifyCount,
     weakestCompetency: weakest ? competencyLabel(weakest[0]) : undefined,
   });
 

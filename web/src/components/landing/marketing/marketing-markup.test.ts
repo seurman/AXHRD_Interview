@@ -53,4 +53,12 @@ describe("buildMarketingHomeHtml", () => {
     expect(html).not.toContain("Growth loop");
     expect(html).not.toContain("NCS");
   });
+
+  it("surfaces competency learning path on the home wedge", () => {
+    const html = buildMarketingHomeHtml();
+    expect(html).toContain("역량 학습 패스");
+    expect(html).toContain('href="/practice/path"');
+    expect(html).toContain("학습 패스 · 기록");
+    expect(html).toContain("역량 패스로 쌓아");
+  });
 });

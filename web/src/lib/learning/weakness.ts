@@ -1,5 +1,5 @@
 /**
- * 약점 드릴 자동 추천 — 최근 답변 6축 + 학습 패스 숙련도
+ * 약점 드릴 자동 추천 — 최근 답변 6축 + 학습 패스 숙련도 + 실전 질문 은행
  */
 
 import { Prisma } from "@prisma/client";
@@ -26,6 +26,12 @@ const DIMENSION_TO_COMPETENCY: Record<AnswerDimensionKey, CompetencyCode> = {
   individualOwnership: "LEADERSHIP",
 };
 
+export type PracticeQuestion = {
+  id: string | null;
+  text: string;
+  fromBank: boolean;
+};
+
 export type WeaknessRecommendation = {
   competency: CompetencyCode;
   titleKo: string;
@@ -34,8 +40,10 @@ export type WeaknessRecommendation = {
   tip: string;
   prompt: string;
   sampleQuestion: string;
+  practiceQuestions: PracticeQuestion[];
   source: "dimensions" | "mastery" | "default";
   href: string;
+  swipeHref: string;
 };
 
 export async function recommendWeaknessDrill(
@@ -46,14 +54,64 @@ export async function recommendWeaknessDrill(
     recommendFromMastery(userId),
   ]);
 
-  if (dimRec) return dimRec;
-  if (masteryRec) return masteryRec;
-  return defaultRecommendation();
+  const base = dimRec ?? masteryRec ?? defaultRecommendation();
+  const practiceQuestions = await loadPracticeQuestions(userId, base.competency);
+  return {
+    ...base,
+    practiceQuestions,
+    sampleQuestion: practiceQuestions[0]?.text ?? base.sampleQuestion,
+    swipeHref: `/practice/swipe?competency=${encodeURIComponent(base.competency)}`,
+  };
+}
+
+async function loadPracticeQuestions(
+  userId: string,
+  competency: CompetencyCode,
+): Promise<PracticeQuestion[]> {
+  const profile = await prisma.userProfile.findUnique({
+    where: { userId },
+    select: { desiredIndustry: true, desiredJobRole: true },
+  });
+
+  const meta = COMPETENCY_LEARNING_META[competency];
+  const bank: PracticeQuestion[] = [];
+
+  const rows = await prisma.realInterviewQuestion.findMany({
+    where: { competency },
+    orderBy: [{ isAiExample: "asc" }, { createdAt: "desc" }],
+    take: 12,
+    select: {
+      id: true,
+      questionText: true,
+      industry: true,
+      jobRole: true,
+    },
+  });
+
+  const preferred = rows.filter(
+    (r) =>
+      (!profile?.desiredIndustry || r.industry === profile.desiredIndustry) &&
+      (!profile?.desiredJobRole || r.jobRole === profile.desiredJobRole),
+  );
+  const industryOnly = rows.filter(
+    (r) =>
+      !preferred.includes(r) &&
+      (!profile?.desiredIndustry || r.industry === profile.desiredIndustry),
+  );
+  const rest = rows.filter((r) => !preferred.includes(r) && !industryOnly.includes(r));
+  for (const r of [...preferred, ...industryOnly, ...rest].slice(0, 3)) {
+    bank.push({ id: r.id, text: r.questionText, fromBank: true });
+  }
+
+  if (bank.length === 0) {
+    bank.push({ id: null, text: meta.sampleQuestion, fromBank: false });
+  }
+  return bank;
 }
 
 async function recommendFromDimensions(
   userId: string,
-): Promise<WeaknessRecommendation | null> {
+): Promise<Omit<WeaknessRecommendation, "practiceQuestions" | "swipeHref"> | null> {
   const rows = await prisma.responseRecord.findMany({
     where: {
       session: { userId },
@@ -73,7 +131,7 @@ async function recommendFromDimensions(
   if (!avg) return null;
 
   const dimension = findWeakestDimension(avg);
-  if (avg[dimension] >= 0.75) return null; // 전반적으로 양호하면 숙련도 로직으로
+  if (avg[dimension] >= 0.75) return null;
 
   const competency = DIMENSION_TO_COMPETENCY[dimension];
   const meta = COMPETENCY_LEARNING_META[competency];
@@ -96,7 +154,7 @@ async function recommendFromDimensions(
 
 async function recommendFromMastery(
   userId: string,
-): Promise<WeaknessRecommendation | null> {
+): Promise<Omit<WeaknessRecommendation, "practiceQuestions" | "swipeHref"> | null> {
   const rows = await prisma.learningPathProgress.findMany({
     where: { userId },
     orderBy: [{ masteryScore: "asc" }, { unlockedStage: "asc" }],
@@ -123,7 +181,10 @@ async function recommendFromMastery(
   };
 }
 
-function defaultRecommendation(): WeaknessRecommendation {
+function defaultRecommendation(): Omit<
+  WeaknessRecommendation,
+  "practiceQuestions" | "swipeHref"
+> {
   const competency: CompetencyCode = "COMMUNICATION";
   const meta = COMPETENCY_LEARNING_META[competency];
   return {
