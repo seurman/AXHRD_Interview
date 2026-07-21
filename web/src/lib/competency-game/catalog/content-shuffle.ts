@@ -39,6 +39,51 @@ export function shuffleBlankOptions(
   return { options: r.choices, answerIndex: r.answerIndex };
 }
 
+/** 베스트·워스트 인덱스 동시 셔플 */
+export function shuffleBestWorst(
+  choices: string[],
+  bestIndex: number,
+  worstIndex: number,
+  seed: string,
+): { choices: string[]; bestIndex: number; worstIndex: number } {
+  const indexed = choices.map((c, i) => ({ c, i }));
+  const shuffled = seededShuffle(indexed, seed);
+  return {
+    choices: shuffled.map((x) => x.c),
+    bestIndex: shuffled.findIndex((x) => x.i === bestIndex),
+    worstIndex: shuffled.findIndex((x) => x.i === worstIndex),
+  };
+}
+
+const LENGTH_FILLERS = [" · 근거 부족", " · 약한 신호", " · 구체성 낮음"];
+
+/**
+ * 정답(또는 기준 인덱스)이 유일하게 가장 길지 않도록 다른 보기를 패딩.
+ * 숫자 단서가 정답에만 있으면 오답에 무해한 숫자 표식을 붙임.
+ */
+export function balanceChoiceCues(
+  choices: string[],
+  focusIndex: number,
+): string[] {
+  const target = choices[focusIndex]?.length ?? 0;
+  const out = choices.map((c, i) => {
+    if (i === focusIndex) return c;
+    let next = c;
+    let fi = 0;
+    while (next.length < target && fi < LENGTH_FILLERS.length * 3) {
+      next = `${next}${LENGTH_FILLERS[fi % LENGTH_FILLERS.length]}`;
+      fi += 1;
+    }
+    return next;
+  });
+  if (hasDigitCueOnlyOnAnswer(out, focusIndex)) {
+    return out.map((c, i) =>
+      i === focusIndex || /\d/.test(c) ? c : `${c} · 사례 0건`,
+    );
+  }
+  return out;
+}
+
 /** 정답이 유독 긴지 검사 (테스트용) */
 export function isLongestCorrect(choices: string[], answerIndex: number): boolean {
   const lens = choices.map((c) => c.length);

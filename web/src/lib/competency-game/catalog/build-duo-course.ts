@@ -6,12 +6,14 @@
 import type { CompetencyCode } from "@/types";
 import { competencyLabel } from "@/lib/labels";
 import type {
+  BestWorstItem,
   ChoiceItem,
   ChipBuildItem,
   FillBlankItem,
   GameCourse,
   GameItem,
   GameUnit,
+  IntentReadItem,
   MatchPairsItem,
   OrderItem,
   SkillRuleId,
@@ -21,13 +23,19 @@ import type {
   TrueFalseItem,
 } from "../types";
 import { level } from "./helpers";
-import { shuffleBlankOptions, shuffleChoices } from "./content-shuffle";
+import {
+  balanceChoiceCues,
+  shuffleBestWorst,
+  shuffleBlankOptions,
+  shuffleChoices,
+} from "./content-shuffle";
 import { UNIQUE_BANKS } from "./unique-banks";
 import {
   lexiconMatchItems,
   lexiconOrgLensChoices,
   lexiconTrueFalseItems,
 } from "./lexicon-banks";
+import { bestWorstBank, intentReadBank } from "./reading-banks";
 
 export type DuoPack = {
   competency: CompetencyCode;
@@ -109,6 +117,56 @@ function fillItem(
   };
 }
 
+function intentReadItem(
+  itemId: string,
+  o: {
+    passage: string;
+    prompt: string;
+    choices: string[];
+    answerIndex: number;
+    explain: string;
+  },
+): IntentReadItem {
+  const balanced = balanceChoiceCues(o.choices, o.answerIndex);
+  const sh = shuffleChoices(balanced, o.answerIndex, itemId);
+  return {
+    id: itemId,
+    gameType: "intent_read",
+    skillRule: "question_intent",
+    passage: o.passage,
+    prompt: o.prompt,
+    choices: sh.choices,
+    answerIndex: sh.answerIndex,
+    explain: o.explain,
+  };
+}
+
+function bestWorstItem(
+  itemId: string,
+  o: {
+    scenario: string;
+    prompt: string;
+    choices: string[];
+    bestIndex: number;
+    worstIndex: number;
+    explain: string;
+  },
+): BestWorstItem {
+  const balanced = balanceChoiceCues(o.choices, o.bestIndex);
+  const sh = shuffleBestWorst(balanced, o.bestIndex, o.worstIndex, itemId);
+  return {
+    id: itemId,
+    gameType: "best_worst",
+    skillRule: "good_vs_bad",
+    scenario: o.scenario,
+    prompt: o.prompt,
+    choices: sh.choices,
+    bestIndex: sh.bestIndex,
+    worstIndex: sh.worstIndex,
+    explain: o.explain,
+  };
+}
+
 export function buildDuoCourse(pack: DuoPack): GameCourse {
   const c = pack.competency;
   const k = pack.key;
@@ -166,10 +224,35 @@ export function buildDuoCourse(pack: DuoPack): GameCourse {
           choiceItem(id(k, 1, 1, i + 1), o, "conclusion_first"),
         ),
       }),
+      // 독해 비중 ↑ — 기존 레벨 id는 유지(진행도 보존), 새 id만 삽입
+      level({
+        id: `${c.toLowerCase()}-u1-intent`,
+        unitId: u1,
+        index: 1,
+        titleKo: "의도 독해",
+        skillRule: "question_intent",
+        difficulty: 2,
+        xpReward: 35,
+        items: intentReadBank(c).map((o, i) =>
+          intentReadItem(id(k, 1, 10, i + 1), o),
+        ),
+      }),
+      level({
+        id: `${c.toLowerCase()}-u1-bestworst`,
+        unitId: u1,
+        index: 2,
+        titleKo: "베스트·워스트",
+        skillRule: "good_vs_bad",
+        difficulty: 2,
+        xpReward: 40,
+        items: bestWorstBank(c).map((o, i) =>
+          bestWorstItem(id(k, 1, 11, i + 1), o),
+        ),
+      }),
       level({
         id: `${c.toLowerCase()}-u1-l2`,
         unitId: u1,
-        index: 1,
+        index: 3,
         titleKo: "참일까 거짓일까",
         skillRule: "good_vs_bad",
         difficulty: 1,
@@ -179,7 +262,7 @@ export function buildDuoCourse(pack: DuoPack): GameCourse {
       level({
         id: `${c.toLowerCase()}-u1-l3`,
         unitId: u1,
-        index: 2,
+        index: 4,
         titleKo: "이 답이 될까",
         skillRule: "good_vs_bad",
         difficulty: 1,
@@ -194,7 +277,7 @@ export function buildDuoCourse(pack: DuoPack): GameCourse {
       level({
         id: `${c.toLowerCase()}-u1-l4`,
         unitId: u1,
-        index: 3,
+        index: 5,
         titleKo: "한 문장으로 잇기",
         skillRule: "cause_result",
         difficulty: 2,
@@ -204,7 +287,7 @@ export function buildDuoCourse(pack: DuoPack): GameCourse {
       level({
         id: `${c.toLowerCase()}-u1-l5`,
         unitId: u1,
-        index: 4,
+        index: 6,
         titleKo: "이야기 순서",
         skillRule: "star_order",
         difficulty: 2,
@@ -219,7 +302,7 @@ export function buildDuoCourse(pack: DuoPack): GameCourse {
       level({
         id: `${c.toLowerCase()}-u1-l6`,
         unitId: u1,
-        index: 5,
+        index: 7,
         titleKo: "짝을 맞추면",
         skillRule: "star_order",
         difficulty: 2,
@@ -229,7 +312,7 @@ export function buildDuoCourse(pack: DuoPack): GameCourse {
       level({
         id: `${c.toLowerCase()}-u1-l7`,
         unitId: u1,
-        index: 6,
+        index: 8,
         titleKo: "약한 문장 찾기",
         skillRule: "good_vs_bad",
         difficulty: 3,
@@ -239,7 +322,7 @@ export function buildDuoCourse(pack: DuoPack): GameCourse {
       level({
         id: `${c.toLowerCase()}-u1-l8`,
         unitId: u1,
-        index: 7,
+        index: 9,
         titleKo: "조각으로 조립",
         skillRule: "star_order",
         difficulty: 3,
@@ -249,7 +332,7 @@ export function buildDuoCourse(pack: DuoPack): GameCourse {
       level({
         id: `${c.toLowerCase()}-u1-l9`,
         unitId: u1,
-        index: 8,
+        index: 10,
         titleKo: "소리 내어 한 번",
         skillRule: "speak_compress",
         difficulty: 3,

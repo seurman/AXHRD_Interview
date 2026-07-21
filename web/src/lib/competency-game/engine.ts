@@ -28,9 +28,11 @@ export function difficultyXpMultiplier(difficulty: Difficulty): number {
 function baseItemXp(item: GameItem): number {
   switch (item.gameType) {
     case "choice":
+    case "intent_read":
     case "true_false":
     case "swipe_judge":
       return 10;
+    case "best_worst":
     case "order":
     case "fill_blank":
     case "match_pairs":
@@ -57,6 +59,19 @@ export function gradeItem(
     case "choice": {
       const ok =
         answer.gameType === "choice" && answer.answerIndex === item.answerIndex;
+      return { correct: ok, explain: item.explain, xpEarned: ok ? xp : 0 };
+    }
+    case "intent_read": {
+      const ok =
+        answer.gameType === "intent_read" &&
+        answer.answerIndex === item.answerIndex;
+      return { correct: ok, explain: item.explain, xpEarned: ok ? xp : 0 };
+    }
+    case "best_worst": {
+      const ok =
+        answer.gameType === "best_worst" &&
+        answer.bestIndex === item.bestIndex &&
+        answer.worstIndex === item.worstIndex;
       return { correct: ok, explain: item.explain, xpEarned: ok ? xp : 0 };
     }
     case "true_false": {
@@ -172,7 +187,12 @@ export function isCourseLevelUnlocked(
   const idx = ids.indexOf(levelId);
   if (idx < 0) return false;
   if (idx === 0) return true;
-  return cleared.has(ids[idx - 1]);
+  if (cleared.has(ids[idx - 1])) return true;
+  // 경로 중간에 새 레벨이 끼워져도, 이미 이후를 깬 사용자는 백필로 열림
+  for (let i = idx; i < ids.length; i++) {
+    if (cleared.has(ids[i])) return true;
+  }
+  return false;
 }
 
 export function coursePathIndex(course: GameCourse, levelId: string): number {

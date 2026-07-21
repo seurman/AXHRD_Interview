@@ -8,6 +8,8 @@ import type { GameAnswerPayload, GameLevel } from "@/lib/competency-game/types";
 import { DIFFICULTY_LABEL_KO } from "@/lib/competency-game/types";
 import { gradeItem } from "@/lib/competency-game/engine";
 import { ChoiceGame } from "./games/ChoiceGame";
+import { IntentReadGame } from "./games/IntentReadGame";
+import { BestWorstGame } from "./games/BestWorstGame";
 import { TrueFalseGame } from "./games/TrueFalseGame";
 import { OrderGame } from "./games/OrderGame";
 import { FillBlankGame } from "./games/FillBlankGame";
@@ -158,6 +160,10 @@ export function GameLevelRunner({
   const goNext = () => {
     if (!item) return;
     const answered = hasAnswerFor(item, answers);
+    if (!answered && item.gameType === "best_worst") {
+      toast.message("베스트와 워스트를 각각 골라 주세요");
+      return;
+    }
     if (!answered && item.gameType !== "order" && item.gameType !== "chip_build") {
       toast.message("답을 선택해 주세요");
       return;
@@ -200,6 +206,37 @@ export function GameLevelRunner({
             disabled={disabled}
             onAnswer={(answerIndex) =>
               setAnswerForCurrent({ gameType: "choice", itemId: item.id, answerIndex })
+            }
+          />
+        );
+      case "intent_read":
+        return (
+          <IntentReadGame
+            key={key}
+            item={item}
+            disabled={disabled}
+            onAnswer={(answerIndex) =>
+              setAnswerForCurrent({
+                gameType: "intent_read",
+                itemId: item.id,
+                answerIndex,
+              })
+            }
+          />
+        );
+      case "best_worst":
+        return (
+          <BestWorstGame
+            key={key}
+            item={item}
+            disabled={disabled}
+            onAnswer={(bestIndex, worstIndex) =>
+              setAnswerForCurrent({
+                gameType: "best_worst",
+                itemId: item.id,
+                bestIndex,
+                worstIndex,
+              })
             }
           />
         );
