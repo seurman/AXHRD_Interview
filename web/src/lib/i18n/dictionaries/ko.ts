@@ -105,6 +105,7 @@ export const dictionary: Dictionary = {
     avatar: {
       menu: "계정 메뉴",
       profile: "프로필",
+      certificate: "역량 인증서",
       billing: "요금·구독",
     },
     mobileNav: {
