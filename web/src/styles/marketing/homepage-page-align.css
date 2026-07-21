@@ -350,8 +350,8 @@ body.ax-home-page .ax-home .aud-mock .mock-chart {
   background: #0a1016;
   border: 1px solid rgb(238 243 246 / 0.1);
   border-radius: 10px;
-  padding: 14px 16px 12px;
-  gap: 8px;
+  padding: 16px 20px 14px;
+  gap: 10px;
 }
 
 body.ax-home-page .ax-home .aud-mock .bar {
