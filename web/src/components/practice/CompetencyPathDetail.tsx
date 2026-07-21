@@ -53,8 +53,9 @@ function actionForKind(kind: LessonKind, competency: string): {
   href?: string;
   label: string;
 } {
+  const swipeHref = `/practice/swipe?competency=${encodeURIComponent(competency)}`;
   if (kind === "SWIPE_DRILL") {
-    return { href: "/practice/swipe", label: "질문 카드로 말하기" };
+    return { href: swipeHref, label: "질문 카드로 말하기" };
   }
   if (kind === "MOCK") {
     return {
@@ -63,7 +64,7 @@ function actionForKind(kind: LessonKind, competency: string): {
     };
   }
   if (kind === "WEAKNESS_DRILL") {
-    return { href: "/practice/swipe", label: "약점 카드 다시 말하기" };
+    return { href: swipeHref, label: "약점 카드 다시 말하기" };
   }
   return { label: "퀴즈로 확인" };
 }
@@ -172,11 +173,13 @@ function LessonPanel({
     explain: string[];
   } | null>(null);
   const [pending, startTransition] = useTransition();
+  const [upgradeUrl, setUpgradeUrl] = useState<string | null>(null);
   const external = actionForKind(lesson.kind, competency);
 
   const submit = (quizScore?: number) => {
     startTransition(async () => {
       try {
+        setUpgradeUrl(null);
         const res = await fetch("/api/learning/drill/complete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -188,7 +191,10 @@ function LessonPanel({
         });
         const json = await res.json().catch(() => ({}));
         if (!res.ok) {
-          if (res.status === 402 && json.upgradeUrl) {
+          if (res.status === 402) {
+            const url =
+              typeof json.upgradeUrl === "string" ? json.upgradeUrl : "/pricing";
+            setUpgradeUrl(url);
             toast.error(json.error ?? "드릴 한도에 도달했습니다.");
             return;
           }
@@ -235,6 +241,15 @@ function LessonPanel({
         <Link href={external.href} className="btn-secondary inline-flex text-sm">
           {external.label} →
         </Link>
+      ) : null}
+
+      {upgradeUrl ? (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-3 text-sm">
+          <p className="text-foreground">이번 주 드릴 한도에 도달했습니다.</p>
+          <Link href={upgradeUrl} className="mt-2 inline-flex text-accent hover:underline">
+            플랜 업그레이드 →
+          </Link>
+        </div>
       ) : null}
 
       {quiz ? (

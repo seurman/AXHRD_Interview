@@ -37,10 +37,10 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
       orgMemberCap: null,
     },
     features: [
-      "역량 개념·원리 레슨 맛보기",
+      "역량 학습 패스 맛보기",
       "주 3회 매일 드릴",
       "월 1회 실전 모의면접",
-      "틴더식 질문 카드(일일 한도)",
+      "틴더식 질문 카드(한도)",
     ],
   },
   INDIVIDUAL_PRO: {
@@ -56,7 +56,7 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
       orgMemberCap: null,
     },
     features: [
-      "전 역량 지식·원리 트랙",
+      "전 역량 학습 패스",
       "매일 드릴 무제한(저원가)",
       "틴더 스와이프·말하기 무제한",
       "월 4회 실전 모의면접",
@@ -76,7 +76,7 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
       orgMemberCap: null,
     },
     features: [
-      "Pro 전체 +",
+      "Pro 전체 + 학습 패스 인증",
       "실전 모의 넉넉/무제한",
       "자소서 인용 깊은 캐물음",
       "트리플 렌즈·페르소나(제공 시)",

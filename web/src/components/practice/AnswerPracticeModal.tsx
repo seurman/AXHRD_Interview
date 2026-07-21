@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { X as XIcon } from "lucide-react";
 import { VoiceRecorder } from "@/components/interview/VoiceRecorder";
 import { industryLabel, jobRoleLabel } from "@/lib/labels";
@@ -30,11 +31,15 @@ export function AnswerPracticeModal({
   );
   const [saving, setSaving] = useState(false);
   const [recordingAgain, setRecordingAgain] = useState(!card.answerTranscript);
+  const [limitError, setLimitError] = useState<string | null>(null);
+  const [upgradeUrl, setUpgradeUrl] = useState<string | null>(null);
 
   const handleTranscript = async (text: string) => {
     setSaving(true);
+    setLimitError(null);
+    setUpgradeUrl(null);
     try {
-      await fetch("/api/questions/swipe", {
+      const res = await fetch("/api/questions/swipe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -43,6 +48,18 @@ export function AnswerPracticeModal({
           answerTranscript: text,
         }),
       });
+      const json = await res.json().catch(() => ({}));
+      if (res.status === 402) {
+        setLimitError(json.error ?? "이번 주 드릴 한도에 도달했습니다.");
+        setUpgradeUrl(
+          typeof json.upgradeUrl === "string" ? json.upgradeUrl : "/pricing",
+        );
+        return;
+      }
+      if (!res.ok) {
+        setLimitError(json.error ?? "저장에 실패했습니다.");
+        return;
+      }
       setSavedTranscript(text);
       setRecordingAgain(false);
       onSaved(text);
@@ -92,6 +109,19 @@ export function AnswerPracticeModal({
           <div className="space-y-3">
             <VoiceRecorder onTranscript={handleTranscript} disabled={saving} />
             <p className="text-center text-xs leading-relaxed text-muted">{s.practiceNote}</p>
+            {limitError ? (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm">
+                <p className="text-foreground">{limitError}</p>
+                {upgradeUrl ? (
+                  <Link
+                    href={upgradeUrl}
+                    className="mt-1 inline-flex text-xs text-accent hover:underline"
+                  >
+                    플랜 업그레이드 →
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         )}
       </div>

@@ -19,7 +19,7 @@ export async function requireCapability(
   return user;
 }
 
-/** 제품 capability — FREE 개인 사용자는 /demo 로 안내 */
+/** 제품 capability — 개인 MEMBER 플랜도 practice 포함. 한도는 billing 402로 처리 */
 export async function requireProductCapability(capability: CapabilityId, nextPath?: string) {
   const user = await requirePageUser(nextPath);
   const billingContext = await loadPersonalAccessContext(user.id);

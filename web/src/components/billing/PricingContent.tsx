@@ -67,10 +67,20 @@ export function PricingContent() {
                 </ul>
                 {tier === "FREE" ? (
                   <Link
-                    href={loggedIn ? (trialOnly ? "/demo" : "/interview/setup") : "/auth/register"}
+                    href={
+                      loggedIn
+                        ? trialOnly
+                          ? "/demo"
+                          : "/practice/path"
+                        : "/auth/register?next=/practice/path"
+                    }
                     className="btn-outline-primary mt-6 block w-full py-2.5 text-center text-sm"
                   >
-                    {loggedIn ? (trialOnly ? "5분 체험하기" : "면접 시작") : "무료 가입"}
+                    {loggedIn
+                      ? trialOnly
+                        ? "5분 체험하기"
+                        : "학습 패스 시작"
+                      : "무료 가입"}
                   </Link>
                 ) : (
                   <PlanSubscribeButton

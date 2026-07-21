@@ -104,6 +104,29 @@ export function LearningPathOverview({
         </p>
       </div>
 
+      {dailyDrills.limit != null &&
+      dailyDrills.used >= dailyDrills.limit ? (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
+          <p className="text-foreground">이번 주 Free 드릴 한도를 모두 썼어요.</p>
+          <Link href="/pricing" className="mt-1 inline-flex text-accent hover:underline">
+            Pro로 무제한 드릴 →
+          </Link>
+        </div>
+      ) : null}
+
+      {competencies.length === 0 ? (
+        <section className="card-luxe p-6 text-center">
+          <p className="text-sm text-muted">레슨 카탈로그를 준비 중입니다.</p>
+          <button
+            type="button"
+            onClick={() => router.refresh()}
+            className="btn-secondary mt-3 px-4 py-2 text-sm"
+          >
+            다시 불러오기
+          </button>
+        </section>
+      ) : null}
+
       {recommendation?.nextLesson ? (
         <section className="card-luxe overflow-hidden">
           <div className="border-b border-card-border bg-gradient-to-r from-gold/10 to-primary/5 px-5 py-4">

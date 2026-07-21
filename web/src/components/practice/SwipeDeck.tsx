@@ -32,9 +32,11 @@ type SwipeActionType = "PASS" | "SAVE";
 export function SwipeDeck({
   initialIndustry,
   initialJobRole,
+  focusCompetency = null,
 }: {
   initialIndustry: string | null;
   initialJobRole: string | null;
+  focusCompetency?: string | null;
 }) {
   const { dict } = useI18n();
   const s = dict.swipe;
@@ -61,9 +63,9 @@ export function SwipeDeck({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/questions/swipe-deck?industry=${ind}&jobRole=${role}`
-      );
+      const qs = new URLSearchParams({ industry: ind, jobRole: role });
+      if (focusCompetency) qs.set("competency", focusCompetency);
+      const res = await fetch(`/api/questions/swipe-deck?${qs.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? s.loadError);
       setDeck(data.deck);
@@ -75,7 +77,7 @@ export function SwipeDeck({
     } finally {
       setLoading(false);
     }
-  }, [s.loadError]);
+  }, [focusCompetency, s.loadError]);
 
   useEffect(() => {
     if (industry && jobRole) loadDeck(industry, jobRole);

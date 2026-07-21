@@ -23,7 +23,7 @@ const PRODUCT_HREFS = [
   "/discover",
   "/resume-review",
   "/auth/register?next=/interview/setup",
-  "/practice/swipe",
+  "/practice/path",
   "/dashboard",
   "/diagnosis",
 ];
