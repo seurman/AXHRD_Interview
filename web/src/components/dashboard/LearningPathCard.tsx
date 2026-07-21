@@ -9,17 +9,23 @@ type Props = {
   pathSummary: PathCompetencySummary[];
 };
 
+function clampText(text: string, max = 120): string {
+  const t = text.trim();
+  if (t.length <= max) return t;
+  return `${t.slice(0, max - 1)}…`;
+}
+
 export function LearningPathCard({ weakness, pathSummary }: Props) {
-  const active = pathSummary.filter((c) => c.unlockedStage > 0 || c.streakDays > 0);
-  const bestStreak = Math.max(0, ...pathSummary.map((c) => c.streakDays));
+  const rows = Array.isArray(pathSummary) ? pathSummary : [];
+  const active = rows.filter((c) => c.unlockedStage > 0 || c.streakDays > 0);
+  const bestStreak =
+    rows.length === 0 ? 0 : Math.max(0, ...rows.map((c) => c.streakDays));
   const questions = weakness.practiceQuestions?.slice(0, 2) ?? [];
 
   return (
-    <section className="card-luxe overflow-hidden">
+    <section className="card-luxe min-w-0 overflow-hidden">
       <div className="border-b border-card-border bg-gradient-to-r from-primary/10 to-gold/5 px-5 py-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">
-          Competency Path
-        </p>
+        <p className="section-eyebrow text-gold">Competency Path</p>
         <h2 className="font-bold text-foreground">역량 학습 패스</h2>
         <p className="mt-1 text-sm text-muted">
           {active.length > 0
@@ -34,12 +40,15 @@ export function LearningPathCard({ weakness, pathSummary }: Props) {
             {weakness.titleKo}
             {weakness.dimensionLabelKo ? ` · ${weakness.dimensionLabelKo}` : ""}
           </p>
-          <p className="mt-1 text-xs text-muted">{weakness.tip}</p>
+          <p className="mt-1 break-words text-xs text-muted">{weakness.tip}</p>
           {questions.length > 0 ? (
             <ul className="mt-2 space-y-1.5">
               {questions.map((q, i) => (
-                <li key={q.id ?? i} className="text-xs leading-relaxed text-foreground">
-                  {i + 1}. {q.text}
+                <li
+                  key={q.id ?? i}
+                  className="break-words text-xs leading-relaxed text-foreground"
+                >
+                  {i + 1}. {clampText(q.text)}
                 </li>
               ))}
             </ul>

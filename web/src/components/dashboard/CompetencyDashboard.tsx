@@ -28,6 +28,7 @@ import type { QuestItem } from "./QuestPanel";
 import type { DiscoverInterviewAdvice, DiscoverStrengthItem } from "@/types/discover";
 import type { PathCompetencySummary } from "@/lib/learning/path";
 import type { WeaknessRecommendation } from "@/lib/learning/weakness";
+import { COMPETENCY_CODES } from "@/types";
 
 interface Snapshot {
   competency: string;
@@ -163,8 +164,8 @@ export function CompetencyDashboard({
         />
       </div>
 
-      <div className={`grid gap-6 ${readOnly ? "" : "lg:grid-cols-3"}`}>
-        <div className={`space-y-6 ${readOnly ? "" : "lg:col-span-2"}`}>
+      <div className={`grid min-w-0 gap-6 ${readOnly ? "" : "lg:grid-cols-3"}`}>
+        <div className={`min-w-0 space-y-6 ${readOnly ? "" : "lg:col-span-2"}`}>
           <div className="grid gap-6 lg:grid-cols-2">
             <ChartCard
               title={st.radar}
@@ -285,9 +286,11 @@ export function CompetencyDashboard({
             <h3 className="mb-1 font-semibold text-foreground">{st.skillTree}</h3>
             <p className="mb-4 text-xs text-muted">{st.onboarding.skillTreeHint}</p>
             <div className="grid gap-3 sm:grid-cols-2">
-              {Object.entries(latestByCompetency).map(([code, v]) => (
-                <CompetencySkillBar key={code} code={code} {...v} />
-              ))}
+              {COMPETENCY_CODES.map((code) => {
+                const v = latestByCompetency[code];
+                if (!v) return null;
+                return <CompetencySkillBar key={code} code={code} {...v} />;
+              })}
             </div>
           </div>
 
@@ -306,8 +309,8 @@ export function CompetencyDashboard({
         </div>
 
         {!readOnly && (
-          <div className="order-first space-y-6 lg:order-none">
-            {learningPath ? (
+          <div className="min-w-0 space-y-6 max-lg:order-first">
+            {learningPath?.weakness && Array.isArray(learningPath.competencies) ? (
               <LearningPathCard
                 weakness={learningPath.weakness}
                 pathSummary={learningPath.competencies}
@@ -387,14 +390,15 @@ function CompetencySkillBar({
   return (
     <Link
       href={`/practice/path/${code.toLowerCase()}`}
-      className={`block rounded-xl bg-background p-4 ring-1 ring-inset ring-card-border/50 transition hover:ring-accent/40 ${!assessed ? "opacity-80" : ""}`}
+      className={`block min-w-0 rounded-xl bg-background p-4 ring-1 ring-inset ring-card-border/50 transition hover:ring-accent/40 touch-manipulation ${!assessed ? "opacity-80" : ""}`}
     >
       <div className="flex min-w-0 items-center justify-between gap-2 text-sm">
         <span className="min-w-0 truncate font-medium text-foreground">
           {competencyLabel(code)}
         </span>
         <span className={`shrink-0 font-bold ${color}`}>
-          {pathCertified ? "인증" : assessed ? `L${levelEst}` : "미시작"}
+          {assessed ? `L${levelEst}` : "미시작"}
+          {pathCertified ? " · 인증" : ""}
         </span>
       </div>
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-primary/10">
@@ -411,7 +415,8 @@ function CompetencySkillBar({
           : "0% · 아직 측정하지 않음"}
       </p>
       <p className="mt-0.5 text-[11px] text-muted">
-        패스 stage {unlockedStage}/5 · 숙련 {Math.round(masteryScore * 100)}%
+        패스 {unlockedStage}/5
+        {masteryScore > 0 ? ` · 숙련 ${Math.round(masteryScore * 100)}%` : ""}
         {pathCertified ? " · 인증 완료" : ""}
       </p>
     </Link>

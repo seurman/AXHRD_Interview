@@ -94,8 +94,12 @@ export async function getOrCreatePathProgress(
 export async function listPathOverview(
   userId: string,
   track: CareerTrack,
+  opts?: { seed?: boolean },
 ): Promise<PathCompetencySummary[]> {
-  await ensureLessonCatalogSeeded();
+  // 대시보드 등 읽기 경로에서는 시드하지 않음 — pooler에서 42 upsert는 타임아웃 위험이 큼
+  if (opts?.seed !== false) {
+    await ensureLessonCatalogSeeded();
+  }
 
   const [progressRows, lessons] = await Promise.all([
     prisma.learningPathProgress.findMany({

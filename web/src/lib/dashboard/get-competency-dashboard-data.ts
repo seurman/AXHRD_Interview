@@ -58,7 +58,7 @@ export type CompetencyDashboardPayload = {
   learningPath: {
     weakness: WeaknessRecommendation;
     competencies: PathCompetencySummary[];
-  };
+  } | null;
 };
 
 /** 개인 홈 대시보드·기관 코칭 뷰가 공유하는 역량 데이터 조회 */
@@ -167,37 +167,56 @@ export async function getCompetencyDashboardData(
 
   const startOfUtcDay = new Date();
   startOfUtcDay.setUTCHours(0, 0, 0, 0);
-  const [swipeToday, pathDrillToday, track, weakness, certifyCount] = await Promise.all([
-    prisma.swipeAction.count({
-      where: {
-        userId,
-        updatedAt: { gte: startOfUtcDay },
-      },
-    }),
-    prisma.drillAttempt.count({
-      where: {
-        userId,
-        createdAt: { gte: startOfUtcDay },
-      },
-    }),
-    resolveUserTrack(userId),
-    recommendWeaknessDrill(userId),
-    prisma.lessonCompletion.count({
-      where: {
-        userId,
-        score: { gte: 0.7 },
-        lesson: { kind: "CERTIFY" },
-      },
-    }),
-  ]);
-  const pathCompetencies = await listPathOverview(userId, track);
-  const pathByCode = new Map(pathCompetencies.map((c) => [c.competency, c]));
-  for (const code of COMPETENCY_CODES) {
-    const path = pathByCode.get(code);
-    const row = latestByCompetency[code];
-    row.unlockedStage = path?.unlockedStage ?? 0;
-    row.masteryScore = path?.masteryScore ?? 0;
-    row.pathCertified = (path?.unlockedStage ?? 0) >= 5;
+
+  let swipeToday = 0;
+  let pathDrillToday = 0;
+  let weakness: WeaknessRecommendation | null = null;
+  let pathCompetencies: PathCompetencySummary[] = [];
+  let certifyCount = 0;
+
+  try {
+    const track = await resolveUserTrack(userId);
+    const [swipe, drills, weaknessRec, certify, overview] = await Promise.all([
+      prisma.swipeAction.count({
+        where: {
+          userId,
+          updatedAt: { gte: startOfUtcDay },
+        },
+      }),
+      prisma.drillAttempt.count({
+        where: {
+          userId,
+          createdAt: { gte: startOfUtcDay },
+        },
+      }),
+      recommendWeaknessDrill(userId),
+      prisma.lessonCompletion.count({
+        where: {
+          userId,
+          score: { gte: 0.7 },
+          lesson: { kind: "CERTIFY" },
+        },
+      }),
+      listPathOverview(userId, track, { seed: false }),
+    ]);
+    swipeToday = swipe;
+    pathDrillToday = drills;
+    weakness = weaknessRec;
+    certifyCount = certify;
+    pathCompetencies = overview;
+
+    const pathByCode = new Map(pathCompetencies.map((c) => [c.competency, c]));
+    for (const code of COMPETENCY_CODES) {
+      const path = pathByCode.get(code);
+      const row = latestByCompetency[code];
+      row.unlockedStage = path?.unlockedStage ?? 0;
+      row.masteryScore = Number.isFinite(path?.masteryScore)
+        ? (path?.masteryScore as number)
+        : 0;
+      row.pathCertified = (path?.unlockedStage ?? 0) >= 5;
+    }
+  } catch (err) {
+    console.error("[dashboard] learning-path enrichment failed", err);
   }
 
   const { quests, totalXp, level } = buildCareerQuests({
@@ -302,10 +321,12 @@ export async function getCompetencyDashboardData(
         }
       : null,
     hasDashboardContent: full.sessions.length > 0 || !!strengthDeck || pathDrillToday > 0,
-    learningPath: {
-      weakness,
-      competencies: pathCompetencies,
-    },
+    learningPath: weakness
+      ? {
+          weakness,
+          competencies: pathCompetencies,
+        }
+      : null,
     coachInsights: {
       competencyDeltas,
       latestDimensions: latestDimensions as Record<string, number> | null,
