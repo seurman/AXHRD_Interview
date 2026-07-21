@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import type { CourseProgressView } from "@/lib/competency-game/progress";
 import { DIFFICULTY_LABEL_KO } from "@/lib/competency-game/types";
+import { LexiconStrip } from "./LexiconStrip";
 
 export function GamePathMap({ view }: { view: CourseProgressView }) {
   const flat = view.units.flatMap((u) => u.levels);
@@ -28,8 +29,16 @@ export function GamePathMap({ view }: { view: CourseProgressView }) {
           <span className="rounded-full border border-card-border px-3 py-1">
             θ {view.theta.toFixed(2)}
           </span>
-          <span className="rounded-full border border-card-border px-3 py-1">
-            스트릭 {view.streakDays}일
+          <span
+            className={`rounded-full border px-3 py-1 font-semibold ${
+              view.streakDays >= 3
+                ? "border-amber-400/40 bg-amber-400/15 text-amber-700 dark:text-amber-300"
+                : "border-card-border"
+            }`}
+          >
+            {view.streakDays >= 1 ? "연속 " : "스트릭 "}
+            {view.streakDays}일
+            {view.streakDays >= 7 ? " · 최고조" : view.streakDays >= 3 ? " · 불붙는 중" : ""}
           </span>
         </div>
         {continueHref ? (
@@ -44,6 +53,8 @@ export function GamePathMap({ view }: { view: CourseProgressView }) {
           <p className="text-sm font-semibold text-gold">이 코스를 모두 클리어했습니다!</p>
         )}
       </header>
+
+      <LexiconStrip competency={view.competency} />
 
       {view.units.map((unit) => (
         <section key={unit.id} className="space-y-4">

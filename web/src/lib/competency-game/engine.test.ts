@@ -13,6 +13,10 @@ import {
 } from "./irt-game";
 import { COMPETENCY_CODES } from "@/types";
 import { GAME_TYPES } from "./types";
+import {
+  hasDigitCueOnlyOnAnswer,
+  isLongestCorrect,
+} from "./catalog/content-shuffle";
 
 describe("competency-game catalog", () => {
   it("ships all six competencies with level-locked game progression", () => {
@@ -67,6 +71,37 @@ describe("competency-game engine + IRT", () => {
     ).toBe(true);
   });
 
+  it("grades intent_read and best_worst reading levels", () => {
+    const intent = findGameLevel("communication-u1-intent")!.level.items[0];
+    if (intent.gameType !== "intent_read") throw new Error("expected intent_read");
+    expect(
+      gradeItem(intent, {
+        gameType: "intent_read",
+        itemId: intent.id,
+        answerIndex: intent.answerIndex,
+      }).correct,
+    ).toBe(true);
+
+    const bw = findGameLevel("communication-u1-bestworst")!.level.items[0];
+    if (bw.gameType !== "best_worst") throw new Error("expected best_worst");
+    expect(
+      gradeItem(bw, {
+        gameType: "best_worst",
+        itemId: bw.id,
+        bestIndex: bw.bestIndex,
+        worstIndex: bw.worstIndex,
+      }).correct,
+    ).toBe(true);
+    expect(
+      gradeItem(bw, {
+        gameType: "best_worst",
+        itemId: bw.id,
+        bestIndex: bw.worstIndex,
+        worstIndex: bw.bestIndex,
+      }).correct,
+    ).toBe(false);
+  });
+
   it("updates theta via 2PL EAP after responses", () => {
     const level = findGameLevel("communication-u1-l1")!.level;
     const responses = level.items.map((item, i) => ({
@@ -102,5 +137,89 @@ describe("competency-game engine + IRT", () => {
     const graded = gradeLevel(level, answers);
     expect(graded.allCorrect).toBe(true);
     expect(graded.xpTotal).toBeGreaterThanOrEqual(level.xpReward);
+  });
+});
+
+describe("competency-game content quality", () => {
+  it("uses SJT scenarios and keeps correct answers from looking longest/numbered", () => {
+    let total = 0;
+    let uniquelyLong = 0;
+    let digitOnly = 0;
+    let missingScenario = 0;
+    for (const course of listGameCourses()) {
+      for (const unit of course.units) {
+        for (const level of unit.levels) {
+          for (const item of level.items) {
+            if (item.gameType !== "choice") continue;
+            total++;
+            if (!item.scenario?.trim()) missingScenario++;
+            if (isLongestCorrect(item.choices, item.answerIndex)) uniquelyLong++;
+            if (hasDigitCueOnlyOnAnswer(item.choices, item.answerIndex)) digitOnly++;
+          }
+        }
+      }
+    }
+    expect(total).toBeGreaterThan(20);
+    expect(missingScenario).toBe(0);
+    expect(uniquelyLong).toBe(0);
+    expect(digitOnly).toBe(0);
+  });
+
+  it("keeps intent_read / best_worst passages and choice quality", () => {
+    let intentN = 0;
+    let bwN = 0;
+    for (const course of listGameCourses()) {
+      for (const unit of course.units) {
+        for (const level of unit.levels) {
+          for (const item of level.items) {
+            if (item.gameType === "intent_read") {
+              intentN++;
+              expect(item.passage.trim().length).toBeGreaterThan(20);
+              expect(isLongestCorrect(item.choices, item.answerIndex)).toBe(false);
+              expect(hasDigitCueOnlyOnAnswer(item.choices, item.answerIndex)).toBe(
+                false,
+              );
+            }
+            if (item.gameType === "best_worst") {
+              bwN++;
+              expect(item.scenario.trim().length).toBeGreaterThan(12);
+              expect(item.bestIndex).not.toBe(item.worstIndex);
+              expect(isLongestCorrect(item.choices, item.bestIndex)).toBe(false);
+              expect(hasDigitCueOnlyOnAnswer(item.choices, item.bestIndex)).toBe(
+                false,
+              );
+            }
+          }
+        }
+      }
+    }
+    expect(intentN).toBeGreaterThanOrEqual(18);
+    expect(bwN).toBeGreaterThanOrEqual(18);
+  });
+
+  it("keeps true_false/match/spot/chip banks from reusing swipe_judge copy", () => {
+    const texts = new Map<string, Set<string>>();
+    const add = (text: string, tag: string) => {
+      const n = text.replace(/\s+/g, " ").trim();
+      if (n.length < 14) return;
+      if (!texts.has(n)) texts.set(n, new Set());
+      texts.get(n)!.add(tag);
+    };
+    for (const course of listGameCourses()) {
+      for (const unit of course.units) {
+        for (const level of unit.levels) {
+          for (const item of level.items) {
+            const tag = item.gameType;
+            if (item.gameType === "swipe_judge") add(item.answerText, tag);
+            if (item.gameType === "spot_weak") item.sentences.forEach((s) => add(s, tag));
+            if (item.gameType === "true_false") add(item.statement, tag);
+            if (item.gameType === "speak_along") add(item.script, tag);
+            if (item.gameType === "order") item.cards.forEach((c) => add(c, tag));
+          }
+        }
+      }
+    }
+    const cross = [...texts.entries()].filter(([, tags]) => tags.size > 1);
+    expect(cross).toEqual([]);
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, Upload } from "lucide-react";
+import { BookOpen, Loader2, Plus, Upload } from "lucide-react";
 import type { CompetencyLifecycleStatus } from "@prisma/client";
 import type { BankCluster, BankCompetencyRow } from "@/lib/competency/content-bank-data";
 import { FrameworkStudioTree } from "@/components/admin/framework/FrameworkStudioTree";
@@ -120,6 +120,33 @@ export function FrameworkStudio({
     }
   }
 
+  async function syncLexiconToBank() {
+    if (
+      !confirm(
+        "역량사전(정의·L1–L5 루브릭·신호어)을 이 Framework Studio 뱅크에 반영할까요?",
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/competency-lexicon/sync-to-bank", {
+        method: "POST",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "역량사전 동기화 실패");
+      await refresh();
+      setMessage(
+        `역량사전 반영 완료 — 역량 ${data.competencies ?? 0} · RubricSet ${data.rubricSets ?? 0} · 문항 ${data.questions ?? 0}`,
+      );
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "역량사전 동기화 실패");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function importFromCatalog(source: "ncs" | "global", code: string) {
     if (competencies.some((c) => c.code === code)) {
       setMessage(`역량 ${code}은(는) 이미 뱅크에 있습니다.`);
@@ -177,6 +204,15 @@ export function FrameworkStudio({
         >
           <Upload className="h-4 w-4" />
           카탈로그 가져오기
+        </button>
+        <button
+          type="button"
+          className="btn-secondary inline-flex min-h-11 items-center justify-center gap-1.5 text-sm"
+          disabled={busy}
+          onClick={() => void syncLexiconToBank()}
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <BookOpen className="h-4 w-4" />}
+          역량사전 반영
         </button>
         <button
           type="button"

@@ -7,6 +7,8 @@ import type { CompetencyCode } from "@/types";
 
 export const GAME_TYPES = [
   "choice",
+  "intent_read",
+  "best_worst",
   "true_false",
   "swipe_judge",
   "fill_blank",
@@ -23,7 +25,9 @@ export type LevelGameType = GameType | "mixed";
 
 /** 플레이 중에는 쓰지 않음 — 관리/테스트용 */
 export const GAME_TYPE_LABEL_KO: Record<GameType, string> = {
-  choice: "고르기",
+  choice: "상황 판단",
+  intent_read: "의도 독해",
+  best_worst: "베스트·워스트",
   true_false: "참/거짓",
   swipe_judge: "판정",
   fill_blank: "빈칸",
@@ -68,9 +72,37 @@ export type ChoiceItem = {
   id: string;
   gameType: "choice";
   skillRule: SkillRuleId;
+  /** SJT 장면 — 있으면 프롬프트 위에 표시 */
+  scenario?: string;
   prompt: string;
   choices: string[];
   answerIndex: number;
+  explain: string;
+};
+
+/** 영어 독해처럼 지문을 읽고 질문 의도/핵심을 고름 */
+export type IntentReadItem = {
+  id: string;
+  gameType: "intent_read";
+  skillRule: SkillRuleId;
+  /** 면접 질문·메일·대화 등 지문 */
+  passage: string;
+  prompt: string;
+  choices: string[];
+  answerIndex: number;
+  explain: string;
+};
+
+/** 같은 보기에서 베스트·워스트를 각각 고름 */
+export type BestWorstItem = {
+  id: string;
+  gameType: "best_worst";
+  skillRule: SkillRuleId;
+  scenario: string;
+  prompt: string;
+  choices: string[];
+  bestIndex: number;
+  worstIndex: number;
   explain: string;
 };
 
@@ -158,6 +190,8 @@ export type SpeakAlongItem = {
 
 export type GameItem =
   | ChoiceItem
+  | IntentReadItem
+  | BestWorstItem
   | TrueFalseItem
   | OrderItem
   | FillBlankItem
@@ -198,6 +232,13 @@ export type GameCourse = {
 
 export type GameAnswerPayload =
   | { gameType: "choice"; itemId: string; answerIndex: number }
+  | { gameType: "intent_read"; itemId: string; answerIndex: number }
+  | {
+      gameType: "best_worst";
+      itemId: string;
+      bestIndex: number;
+      worstIndex: number;
+    }
   | { gameType: "true_false"; itemId: string; judgedTrue: boolean }
   | { gameType: "order"; itemId: string; order: number[] }
   | { gameType: "fill_blank"; itemId: string; blankIndexes: number[] }

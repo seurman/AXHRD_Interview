@@ -161,6 +161,12 @@ export function PlatformHomeDashboard({ snapshot }: { snapshot: PlatformHomeSnap
           <span>모든 수치는 DB 실시간 집계입니다.</span>
           <div className="flex flex-wrap gap-3">
             <Link
+              href="/admin/content/game"
+              className="font-medium text-[var(--platform-accent)] hover:underline"
+            >
+              역량게임 운영 →
+            </Link>
+            <Link
               href="/admin/content/assessment"
               className="font-medium text-[var(--platform-accent)] hover:underline"
             >

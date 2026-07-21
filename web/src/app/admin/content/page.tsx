@@ -20,6 +20,7 @@ const VALID_TABS = new Set<FrameworkWorkspaceTab>([
 
 const VALID_VIEWS = new Set<ContentStudioView>([
   "platform",
+  "lexicon",
   "ncs",
   "global_source",
   "alignment",
@@ -76,6 +77,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
           </>
         }
         links={[
+          { href: "/admin/content/game", label: "역량게임 운영 →" },
           { href: "/admin/content/assessment", label: "평가 과제 스튜디오 →" },
           { href: "/admin/content/resume-review", label: "자소서 첨삭 기준 →" },
           { href: "/admin/irt-recalibration", label: "IRT 재보정 →" },

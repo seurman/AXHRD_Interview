@@ -5,13 +5,20 @@ import { useState } from "react";
 import { FrameworkStudio } from "@/components/admin/framework/FrameworkStudio";
 import { AdminOrgCustomCompetenciesPanel } from "@/components/admin/AdminOrgCustomCompetenciesPanel";
 import { GlobalCompetencyDictionaryPanel } from "@/components/admin/GlobalCompetencyDictionaryPanel";
+import { LexiconDictionaryPanel } from "@/components/admin/LexiconDictionaryPanel";
 import { NcsCompetencyBankPanel } from "@/components/admin/NcsCompetencyBankPanel";
 import { MeaningLayerPanel } from "@/components/admin/MeaningLayerPanel";
 import { AdminStudioTabs } from "@/components/admin/AdminStudioTabs";
 import type { BankCluster, BankCompetencyRow } from "@/lib/competency/content-bank-data";
 import type { FrameworkWorkspaceTab } from "@/components/admin/framework/FrameworkCompetencyWorkspace";
 
-export type ContentStudioView = "platform" | "ncs" | "global_source" | "alignment" | "org_custom";
+export type ContentStudioView =
+  | "platform"
+  | "lexicon"
+  | "ncs"
+  | "global_source"
+  | "alignment"
+  | "org_custom";
 
 type Props = {
   initialClusters: BankCluster[];
@@ -46,6 +53,19 @@ export function AdminContentTabs({
           initialQuestions={initialQuestions}
           initialCompetencyCode={initialCompetencyCode}
           initialTab={initialTab}
+        />
+      ),
+    },
+    {
+      id: "lexicon",
+      label: "역량사전",
+      content: (
+        <LexiconDictionaryPanel
+          embedded
+          onSynced={() => {
+            router.refresh();
+            setView("platform");
+          }}
         />
       ),
     },

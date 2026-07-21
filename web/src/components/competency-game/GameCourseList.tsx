@@ -33,8 +33,8 @@ export function GameCourseList({ courses }: { courses: CourseSummary[] }) {
         <p className="section-eyebrow">Competency Game</p>
         <h1 className="text-3xl font-bold text-foreground">역량게임</h1>
         <p className="text-sm leading-relaxed text-muted">
-          듀오링고처럼 역량마다 레벨을 깨며 규칙을 쌓습니다. 짧고, 반복하고, 점점
-          어려워집니다.
+          상황 판단 다음에 의도 독해·베스트/워스트로 지문을 읽고 정확히 고릅니다.
+          단어장과 조직 렌즈 독해도 같이 연습합니다.
         </p>
         <div className="flex flex-wrap justify-center gap-2 text-xs sm:justify-start">
           <span className="rounded-full bg-gold/10 px-3 py-1 font-semibold text-gold">
