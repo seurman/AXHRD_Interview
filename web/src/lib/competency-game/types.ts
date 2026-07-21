@@ -1,6 +1,6 @@
 /**
  * 역량게임 — 듀오링고식 미니드릴 타입·스키마
- * Phase A: 고르기 / 순서 / 빈칸 / 스와이프판정 / 따라말하기
+ * 레벨은 단일 또는 혼합(mixed) 게임 타입, difficulty 1–5
  */
 
 import type { CompetencyCode } from "@/types";
@@ -15,12 +15,25 @@ export const GAME_TYPES = [
 
 export type GameType = (typeof GAME_TYPES)[number];
 
+/** 레벨 표시용 — mixed면 여러 미니게임이 한 레벨에 섞임 */
+export type LevelGameType = GameType | "mixed";
+
 export const GAME_TYPE_LABEL_KO: Record<GameType, string> = {
   choice: "고르기",
   order: "순서 맞추기",
   fill_blank: "빈칸 채우기",
   swipe_judge: "좋은 답 고르기",
   speak_along: "따라 말하기",
+};
+
+export type Difficulty = 1 | 2 | 3 | 4 | 5;
+
+export const DIFFICULTY_LABEL_KO: Record<Difficulty, string> = {
+  1: "기초",
+  2: "익숙",
+  3: "응용",
+  4: "도전",
+  5: "보스",
 };
 
 export type SkillRuleId =
@@ -31,7 +44,8 @@ export type SkillRuleId =
   | "speak_compress"
   | "ownership"
   | "quantify"
-  | "question_intent";
+  | "question_intent"
+  | "mixed_review";
 
 export type ChoiceItem = {
   id: string;
@@ -97,7 +111,9 @@ export type GameLevel = {
   index: number;
   titleKo: string;
   skillRule: SkillRuleId;
-  gameType: GameType;
+  /** 단일 타입 또는 mixed (items가 여러 gameType) */
+  gameType: LevelGameType;
+  difficulty: Difficulty;
   xpReward: number;
   items: GameItem[];
 };
@@ -124,3 +140,10 @@ export type GameAnswerPayload =
   | { gameType: "fill_blank"; itemId: string; blankIndexes: number[] }
   | { gameType: "swipe_judge"; itemId: string; judgedGood: boolean }
   | { gameType: "speak_along"; itemId: string; completed: true };
+
+export function resolveLevelGameType(items: GameItem[]): LevelGameType {
+  if (items.length === 0) return "choice";
+  const types = new Set(items.map((i) => i.gameType));
+  if (types.size === 1) return items[0].gameType;
+  return "mixed";
+}

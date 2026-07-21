@@ -1,35 +1,44 @@
 import { describe, expect, it } from "vitest";
 import { findGameLevel, getGameCourse, listGameCourses } from "./catalog";
-import { gradeItem, gradeLevel, isLevelUnlocked } from "./engine";
+import {
+  flattenCourseLevels,
+  gradeItem,
+  gradeLevel,
+  isCourseLevelUnlocked,
+  isLevelUnlocked,
+} from "./engine";
 
 describe("competency-game catalog", () => {
-  it("ships communication unit 1 with five levels and three items each", () => {
+  it("ships two communication units with rising difficulty", () => {
     const course = getGameCourse("COMMUNICATION");
+    expect(course.units).toHaveLength(2);
     expect(course.units[0].levels).toHaveLength(5);
-    const types = course.units[0].levels.map((l) => l.gameType);
-    expect(types).toEqual([
-      "choice",
-      "order",
-      "fill_blank",
-      "swipe_judge",
-      "speak_along",
-    ]);
-    for (const level of course.units[0].levels) {
-      expect(level.items).toHaveLength(3);
+    expect(course.units[1].levels).toHaveLength(3);
+
+    const flat = flattenCourseLevels(course);
+    expect(flat).toHaveLength(8);
+    for (let i = 1; i < flat.length; i++) {
+      expect(flat[i].difficulty).toBeGreaterThanOrEqual(flat[i - 1].difficulty);
     }
+  });
+
+  it("ends with a mixed boss level of multiple game types", () => {
+    const boss = findGameLevel("communication-u2-l3")!.level;
+    expect(boss.gameType).toBe("mixed");
+    expect(boss.difficulty).toBe(5);
+    const types = new Set(boss.items.map((i) => i.gameType));
+    expect(types.size).toBeGreaterThanOrEqual(4);
   });
 
   it("keeps play titles free of technique spoilers", () => {
     const course = getGameCourse("COMMUNICATION");
-    const unit = course.units[0];
-    const blob = [
-      unit.titleKo,
-      unit.subtitleKo,
-      ...unit.levels.map((l) => l.titleKo),
-      ...unit.levels.flatMap((l) =>
-        l.items.map((item) => ("prompt" in item ? item.prompt : "")),
-      ),
-    ].join("\n");
+    const blob = course.units
+      .flatMap((u) => [
+        u.titleKo,
+        ...u.levels.map((l) => l.titleKo),
+        ...u.levels.flatMap((l) => l.items.map((item) => item.prompt)),
+      ])
+      .join("\n");
     expect(blob).not.toMatch(/STAR|결론이 먼저|결론 고르기|따라 말하기/);
   });
 
@@ -50,7 +59,7 @@ describe("competency-game engine", () => {
     });
     expect(ok.correct).toBe(true);
 
-    const orderLevel = findGameLevel("communication-u1-l2")!.level;
+    const orderLevel = findGameLevel("communication-u1-l4")!.level;
     const orderItem = orderLevel.items[0];
     if (orderItem.gameType !== "order") throw new Error("expected order");
     const bad = gradeItem(orderItem, {
@@ -61,7 +70,15 @@ describe("competency-game engine", () => {
     expect(bad.correct).toBe(false);
   });
 
-  it("unlocks levels linearly", () => {
+  it("unlocks across the whole course, not per unit", () => {
+    const course = getGameCourse("COMMUNICATION");
+    const u2First = course.units[1].levels[0].id;
+    expect(isCourseLevelUnlocked(course, u2First, new Set())).toBe(false);
+    const u1Ids = course.units[0].levels.map((l) => l.id);
+    expect(isCourseLevelUnlocked(course, u2First, new Set(u1Ids))).toBe(true);
+  });
+
+  it("keeps legacy unit unlock helper", () => {
     const ids = ["a", "b", "c"];
     expect(isLevelUnlocked(0, ids, new Set())).toBe(true);
     expect(isLevelUnlocked(1, ids, new Set())).toBe(false);

@@ -2,7 +2,13 @@
  * 역량게임 채점·해금 엔진 (정답 키 기반, LLM 없음)
  */
 
-import type { GameAnswerPayload, GameItem, GameLevel } from "./types";
+import type {
+  Difficulty,
+  GameAnswerPayload,
+  GameCourse,
+  GameItem,
+  GameLevel,
+} from "./types";
 
 export type GradeResult = {
   correct: boolean;
@@ -15,10 +21,34 @@ function arraysEqual(a: number[], b: number[]): boolean {
   return a.every((v, i) => v === b[i]);
 }
 
-export function gradeItem(item: GameItem, answer: GameAnswerPayload): GradeResult {
+/** 난이도↑ → 문항 XP 배수 */
+export function difficultyXpMultiplier(difficulty: Difficulty): number {
+  return 1 + (difficulty - 1) * 0.25;
+}
+
+function baseItemXp(item: GameItem): number {
+  switch (item.gameType) {
+    case "choice":
+    case "swipe_judge":
+      return 10;
+    case "order":
+    case "fill_blank":
+      return 12;
+    case "speak_along":
+      return 15;
+  }
+}
+
+export function gradeItem(
+  item: GameItem,
+  answer: GameAnswerPayload,
+  difficulty: Difficulty = 1,
+): GradeResult {
   if (item.id !== answer.itemId || item.gameType !== answer.gameType) {
     return { correct: false, explain: "문항이 일치하지 않습니다.", xpEarned: 0 };
   }
+
+  const xp = Math.round(baseItemXp(item) * difficultyXpMultiplier(difficulty));
 
   switch (item.gameType) {
     case "choice": {
@@ -27,7 +57,7 @@ export function gradeItem(item: GameItem, answer: GameAnswerPayload): GradeResul
       return {
         correct: ok,
         explain: item.explain,
-        xpEarned: ok ? 10 : 0,
+        xpEarned: ok ? xp : 0,
       };
     }
     case "order": {
@@ -36,7 +66,7 @@ export function gradeItem(item: GameItem, answer: GameAnswerPayload): GradeResul
       return {
         correct: ok,
         explain: item.explain,
-        xpEarned: ok ? 12 : 0,
+        xpEarned: ok ? xp : 0,
       };
     }
     case "fill_blank": {
@@ -49,7 +79,7 @@ export function gradeItem(item: GameItem, answer: GameAnswerPayload): GradeResul
       return {
         correct: ok,
         explain: item.explain,
-        xpEarned: ok ? 12 : 0,
+        xpEarned: ok ? xp : 0,
       };
     }
     case "swipe_judge": {
@@ -58,7 +88,7 @@ export function gradeItem(item: GameItem, answer: GameAnswerPayload): GradeResul
       return {
         correct: ok,
         explain: item.explain,
-        xpEarned: ok ? 10 : 0,
+        xpEarned: ok ? xp : 0,
       };
     }
     case "speak_along": {
@@ -66,7 +96,7 @@ export function gradeItem(item: GameItem, answer: GameAnswerPayload): GradeResul
       return {
         correct: ok,
         explain: item.tip,
-        xpEarned: ok ? 15 : 0,
+        xpEarned: ok ? xp : 0,
       };
     }
   }
@@ -93,7 +123,7 @@ export function gradeLevel(
       wrongCount += 1;
       continue;
     }
-    const r = gradeItem(item, ans);
+    const r = gradeItem(item, ans, level.difficulty);
     results.push(r);
     xpTotal += r.xpEarned;
     if (!r.correct) wrongCount += 1;
@@ -105,7 +135,11 @@ export function gradeLevel(
   return { allCorrect, results, xpTotal, wrongCount };
 }
 
-/** 유닛 내 다음 도전 가능 레벨 인덱스 (cleared = 완료한 level id 집합) */
+/** 코스 전체 레벨을 유닛 순서대로 평탄화 */
+export function flattenCourseLevels(course: GameCourse): GameLevel[] {
+  return course.units.flatMap((u) => u.levels);
+}
+
 export function nextPlayableLevelIndex(
   levelIds: string[],
   cleared: Set<string>,
@@ -116,6 +150,7 @@ export function nextPlayableLevelIndex(
   return levelIds.length;
 }
 
+/** @deprecated 유닛 내 인덱스용 — 코스는 isCourseLevelUnlocked 사용 */
 export function isLevelUnlocked(
   levelIndex: number,
   levelIds: string[],
@@ -124,4 +159,21 @@ export function isLevelUnlocked(
   if (levelIndex <= 0) return true;
   const prev = levelIds[levelIndex - 1];
   return cleared.has(prev);
+}
+
+/** 코스 전체에서 이전 레벨 클리어 시에만 해금 */
+export function isCourseLevelUnlocked(
+  course: GameCourse,
+  levelId: string,
+  cleared: Set<string>,
+): boolean {
+  const ids = flattenCourseLevels(course).map((l) => l.id);
+  const idx = ids.indexOf(levelId);
+  if (idx < 0) return false;
+  if (idx === 0) return true;
+  return cleared.has(ids[idx - 1]);
+}
+
+export function coursePathIndex(course: GameCourse, levelId: string): number {
+  return flattenCourseLevels(course).findIndex((l) => l.id === levelId);
 }

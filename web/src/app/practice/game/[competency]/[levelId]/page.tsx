@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { requireProductCapability } from "@/lib/platform/page-guards";
 import { GameLevelRunner } from "@/components/competency-game/GameLevelRunner";
 import { findGameLevel } from "@/lib/competency-game/catalog";
-import { isLevelUnlocked } from "@/lib/competency-game/engine";
+import { isCourseLevelUnlocked } from "@/lib/competency-game/engine";
 import { getOrCreateGameProgress } from "@/lib/competency-game/progress";
 import { COMPETENCY_CODES, type CompetencyCode } from "@/types";
 
@@ -38,8 +38,7 @@ export default async function CompetencyGameLevelPage({ params }: Props) {
       ? (progress.clearedLevelIds as string[])
       : [],
   );
-  const levelIds = found.unit.levels.map((l) => l.id);
-  const unlocked = isLevelUnlocked(found.level.index, levelIds, cleared);
+  const unlocked = isCourseLevelUnlocked(found.course, levelId, cleared);
 
   if (!unlocked) {
     redirect(`/practice/game/${competency.toLowerCase()}`);

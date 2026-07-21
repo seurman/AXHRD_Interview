@@ -5,7 +5,12 @@
 import { prisma } from "@/lib/prisma";
 import type { CompetencyCode } from "@/types";
 import { getGameCourse } from "./catalog";
-import { isLevelUnlocked, nextPlayableLevelIndex } from "./engine";
+import {
+  flattenCourseLevels,
+  isCourseLevelUnlocked,
+  nextPlayableLevelIndex,
+} from "./engine";
+import type { Difficulty, LevelGameType } from "./types";
 
 export type CourseProgressView = {
   competency: CompetencyCode;
@@ -21,7 +26,10 @@ export type CourseProgressView = {
     levels: Array<{
       id: string;
       titleKo: string;
-      gameType: string;
+      gameType: LevelGameType;
+      difficulty: Difficulty;
+      itemCount: number;
+      pathIndex: number;
       index: number;
       cleared: boolean;
       unlocked: boolean;
@@ -59,6 +67,8 @@ export async function getCourseProgressView(
   const course = getGameCourse(competency);
   const progress = await getOrCreateGameProgress(userId, competency);
   const cleared = new Set(asStringArray(progress.clearedLevelIds));
+  const flat = flattenCourseLevels(course);
+  const pathIndexById = new Map(flat.map((l, i) => [l.id, i]));
 
   return {
     competency,
@@ -67,23 +77,23 @@ export async function getCourseProgressView(
     xp: progress.xp,
     hearts: progress.hearts,
     streakDays: progress.streakDays,
-    units: course.units.map((unit) => {
-      const levelIds = unit.levels.map((l) => l.id);
-      return {
-        id: unit.id,
-        titleKo: unit.titleKo,
-        subtitleKo: unit.subtitleKo,
-        levels: unit.levels.map((level) => ({
-          id: level.id,
-          titleKo: level.titleKo,
-          gameType: level.gameType,
-          index: level.index,
-          cleared: cleared.has(level.id),
-          unlocked: isLevelUnlocked(level.index, levelIds, cleared),
-          xpReward: level.xpReward,
-        })),
-      };
-    }),
+    units: course.units.map((unit) => ({
+      id: unit.id,
+      titleKo: unit.titleKo,
+      subtitleKo: unit.subtitleKo,
+      levels: unit.levels.map((level) => ({
+        id: level.id,
+        titleKo: level.titleKo,
+        gameType: level.gameType,
+        difficulty: level.difficulty,
+        itemCount: level.items.length,
+        pathIndex: pathIndexById.get(level.id) ?? level.index,
+        index: level.index,
+        cleared: cleared.has(level.id),
+        unlocked: isCourseLevelUnlocked(course, level.id, cleared),
+        xpReward: level.xpReward,
+      })),
+    })),
   };
 }
 
@@ -99,8 +109,8 @@ export async function listCourseSummaries(userId: string) {
     const course = getGameCourse(code);
     const progress = byComp.get(code);
     const cleared = asStringArray(progress?.clearedLevelIds);
-    const totalLevels = course.units.reduce((s, u) => s + u.levels.length, 0);
-    const levelIds = course.units.flatMap((u) => u.levels.map((l) => l.id));
+    const levelIds = flattenCourseLevels(course).map((l) => l.id);
+    const totalLevels = levelIds.length;
     const nextIdx = nextPlayableLevelIndex(levelIds, new Set(cleared));
     return {
       competency: code,
