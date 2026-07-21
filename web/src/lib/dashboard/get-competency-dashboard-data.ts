@@ -167,7 +167,8 @@ export async function getCompetencyDashboardData(
 
   const startOfUtcDay = new Date();
   startOfUtcDay.setUTCHours(0, 0, 0, 0);
-  const [swipeToday, pathDrillToday, track, weakness, certifyCount] = await Promise.all([
+  const [swipeToday, pathDrillToday, gameToday, track, weakness, certifyCount] =
+    await Promise.all([
     prisma.swipeAction.count({
       where: {
         userId,
@@ -177,6 +178,14 @@ export async function getCompetencyDashboardData(
     prisma.drillAttempt.count({
       where: {
         userId,
+        kind: { not: "game" },
+        createdAt: { gte: startOfUtcDay },
+      },
+    }),
+    prisma.drillAttempt.count({
+      where: {
+        userId,
+        kind: "game",
         createdAt: { gte: startOfUtcDay },
       },
     }),
@@ -205,6 +214,7 @@ export async function getCompetencyDashboardData(
     hasDiscover: full.selfDiscoverySessions.length > 0,
     hasSwipeToday: swipeToday > 0,
     hasPathDrillToday: pathDrillToday > 0,
+    hasGameToday: gameToday > 0,
     pathCertifiedCount: certifyCount,
     weakestCompetency: weakest ? competencyLabel(weakest[0]) : undefined,
   });

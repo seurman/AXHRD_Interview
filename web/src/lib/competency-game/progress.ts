@@ -109,9 +109,15 @@ export async function listCourseSummaries(userId: string) {
     const course = getGameCourse(code);
     const progress = byComp.get(code);
     const cleared = asStringArray(progress?.clearedLevelIds);
-    const levelIds = flattenCourseLevels(course).map((l) => l.id);
+    const flat = flattenCourseLevels(course);
+    const levelIds = flat.map((l) => l.id);
     const totalLevels = levelIds.length;
     const nextIdx = nextPlayableLevelIndex(levelIds, new Set(cleared));
+    const nextLevel = flat[nextIdx] ?? null;
+    const pct =
+      totalLevels === 0
+        ? 0
+        : Math.round((Math.min(cleared.length, totalLevels) / totalLevels) * 100);
     return {
       competency: code,
       titleKo: competencyLabel(code),
@@ -120,8 +126,14 @@ export async function listCourseSummaries(userId: string) {
       hearts: progress?.hearts ?? 5,
       clearedCount: cleared.length,
       totalLevels,
+      progressPct: pct,
       hasContent: totalLevels > 0,
-      nextLevelId: levelIds[nextIdx] ?? null,
+      nextLevelId: nextLevel?.id ?? null,
+      nextLevelTitle: nextLevel?.titleKo ?? null,
+      continueHref: nextLevel
+        ? `/practice/game/${code.toLowerCase()}/${nextLevel.id}`
+        : `/practice/game/${code.toLowerCase()}`,
+      completed: totalLevels > 0 && cleared.length >= totalLevels,
     };
   });
 }
