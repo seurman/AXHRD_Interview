@@ -13,14 +13,12 @@ export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ competency: string }> };
 
 export default async function CompetencyPathPage({ params }: Ctx) {
-  const user = await requireProductCapability(
-    "product.practice",
-    "/practice/path",
-  );
   const { competency: raw } = await params;
   const competency = raw?.toUpperCase() as CompetencyCode;
   if (!COMPETENCY_CODES.includes(competency)) notFound();
 
+  const nextPath = `/practice/path/${raw.toLowerCase()}`;
+  const user = await requireProductCapability("product.practice", nextPath);
   const track = await resolveUserTrack(user.id);
   const detail = await getCompetencyPathDetail(user.id, competency, track);
 

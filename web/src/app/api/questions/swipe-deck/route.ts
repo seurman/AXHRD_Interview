@@ -21,6 +21,9 @@ export async function GET(req: Request) {
   const industryParam = searchParams.get("industry") ?? "";
   const jobRoleParam = searchParams.get("jobRole") ?? "";
   const companySizeParam = searchParams.get("companySize") ?? "";
+  const competencyParam = (searchParams.get("competency") ?? "").toUpperCase();
+  const competencyFilter =
+    competencyParam.length > 0 ? competencyParam : null;
 
   const industry: IndustryCode | null = (INDUSTRY_CODES as readonly string[]).includes(
     industryParam
@@ -84,6 +87,12 @@ export async function GET(req: Request) {
     }
   }
 
+  // 0순위: 학습 패스에서 지정한 역량 (있으면)
+  if (competencyFilter) {
+    await addTier({ competency: competencyFilter, industry, jobRole });
+    await addTier({ competency: competencyFilter, industry });
+    await addTier({ competency: competencyFilter });
+  }
   // 1순위: 정확히 고른 산업군+직무
   await addTier({ industry, jobRole });
   // 2순위: 같은 산업군(다른 직무)

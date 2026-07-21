@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { SESSION_COOKIE, getJwtSecret, verifySessionToken } from "@/lib/auth/jwt";
+import { requiresAuth } from "@/lib/auth/middleware-paths";
 
 /** Edge middleware 전용 — Prisma·presenter.ts import 금지 */
 const DEMO_PRESENTER_COOKIE = "hr_in_demo_presenter";
@@ -43,48 +44,6 @@ function productLandingRewrite(request: NextRequest): NextResponse | null {
   const url = request.nextUrl.clone();
   url.pathname = target;
   return NextResponse.rewrite(url);
-}
-
-function isPublicPath(pathname: string) {
-  if (pathname === "/") return true;
-  if (pathname.startsWith("/auth")) return true;
-  if (pathname.startsWith("/api/auth")) return true;
-  if (pathname.startsWith("/c/")) return true;
-  if (pathname === "/pricing") return true;
-  if (pathname.startsWith("/billing/fail")) return true;
-  if (pathname.startsWith("/demo")) return true;
-  if (pathname.startsWith("/api/demo")) return true;
-  if (pathname.startsWith("/api/trial")) return true;
-  return false;
-}
-
-function requiresAuth(pathname: string) {
-  if (isPublicPath(pathname)) return false;
-  if (pathname.startsWith("/dashboard")) return true;
-  if (pathname.startsWith("/profile")) return true;
-  if (pathname.startsWith("/interview")) return true;
-  if (pathname.startsWith("/api/interview")) {
-    if (pathname === "/api/interview/respond" || pathname === "/api/interview/tts") {
-      return false;
-    }
-    return true;
-  }
-  if (pathname.startsWith("/api/candidates")) return true;
-  if (pathname.startsWith("/api/profile")) return true;
-  if (pathname.startsWith("/api/companies")) return true;
-  if (pathname.startsWith("/api/resume")) return true;
-  if (pathname.startsWith("/api/org")) return true;
-  if (pathname.startsWith("/org")) return true;
-  if (pathname.startsWith("/assessment")) return true;
-  if (pathname.startsWith("/api/assessment")) return true;
-  if (pathname.startsWith("/api/admin")) return true;
-  if (pathname.startsWith("/admin")) return true;
-  if (pathname.startsWith("/billing/success")) return true;
-  if (pathname.startsWith("/api/billing/prepare")) return true;
-  if (pathname.startsWith("/api/billing/confirm")) return true;
-  if (pathname.startsWith("/api/billing/cancel")) return true;
-  if (pathname.startsWith("/api/billing/status")) return true;
-  return false;
 }
 
 export async function middleware(request: NextRequest) {
@@ -129,7 +88,12 @@ export const config = {
     "/",
     "/dashboard/:path*",
     "/profile/:path*",
+    "/practice/:path*",
+    "/discover/:path*",
+    "/resume-review/:path*",
     "/interview/:path*",
+    "/api/learning/:path*",
+    "/api/questions/:path*",
     "/api/interview/:path*",
     "/api/candidates/:path*",
     "/api/profile/:path*",

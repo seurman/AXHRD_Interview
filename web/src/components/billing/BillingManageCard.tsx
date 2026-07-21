@@ -132,6 +132,9 @@ export function BillingManageCard() {
           </p>
         </div>
         <div className="flex flex-col gap-2">
+          <Link href="/practice/path" className="btn-outline-primary px-4 py-2 text-xs text-center">
+            역량 학습 패스
+          </Link>
           <Link href="/pricing" className="btn-outline-primary px-4 py-2 text-xs text-center">
             플랜 변경
           </Link>

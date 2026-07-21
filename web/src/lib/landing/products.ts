@@ -49,7 +49,7 @@ const APP_HREFS: Record<ProductSlug, { personal: string; demo?: string; org?: st
   discover: { personal: "/discover", demo: "/demo" },
   resume: { personal: "/resume-review", demo: "/demo" },
   interview: { personal: "/interview/setup", demo: "/demo" },
-  practice: { personal: "/practice/swipe", demo: "/demo" },
+  practice: { personal: "/practice/path", demo: "/demo" },
   growth: { personal: "/dashboard", demo: "/demo" },
   diagnostic: { personal: "/diagnosis", org: "/org/diagnosis" },
   organizations: { personal: "/org/setup", org: "/org/setup" },
@@ -63,8 +63,8 @@ export function productAppHref(
   const routes = APP_HREFS[slug];
   if (slug === "organizations") return routes.org ?? "/org/setup";
   if (opts.trialOnly && routes.demo) return routes.demo;
-  if (!opts.loggedIn && slug === "interview") {
-    return "/auth/register?next=/interview/setup";
+  if (!opts.loggedIn && (slug === "interview" || slug === "practice")) {
+    return `/auth/register?next=${encodeURIComponent(routes.personal)}`;
   }
   return routes.personal;
 }
