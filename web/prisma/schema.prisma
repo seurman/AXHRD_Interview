@@ -1366,7 +1366,15 @@ model CompetencyGameProgress {
   /**
    * 일일 하트(에너지). 오답 시 차감
    */
+  /**
+   * 일일 하트(에너지). 오답 시 차감
+   */
   hearts           Int       @default(5)
+  /**
+   * 역량게임 2PL θ / SE (면접 θ와 별도 스트림, 대시보드에서 참고)
+   */
+  theta            Float     @default(0)
+  se               Float     @default(1)
   streakDays       Int       @default(0)
   lastPlayAt       DateTime?
   createdAt        DateTime  @default(now())

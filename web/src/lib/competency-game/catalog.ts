@@ -1,12 +1,12 @@
 /**
- * 역량게임 카탈로그 — 6역량 듀오링고식 패스
+ * 역량게임 카탈로그 — 6역량 × 레벨별 게임타입 고정 + IRT 뱅크
  */
 
 import type { CompetencyCode } from "@/types";
 import { COMPETENCY_CODES } from "@/types";
 import type { GameCourse } from "./types";
 import { buildDuoCourse } from "./catalog/build-duo-course";
-import { COMMUNICATION_COURSE } from "./catalog/communication";
+import { COMMUNICATION_PACK } from "./catalog/packs/communication";
 import { PROBLEM_SOLVING_PACK } from "./catalog/packs/problem-solving";
 import { JOB_FIT_PACK } from "./catalog/packs/job-fit";
 import { ORG_FIT_PACK } from "./catalog/packs/org-fit";
@@ -14,7 +14,7 @@ import { LEADERSHIP_PACK } from "./catalog/packs/leadership";
 import { GROWTH_PACK } from "./catalog/packs/growth";
 
 export const COMPETENCY_GAME_COURSES: Record<CompetencyCode, GameCourse> = {
-  COMMUNICATION: COMMUNICATION_COURSE,
+  COMMUNICATION: buildDuoCourse(COMMUNICATION_PACK),
   PROBLEM_SOLVING: buildDuoCourse(PROBLEM_SOLVING_PACK),
   JOB_FIT: buildDuoCourse(JOB_FIT_PACK),
   ORG_FIT: buildDuoCourse(ORG_FIT_PACK),

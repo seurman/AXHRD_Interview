@@ -109,7 +109,7 @@ export function GameCourseList({ courses }: { courses: CourseSummary[] }) {
       </ul>
 
       <p className="text-center text-xs text-muted">
-        6역량 × 8레벨 · 기초→보스 · 후반 혼합 라운드
+        6역량 · 레벨마다 다른 미니게임 · IRT(θ) 적응
       </p>
     </div>
   );

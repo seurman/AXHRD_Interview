@@ -1,28 +1,36 @@
 /**
- * 역량게임 — 듀오링고식 미니드릴 타입·스키마
- * 레벨은 단일 또는 혼합(mixed) 게임 타입, difficulty 1–5
+ * 역량게임 — 미니드릴 타입
+ * 레벨마다 하나의 게임 타입이 순서대로 등장 (자유 선택 없음)
  */
 
 import type { CompetencyCode } from "@/types";
 
 export const GAME_TYPES = [
   "choice",
-  "order",
-  "fill_blank",
+  "true_false",
   "swipe_judge",
+  "fill_blank",
+  "order",
+  "match_pairs",
+  "spot_weak",
+  "chip_build",
   "speak_along",
 ] as const;
 
 export type GameType = (typeof GAME_TYPES)[number];
 
-/** 레벨 표시용 — mixed면 여러 미니게임이 한 레벨에 섞임 */
 export type LevelGameType = GameType | "mixed";
 
+/** 플레이 중에는 쓰지 않음 — 관리/테스트용 */
 export const GAME_TYPE_LABEL_KO: Record<GameType, string> = {
   choice: "고르기",
-  order: "순서 맞추기",
-  fill_blank: "빈칸 채우기",
-  swipe_judge: "좋은 답 고르기",
+  true_false: "참/거짓",
+  swipe_judge: "판정",
+  fill_blank: "빈칸",
+  order: "순서",
+  match_pairs: "짝 맞추기",
+  spot_weak: "약한 부분 찾기",
+  chip_build: "조각 조립",
   speak_along: "따라 말하기",
 };
 
@@ -34,6 +42,15 @@ export const DIFFICULTY_LABEL_KO: Record<Difficulty, string> = {
   3: "응용",
   4: "도전",
   5: "보스",
+};
+
+/** UX 난이도 → IRT b 시드 */
+export const DIFFICULTY_TO_B: Record<Difficulty, number> = {
+  1: -2,
+  2: -1,
+  3: 0,
+  4: 1,
+  5: 2,
 };
 
 export type SkillRuleId =
@@ -57,13 +74,22 @@ export type ChoiceItem = {
   explain: string;
 };
 
+export type TrueFalseItem = {
+  id: string;
+  gameType: "true_false";
+  skillRule: SkillRuleId;
+  prompt: string;
+  statement: string;
+  isTrue: boolean;
+  explain: string;
+};
+
 export type OrderItem = {
   id: string;
   gameType: "order";
   skillRule: SkillRuleId;
   prompt: string;
   cards: string[];
-  /** 정답 순서 (cards 인덱스) */
   answerOrder: number[];
   explain: string;
 };
@@ -84,8 +110,40 @@ export type SwipeJudgeItem = {
   skillRule: SkillRuleId;
   prompt: string;
   answerText: string;
-  /** true = 좋은 답(오른쪽), false = 나쁜 답(왼쪽) */
   isGood: boolean;
+  explain: string;
+};
+
+export type MatchPairsItem = {
+  id: string;
+  gameType: "match_pairs";
+  skillRule: SkillRuleId;
+  prompt: string;
+  left: string[];
+  right: string[];
+  /** left[i] → right[answerMap[i]] */
+  answerMap: number[];
+  explain: string;
+};
+
+export type SpotWeakItem = {
+  id: string;
+  gameType: "spot_weak";
+  skillRule: SkillRuleId;
+  prompt: string;
+  sentences: string[];
+  weakIndex: number;
+  explain: string;
+};
+
+export type ChipBuildItem = {
+  id: string;
+  gameType: "chip_build";
+  skillRule: SkillRuleId;
+  prompt: string;
+  chips: string[];
+  /** 정답 칩 순서 (chips 인덱스) */
+  answerOrder: number[];
   explain: string;
 };
 
@@ -100,9 +158,13 @@ export type SpeakAlongItem = {
 
 export type GameItem =
   | ChoiceItem
+  | TrueFalseItem
   | OrderItem
   | FillBlankItem
   | SwipeJudgeItem
+  | MatchPairsItem
+  | SpotWeakItem
+  | ChipBuildItem
   | SpeakAlongItem;
 
 export type GameLevel = {
@@ -111,10 +173,10 @@ export type GameLevel = {
   index: number;
   titleKo: string;
   skillRule: SkillRuleId;
-  /** 단일 타입 또는 mixed (items가 여러 gameType) */
   gameType: LevelGameType;
   difficulty: Difficulty;
   xpReward: number;
+  /** 문항 뱅크 — 플레이 시 IRT로 N개 추출 */
   items: GameItem[];
 };
 
@@ -136,9 +198,13 @@ export type GameCourse = {
 
 export type GameAnswerPayload =
   | { gameType: "choice"; itemId: string; answerIndex: number }
+  | { gameType: "true_false"; itemId: string; judgedTrue: boolean }
   | { gameType: "order"; itemId: string; order: number[] }
   | { gameType: "fill_blank"; itemId: string; blankIndexes: number[] }
   | { gameType: "swipe_judge"; itemId: string; judgedGood: boolean }
+  | { gameType: "match_pairs"; itemId: string; map: number[] }
+  | { gameType: "spot_weak"; itemId: string; weakIndex: number }
+  | { gameType: "chip_build"; itemId: string; order: number[] }
   | { gameType: "speak_along"; itemId: string; completed: true };
 
 export function resolveLevelGameType(items: GameItem[]): LevelGameType {
