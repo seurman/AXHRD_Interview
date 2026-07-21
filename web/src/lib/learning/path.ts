@@ -19,11 +19,15 @@ export type PathCompetencySummary = {
   } | null;
 };
 
-/** DB에 레슨이 없으면(또는 카탈로그보다 적으면) upsert (idempotent) */
-export async function ensureLessonCatalogSeeded(): Promise<number> {
+/** DB 레슨을 카탈로그와 동기화 (idempotent upsert) */
+export async function syncLessonCatalog(opts?: {
+  force?: boolean;
+}): Promise<{ upserted: number; total: number }> {
   const catalog = buildLessonCatalog();
   const count = await prisma.competencyLesson.count();
-  if (count >= catalog.length) return count;
+  if (!opts?.force && count >= catalog.length) {
+    return { upserted: 0, total: count };
+  }
 
   for (const lesson of catalog) {
     await prisma.competencyLesson.upsert({
@@ -57,7 +61,13 @@ export async function ensureLessonCatalogSeeded(): Promise<number> {
       },
     });
   }
-  return catalog.length;
+  return { upserted: catalog.length, total: catalog.length };
+}
+
+/** DB에 레슨이 없으면(또는 카탈로그보다 적으면) upsert (idempotent) */
+export async function ensureLessonCatalogSeeded(): Promise<number> {
+  const result = await syncLessonCatalog({ force: false });
+  return result.total;
 }
 
 function lessonVisibleForTrack(
@@ -238,7 +248,14 @@ export async function completeLesson(params: {
     data: {
       userId: params.userId,
       competency: lesson.competency,
-      kind: lesson.kind === "CONCEPT" || lesson.kind === "FRAMEWORK" ? "quiz" : "daily",
+      kind:
+        lesson.kind === "CONCEPT" ||
+        lesson.kind === "FRAMEWORK" ||
+        lesson.kind === "CERTIFY"
+          ? "quiz"
+          : lesson.kind === "WEAKNESS_DRILL"
+            ? "weakness"
+            : "daily",
       lessonId: lesson.id,
       unscored: score == null,
       score: score ?? undefined,
@@ -252,7 +269,11 @@ export async function completeLesson(params: {
     quizScore: score,
   });
 
-  const masteryScore = blendMastery(progress.masteryScore, score ?? 0.6);
+  const masterySample =
+    lesson.kind === "CERTIFY"
+      ? Math.max(score ?? 0, 0.85)
+      : (score ?? 0.6);
+  const masteryScore = blendMastery(progress.masteryScore, masterySample);
   const streakDays = bumpStreak(progress.lastDrillAt, progress.streakDays);
 
   const updated = await prisma.learningPathProgress.update({
@@ -322,7 +343,9 @@ export function nextUnlockedStage(params: {
 }): number {
   const floor = Math.max(params.currentUnlocked, params.lessonStage);
   const needsQuiz =
-    params.kind === "CONCEPT" || params.kind === "FRAMEWORK";
+    params.kind === "CONCEPT" ||
+    params.kind === "FRAMEWORK" ||
+    params.kind === "CERTIFY";
   const passed = needsQuiz ? (params.quizScore ?? 0) >= 0.7 : true;
   if (!passed) return floor;
   return Math.max(floor, Math.min(5, params.lessonStage + 1));

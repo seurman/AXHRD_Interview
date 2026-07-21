@@ -54,6 +54,25 @@ describe("nextUnlockedStage", () => {
     ).toBe(4);
   });
 
+  it("requires quiz pass for CERTIFY before staying unlocked at 5", () => {
+    expect(
+      nextUnlockedStage({
+        currentUnlocked: 5,
+        lessonStage: 5,
+        kind: "CERTIFY",
+        quizScore: 0.5,
+      }),
+    ).toBe(5);
+    expect(
+      nextUnlockedStage({
+        currentUnlocked: 5,
+        lessonStage: 5,
+        kind: "CERTIFY",
+        quizScore: 1,
+      }),
+    ).toBe(5);
+  });
+
   it("never exceeds stage 5", () => {
     expect(
       nextUnlockedStage({

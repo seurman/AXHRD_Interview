@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { CareerTrack } from "@prisma/client";
 import type { PathCompetencySummary } from "@/lib/learning/path";
+import type { WeaknessRecommendation } from "@/lib/learning/weakness";
 
 type UsageSlice = {
   used: number;
@@ -16,6 +17,7 @@ type Props = {
   initialTrack: CareerTrack;
   competencies: PathCompetencySummary[];
   recommendation: PathCompetencySummary | null;
+  weakness: WeaknessRecommendation;
   dailyDrills: UsageSlice;
   mockInterviews: UsageSlice;
 };
@@ -24,6 +26,7 @@ export function LearningPathOverview({
   initialTrack,
   competencies,
   recommendation,
+  weakness,
   dailyDrills,
   mockInterviews,
 }: Props) {
@@ -63,8 +66,8 @@ export function LearningPathOverview({
         <p className="section-eyebrow">Competency Path</p>
         <h1 className="mt-3 text-3xl font-bold text-foreground">역량 학습 패스</h1>
         <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-muted sm:mx-0">
-          개념 → 원리 → 카드 말하기 → 약점 드릴 → 실전. 매일 가벼운 습관으로
-          쌓고, 필요할 때만 모의면접으로 측정합니다.
+          개념 → 원리 → 카드 말하기 → 약점 드릴 → 실전 → 인증. 매일 가벼운
+          습관으로 쌓고, 필요할 때만 모의면접으로 측정합니다.
         </p>
       </header>
 
@@ -127,6 +130,28 @@ export function LearningPathOverview({
           </div>
         </section>
       ) : null}
+
+      <section className="card-luxe space-y-3 p-5">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gold">
+            Weakness Drill
+          </p>
+          <h2 className="mt-1 font-bold text-foreground">
+            약점 드릴 · {weakness.titleKo}
+            {weakness.dimensionLabelKo
+              ? ` (${weakness.dimensionLabelKo})`
+              : ""}
+          </h2>
+          <p className="mt-1 text-sm text-muted">{weakness.tip}</p>
+        </div>
+        <p className="rounded-lg bg-primary/5 px-3 py-2 text-sm text-foreground">
+          {weakness.prompt}
+        </p>
+        <p className="text-xs text-muted">샘플: {weakness.sampleQuestion}</p>
+        <Link href={weakness.href} className="btn-secondary inline-flex text-sm">
+          약점 레슨 열기 →
+        </Link>
+      </section>
 
       <section className="space-y-3">
         <div className="flex items-end justify-between gap-2">
