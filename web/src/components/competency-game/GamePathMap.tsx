@@ -26,6 +26,9 @@ export function GamePathMap({ view }: { view: CourseProgressView }) {
             ❤️ {view.hearts}
           </span>
           <span className="rounded-full border border-card-border px-3 py-1">
+            θ {view.theta.toFixed(2)}
+          </span>
+          <span className="rounded-full border border-card-border px-3 py-1">
             스트릭 {view.streakDays}일
           </span>
         </div>
@@ -59,7 +62,7 @@ export function GamePathMap({ view }: { view: CourseProgressView }) {
                 const locked = !level.unlocked;
                 const href = `/practice/game/${view.competency.toLowerCase()}/${level.id}`;
                 const mixHint =
-                  level.gameType === "mixed" ? "혼합 라운드" : "연습";
+                  level.gameType === "mixed" ? "보스 라운드" : "레벨 진행";
                 return (
                   <motion.li
                     key={level.id}

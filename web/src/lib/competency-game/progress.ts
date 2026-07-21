@@ -19,6 +19,8 @@ export type CourseProgressView = {
   xp: number;
   hearts: number;
   streakDays: number;
+  theta: number;
+  se: number;
   units: Array<{
     id: string;
     titleKo: string;
@@ -77,6 +79,8 @@ export async function getCourseProgressView(
     xp: progress.xp,
     hearts: progress.hearts,
     streakDays: progress.streakDays,
+    theta: progress.theta ?? 0,
+    se: progress.se ?? 1,
     units: course.units.map((unit) => ({
       id: unit.id,
       titleKo: unit.titleKo,
@@ -199,5 +203,18 @@ export async function loseHeart(userId: string, competency: CompetencyCode) {
   return prisma.competencyGameProgress.update({
     where: { id: progress.id },
     data: { hearts: progress.hearts - 1, lastPlayAt: new Date() },
+  });
+}
+
+export async function updateGameTheta(
+  userId: string,
+  competency: CompetencyCode,
+  theta: number,
+  se: number,
+) {
+  const progress = await getOrCreateGameProgress(userId, competency);
+  return prisma.competencyGameProgress.update({
+    where: { id: progress.id },
+    data: { theta, se, lastPlayAt: new Date() },
   });
 }

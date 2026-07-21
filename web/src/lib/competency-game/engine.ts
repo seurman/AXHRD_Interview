@@ -1,5 +1,5 @@
 /**
- * 역량게임 채점·해금 엔진 (정답 키 기반, LLM 없음)
+ * 역량게임 채점·해금 엔진
  */
 
 import type {
@@ -21,7 +21,6 @@ function arraysEqual(a: number[], b: number[]): boolean {
   return a.every((v, i) => v === b[i]);
 }
 
-/** 난이도↑ → 문항 XP 배수 */
 export function difficultyXpMultiplier(difficulty: Difficulty): number {
   return 1 + (difficulty - 1) * 0.25;
 }
@@ -29,10 +28,14 @@ export function difficultyXpMultiplier(difficulty: Difficulty): number {
 function baseItemXp(item: GameItem): number {
   switch (item.gameType) {
     case "choice":
+    case "true_false":
     case "swipe_judge":
       return 10;
     case "order":
     case "fill_blank":
+    case "match_pairs":
+    case "spot_weak":
+    case "chip_build":
       return 12;
     case "speak_along":
       return 15;
@@ -54,20 +57,17 @@ export function gradeItem(
     case "choice": {
       const ok =
         answer.gameType === "choice" && answer.answerIndex === item.answerIndex;
-      return {
-        correct: ok,
-        explain: item.explain,
-        xpEarned: ok ? xp : 0,
-      };
+      return { correct: ok, explain: item.explain, xpEarned: ok ? xp : 0 };
+    }
+    case "true_false": {
+      const ok =
+        answer.gameType === "true_false" && answer.judgedTrue === item.isTrue;
+      return { correct: ok, explain: item.explain, xpEarned: ok ? xp : 0 };
     }
     case "order": {
       const ok =
         answer.gameType === "order" && arraysEqual(answer.order, item.answerOrder);
-      return {
-        correct: ok,
-        explain: item.explain,
-        xpEarned: ok ? xp : 0,
-      };
+      return { correct: ok, explain: item.explain, xpEarned: ok ? xp : 0 };
     }
     case "fill_blank": {
       if (answer.gameType !== "fill_blank") {
@@ -76,28 +76,33 @@ export function gradeItem(
       const ok =
         answer.blankIndexes.length === item.blanks.length &&
         answer.blankIndexes.every((v, i) => v === item.blanks[i].answerIndex);
-      return {
-        correct: ok,
-        explain: item.explain,
-        xpEarned: ok ? xp : 0,
-      };
+      return { correct: ok, explain: item.explain, xpEarned: ok ? xp : 0 };
     }
     case "swipe_judge": {
       const ok =
         answer.gameType === "swipe_judge" && answer.judgedGood === item.isGood;
-      return {
-        correct: ok,
-        explain: item.explain,
-        xpEarned: ok ? xp : 0,
-      };
+      return { correct: ok, explain: item.explain, xpEarned: ok ? xp : 0 };
+    }
+    case "match_pairs": {
+      const ok =
+        answer.gameType === "match_pairs" &&
+        arraysEqual(answer.map, item.answerMap);
+      return { correct: ok, explain: item.explain, xpEarned: ok ? xp : 0 };
+    }
+    case "spot_weak": {
+      const ok =
+        answer.gameType === "spot_weak" && answer.weakIndex === item.weakIndex;
+      return { correct: ok, explain: item.explain, xpEarned: ok ? xp : 0 };
+    }
+    case "chip_build": {
+      const ok =
+        answer.gameType === "chip_build" &&
+        arraysEqual(answer.order, item.answerOrder);
+      return { correct: ok, explain: item.explain, xpEarned: ok ? xp : 0 };
     }
     case "speak_along": {
       const ok = answer.gameType === "speak_along" && answer.completed;
-      return {
-        correct: ok,
-        explain: item.tip,
-        xpEarned: ok ? xp : 0,
-      };
+      return { correct: ok, explain: item.tip, xpEarned: ok ? xp : 0 };
     }
   }
 }
@@ -135,7 +140,6 @@ export function gradeLevel(
   return { allCorrect, results, xpTotal, wrongCount };
 }
 
-/** 코스 전체 레벨을 유닛 순서대로 평탄화 */
 export function flattenCourseLevels(course: GameCourse): GameLevel[] {
   return course.units.flatMap((u) => u.levels);
 }
@@ -150,18 +154,15 @@ export function nextPlayableLevelIndex(
   return levelIds.length;
 }
 
-/** @deprecated 유닛 내 인덱스용 — 코스는 isCourseLevelUnlocked 사용 */
 export function isLevelUnlocked(
   levelIndex: number,
   levelIds: string[],
   cleared: Set<string>,
 ): boolean {
   if (levelIndex <= 0) return true;
-  const prev = levelIds[levelIndex - 1];
-  return cleared.has(prev);
+  return cleared.has(levelIds[levelIndex - 1]);
 }
 
-/** 코스 전체에서 이전 레벨 클리어 시에만 해금 */
 export function isCourseLevelUnlocked(
   course: GameCourse,
   levelId: string,
