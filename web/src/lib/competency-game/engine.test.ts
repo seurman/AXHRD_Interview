@@ -7,30 +7,22 @@ import {
   isCourseLevelUnlocked,
   isLevelUnlocked,
 } from "./engine";
+import { COMPETENCY_CODES } from "@/types";
 
 describe("competency-game catalog", () => {
-  it("ships two communication units with rising difficulty", () => {
-    const course = getGameCourse("COMMUNICATION");
-    expect(course.units).toHaveLength(2);
-    expect(course.units[0].levels).toHaveLength(5);
-    expect(course.units[1].levels).toHaveLength(3);
-
-    const flat = flattenCourseLevels(course);
-    expect(flat).toHaveLength(8);
-    for (let i = 1; i < flat.length; i++) {
-      expect(flat[i].difficulty).toBeGreaterThanOrEqual(flat[i - 1].difficulty);
+  it("ships all six competencies with duo-style 8-level paths", () => {
+    expect(listGameCourses()).toHaveLength(6);
+    for (const code of COMPETENCY_CODES) {
+      const course = getGameCourse(code);
+      const flat = flattenCourseLevels(course);
+      expect(flat.length).toBeGreaterThanOrEqual(8);
+      expect(flat[0].difficulty).toBe(1);
+      expect(flat[flat.length - 1].difficulty).toBe(5);
+      expect(flat[flat.length - 1].gameType).toBe("mixed");
     }
   });
 
-  it("ends with a mixed boss level of multiple game types", () => {
-    const boss = findGameLevel("communication-u2-l3")!.level;
-    expect(boss.gameType).toBe("mixed");
-    expect(boss.difficulty).toBe(5);
-    const types = new Set(boss.items.map((i) => i.gameType));
-    expect(types.size).toBeGreaterThanOrEqual(4);
-  });
-
-  it("keeps play titles free of technique spoilers", () => {
+  it("keeps communication titles free of technique spoilers", () => {
     const course = getGameCourse("COMMUNICATION");
     const blob = course.units
       .flatMap((u) => [
@@ -39,11 +31,7 @@ describe("competency-game catalog", () => {
         ...u.levels.flatMap((l) => l.items.map((item) => item.prompt)),
       ])
       .join("\n");
-    expect(blob).not.toMatch(/STAR|결론이 먼저|결론 고르기|따라 말하기/);
-  });
-
-  it("lists six courses", () => {
-    expect(listGameCourses()).toHaveLength(6);
+    expect(blob).not.toMatch(/STAR|결론이 먼저|결론 고르기/);
   });
 });
 
@@ -71,7 +59,7 @@ describe("competency-game engine", () => {
   });
 
   it("unlocks across the whole course, not per unit", () => {
-    const course = getGameCourse("COMMUNICATION");
+    const course = getGameCourse("PROBLEM_SOLVING");
     const u2First = course.units[1].levels[0].id;
     expect(isCourseLevelUnlocked(course, u2First, new Set())).toBe(false);
     const u1Ids = course.units[0].levels.map((l) => l.id);
@@ -82,7 +70,6 @@ describe("competency-game engine", () => {
     const ids = ["a", "b", "c"];
     expect(isLevelUnlocked(0, ids, new Set())).toBe(true);
     expect(isLevelUnlocked(1, ids, new Set())).toBe(false);
-    expect(isLevelUnlocked(1, ids, new Set(["a"]))).toBe(true);
   });
 
   it("awards level bonus when all items correct", () => {

@@ -5,6 +5,7 @@ export function buildCareerQuests(params: {
   hasDiscover: boolean;
   hasSwipeToday?: boolean;
   hasPathDrillToday?: boolean;
+  hasGameToday?: boolean;
   pathCertifiedCount?: number;
   weakestCompetency?: string;
 }): { quests: QuestItem[]; totalXp: number; level: number } {
@@ -40,6 +41,15 @@ export function buildCareerQuests(params: {
       icon: "🧭",
     },
     {
+      id: "game",
+      title: "역량게임 1레벨",
+      description: "듀오링고식 미니게임으로 역량 규칙 익히기",
+      href: "/practice/game",
+      xp: 50,
+      done: !!params.hasGameToday,
+      icon: "🎮",
+    },
+    {
       id: "swipe",
       title: "질문 카드 10장",
       description: "실전 질문 카드로 습관 만들기",
@@ -66,6 +76,7 @@ export function buildCareerQuests(params: {
     (params.hasDiscover ? 150 : 0) +
     Math.min(params.sessionCount, 10) * 200 +
     (params.hasPathDrillToday ? 60 : 0) +
+    (params.hasGameToday ? 50 : 0) +
     (params.hasSwipeToday ? 80 : 0) +
     (params.sessionCount >= 3 || certified > 0 ? 100 : 0) +
     Math.min(certified, 6) * 20;

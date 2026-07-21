@@ -6,6 +6,12 @@ import type { CourseProgressView } from "@/lib/competency-game/progress";
 import { DIFFICULTY_LABEL_KO } from "@/lib/competency-game/types";
 
 export function GamePathMap({ view }: { view: CourseProgressView }) {
+  const flat = view.units.flatMap((u) => u.levels);
+  const next = flat.find((l) => l.unlocked && !l.cleared);
+  const continueHref = next
+    ? `/practice/game/${view.competency.toLowerCase()}/${next.id}`
+    : null;
+
   return (
     <div className="mx-auto max-w-lg space-y-8">
       <header className="space-y-2 text-center sm:text-left">
@@ -23,6 +29,17 @@ export function GamePathMap({ view }: { view: CourseProgressView }) {
             스트릭 {view.streakDays}일
           </span>
         </div>
+        {continueHref ? (
+          <Link
+            href={continueHref}
+            className="btn-primary inline-flex min-h-11 items-center justify-center px-5 text-sm"
+          >
+            이어서 하기
+            {next?.titleKo ? ` · ${next.titleKo}` : ""}
+          </Link>
+        ) : (
+          <p className="text-sm font-semibold text-gold">이 코스를 모두 클리어했습니다!</p>
+        )}
       </header>
 
       {view.units.map((unit) => (
