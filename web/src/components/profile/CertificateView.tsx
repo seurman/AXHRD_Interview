@@ -13,7 +13,7 @@ function formatDate(iso: string): string {
  *  "설명 가능한 평가"를 정체성으로 내세우기 위해 방법론 한 줄을 항상 노출한다. */
 export function CertificateView({ data }: { data: CertificateData }) {
   return (
-    <div className="rounded-3xl border-4 border-double border-gold/70 bg-card p-8 shadow-luxe sm:p-12">
+    <div className="rounded-3xl border-4 border-double border-gold/70 bg-card p-5 shadow-luxe sm:p-8 lg:p-12">
       <div className="text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold">
           AXHRD Competency Certificate
@@ -21,11 +21,16 @@ export function CertificateView({ data }: { data: CertificateData }) {
         <h1 className="mt-3 text-2xl font-bold text-foreground sm:text-3xl">
           {data.name}님의 역량 인증서
         </h1>
-        <p className="mt-2 text-sm text-muted">
+        <p className="mt-2 text-sm leading-relaxed text-muted">
           발급일 {formatDate(data.issuedAt)} · 완료 세션 {data.sessionCount}회
-          {data.pathBadges.length > 0
-            ? ` · 학습 패스 인증 ${data.pathBadges.length}개`
-            : ""}
+          {data.pathBadges.length > 0 ? (
+            <>
+              <span className="hidden sm:inline"> · </span>
+              <span className="mt-1 block sm:mt-0 sm:inline">
+                학습 패스 인증 {data.pathBadges.length}개
+              </span>
+            </>
+          ) : null}
         </p>
       </div>
 
@@ -46,13 +51,13 @@ export function CertificateView({ data }: { data: CertificateData }) {
             {data.pathBadges.map((b) => (
               <li
                 key={b.competency}
-                className="rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-medium text-foreground"
+                className="max-w-full rounded-full border border-gold/40 bg-gold/10 px-3 py-1.5 text-center text-xs font-medium text-foreground"
               >
                 {b.titleKo} · {formatDate(b.certifiedAt)}
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-center text-[11px] text-muted">
+          <p className="mt-2 px-1 text-center text-[11px] leading-relaxed text-muted">
             학습 패스 인증은 개념·원리·드릴·자가점검 완료 표시이며, IRT θ와는 별개입니다.
           </p>
         </div>
@@ -66,7 +71,7 @@ export function CertificateView({ data }: { data: CertificateData }) {
         <div className="space-y-4">
           {data.competencies.map((c) => (
             <div key={c.competency}>
-              <div className="mb-1 flex items-baseline justify-between text-sm">
+              <div className="mb-1 flex flex-col gap-0.5 text-sm sm:flex-row sm:items-baseline sm:justify-between">
                 <span className="font-medium text-foreground">
                   {competencyLabel(c.competency)}
                 </span>

@@ -306,7 +306,7 @@ export function CompetencyDashboard({
         </div>
 
         {!readOnly && (
-          <div className="space-y-6">
+          <div className="order-first space-y-6 lg:order-none">
             {learningPath ? (
               <LearningPathCard
                 weakness={learningPath.weakness}
@@ -389,9 +389,11 @@ function CompetencySkillBar({
       href={`/practice/path/${code.toLowerCase()}`}
       className={`block rounded-xl bg-background p-4 ring-1 ring-inset ring-card-border/50 transition hover:ring-accent/40 ${!assessed ? "opacity-80" : ""}`}
     >
-      <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-foreground">{competencyLabel(code)}</span>
-        <span className={`font-bold ${color}`}>
+      <div className="flex min-w-0 items-center justify-between gap-2 text-sm">
+        <span className="min-w-0 truncate font-medium text-foreground">
+          {competencyLabel(code)}
+        </span>
+        <span className={`shrink-0 font-bold ${color}`}>
           {pathCertified ? "인증" : assessed ? `L${levelEst}` : "미시작"}
         </span>
       </div>

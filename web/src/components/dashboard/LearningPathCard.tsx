@@ -45,13 +45,16 @@ export function LearningPathCard({ weakness, pathSummary }: Props) {
             </ul>
           ) : null}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/practice/path" className="btn-primary px-4 py-2 text-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <Link
+            href="/practice/path"
+            className="btn-primary inline-flex min-h-11 w-full items-center justify-center px-4 text-sm sm:w-auto"
+          >
             학습 패스 열기
           </Link>
           <Link
             href={weakness.swipeHref ?? weakness.href}
-            className="btn-secondary px-4 py-2 text-sm"
+            className="btn-secondary inline-flex min-h-11 w-full items-center justify-center px-4 text-sm sm:w-auto"
           >
             약점 말하기
           </Link>

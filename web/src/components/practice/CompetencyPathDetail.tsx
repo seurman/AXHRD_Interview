@@ -83,7 +83,7 @@ export function CompetencyPathDetail({ detail }: { detail: PathDetailView }) {
       <header className="space-y-2">
         <Link
           href="/practice/path"
-          className="text-xs font-medium text-accent hover:underline"
+          className="inline-flex min-h-11 items-center text-sm font-medium text-accent hover:underline touch-manipulation"
         >
           ← 역량 학습 패스
         </Link>
@@ -128,7 +128,7 @@ export function CompetencyPathDetail({ detail }: { detail: PathDetailView }) {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-muted">{lesson.stageLabel}</p>
-                  <p className="truncate text-sm font-medium text-foreground">
+                  <p className="line-clamp-2 text-sm font-medium text-foreground">
                     {lesson.titleKo}
                   </p>
                 </div>
@@ -240,7 +240,10 @@ function LessonPanel({
       {lesson.bodyMd ? <LessonMarkdown source={lesson.bodyMd} /> : null}
 
       {external.href ? (
-        <Link href={external.href} className="btn-secondary inline-flex text-sm">
+        <Link
+          href={external.href}
+          className="btn-secondary inline-flex min-h-11 w-full items-center justify-center text-sm sm:w-auto"
+        >
           {external.label} →
         </Link>
       ) : null}
@@ -257,7 +260,7 @@ function LessonPanel({
       {lesson.kind === "CERTIFY" && lesson.completed ? (
         <Link
           href="/profile/certificate"
-          className="btn-secondary inline-flex text-sm"
+          className="btn-secondary inline-flex min-h-11 w-full items-center justify-center text-sm sm:w-auto"
         >
           인증서에서 뱃지 보기 →
         </Link>
@@ -276,7 +279,7 @@ function LessonPanel({
                   return (
                     <label
                       key={ci}
-                      className={`flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm ${
+                      className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-3 py-3 text-sm touch-manipulation ${
                         selected
                           ? "border-accent/50 bg-accent/5"
                           : "border-card-border hover:border-accent/30"
@@ -284,7 +287,7 @@ function LessonPanel({
                     >
                       <input
                         type="radio"
-                        className="mt-1"
+                        className="h-4 w-4 shrink-0"
                         name={`q-${lesson.id}-${qi}`}
                         checked={selected}
                         onChange={() =>
@@ -305,7 +308,7 @@ function LessonPanel({
               quiz.questions.some((_, i) => answers[i] === undefined)
             }
             onClick={gradeQuiz}
-            className="btn-primary w-full py-2.5 text-sm disabled:opacity-50"
+            className="btn-primary min-h-11 w-full text-sm disabled:opacity-50"
           >
             {pending ? "채점 중…" : "퀴즈 제출하고 다음 단계"}
           </button>
@@ -320,7 +323,7 @@ function LessonPanel({
           type="button"
           disabled={pending || lesson.locked}
           onClick={() => submit(undefined)}
-          className="btn-primary w-full py-2.5 text-sm disabled:opacity-50"
+          className="btn-primary min-h-11 w-full text-sm disabled:opacity-50"
         >
           {pending
             ? "저장 중…"

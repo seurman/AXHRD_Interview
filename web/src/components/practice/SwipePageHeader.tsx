@@ -22,8 +22,11 @@ export function SwipePageHeader({
           집중 역량: {competencyLabel(focusCompetency)}
         </p>
       ) : null}
-      <p className="mt-3 text-xs text-muted">
-        <Link href="/practice/path" className="text-accent hover:underline">
+      <p className="mt-3 text-sm text-muted">
+        <Link
+          href="/practice/path"
+          className="inline-flex min-h-11 items-center text-accent hover:underline touch-manipulation"
+        >
           역량 학습 패스
         </Link>
         에서 개념·원리를 먼저 익힐 수 있어요
