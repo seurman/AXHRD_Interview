@@ -17,6 +17,11 @@ export function ChoiceGame({
 
   return (
     <div className="space-y-3">
+      {item.scenario ? (
+        <div className="rounded-xl border border-card-border bg-primary/[0.04] px-3.5 py-3 text-sm leading-relaxed text-foreground/90">
+          {item.scenario}
+        </div>
+      ) : null}
       <p className="text-base font-semibold text-foreground">{item.prompt}</p>
       <div className="space-y-2">
         {item.choices.map((choice, i) => {

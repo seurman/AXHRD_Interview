@@ -45,3 +45,20 @@ export function isLongestCorrect(choices: string[], answerIndex: number): boolea
   const max = Math.max(...lens);
   return lens[answerIndex] === max && lens.filter((l) => l === max).length === 1;
 }
+
+const DIGIT_RE = /\d/;
+
+/** 숫자·수치 단서가 정답에만 있는지 (패턴 맞히기 방지) */
+export function hasDigitCueOnlyOnAnswer(
+  choices: string[],
+  answerIndex: number,
+): boolean {
+  const withDigit = choices.map((c) => DIGIT_RE.test(c));
+  return withDigit[answerIndex] && withDigit.filter(Boolean).length === 1;
+}
+
+/** 보기 길이 편차(최장-최단) — SJT는 짧게 유지 */
+export function choiceLengthSpread(choices: string[]): number {
+  const lens = choices.map((c) => c.length);
+  return Math.max(...lens) - Math.min(...lens);
+}

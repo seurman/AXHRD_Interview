@@ -23,7 +23,7 @@ export type LevelGameType = GameType | "mixed";
 
 /** 플레이 중에는 쓰지 않음 — 관리/테스트용 */
 export const GAME_TYPE_LABEL_KO: Record<GameType, string> = {
-  choice: "고르기",
+  choice: "상황 판단",
   true_false: "참/거짓",
   swipe_judge: "판정",
   fill_blank: "빈칸",
@@ -68,6 +68,8 @@ export type ChoiceItem = {
   id: string;
   gameType: "choice";
   skillRule: SkillRuleId;
+  /** SJT 장면 — 있으면 프롬프트 위에 표시 */
+  scenario?: string;
   prompt: string;
   choices: string[];
   answerIndex: number;

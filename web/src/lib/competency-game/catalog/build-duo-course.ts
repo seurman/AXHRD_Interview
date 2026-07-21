@@ -31,7 +31,7 @@ export type DuoPack = {
   unit1: { titleKo: string; subtitleKo: string };
   unit2: { titleKo: string; subtitleKo: string };
   openers: Array<
-    Pick<ChoiceItem, "prompt" | "choices" | "answerIndex" | "explain"> & {
+    Pick<ChoiceItem, "prompt" | "choices" | "answerIndex" | "explain" | "scenario"> & {
       skillRule?: SkillRuleId;
     }
   >;
@@ -40,7 +40,7 @@ export type DuoPack = {
   stories: Array<Pick<OrderItem, "prompt" | "cards" | "answerOrder" | "explain">>;
   scripts: Array<Pick<SpeakAlongItem, "prompt" | "script" | "tip">>;
   traps: Array<
-    Pick<ChoiceItem, "prompt" | "choices" | "answerIndex" | "explain"> & {
+    Pick<ChoiceItem, "prompt" | "choices" | "answerIndex" | "explain" | "scenario"> & {
       skillRule?: SkillRuleId;
     }
   >;
@@ -64,6 +64,7 @@ function unitId(competency: CompetencyCode, unit: number) {
 function choiceItem(
   itemId: string,
   o: {
+    scenario?: string;
     prompt: string;
     choices: string[];
     answerIndex: number;
@@ -77,6 +78,7 @@ function choiceItem(
     id: itemId,
     gameType: "choice",
     skillRule: o.skillRule ?? defaultRule,
+    scenario: o.scenario,
     prompt: o.prompt,
     choices: sh.choices,
     answerIndex: sh.answerIndex,
@@ -148,7 +150,7 @@ export function buildDuoCourse(pack: DuoPack): GameCourse {
         id: `${c.toLowerCase()}-u1-l1`,
         unitId: u1,
         index: 0,
-        titleKo: "장면을 고르면",
+        titleKo: "상황 판단",
         skillRule: "conclusion_first",
         difficulty: 1,
         xpReward: 25,
@@ -265,7 +267,7 @@ export function buildDuoCourse(pack: DuoPack): GameCourse {
         id: `${c.toLowerCase()}-u2-l1`,
         unitId: u2,
         index: 0,
-        titleKo: "거의 비슷해 보이는 답",
+        titleKo: "아슬아슬한 판단",
         skillRule: "conclusion_first",
         difficulty: 4,
         xpReward: 55,

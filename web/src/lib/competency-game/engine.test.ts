@@ -13,7 +13,10 @@ import {
 } from "./irt-game";
 import { COMPETENCY_CODES } from "@/types";
 import { GAME_TYPES } from "./types";
-import { isLongestCorrect } from "./catalog/content-shuffle";
+import {
+  hasDigitCueOnlyOnAnswer,
+  isLongestCorrect,
+} from "./catalog/content-shuffle";
 
 describe("competency-game catalog", () => {
   it("ships all six competencies with level-locked game progression", () => {
@@ -107,23 +110,30 @@ describe("competency-game engine + IRT", () => {
 });
 
 describe("competency-game content quality", () => {
-  it("does not make the uniquely longest choice the correct answer", () => {
+  it("uses SJT scenarios and keeps correct answers from looking longest/numbered", () => {
     let total = 0;
     let uniquelyLong = 0;
+    let digitOnly = 0;
+    let missingScenario = 0;
     for (const course of listGameCourses()) {
       for (const unit of course.units) {
         for (const level of unit.levels) {
           for (const item of level.items) {
             if (item.gameType !== "choice") continue;
             total++;
+            if (!item.scenario?.trim()) missingScenario++;
             if (isLongestCorrect(item.choices, item.answerIndex)) uniquelyLong++;
+            if (hasDigitCueOnlyOnAnswer(item.choices, item.answerIndex)) digitOnly++;
           }
         }
       }
     }
     expect(total).toBeGreaterThan(20);
-    expect(uniquelyLong / total).toBeLessThanOrEqual(0.15);
+    expect(missingScenario).toBe(0);
+    expect(uniquelyLong).toBe(0);
+    expect(digitOnly).toBe(0);
   });
+
   it("keeps true_false/match/spot/chip banks from reusing swipe_judge copy", () => {
     const texts = new Map<string, Set<string>>();
     const add = (text: string, tag: string) => {
