@@ -2,6 +2,18 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 역량게임 모듈 Phase A (진행 중)
+
+듀오링고식 역량 미니게임 모듈을 학습 패스(`/practice/path`)와 **별도**로 추가.
+
+| 항목 | 내용 |
+|------|------|
+| 라우트 | `/practice/game` 코스 · `/practice/game/[competency]` 패스 맵 · `/…/[levelId]` 플레이 |
+| 미니게임 | 고르기 · 순서 · 빈칸 · 스와이프 판정 · 따라 말하기 (의사소통 유닛1) |
+| 진행도 | `CompetencyGameProgress` (XP · 하트 · 스트릭 · clearedLevelIds) |
+| API | `POST /api/competency-game/complete` |
+| 네비 | 연습 메뉴 「역량게임」 |
+
 ## 최근 작업 — 약점 드릴·인증서·홈 반영 (진행 중)
 
 | 항목 | 내용 |

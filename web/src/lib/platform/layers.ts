@@ -26,6 +26,8 @@ export const MODULE_LAYER: Record<string, AxPlatformLayer> = {
   "/discover": "workflows",
   "/practice": "workflows",
   "/practice/path": "workflows",
+  "/practice/game": "workflows",
+  "/api/competency-game": "workflows",
   "/org/settings/interview-kit": "workflows",
   "/admin/demo": "surfaces",
   "/admin/content": "meaning",

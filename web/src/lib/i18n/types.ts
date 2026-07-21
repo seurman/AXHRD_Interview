@@ -26,6 +26,7 @@ export type Dictionary = {
       resumeReview: string;
       cards: string;
       path: string;
+      game: string;
       trialInterview: string;
       profile: string;
     };
@@ -38,6 +39,7 @@ export type Dictionary = {
       resumeReview: string;
       cards: string;
       path: string;
+      game: string;
       trialInterview: string;
       profile: string;
     };

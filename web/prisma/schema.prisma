@@ -342,6 +342,7 @@ model User {
   learningPathProgress         LearningPathProgress[]
   drillAttempts                DrillAttempt[]
   lessonCompletions            LessonCompletion[]
+  competencyGameProgress       CompetencyGameProgress[]
   adminAuditLogs               AdminAuditLog[]        @relation("AdminAuditActor")
   auditRollbacks               AdminAuditLog[]        @relation("AdminAuditRollback")
   subscriptions                Subscription[]
@@ -1329,7 +1330,7 @@ model DrillAttempt {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   competency  String?
   /**
-   * daily | swipe | quiz | weakness
+   * daily | swipe | quiz | weakness | game
    */
   kind        String
   lessonId    String?
@@ -1344,6 +1345,35 @@ model DrillAttempt {
   @@index([userId, createdAt])
   @@index([userId, kind, createdAt])
   @@index([competency, createdAt])
+}
+
+/**
+ * 역량게임(듀오링고식 미니드릴) 코스 진행도 — 학습 패스와 별도 모듈
+ */
+model CompetencyGameProgress {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /**
+   * COMPETENCY_CODES
+   */
+  competency       String
+  /**
+   * 클리어한 level id 배열 (JSON string[])
+   */
+  clearedLevelIds  Json      @default("[]")
+  xp               Int       @default(0)
+  /**
+   * 일일 하트(에너지). 오답 시 차감
+   */
+  hearts           Int       @default(5)
+  streakDays       Int       @default(0)
+  lastPlayAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([userId, competency])
+  @@index([userId, lastPlayAt])
 }
 
 // ── 자기발견 인터뷰 (IRT/채점과 완전 분리된 성찰형 대화) ──

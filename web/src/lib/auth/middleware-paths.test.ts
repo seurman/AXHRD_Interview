@@ -13,9 +13,12 @@ describe("middleware-paths", () => {
   it("requires auth for learning path and related APIs", () => {
     expect(requiresAuth("/practice/path")).toBe(true);
     expect(requiresAuth("/practice/path/communication")).toBe(true);
+    expect(requiresAuth("/practice/game")).toBe(true);
+    expect(requiresAuth("/practice/game/communication")).toBe(true);
     expect(requiresAuth("/practice/swipe")).toBe(true);
     expect(requiresAuth("/api/learning/path")).toBe(true);
     expect(requiresAuth("/api/learning/drill/complete")).toBe(true);
+    expect(requiresAuth("/api/competency-game/complete")).toBe(true);
     expect(requiresAuth("/api/questions/swipe")).toBe(true);
     expect(requiresAuth("/discover")).toBe(true);
     expect(requiresAuth("/resume-review")).toBe(true);
