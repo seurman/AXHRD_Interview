@@ -25,6 +25,7 @@ export type PrepareLabelKey =
   | "discover"
   | "cards"
   | "path"
+  | "game"
   | "resumeReview"
   | "trialInterview"
   | "assessment";
@@ -146,6 +147,7 @@ const GROWTH_HREFS: { href: string; labelKey: PrepareLabelKey; capability: Capab
 const PRACTICE_HREFS: { href: string; labelKey: PrepareLabelKey; capability: CapabilityId }[] = [
   { href: "/demo", labelKey: "trialInterview", capability: "product.demo_trial" },
   { href: "/practice/path", labelKey: "path", capability: "product.practice" },
+  { href: "/practice/game", labelKey: "game", capability: "product.practice" },
   { href: "/practice/swipe", labelKey: "cards", capability: "product.practice" },
 ];
 

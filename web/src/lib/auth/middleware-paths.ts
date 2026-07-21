@@ -22,6 +22,7 @@ export function requiresAuth(pathname: string) {
   if (pathname.startsWith("/resume-review")) return true;
   if (pathname.startsWith("/interview")) return true;
   if (pathname.startsWith("/api/learning")) return true;
+  if (pathname.startsWith("/api/competency-game")) return true;
   if (pathname.startsWith("/api/questions")) return true;
   if (pathname.startsWith("/api/interview")) {
     if (pathname === "/api/interview/respond" || pathname === "/api/interview/tts") {
