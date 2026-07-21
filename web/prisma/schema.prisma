@@ -339,9 +339,16 @@ model User {
   oauthAccounts                OAuthAccount[]
   swipeActions                 SwipeAction[]
   selfDiscoverySessions        SelfDiscoverySession[]
+  learningPathProgress         LearningPathProgress[]
+  drillAttempts                DrillAttempt[]
+  lessonCompletions            LessonCompletion[]
   adminAuditLogs               AdminAuditLog[]        @relation("AdminAuditActor")
   auditRollbacks               AdminAuditLog[]        @relation("AdminAuditRollback")
   subscriptions                Subscription[]
+  /**
+   * 기본 학습 트랙(신입/경력) — 없으면 NEW_GRAD
+   */
+  careerTrack                  CareerTrack            @default(NEW_GRAD)
   orgInterviewKitUpdates       OrgInterviewKit[]      @relation("OrgInterviewKitUpdatedBy")
   orgInterviewKitSharesCreated OrgInterviewKitShare[] @relation("OrgInterviewKitShareCreatedBy")
   textRecords                  UserTextRecord[]
@@ -1230,6 +1237,115 @@ model SwipeAction {
   @@index([userId, action])
 }
 
+// ── 역량 학습 패스 (지식·원리 + 틴더 드릴 + 실전) ──
+// 면접 세션(CompetencyProgress)과 분리: 여기는 듀오링고식 습관·레슨 진행도.
+
+model CompetencyLesson {
+  id          String       @id @default(cuid())
+  /**
+   * COMPETENCY_CODES 값
+   */
+  competency  String
+  /**
+   * null이면 신입·경력 공통
+   */
+  track       CareerTrack?
+  /**
+   * 0=개념 … 5=인증
+   */
+  stage       Int
+  kind        LessonKind
+  slug        String
+  titleKo     String
+  /**
+   * 지식·원리 본문(마크다운). SWIPE/MOCK은 안내 문구만.
+   */
+  bodyMd      String?      @db.Text
+  /**
+   * CONCEPT/FRAMEWORK용 퀴즈: { questions: [{ prompt, choices, answerIndex, explain }] }
+   */
+  quizJson    Json?
+  sortOrder   Int          @default(0)
+  published   Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  completions LessonCompletion[]
+
+  @@unique([competency, slug])
+  @@index([competency, stage, published])
+  @@index([kind, published])
+}
+
+model LearningPathProgress {
+  id               String      @id @default(cuid())
+  userId           String
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  competency       String
+  track            CareerTrack @default(NEW_GRAD)
+  /**
+   * 해금된 최고 stage (0~5)
+   */
+  unlockedStage    Int         @default(0)
+  /**
+   * 연속 학습일
+   */
+  streakDays       Int         @default(0)
+  lastDrillAt      DateTime?
+  /**
+   * 퀴즈·드릴 숙련 추정 0~1 (저원가 휴리스틱)
+   */
+  masteryScore     Float       @default(0)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@unique([userId, competency, track])
+  @@index([userId, track])
+  @@index([userId, lastDrillAt])
+}
+
+model LessonCompletion {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId  String
+  lesson    CompetencyLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  /**
+   * 퀴즈 정답률 등 0~1
+   */
+  score     Float?
+  createdAt DateTime         @default(now())
+
+  @@unique([userId, lessonId])
+  @@index([userId, createdAt])
+}
+
+/**
+ * 일일 드릴·스와이프 말하기 등 저원가 연습 로그 (한도·스트릭·분석용)
+ */
+model DrillAttempt {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  competency  String?
+  /**
+   * daily | swipe | quiz | weakness
+   */
+  kind        String
+  lessonId    String?
+  swipeId     String?
+  /**
+   * true면 LLM 채점 없이 STT만 (원가 0에 가깝게)
+   */
+  unscored    Boolean  @default(true)
+  score       Float?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, kind, createdAt])
+  @@index([competency, createdAt])
+}
+
 // ── 자기발견 인터뷰 (IRT/채점과 완전 분리된 성찰형 대화) ──
 
 model SelfDiscoverySession {
@@ -1297,8 +1413,32 @@ model SelfDiscoveryProfile {
 enum PlanTier {
   FREE
   INDIVIDUAL_PRO
+  /**
+   * 개인 Premium — 실전 모의·깊은 코칭·자소서 맞춤 덱
+   */
+  INDIVIDUAL_PREMIUM
   ORG_STANDARD
   ORG_ENTERPRISE
+}
+
+/**
+ * 학습 트랙 — 신입 / 경력 (같은 역량 트리, 콘텐츠·난이도만 분기)
+ */
+enum CareerTrack {
+  NEW_GRAD
+  EXPERIENCED
+}
+
+/**
+ * 역량 레슨 종류 — 듀오링고식 단계 (지식→원리→스와이프→드릴→실전→인증)
+ */
+enum LessonKind {
+  CONCEPT
+  FRAMEWORK
+  SWIPE_DRILL
+  WEAKNESS_DRILL
+  MOCK
+  CERTIFY
 }
 
 enum SubscriptionStatus {

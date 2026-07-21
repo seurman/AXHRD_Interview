@@ -39,6 +39,7 @@ function pickBestPlan(
   const priority: PlanTier[] = [
     "ORG_ENTERPRISE",
     "ORG_STANDARD",
+    "INDIVIDUAL_PREMIUM",
     "INDIVIDUAL_PRO",
   ];
 

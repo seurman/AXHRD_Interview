@@ -90,11 +90,11 @@ export const CAPABILITY_REGISTRY: Record<CapabilityId, CapabilityDef> = {
   "product.practice": {
     id: "product.practice",
     category: "product",
-    labelKo: "질문 카드",
+    labelKo: "역량 연습",
     labelEn: "Practice",
-    descriptionKo: "질문 연습",
-    href: "/practice/swipe",
-    designNote: "스와이프 덱으로 실전 질문 민감도 훈련",
+    descriptionKo: "역량 학습 패스 · 질문 카드",
+    href: "/practice/path",
+    designNote: "지식·원리 → 스와이프 드릴 → 실전 모의 루프",
   },
   "product.assessment": {
     id: "product.assessment",

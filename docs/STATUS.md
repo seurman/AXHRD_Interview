@@ -2,6 +2,42 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 운영 DB 시드 + 대시보드 연동 (2026-07-21)
+
+| 항목 | 내용 |
+|------|------|
+| 운영 DB | `migrate` 이미 최신 · `db:seed:learning`로 42레슨 upsert 완료 |
+| 관리자 | `POST /api/admin/learning/seed-catalog` (슈퍼어드민 재시드) |
+| 대시보드 | `LearningPathCard` + 퀘스트「역량 학습」오늘 드릴 완료 연동 |
+
+## 최근 작업 — 약점 드릴·인증 + DB 시드 (2026-07-21)
+
+| 항목 | 내용 |
+|------|------|
+| 콘텐츠 | NCS·STAR/BARS 근거로 약점 드릴·CERTIFY 레슨 보강 (역량당 7단계) |
+| 추천 | `recommendWeaknessDrill` — 최근 6축 → 숙련도 → 기본값 |
+| DB | 마이그레이션 `20260721060000_…` 적용 + `db:seed:learning` 42레슨 upsert |
+| API/UI | `/api/learning/daily` 약점 포함 · 패스 개요에 약점 카드 |
+
+## 최근 작업 — 역량 학습 패스 UI (2026-07-21)
+
+| 항목 | 내용 |
+|------|------|
+| 라우트 | `/practice/path` 개요 · `/practice/path/[competency]` 레슨/퀴즈 |
+| 네비 | 연습 메뉴에 「역량 학습 패스」 |
+| 연동 | 스와이프 헤더·대시보드 퀘스트 → 패스 진입 |
+
+## 최근 작업 — 역량 학습 패스 백엔드 (2026-07-21)
+
+듀오링고식 역량 트랙(지식→원리→스와이프→약점→실전) + Free/Pro/Premium 한도.
+
+| 항목 | 내용 |
+|------|------|
+| 스키마 | `CompetencyLesson` · `LearningPathProgress` · `LessonCompletion` · `DrillAttempt` · `CareerTrack` · `INDIVIDUAL_PREMIUM` |
+| 빌링 | Free 주 3 드릴·월 1 모의 / Pro ₩9,900 드릴 무제한·월 4 모의 / Premium ₩24,900 모의 무제한 |
+| API | `GET/PATCH /api/learning/path` · `GET …/path/[competency]` · `POST …/drill/complete` · `GET …/daily` |
+| 스와이프 | Save+말하기 시 `DrillAttempt` 기록 + 주간 드릴 한도 |
+
 ## 최근 작업 — 실제 면접 질문 구체화 + 홈 로딩 (2026-07-21)
 
 | 항목 | 내용 |

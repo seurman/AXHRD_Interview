@@ -182,6 +182,7 @@ export function getMobileNavLabel(
     | "interview"
     | "resumeReview"
     | "cards"
+    | "path"
     | "trialInterview"
     | "profile"
     | "home"

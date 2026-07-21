@@ -110,6 +110,7 @@ export default async function DashboardPage() {
         totalXp={dashboard.totalXp}
         level={dashboard.level}
         strengthDeck={dashboard.strengthDeck}
+        learningPath={dashboard.learningPath}
         showOnboardingBanner={!dashboard.hasDashboardContent}
       />
 
