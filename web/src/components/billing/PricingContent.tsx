@@ -13,7 +13,13 @@ export function PricingContent() {
   const isOrgAdmin =
     loggedIn && nav?.orgRole === "ADMIN" && !!nav?.organizationId;
 
-  const tiers = ["FREE", "INDIVIDUAL_PRO", "ORG_STANDARD", "ORG_ENTERPRISE"] as const;
+  const tiers = [
+    "FREE",
+    "INDIVIDUAL_PRO",
+    "INDIVIDUAL_PREMIUM",
+    "ORG_STANDARD",
+    "ORG_ENTERPRISE",
+  ] as const;
 
   return (
     <div className="space-y-16 pb-12">
@@ -24,13 +30,13 @@ export function PricingContent() {
             역량 면접 연습, <span className="hero-highlight">플랜에 맞게</span>
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/80">
-            Free로 시작하고, 필요할 때 Pro 또는 기관 플랜으로 업그레이드하세요.
+            Free로 개념을 맛보고, Pro로 매일 드릴 습관을, Premium으로 실전·깊은 코칭을.
             카드 정보는 토스페이먼츠가 처리하며 HR_IN에는 빌링키만 저장됩니다.
           </p>
         </Reveal>
       </section>
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {tiers.map((tier, i) => {
           const plan = PLANS[tier];
           const isPro = tier === "INDIVIDUAL_PRO";
@@ -71,7 +77,13 @@ export function PricingContent() {
                     tier={tier}
                     canSubscribe={canSubscribe}
                     loggedIn={loggedIn}
-                    subscribeLabel={isOrg ? "기관 구독하기" : "Pro 구독하기"}
+                    subscribeLabel={
+                      isOrg
+                        ? "기관 구독하기"
+                        : tier === "INDIVIDUAL_PREMIUM"
+                          ? "Premium 구독하기"
+                          : "Pro 구독하기"
+                    }
                   />
                 )}
               </div>

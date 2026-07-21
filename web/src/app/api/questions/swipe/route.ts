@@ -28,13 +28,35 @@ export async function POST(req: Request) {
 
   const question = await prisma.realInterviewQuestion.findUnique({
     where: { id: questionId },
-    select: { id: true, questionText: true, industry: true, jobRole: true },
+    select: {
+      id: true,
+      questionText: true,
+      industry: true,
+      jobRole: true,
+      competency: true,
+    },
   });
   if (!question) {
     return NextResponse.json({ error: "존재하지 않는 질문입니다." }, { status: 404 });
   }
 
-  await prisma.swipeAction.upsert({
+  if (trimmedAnswer) {
+    const { checkUsageLimit } = await import("@/lib/billing/usage");
+    const usage = await checkUsageLimit(user.id, "daily_drill");
+    if (!usage.allowed) {
+      return NextResponse.json(
+        {
+          error: usage.message,
+          upgradeUrl: usage.upgradeUrl,
+          used: usage.used,
+          limit: usage.limit,
+        },
+        { status: 402 },
+      );
+    }
+  }
+
+  const swipe = await prisma.swipeAction.upsert({
     where: { userId_questionId: { userId: user.id, questionId } },
     create: {
       userId: user.id,
@@ -47,6 +69,17 @@ export async function POST(req: Request) {
       ...(trimmedAnswer && { answerTranscript: trimmedAnswer, answeredAt: new Date() }),
     },
   });
+
+  if (trimmedAnswer) {
+    const { resolveUserTrack, recordSwipeDrill } = await import("@/lib/learning/path");
+    const track = await resolveUserTrack(user.id);
+    await recordSwipeDrill({
+      userId: user.id,
+      competency: question.competency,
+      swipeId: swipe.id,
+      track,
+    });
+  }
 
   void appendUserTextRecord({
     userId: user.id,

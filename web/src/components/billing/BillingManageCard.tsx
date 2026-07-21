@@ -19,6 +19,7 @@ type BillingStatus = {
   usage: {
     mockInterviews: { used: number; limit: number | null };
     selfDiscovery: { used: number; limit: number | null };
+    dailyDrills?: { used: number; limit: number | null };
   };
 };
 
@@ -119,6 +120,15 @@ export function BillingManageCard() {
             {data.usage.selfDiscovery.limit != null
               ? ` / ${data.usage.selfDiscovery.limit}`
               : " (무제한)"}
+            {data.usage.dailyDrills && (
+              <>
+                {" "}
+                · 이번 주 드릴 {data.usage.dailyDrills.used}
+                {data.usage.dailyDrills.limit != null
+                  ? ` / ${data.usage.dailyDrills.limit}`
+                  : " (무제한)"}
+              </>
+            )}
           </p>
         </div>
         <div className="flex flex-col gap-2">

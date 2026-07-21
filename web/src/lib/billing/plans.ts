@@ -15,6 +15,8 @@ export type PlanDefinition = {
   limits: {
     mockInterviewsPerMonth: number | null;
     selfDiscoveryPerMonth: number | null;
+    /** 역량 학습 일일 드릴(퀴즈·말하기) — 주간 한도. null=무제한 */
+    dailyDrillsPerWeek: number | null;
     orgMemberCap: number | null;
   };
   features: string[];
@@ -25,35 +27,59 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
   FREE: {
     tier: "FREE",
     nameKo: "Free",
-    description: "기본 체험 플랜",
+    description: "역량 개념 맛보기 + 가벼운 습관",
     priceMonthlyKrw: 0,
     selfServeBilling: false,
     limits: {
-      mockInterviewsPerMonth: 3,
+      mockInterviewsPerMonth: 1,
       selfDiscoveryPerMonth: 1,
+      dailyDrillsPerWeek: 3,
       orgMemberCap: null,
     },
     features: [
-      "월 3회 모의면접",
-      "자기발견 인터뷰 1회/월",
-      "기본 역량 리포트",
+      "역량 개념·원리 레슨 맛보기",
+      "주 3회 매일 드릴",
+      "월 1회 실전 모의면접",
+      "틴더식 질문 카드(일일 한도)",
     ],
   },
   INDIVIDUAL_PRO: {
     tier: "INDIVIDUAL_PRO",
-    nameKo: "Individual Pro",
-    description: "개인 구독 — 무제한 연습",
-    priceMonthlyKrw: 29_000,
+    nameKo: "Pro",
+    description: "매일 역량 학습 루틴",
+    priceMonthlyKrw: 9_900,
+    selfServeBilling: true,
+    limits: {
+      mockInterviewsPerMonth: 4,
+      selfDiscoveryPerMonth: 1,
+      dailyDrillsPerWeek: null,
+      orgMemberCap: null,
+    },
+    features: [
+      "전 역량 지식·원리 트랙",
+      "매일 드릴 무제한(저원가)",
+      "틴더 스와이프·말하기 무제한",
+      "월 4회 실전 모의면접",
+      "성장·스트릭·배지",
+    ],
+  },
+  INDIVIDUAL_PREMIUM: {
+    tier: "INDIVIDUAL_PREMIUM",
+    nameKo: "Premium",
+    description: "실전·깊은 코칭·자소서 맞춤",
+    priceMonthlyKrw: 24_900,
     selfServeBilling: true,
     limits: {
       mockInterviewsPerMonth: null,
       selfDiscoveryPerMonth: null,
+      dailyDrillsPerWeek: null,
       orgMemberCap: null,
     },
     features: [
-      "무제한 모의면접",
-      "자기발견 인터뷰 무제한",
-      "상세 STAR·IRT 리포트",
+      "Pro 전체 +",
+      "실전 모의 넉넉/무제한",
+      "자소서 인용 깊은 캐물음",
+      "트리플 렌즈·페르소나(제공 시)",
       "역량 인증서 공유",
     ],
   },
@@ -69,13 +95,14 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
     limits: {
       mockInterviewsPerMonth: null,
       selfDiscoveryPerMonth: null,
+      dailyDrillsPerWeek: null,
       orgMemberCap: 50,
     },
     features: [
       "소속 구성원 무제한 모의면접",
       "참여 현황·코칭 콘솔",
       "좌석 단위 과금·초대 배포",
-      "자기발견 인터뷰 무제한",
+      "역량 학습 트랙·내부평가 웨이브",
     ],
   },
   ORG_ENTERPRISE: {
@@ -87,6 +114,7 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
     limits: {
       mockInterviewsPerMonth: null,
       selfDiscoveryPerMonth: null,
+      dailyDrillsPerWeek: null,
       orgMemberCap: null,
     },
     features: [
@@ -98,9 +126,16 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
   },
 };
 
-export const SELF_SERVE_PLAN_TIERS: PlanTier[] = ["INDIVIDUAL_PRO", "ORG_STANDARD"];
+export const SELF_SERVE_PLAN_TIERS: PlanTier[] = [
+  "INDIVIDUAL_PRO",
+  "INDIVIDUAL_PREMIUM",
+  "ORG_STANDARD",
+];
 
-export const INDIVIDUAL_PLAN_TIERS: PlanTier[] = ["INDIVIDUAL_PRO"];
+export const INDIVIDUAL_PLAN_TIERS: PlanTier[] = [
+  "INDIVIDUAL_PRO",
+  "INDIVIDUAL_PREMIUM",
+];
 
 export const ORG_PLAN_TIERS: PlanTier[] = ["ORG_STANDARD", "ORG_ENTERPRISE"];
 
@@ -129,7 +164,10 @@ export function resolvePlanChargeAmount(
 ): number | null {
   const plan = PLANS[tier];
   if (plan.pricePerSeatMonthlyKrw != null) {
-    const seats = clampSeatQuantity(tier, seatQuantity ?? plan.limits.orgMemberCap ?? plan.minSeats ?? 10);
+    const seats = clampSeatQuantity(
+      tier,
+      seatQuantity ?? plan.limits.orgMemberCap ?? plan.minSeats ?? 10,
+    );
     return seats * plan.pricePerSeatMonthlyKrw;
   }
   return plan.priceMonthlyKrw;
