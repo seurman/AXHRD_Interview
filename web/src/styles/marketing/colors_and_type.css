@@ -1,10 +1,8 @@
 /* ─────────────────────────────────────────────────────────────
    AXHRD Design System · v2.0 (Refined)
    Human Pixel direction · sophisticated warm palette
+   Fonts come from next/font (layout) — no render-blocking Google @import
    ───────────────────────────────────────────────────────────── */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Pretendard:wght@400;500;600;700;800&display=swap');
-/* Pretendard for KR body, Inter for EN, Instrument Serif for editorial display italic, JetBrains Mono for data / labels */
 
 :root {
   /* ─── COLOR · CORE PALETTE ───────────────────────────────

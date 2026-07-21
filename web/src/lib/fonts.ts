@@ -14,7 +14,7 @@ export const ibmPlexSansKr = IBM_Plex_Sans_KR({
   weight: ["400", "500", "600", "700"],
   variable: "--font-ibm-plex",
   display: "swap",
-  preload: true,
+  preload: false,
 });
 
 export const outfit = Outfit({
@@ -22,7 +22,7 @@ export const outfit = Outfit({
   weight: ["500", "600", "700", "800"],
   variable: "--font-outfit",
   display: "swap",
-  preload: true,
+  preload: false,
 });
 
 export const fontVariables = `${pretendard.variable} ${ibmPlexSansKr.variable} ${outfit.variable}`;

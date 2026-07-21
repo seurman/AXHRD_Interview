@@ -1,7 +1,7 @@
 import { MarketingHome } from "@/components/landing/marketing/MarketingHome";
+import "@/styles/marketing/homepage.css";
 
-export const dynamic = "force-dynamic";
-
+/** Static guest CTAs; MarketingHome upgrades hrefs after nav resolves */
 export default function HomePage() {
   return <MarketingHome />;
 }
