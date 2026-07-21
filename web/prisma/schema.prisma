@@ -1366,9 +1366,6 @@ model CompetencyGameProgress {
   /**
    * 일일 하트(에너지). 오답 시 차감
    */
-  /**
-   * 일일 하트(에너지). 오답 시 차감
-   */
   hearts           Int       @default(5)
   /**
    * 역량게임 2PL θ / SE (면접 θ와 별도 스트림, 대시보드에서 참고)
@@ -1382,6 +1379,25 @@ model CompetencyGameProgress {
 
   @@unique([userId, competency])
   @@index([userId, lastPlayAt])
+}
+
+/**
+ * 역량게임 운영 설정 — 게임 타입/레벨 단위로 켜고 끔 (Framework Studio 관리자)
+ * 싱글톤 row id = "default". 비어 있으면 전부 활성.
+ */
+model CompetencyGameRuntimeConfig {
+  id                 String   @id @default("default")
+  /**
+   * GameType[] — 비활성 타입 (해당 타입 레벨이 플레이어 패스에서 숨김)
+   */
+  disabledGameTypes  Json     @default("[]")
+  /**
+   * level id[] — 개별 레벨 비활성 (예: communication-u1-intent)
+   */
+  disabledLevelIds   Json     @default("[]")
+  updatedByUserId    String?
+  updatedAt          DateTime @updatedAt
+  createdAt          DateTime @default(now())
 }
 
 // ── 자기발견 인터뷰 (IRT/채점과 완전 분리된 성찰형 대화) ──

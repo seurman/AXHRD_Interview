@@ -12,6 +12,7 @@ import {
   loseHeart,
   updateGameTheta,
 } from "@/lib/competency-game/progress";
+import { isGameLevelEnabled } from "@/lib/competency-game/runtime-config";
 import type { CompetencyCode } from "@/types";
 import type { GameAnswerPayload } from "@/lib/competency-game/types";
 
@@ -52,6 +53,12 @@ export async function POST(req: Request) {
   const found = findGameLevel(levelId);
   if (!found || found.course.competency !== competency) {
     return NextResponse.json({ error: "Level not found" }, { status: 404 });
+  }
+  if (!(await isGameLevelEnabled(levelId))) {
+    return NextResponse.json(
+      { error: "이 레벨은 운영에서 비활성화되어 있습니다." },
+      { status: 403 },
+    );
   }
 
   const progress = await getOrCreateGameProgress(user.id, competency);

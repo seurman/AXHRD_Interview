@@ -6,6 +6,10 @@ import { findGameLevel } from "@/lib/competency-game/catalog";
 import { isCourseLevelUnlocked } from "@/lib/competency-game/engine";
 import { selectAdaptiveItems } from "@/lib/competency-game/irt-game";
 import { getOrCreateGameProgress } from "@/lib/competency-game/progress";
+import {
+  getEnabledGameCourse,
+  isGameLevelEnabled,
+} from "@/lib/competency-game/runtime-config";
 import { COMPETENCY_CODES, type CompetencyCode } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +34,10 @@ export default async function CompetencyGameLevelPage({ params }: Props) {
   const found = findGameLevel(levelId);
   if (!found || found.course.competency !== competency) notFound();
 
+  if (!(await isGameLevelEnabled(levelId))) {
+    redirect(`/practice/game/${competency.toLowerCase()}`);
+  }
+
   const progress = await getOrCreateGameProgress(
     user.id,
     competency as CompetencyCode,
@@ -39,7 +47,8 @@ export default async function CompetencyGameLevelPage({ params }: Props) {
       ? (progress.clearedLevelIds as string[])
       : [],
   );
-  const unlocked = isCourseLevelUnlocked(found.course, levelId, cleared);
+  const enabledCourse = await getEnabledGameCourse(competency as CompetencyCode);
+  const unlocked = isCourseLevelUnlocked(enabledCourse, levelId, cleared);
 
   if (!unlocked) {
     redirect(`/practice/game/${competency.toLowerCase()}`);

@@ -4,12 +4,12 @@
 
 import { prisma } from "@/lib/prisma";
 import type { CompetencyCode } from "@/types";
-import { getGameCourse } from "./catalog";
 import {
   flattenCourseLevels,
   isCourseLevelUnlocked,
   nextPlayableLevelIndex,
 } from "./engine";
+import { getEnabledGameCourse } from "./runtime-config";
 import type { Difficulty, LevelGameType } from "./types";
 
 export type CourseProgressView = {
@@ -66,7 +66,7 @@ export async function getCourseProgressView(
   userId: string,
   competency: CompetencyCode,
 ): Promise<CourseProgressView> {
-  const course = getGameCourse(competency);
+  const course = await getEnabledGameCourse(competency);
   const progress = await getOrCreateGameProgress(userId, competency);
   const cleared = new Set(asStringArray(progress.clearedLevelIds));
   const flat = flattenCourseLevels(course);
@@ -109,37 +109,39 @@ export async function listCourseSummaries(userId: string) {
   });
   const byComp = new Map(rows.map((r) => [r.competency, r]));
 
-  return COMPETENCY_CODES.map((code) => {
-    const course = getGameCourse(code);
-    const progress = byComp.get(code);
-    const cleared = asStringArray(progress?.clearedLevelIds);
-    const flat = flattenCourseLevels(course);
-    const levelIds = flat.map((l) => l.id);
-    const totalLevels = levelIds.length;
-    const nextIdx = nextPlayableLevelIndex(levelIds, new Set(cleared));
-    const nextLevel = flat[nextIdx] ?? null;
-    const pct =
-      totalLevels === 0
-        ? 0
-        : Math.round((Math.min(cleared.length, totalLevels) / totalLevels) * 100);
-    return {
-      competency: code,
-      titleKo: competencyLabel(code),
-      blurbKo: course.blurbKo,
-      xp: progress?.xp ?? 0,
-      hearts: progress?.hearts ?? 5,
-      clearedCount: cleared.length,
-      totalLevels,
-      progressPct: pct,
-      hasContent: totalLevels > 0,
-      nextLevelId: nextLevel?.id ?? null,
-      nextLevelTitle: nextLevel?.titleKo ?? null,
-      continueHref: nextLevel
-        ? `/practice/game/${code.toLowerCase()}/${nextLevel.id}`
-        : `/practice/game/${code.toLowerCase()}`,
-      completed: totalLevels > 0 && cleared.length >= totalLevels,
-    };
-  });
+  return Promise.all(
+    COMPETENCY_CODES.map(async (code) => {
+      const course = await getEnabledGameCourse(code);
+      const progress = byComp.get(code);
+      const cleared = asStringArray(progress?.clearedLevelIds);
+      const flat = flattenCourseLevels(course);
+      const levelIds = flat.map((l) => l.id);
+      const totalLevels = levelIds.length;
+      const nextIdx = nextPlayableLevelIndex(levelIds, new Set(cleared));
+      const nextLevel = flat[nextIdx] ?? null;
+      const pct =
+        totalLevels === 0
+          ? 0
+          : Math.round((Math.min(cleared.length, totalLevels) / totalLevels) * 100);
+      return {
+        competency: code,
+        titleKo: competencyLabel(code),
+        blurbKo: course.blurbKo,
+        xp: progress?.xp ?? 0,
+        hearts: progress?.hearts ?? 5,
+        clearedCount: cleared.filter((id) => levelIds.includes(id)).length,
+        totalLevels,
+        progressPct: pct,
+        hasContent: totalLevels > 0,
+        nextLevelId: nextLevel?.id ?? null,
+        nextLevelTitle: nextLevel?.titleKo ?? null,
+        continueHref: nextLevel
+          ? `/practice/game/${code.toLowerCase()}/${nextLevel.id}`
+          : `/practice/game/${code.toLowerCase()}`,
+        completed: totalLevels > 0 && cleared.filter((id) => levelIds.includes(id)).length >= totalLevels,
+      };
+    }),
+  );
 }
 
 function bumpStreak(lastPlayAt: Date | null, streakDays: number): number {
