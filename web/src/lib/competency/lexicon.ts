@@ -1,6 +1,6 @@
 /**
- * 역량 단어장(SSoT) — NCS·역량사전 관행의 신호어/숙어
- * 게임·학습·면접 트리플 렌즈가 동일 소스를 참조
+ * 역량 사전(SSoT) — 정의 · L1–L5 루브릭 · 신호어/숙어
+ * Framework Studio · 게임 · 학습 · 면접 트리플 렌즈가 동일 소스 참조
  */
 
 import type { CompetencyCode } from "@/types";
@@ -19,13 +19,26 @@ export type LexiconTerm = {
   preferredBy: OrgLens[];
 };
 
+export type LexiconRubricByLevel = Record<string, string[]>;
+
 export type LexiconCompetency = {
   nameKo: string;
+  nameEn?: string;
+  clusterCode: string;
   ncsAnchor: string;
   definition: string;
+  rubricByLevel: LexiconRubricByLevel;
   subskills: Array<{ code: string; nameKo: string; ncs: string }>;
   terms: LexiconTerm[];
   lensSignals: Record<OrgLens, string[]>;
+};
+
+export type LexiconClusterMeta = {
+  code: string;
+  nameKo: string;
+  nameEn?: string;
+  description?: string;
+  sortOrder?: number;
 };
 
 export type CompetencyLexiconDoc = {
@@ -33,6 +46,7 @@ export type CompetencyLexiconDoc = {
   description: string;
   sources: string[];
   orgLenses: Record<OrgLens, { labelKo: string; looksFor: string[] }>;
+  clusters: LexiconClusterMeta[];
   competencies: Record<string, LexiconCompetency>;
 };
 
@@ -44,6 +58,22 @@ export function getLexiconDoc(): CompetencyLexiconDoc {
   return DOC;
 }
 
+export function listLexiconClusters(): LexiconClusterMeta[] {
+  return [...(DOC.clusters ?? [])].sort(
+    (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+  );
+}
+
+/** 사전 전체 역량 코드 (런타임 6개 포함) */
+export function listAllLexiconCodes(): string[] {
+  return Object.keys(DOC.competencies);
+}
+
+export function getLexiconEntry(code: string): LexiconCompetency | null {
+  return DOC.competencies[code] ?? null;
+}
+
+/** 런타임 6역량 — 게임/학습 전용 (없으면 throw) */
 export function getLexicon(competency: CompetencyCode): LexiconCompetency {
   const entry = DOC.competencies[competency];
   if (!entry) {
@@ -88,4 +118,8 @@ export function buildTripleLexiconHints(competency: string): string {
 
 export function allLexiconCompetencies(): CompetencyCode[] {
   return COMPETENCY_CODES.filter((c) => Boolean(DOC.competencies[c]));
+}
+
+export function lexiconRubricFor(code: string): LexiconRubricByLevel | null {
+  return getLexiconEntry(code)?.rubricByLevel ?? null;
 }

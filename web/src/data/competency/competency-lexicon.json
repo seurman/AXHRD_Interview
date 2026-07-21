@@ -1,35 +1,106 @@
 {
-  "version": 1,
-  "description": "NCS 직업기초능력·역량사전 관행을 반영한 신호어/숙어 사전. 영어앱 단어장처럼 게임·학습·면접 트리플 렌즈에 공유.",
+  "version": 2,
+  "description": "NCS·행동역량·조직렌즈·면접기법까지 확장한 역량사전. 정의·L1–L5 루브릭·신호어/숙어를 Framework Studio와 게임·학습·면접이 공유.",
   "sources": [
     "NCS 직업기초능력(의사소통·문제해결·조직이해·자기개발 등) — ncs.go.kr",
     "공공·대기업 구조화 면접·행동지표(BARS) 관행",
     "스타트업 오너십·속도·임팩트 채용 관행",
-    "IRCC/SHL류 역량사전: definition + behavioral indicators"
+    "IRCC/SHL류 역량사전: definition + behavioral indicators",
+    "NCS 직업기초능력 확장(수리·정보·기술·자원·윤리 등)",
+    "행동역량 BARS(성취·영향력·분석·팀워크 등)",
+    "조직 렌즈(대기업·공공·스타트업) 담당자 신호",
+    "면접 기법 역량(STAR·수치화·의도독해·베스트워스트)"
   ],
   "orgLenses": {
     "LARGE": {
       "labelKo": "대기업",
-      "looksFor": ["구조화 답변", "역할 경계", "프로세스·리스크", "이해관계자 정렬", "재현 가능한 성과"]
+      "looksFor": [
+        "구조화 답변",
+        "역할 경계",
+        "프로세스·리스크",
+        "이해관계자 정렬",
+        "재현 가능한 성과"
+      ]
     },
     "PUBLIC": {
       "labelKo": "공공기관",
-      "looksFor": ["NCS 행동지표", "공정·투명", "규정·절차", "공익·책임", "근거 문서화"]
+      "looksFor": [
+        "NCS 행동지표",
+        "공정·투명",
+        "규정·절차",
+        "공익·책임",
+        "근거 문서화"
+      ]
     },
     "STARTUP": {
       "labelKo": "스타트업",
-      "looksFor": ["오너십", "속도·학습", "모호함 속 결정", "직접 실행", "임팩트 수치"]
+      "looksFor": [
+        "오너십",
+        "속도·학습",
+        "모호함 속 결정",
+        "직접 실행",
+        "임팩트 수치"
+      ]
     }
   },
+  "clusters": [
+    {
+      "code": "LEX_IRT_CORE",
+      "nameKo": "면접 IRT 핵심 역량",
+      "nameEn": "IRT Core Interview",
+      "description": "모의면접·역량게임 런타임 6역량 — NCS 앵커 + 신호어 + BARS 루브릭",
+      "sortOrder": 1
+    },
+    {
+      "code": "LEX_NCS_FOUNDATION",
+      "nameKo": "NCS 직업기초능력 확장",
+      "nameEn": "NCS Foundation Extended",
+      "description": "NCS 직업기초능력 중 면접·평가에 자주 쓰이는 확장 역량사전",
+      "sortOrder": 2
+    },
+    {
+      "code": "LEX_BEHAVIORAL",
+      "nameKo": "행동·성과 신호 역량",
+      "nameEn": "Behavioral Performance Signals",
+      "description": "Spencer류 행동역량·채용 관행에서 추출한 관찰 가능 신호",
+      "sortOrder": 3
+    },
+    {
+      "code": "LEX_ORG_LENS",
+      "nameKo": "조직 렌즈 역량",
+      "nameEn": "Organization Lens Competencies",
+      "description": "대기업·공공·스타트업 담당자가 특히 듣는 신호 묶음",
+      "sortOrder": 4
+    },
+    {
+      "code": "LEX_INTERVIEW_CRAFT",
+      "nameKo": "면접 답변 기법 역량",
+      "nameEn": "Interview Craft Signals",
+      "description": "STAR·수치화·오너십 등 답변 품질을 가르는 메타 역량",
+      "sortOrder": 5
+    }
+  ],
   "competencies": {
     "COMMUNICATION": {
       "nameKo": "의사소통",
       "ncsAnchor": "NCS 의사소통능력 — 문서이해·경청·의사표현",
       "definition": "상대 의도를 정확히 파악하고, 결론부터 명확히 전달하며, 상황에 맞게 설득·조율하는 능력",
       "subskills": [
-        { "code": "INTENT", "nameKo": "의도 파악", "ncs": "경청·문서이해" },
-        { "code": "CLARITY", "nameKo": "명확한 전달", "ncs": "의사표현" },
-        { "code": "PERSUADE", "nameKo": "설득·조율", "ncs": "의사표현·경청" }
+        {
+          "code": "INTENT",
+          "nameKo": "의도 파악",
+          "ncs": "경청·문서이해"
+        },
+        {
+          "code": "CLARITY",
+          "nameKo": "명확한 전달",
+          "ncs": "의사표현"
+        },
+        {
+          "code": "PERSUADE",
+          "nameKo": "설득·조율",
+          "ncs": "의사표현·경청"
+        }
       ],
       "terms": [
         {
@@ -39,7 +110,11 @@
           "meaningKo": "첫 문장에 핵심 행동을 두는 전달 습관",
           "goodExample": "갈등에서 제가 한 일은 우선순위 합의였습니다.",
           "badExample": "사실 그때 분위기가 좀 복잡했어요.",
-          "preferredBy": ["LARGE", "PUBLIC", "STARTUP"]
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
         },
         {
           "id": "comm-listen-back",
@@ -48,7 +123,10 @@
           "meaningKo": "질문·상대 핵심 단어를 첫 문장에 반영",
           "goodExample": "의견이 달랐을 때, 저는 일정 리스크를 수치로 공유해 설득했습니다.",
           "badExample": "평소 소통을 잘하는 편이라 자연스럽게 풀었습니다.",
-          "preferredBy": ["PUBLIC", "LARGE"]
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE"
+          ]
         },
         {
           "id": "comm-stakeholder",
@@ -57,7 +135,10 @@
           "meaningKo": "결정에 영향받는 사람·팀을 명시하고 메시지를 조정",
           "goodExample": "개발·영업 각각에 다른 한 줄로 합의안을 공유했습니다.",
           "badExample": "다들 알아서 맞춰 주셨습니다.",
-          "preferredBy": ["LARGE", "PUBLIC"]
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
         },
         {
           "id": "comm-evidence",
@@ -66,7 +147,11 @@
           "meaningKo": "주장 뒤에 데이터·사례·절차를 붙임",
           "goodExample": "문의 건수가 주 25→8로 줄어 합의가 유지됐습니다.",
           "badExample": "분위기가 좋아져 소통이 잘 된 것 같습니다.",
-          "preferredBy": ["PUBLIC", "LARGE", "STARTUP"]
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE",
+            "STARTUP"
+          ]
         },
         {
           "id": "comm-channel",
@@ -75,13 +160,56 @@
           "meaningKo": "보고·슬랙·회의 등 상황에 맞는 전달 방식 선택",
           "goodExample": "급한 리스크는 슬랙, 결정은 짧은 문서로 남겼습니다.",
           "badExample": "중요한 내용도 구두로만 맞춰 두었습니다.",
-          "preferredBy": ["LARGE", "PUBLIC"]
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
         }
       ],
       "lensSignals": {
-        "LARGE": ["구조화된 한 줄 결론", "이해관계자별 메시지", "리스크·합의 기록"],
-        "PUBLIC": ["경청·의도 확인", "근거·절차 명시", "공정한 공유"],
-        "STARTUP": ["짧은 결론", "바로 실행 가능한 합의", "속도 있는 피드백"]
+        "LARGE": [
+          "구조화된 한 줄 결론",
+          "이해관계자별 메시지",
+          "리스크·합의 기록"
+        ],
+        "PUBLIC": [
+          "경청·의도 확인",
+          "근거·절차 명시",
+          "공정한 공유"
+        ],
+        "STARTUP": [
+          "짧은 결론",
+          "바로 실행 가능한 합의",
+          "속도 있는 피드백"
+        ]
+      },
+      "clusterCode": "LEX_IRT_CORE",
+      "nameEn": "Communication",
+      "rubricByLevel": {
+        "1": [
+          "글·말로 전달된 질문·지시의 핵심 의도를 파악했는가 (NCS 문서이해·경청)",
+          "본인 경험을 한두 문장으로 답했는가 (NCS 의사표현 기초)"
+        ],
+        "2": [
+          "상대·상황 맥락을 간단히 설명했는가",
+          "본인이 직접 수행한 행동을 구체적으로 서술했는가 (NCS 의사표현)",
+          "듣는 이를 고려한 표현을 사용했는가 (NCS 경청 반영)"
+        ],
+        "3": [
+          "문서·대화에서 핵심 정보를 골라 전달했는가 (NCS 문서이해·의사표현)",
+          "오해 없이 논리적 순서로 설명했는가",
+          "보고·설명·협의 중 적절한 방식을 선택했는가"
+        ],
+        "4": [
+          "복잡한 내용을 구조화해 명확히 전달했는가 (NCS 문서작성·의사표현)",
+          "이해관계자별 메시지를 조정한 사례가 있는가",
+          "설득·공감 요소가 답변에 드러나는가"
+        ],
+        "5": [
+          "전략적 커뮤니케이션(조직 메시지·리스크 설명)이 보이는가",
+          "다양한 채널·매체를 상황에 맞게 활용했는가",
+          "의사소통 결과가 업무 성과로 연결됐는가"
+        ]
       }
     },
     "PROBLEM_SOLVING": {
@@ -89,9 +217,21 @@
       "ncsAnchor": "NCS 문제해결능력 — 사고력·문제처리",
       "definition": "문제를 정의하고, 가설을 검증하며, 대안을 비교·실행·평가하는 능력",
       "subskills": [
-        { "code": "DEFINE", "nameKo": "문제 정의", "ncs": "문제처리" },
-        { "code": "ANALYZE", "nameKo": "원인 분석", "ncs": "사고력" },
-        { "code": "DECIDE", "nameKo": "대안 선택", "ncs": "문제처리" }
+        {
+          "code": "DEFINE",
+          "nameKo": "문제 정의",
+          "ncs": "문제처리"
+        },
+        {
+          "code": "ANALYZE",
+          "nameKo": "원인 분석",
+          "ncs": "사고력"
+        },
+        {
+          "code": "DECIDE",
+          "nameKo": "대안 선택",
+          "ncs": "문제처리"
+        }
       ],
       "terms": [
         {
@@ -101,7 +241,11 @@
           "meaningKo": "영향 범위·지표로 문제를 한 줄로 고정",
           "goodExample": "결제 전환율이 이틀째 1.8%로 떨어진 것이 문제입니다.",
           "badExample": "뭔가 이상해서 일단 서버를 재시작했습니다.",
-          "preferredBy": ["PUBLIC", "LARGE", "STARTUP"]
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE",
+            "STARTUP"
+          ]
         },
         {
           "id": "ps-hypothesis",
@@ -110,7 +254,10 @@
           "meaningKo": "원인 후보를 검증 가능한 형태로 세움",
           "goodExample": "타임아웃·UI 변경·로그 누락 세 가설을 영향도 순으로 검증했습니다.",
           "badExample": "직감으로 서버가 문제라고 봤습니다.",
-          "preferredBy": ["LARGE", "STARTUP"]
+          "preferredBy": [
+            "LARGE",
+            "STARTUP"
+          ]
         },
         {
           "id": "ps-tradeoff",
@@ -119,7 +266,10 @@
           "meaningKo": "무엇을 포기하고 무엇을 지켰는지 명시",
           "goodExample": "비핵심 기능을 빼고 성능 SLA를 지켰습니다.",
           "badExample": "둘 다 지키려다 일정이 밀렸습니다.",
-          "preferredBy": ["LARGE", "STARTUP"]
+          "preferredBy": [
+            "LARGE",
+            "STARTUP"
+          ]
         },
         {
           "id": "ps-rootcause",
@@ -128,7 +278,10 @@
           "meaningKo": "증상 대응을 넘어 재발 방지까지 연결",
           "goodExample": "알림 규칙을 바꿔 같은 장애가 다음 피크에서 재발하지 않았습니다.",
           "badExample": "야근으로 일단 막았습니다.",
-          "preferredBy": ["PUBLIC", "LARGE"]
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE"
+          ]
         },
         {
           "id": "ps-metric",
@@ -137,13 +290,56 @@
           "meaningKo": "성공/실패를 판정할 수치·기준",
           "goodExample": "전환율 1.8%→2.4%로 회복되며 가설이 맞았습니다.",
           "badExample": "체감으로 훨씬 나아진 것 같습니다.",
-          "preferredBy": ["STARTUP", "LARGE", "PUBLIC"]
+          "preferredBy": [
+            "STARTUP",
+            "LARGE",
+            "PUBLIC"
+          ]
         }
       ],
       "lensSignals": {
-        "LARGE": ["영향도·우선순위", "재발 방지", "승인·리스크 문서"],
-        "PUBLIC": ["문제 인식·정의", "대안 비교 근거", "결과 평가·기록"],
-        "STARTUP": ["빠른 가설 검증", "트레이드오프", "임팩트 수치"]
+        "LARGE": [
+          "영향도·우선순위",
+          "재발 방지",
+          "승인·리스크 문서"
+        ],
+        "PUBLIC": [
+          "문제 인식·정의",
+          "대안 비교 근거",
+          "결과 평가·기록"
+        ],
+        "STARTUP": [
+          "빠른 가설 검증",
+          "트레이드오프",
+          "임팩트 수치"
+        ]
+      },
+      "clusterCode": "LEX_IRT_CORE",
+      "nameEn": "Problem Solving",
+      "rubricByLevel": {
+        "1": [
+          "문제 상황이 무엇인지 인식했는가 (NCS 문제처리 — 특성 파악)",
+          "본인이 관여한 상황을 간단히 설명했는가"
+        ],
+        "2": [
+          "문제의 원인·특성을 분석하려는 시도가 보이는가 (NCS 사고력)",
+          "해결 대안을 1개 이상 제시했는가 (NCS 문제처리 — 대안 제시)"
+        ],
+        "3": [
+          "창조적·논리적 사고로 대안을 비교·선택했는가 (NCS 사고력)",
+          "선택한 대안을 실행·적용한 과정이 구체적인가 (NCS 문제처리 — 적용)",
+          "결과를 수치·사실로 뒷받침했는가"
+        ],
+        "4": [
+          "해결 결과를 평가하고 피드백을 반영했는가 (NCS 문제처리 — 결과 평가)",
+          "분석→대안→실행→검증 사고 과정이 체계적으로 드러나는가",
+          "예상치 못한 변수에 대한 대응이 있었는가"
+        ],
+        "5": [
+          "근본 원인 해결·재발 방지 조치까지 고려했는가",
+          "문제 해결이 팀·조직 차원의 개선으로 확장됐는가",
+          "의사결정 근거와 트레이드오프를 명확히 설명했는가"
+        ]
       }
     },
     "JOB_FIT": {
@@ -151,9 +347,21 @@
       "ncsAnchor": "직무수행능력 — 정보·기술·자원과 직무 과업의 정합",
       "definition": "직무 요구와 내 증거(도구·산출·성과)를 연결해 기여를 증명하는 능력",
       "subskills": [
-        { "code": "MATCH", "nameKo": "과업 매칭", "ncs": "정보·기술" },
-        { "code": "TOOL", "nameKo": "도구·스킬", "ncs": "기술선택·적용" },
-        { "code": "GAP", "nameKo": "갭 메우기", "ncs": "정보처리·자기개발" }
+        {
+          "code": "MATCH",
+          "nameKo": "과업 매칭",
+          "ncs": "정보·기술"
+        },
+        {
+          "code": "TOOL",
+          "nameKo": "도구·스킬",
+          "ncs": "기술선택·적용"
+        },
+        {
+          "code": "GAP",
+          "nameKo": "갭 메우기",
+          "ncs": "정보처리·자기개발"
+        }
       ],
       "terms": [
         {
@@ -163,7 +371,11 @@
           "meaningKo": "공고의 주 과업 ↔ 내 행동·산출을 바로 잇기",
           "goodExample": "주간 실험이 주 과업이라, 유사 퍼널에서 CAC를 개선한 경험을 연결했습니다.",
           "badExample": "성장 가능성이 큰 회사라 지원했습니다.",
-          "preferredBy": ["LARGE", "STARTUP", "PUBLIC"]
+          "preferredBy": [
+            "LARGE",
+            "STARTUP",
+            "PUBLIC"
+          ]
         },
         {
           "id": "jf-deliverable",
@@ -172,7 +384,10 @@
           "meaningKo": "보드·리포트·데모 등 직무 결과물",
           "goodExample": "실험 보드를 정착시켜 주간 리뷰에 붙였습니다.",
           "badExample": "열심히 배우며 적응하겠습니다.",
-          "preferredBy": ["STARTUP", "LARGE"]
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
         },
         {
           "id": "jf-stack",
@@ -181,7 +396,10 @@
           "meaningKo": "공고가 요구하는 도구·기술 목록",
           "goodExample": "요구 도구 중 둘은 현업, 하나는 사이드 파이프라인으로 보완했습니다.",
           "badExample": "관심과 열정으로 부족함을 메우겠습니다.",
-          "preferredBy": ["STARTUP", "LARGE"]
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
         },
         {
           "id": "jf-transfer",
@@ -190,7 +408,10 @@
           "meaningKo": "경험 갭을 유사 맥락의 학습·실험으로 메움",
           "goodExample": "대규모 브랜드는 없지만 유사 퍼널 실험으로 갭을 메우겠습니다.",
           "badExample": "관련 업계 관심만으로 충분하다고 봅니다.",
-          "preferredBy": ["PUBLIC", "STARTUP"]
+          "preferredBy": [
+            "PUBLIC",
+            "STARTUP"
+          ]
         },
         {
           "id": "jf-90day",
@@ -199,13 +420,56 @@
           "meaningKo": "입사 초 직무 산출물 중심 목표",
           "goodExample": "90일 안에 실험 보드와 CAC 주간 리뷰를 정착시키겠습니다.",
           "badExample": "먼저 문화에 적응한 뒤 목표를 잡겠습니다.",
-          "preferredBy": ["LARGE", "STARTUP"]
+          "preferredBy": [
+            "LARGE",
+            "STARTUP"
+          ]
         }
       ],
       "lensSignals": {
-        "LARGE": ["직무 기술서 정합", "프로세스 기여", "확장 가능한 산출"],
-        "PUBLIC": ["직무기술서·능력단위", "정보·기술 활용 근거", "공정한 성과 설명"],
-        "STARTUP": ["즉시 투입 가능한 스킬", "데모·산출물", "갭을 실험으로 메움"]
+        "LARGE": [
+          "직무 기술서 정합",
+          "프로세스 기여",
+          "확장 가능한 산출"
+        ],
+        "PUBLIC": [
+          "직무기술서·능력단위",
+          "정보·기술 활용 근거",
+          "공정한 성과 설명"
+        ],
+        "STARTUP": [
+          "즉시 투입 가능한 스킬",
+          "데모·산출물",
+          "갭을 실험으로 메움"
+        ]
+      },
+      "clusterCode": "LEX_IRT_CORE",
+      "nameEn": "Job Fit",
+      "rubricByLevel": {
+        "1": [
+          "직무와 관련된 기본 정보·경험을 언급했는가 (NCS 정보능력)",
+          "사용한 도구·기술 이름을 밝혔는가 (NCS 기술이해)"
+        ],
+        "2": [
+          "업무 관련 정보를 수집·정리하려는 시도가 보이는가 (NCS 정보처리)",
+          "직무에 맞는 기술·도구를 선택한 근거가 있는가 (NCS 기술선택)",
+          "시간·자원 계획을 언급했는가 (NCS 시간자원관리)"
+        ],
+        "3": [
+          "정보를 분석해 의미 있는 결론을 도출했는가 (NCS 정보처리)",
+          "기술·도구를 실제 업무에 적용한 사례가 구체적인가 (NCS 기술적용)",
+          "예산·인적자원 등 자원을 계획·할당한 경험이 드러나는가 (NCS 자원관리)"
+        ],
+        "4": [
+          "정보·기술·자원을 통합해 직무 성과로 연결했는가",
+          "직무 맥락에 맞는 기술 선택과 결과가 일치하는가",
+          "효율·품질 관점에서 자원 활용을 설명했는가"
+        ],
+        "5": [
+          "직무 전문성이 조직·프로젝트 목표에 기여했는가",
+          "기술·정보 활용으로 프로세스·성과를 개선한 사례가 있는가",
+          "자원 제약 하에서 최적 의사결정을 했는가"
+        ]
       }
     },
     "ORG_FIT": {
@@ -213,9 +477,21 @@
       "ncsAnchor": "NCS 조직이해능력·직업윤리 — 체제·업무·가치 정렬",
       "definition": "조직 목표·문화·규범을 이해하고, 협력·윤리에 맞게 기여하는 능력",
       "subskills": [
-        { "code": "ALIGN", "nameKo": "목표 정렬", "ncs": "경영·업무이해" },
-        { "code": "NORM", "nameKo": "규범·절차", "ncs": "근로·공동체윤리" },
-        { "code": "COLLAB", "nameKo": "협력", "ncs": "대인관계·팀워크" }
+        {
+          "code": "ALIGN",
+          "nameKo": "목표 정렬",
+          "ncs": "경영·업무이해"
+        },
+        {
+          "code": "NORM",
+          "nameKo": "규범·절차",
+          "ncs": "근로·공동체윤리"
+        },
+        {
+          "code": "COLLAB",
+          "nameKo": "협력",
+          "ncs": "대인관계·팀워크"
+        }
       ],
       "terms": [
         {
@@ -225,7 +501,10 @@
           "meaningKo": "개인 역할과 조직·팀 목표를 연결",
           "goodExample": "팀 OKR에 맞춰 제 실험을 주간 지표에 붙였습니다.",
           "badExample": "제가 하고 싶은 일 위주로 우선순위를 잡았습니다.",
-          "preferredBy": ["LARGE", "PUBLIC"]
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
         },
         {
           "id": "of-process",
@@ -234,7 +513,10 @@
           "meaningKo": "합의·문서·승인 등 조직이 정한 방식",
           "goodExample": "결정은 짧은 문서로 남겨 비동기 공유 문화에 맞췄습니다.",
           "badExample": "문서 부담을 줄이려 구두로만 합의했습니다.",
-          "preferredBy": ["PUBLIC", "LARGE"]
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE"
+          ]
         },
         {
           "id": "of-ethics",
@@ -243,7 +525,9 @@
           "meaningKo": "편애·은닉 없이 기준을 공개",
           "goodExample": "우선순위 기준표를 공개해 요청을 같은 규칙으로 받았습니다.",
           "badExample": "목소리가 큰 쪽 요청만 먼저 받았습니다.",
-          "preferredBy": ["PUBLIC"]
+          "preferredBy": [
+            "PUBLIC"
+          ]
         },
         {
           "id": "of-culture",
@@ -252,7 +536,10 @@
           "meaningKo": "조직이 실제로 보상하는 행동 패턴",
           "goodExample": "합의 중시 문화라 반대도 수치 근거와 대안을 함께 냈습니다.",
           "badExample": "내 방식이 맞으니 팀이 적응하게 밀었습니다.",
-          "preferredBy": ["STARTUP", "LARGE"]
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
         },
         {
           "id": "of-sla",
@@ -261,13 +548,57 @@
           "meaningKo": "공유·응답의 기한을 약속하고 지킴",
           "goodExample": "피드백 후 공유 SLA를 만들고 실제로 지켰습니다.",
           "badExample": "성격 차이라며 공유 지연을 넘겼습니다.",
-          "preferredBy": ["LARGE", "PUBLIC", "STARTUP"]
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
         }
       ],
       "lensSignals": {
-        "LARGE": ["조직 목표 정렬", "절차·거버넌스", "크로스팀 협력"],
-        "PUBLIC": ["공직가치·윤리", "규정 준수", "투명한 공유"],
-        "STARTUP": ["문화 핏", "자율과 책임", "빠른 합의"]
+        "LARGE": [
+          "조직 목표 정렬",
+          "절차·거버넌스",
+          "크로스팀 협력"
+        ],
+        "PUBLIC": [
+          "공직가치·윤리",
+          "규정 준수",
+          "투명한 공유"
+        ],
+        "STARTUP": [
+          "문화 핏",
+          "자율과 책임",
+          "빠른 합의"
+        ]
+      },
+      "clusterCode": "LEX_IRT_CORE",
+      "nameEn": "Organization Fit",
+      "rubricByLevel": {
+        "1": [
+          "소속 조직·팀의 역할을 인식했는가 (NCS 업무이해)",
+          "근로·협업에 필요한 기본 태도를 보였는가 (NCS 근로윤리)"
+        ],
+        "2": [
+          "조직 구조·업무 흐름을 이해하고 설명했는가 (NCS 조직체제·업무이해)",
+          "규칙·절차를 준수하며 협력한 사례가 있는가 (NCS 공동체윤리)",
+          "정직·성실한 태도가 드러나는가 (NCS 근로윤리)"
+        ],
+        "3": [
+          "조직 목표와 개인 역할의 정렬이 드러나는가 (NCS 경영이해)",
+          "책임·예의를 지키며 팀에 기여한 경험을 설명했는가 (NCS 공동체윤리)",
+          "조직 문화·가치에 맞는 행동을 했는가"
+        ],
+        "4": [
+          "조직 체제·경영 맥락을 고려한 의사결정이 보이는가",
+          "이해관계 조율 시 윤리·규범을 지켰는가",
+          "조직 이해를 바탕으로 협업 성과를 냈는가"
+        ],
+        "5": [
+          "국제·산업 추세를 고려한 조직 이해가 드러나는가 (NCS 국제감각)",
+          "조직 차원의 윤리·책임 의식이 행동으로 연결됐는가",
+          "장기적 조직 기여 관점이 답변에 반영됐는가"
+        ]
       }
     },
     "LEADERSHIP": {
@@ -275,9 +606,21 @@
       "ncsAnchor": "NCS 대인관계·리더십 — 팀워크·갈등관리·협상",
       "definition": "직책 없이도 방향을 맞추고, 결정을 내리며, 사람을 자립하도록 돕는 영향력",
       "subskills": [
-        { "code": "ALIGN_DIR", "nameKo": "방향 정렬", "ncs": "리더십·팀웍" },
-        { "code": "DECIDE", "nameKo": "결정", "ncs": "갈등관리·협상" },
-        { "code": "ENABLE", "nameKo": "자립 지원", "ncs": "고객서비스·팀웍" }
+        {
+          "code": "ALIGN_DIR",
+          "nameKo": "방향 정렬",
+          "ncs": "리더십·팀웍"
+        },
+        {
+          "code": "DECIDE",
+          "nameKo": "결정",
+          "ncs": "갈등관리·협상"
+        },
+        {
+          "code": "ENABLE",
+          "nameKo": "자립 지원",
+          "ncs": "고객서비스·팀웍"
+        }
       ],
       "terms": [
         {
@@ -287,7 +630,11 @@
           "meaningKo": "목표·지표·보드처럼 팀을 같은 방향으로 묶는 도구",
           "goodExample": "주간 목표 3개를 고정해 팀이 같은 지표를 보게 했습니다.",
           "badExample": "성격이 리더형이라 자연스럽게 이끌었습니다.",
-          "preferredBy": ["LARGE", "STARTUP", "PUBLIC"]
+          "preferredBy": [
+            "LARGE",
+            "STARTUP",
+            "PUBLIC"
+          ]
         },
         {
           "id": "ld-without-title",
@@ -296,7 +643,10 @@
           "meaningKo": "공식 권한 없이 합의·기준으로 움직이기",
           "goodExample": "직함 없이 공통 성공 지표로 세 팀 출시일을 맞췄습니다.",
           "badExample": "조장·반장 경험이 많아 리더십이 익숙합니다.",
-          "preferredBy": ["STARTUP", "LARGE"]
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
         },
         {
           "id": "ld-decision-rule",
@@ -305,7 +655,10 @@
           "meaningKo": "선택 기준과 기한을 미리 고정",
           "goodExample": "기준표를 만들어 30분 안에 고르도록 바꿨습니다.",
           "badExample": "합의가 될 때까지 논의를 열어 두었습니다.",
-          "preferredBy": ["LARGE", "PUBLIC"]
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
         },
         {
           "id": "ld-enable",
@@ -314,7 +667,10 @@
           "meaningKo": "단기 도움 후 혼자 할 체크리스트·루브릭을 남김",
           "goodExample": "페어로 풀고 다음엔 혼자 쓸 체크리스트를 남겼습니다.",
           "badExample": "막힐 때마다 제가 대신 다 처리했습니다.",
-          "preferredBy": ["LARGE", "STARTUP"]
+          "preferredBy": [
+            "LARGE",
+            "STARTUP"
+          ]
         },
         {
           "id": "ld-leadtime",
@@ -323,13 +679,55 @@
           "meaningKo": "결정·전달에 걸리는 시간 — 리더십 성과 지표",
           "goodExample": "결정 리드타임이 3일에서 반나절로 줄었습니다.",
           "badExample": "팀 분위기가 좋아져 결속이 단단해졌습니다.",
-          "preferredBy": ["STARTUP", "LARGE"]
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
         }
       ],
       "lensSignals": {
-        "LARGE": ["정렬·거버넌스", "이해관계자 설득", "위임과 자립"],
-        "PUBLIC": ["공정한 조율", "책임·기록", "갈등 원만 해결"],
-        "STARTUP": ["직책 없는 리드", "빠른 결정", "실행 속도"]
+        "LARGE": [
+          "정렬·거버넌스",
+          "이해관계자 설득",
+          "위임과 자립"
+        ],
+        "PUBLIC": [
+          "공정한 조율",
+          "책임·기록",
+          "갈등 원만 해결"
+        ],
+        "STARTUP": [
+          "직책 없는 리드",
+          "빠른 결정",
+          "실행 속도"
+        ]
+      },
+      "clusterCode": "LEX_IRT_CORE",
+      "nameEn": "Leadership",
+      "rubricByLevel": {
+        "1": [
+          "팀·그룹 활동에 참여한 경험을 언급했는가 (NCS 팀웍)",
+          "본인의 역할을 한 문장이라도 밝혔는가"
+        ],
+        "2": [
+          "팀 목표 달성을 위해 협력한 사례가 있는가 (NCS 팀웍)",
+          "동료·고객을 배려한 소통을 시도했는가 (NCS 고객서비스)"
+        ],
+        "3": [
+          "리더십 발휘(주도·조율·지원) 과정에서 본인 역할이 명확한가 (NCS 리더십)",
+          "갈등·의견 차이를 원만히 조율한 경험이 드러나는가 (NCS 갈등관리)",
+          "협상·합의를 통해 결과를 낸 사례가 있는가 (NCS 협상)"
+        ],
+        "4": [
+          "팀워크를 통해 공동 목표를 달성한 과정이 구체적인가",
+          "이해관계자를 설득·조율한 경험이 성과로 연결됐는가",
+          "리더로서 책임을 지고 후속 조치를 했는가"
+        ],
+        "5": [
+          "조직·팀 차원의 변화·성과를 이끈 사례가 있는가",
+          "갈등·협상을 전략적으로 해결한 경험이 드러나는가",
+          "리더십이 지속 가능한 팀 문화로 이어졌는가"
+        ]
       }
     },
     "GROWTH": {
@@ -337,9 +735,21 @@
       "ncsAnchor": "NCS 자기개발능력 — 자아인식·자기관리·경력개발",
       "definition": "피드백과 실패를 행동 변화로 바꾸고, 학습을 성과로 전이하는 능력",
       "subskills": [
-        { "code": "AWARE", "nameKo": "자아인식", "ncs": "자아인식" },
-        { "code": "LOOP", "nameKo": "피드백 루프", "ncs": "자기관리" },
-        { "code": "TRANSFER", "nameKo": "학습 전이", "ncs": "경력개발" }
+        {
+          "code": "AWARE",
+          "nameKo": "자아인식",
+          "ncs": "자아인식"
+        },
+        {
+          "code": "LOOP",
+          "nameKo": "피드백 루프",
+          "ncs": "자기관리"
+        },
+        {
+          "code": "TRANSFER",
+          "nameKo": "학습 전이",
+          "ncs": "경력개발"
+        }
       ],
       "terms": [
         {
@@ -349,7 +759,11 @@
           "meaningKo": "피드백→행동 변경→효과 측정",
           "goodExample": "리뷰 피드백을 템플릿에 반영해 미팅 시간을 줄였습니다.",
           "badExample": "평생 학습형이라 성장에 자신 있습니다.",
-          "preferredBy": ["STARTUP", "LARGE", "PUBLIC"]
+          "preferredBy": [
+            "STARTUP",
+            "LARGE",
+            "PUBLIC"
+          ]
         },
         {
           "id": "gr-transfer",
@@ -358,7 +772,10 @@
           "meaningKo": "배운 내용을 다음 티켓·산출에 연결",
           "goodExample": "스파이크로 배운 뒤 작은 기능에 이식했습니다.",
           "badExample": "강의를 여러 개 수강했습니다.",
-          "preferredBy": ["STARTUP", "LARGE"]
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
         },
         {
           "id": "gr-system",
@@ -367,7 +784,10 @@
           "meaningKo": "반복 실수를 체크리스트·규칙으로 바꿈",
           "goodExample": "같은 코멘트가 줄도록 PR 템플릿을 바꿨습니다.",
           "badExample": "실패해도 괜찮다고 스스로를 다독였습니다.",
-          "preferredBy": ["PUBLIC", "LARGE"]
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE"
+          ]
         },
         {
           "id": "gr-gap-plan",
@@ -376,7 +796,10 @@
           "meaningKo": "약점을 장면으로 말하고 학습 경로를 이음",
           "goodExample": "설명 과다라는 약점을 템플릿으로 고치고 미팅을 줄였습니다.",
           "badExample": "강점만 말하고 약점은 짧게 넘겼습니다.",
-          "preferredBy": ["PUBLIC", "LARGE"]
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE"
+          ]
         },
         {
           "id": "gr-measure",
@@ -385,13 +808,3525 @@
           "meaningKo": "배움을 시간·오류·자립 기간 등으로 측정",
           "goodExample": "온보딩 자립 4주→2주로 앞당겼습니다.",
           "badExample": "자신감이 많이 붙었습니다.",
-          "preferredBy": ["STARTUP", "LARGE", "PUBLIC"]
+          "preferredBy": [
+            "STARTUP",
+            "LARGE",
+            "PUBLIC"
+          ]
         }
       ],
       "lensSignals": {
-        "LARGE": ["체계적 자기개발", "피드백 반영 기록", "조직 기여로 확장"],
-        "PUBLIC": ["자아인식", "개선 의지·실행", "윤리와 성장의 균형"],
-        "STARTUP": ["빠른 학습 루프", "전이·실행", "실패를 시스템으로"]
+        "LARGE": [
+          "체계적 자기개발",
+          "피드백 반영 기록",
+          "조직 기여로 확장"
+        ],
+        "PUBLIC": [
+          "자아인식",
+          "개선 의지·실행",
+          "윤리와 성장의 균형"
+        ],
+        "STARTUP": [
+          "빠른 학습 루프",
+          "전이·실행",
+          "실패를 시스템으로"
+        ]
+      },
+      "clusterCode": "LEX_IRT_CORE",
+      "nameEn": "Growth & Learning",
+      "rubricByLevel": {
+        "1": [
+          "본인의 강점·약점을 인식했는가 (NCS 자아인식)",
+          "학습·개선하려는 의지를 표현했는가 (NCS 경력개발)"
+        ],
+        "2": [
+          "자기관리(시간·목표·습관)를 시도한 사례가 있는가 (NCS 자기관리)",
+          "피드백·실패를 계기로 배운 점을 언급했는가"
+        ],
+        "3": [
+          "경력개발·학습 동기를 바탕으로 역량을 발전시킨 사례가 있는가 (NCS 경력개발)",
+          "피드백·회고를 통해 행동을 개선한 과정이 드러나는가",
+          "자아인식을 바탕으로 구체적 행동 변화가 있었는가"
+        ],
+        "4": [
+          "지속적 학습이 직무 성과로 연결됐는가",
+          "자기개발 계획을 세우고 실행한 경험이 구체적인가",
+          "성장 과정을 수치·사례로 설명했는가"
+        ],
+        "5": [
+          "학습·성장이 팀·조직에 긍정적 영향을 줬는가",
+          "자기개발 리더십(타인 멘토링·지식 공유)이 드러나는가",
+          "장기 경력 목표와 현재 역량 개선이 정렬됐는가"
+        ]
+      }
+    },
+    "NCS_NUMERACY": {
+      "nameKo": "수리능력",
+      "nameEn": "Numeracy",
+      "clusterCode": "LEX_NCS_FOUNDATION",
+      "ncsAnchor": "NCS 수리능력 — 기초연산·통계·도표",
+      "definition": "수치·비율·지표로 상황을 이해하고 의사결정에 연결하는 능력",
+      "rubricByLevel": {
+        "1": [
+          "수치·자료를 확인·인식했는가 (NCS 수리능력)",
+          "간단한 비율·증감을 이해했는가"
+        ],
+        "2": [
+          "데이터에서 이상·패턴을 찾으려 했는가",
+          "추정·계산을 계획에 반영했는가"
+        ],
+        "3": [
+          "수치 비교·분석으로 결론을 도출했는가",
+          "지표를 설정·추적했는가"
+        ],
+        "4": [
+          "시나리오·모델 기반 정량 분석이 드러나는가",
+          "불확실성 하 합리적 가정을 세웠는가"
+        ],
+        "5": [
+          "조직 지표 체계·정량 의사결정에 기여했는가",
+          "데이터 리터러시 확산이 보이는가"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "BASIC",
+          "nameKo": "기초 적용",
+          "ncs": "수리능력"
+        },
+        {
+          "code": "ANALYZE",
+          "nameKo": "분석·판단",
+          "ncs": "수리능력"
+        },
+        {
+          "code": "IMPROVE",
+          "nameKo": "개선·확산",
+          "ncs": "수리능력"
+        }
+      ],
+      "terms": [
+        {
+          "id": "ncs_numeracy-signal",
+          "kind": "phrase",
+          "termKo": "수리능력 신호",
+          "meaningKo": "수치·비율·지표로 상황을 이해하고 의사결정에 연결하는 능력",
+          "goodExample": "수리능력을(를) 수치·사례로 연결해 설명했습니다.",
+          "badExample": "관련 경험은 없지만 잘할 수 있습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "ncs_numeracy-evidence",
+          "kind": "word",
+          "termKo": "증거",
+          "meaningKo": "관찰 가능한 산출·수치",
+          "goodExample": "지표와 산출물로 증명했습니다.",
+          "badExample": "느낌으로 잘했다고 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "ncs_numeracy-tradeoff",
+          "kind": "word",
+          "termKo": "트레이드오프",
+          "meaningKo": "자원·품질 간 선택",
+          "goodExample": "무엇을 포기하고 무엇을 지켰는지 밝혔습니다.",
+          "badExample": "둘 다 하겠다고만 했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "ncs_numeracy-govern",
+          "kind": "phrase",
+          "termKo": "기준 공유",
+          "meaningKo": "판단 기준을 팀에 공개",
+          "goodExample": "기준표를 공유해 같은 규칙으로 골랐습니다.",
+          "badExample": "혼자 임의로 결정했습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "프로세스·지표",
+          "재현 가능한 분석",
+          "리스크 문서"
+        ],
+        "PUBLIC": [
+          "근거·출처",
+          "공정한 기준",
+          "기록"
+        ],
+        "STARTUP": [
+          "빠른 검증",
+          "임팩트 수치",
+          "실용 도구"
+        ]
+      }
+    },
+    "NCS_INFORMATION": {
+      "nameKo": "정보능력",
+      "nameEn": "Information Literacy",
+      "clusterCode": "LEX_NCS_FOUNDATION",
+      "ncsAnchor": "NCS 정보능력 — 수집·분석·활용",
+      "definition": "필요 정보를 찾아 검증하고 업무 결론으로 전환하는 능력",
+      "rubricByLevel": {
+        "1": [
+          "필요 정보를 찾으려 했는가 (NCS 정보능력)",
+          "정보 출처를 언급했는가"
+        ],
+        "2": [
+          "출처를 비교·검증하려 했는가",
+          "정보를 요약·공유했는가"
+        ],
+        "3": [
+          "정확성·최신성 검증 후 활용했는가",
+          "핵심 인사이트를 도출했는가"
+        ],
+        "4": [
+          "정보 체계·지식관리를 개선했는가",
+          "민감정보 구분·관리가 드러나는가"
+        ],
+        "5": [
+          "정보 거버넌스·데이터 기반 문화에 기여했는가",
+          "오정보·편향 방지 조치가 있는가"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "BASIC",
+          "nameKo": "기초 적용",
+          "ncs": "정보능력"
+        },
+        {
+          "code": "ANALYZE",
+          "nameKo": "분석·판단",
+          "ncs": "정보능력"
+        },
+        {
+          "code": "IMPROVE",
+          "nameKo": "개선·확산",
+          "ncs": "정보능력"
+        }
+      ],
+      "terms": [
+        {
+          "id": "ncs_information-signal",
+          "kind": "phrase",
+          "termKo": "정보능력 신호",
+          "meaningKo": "필요 정보를 찾아 검증하고 업무 결론으로 전환하는 능력",
+          "goodExample": "정보능력을(를) 수치·사례로 연결해 설명했습니다.",
+          "badExample": "관련 경험은 없지만 잘할 수 있습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "ncs_information-evidence",
+          "kind": "word",
+          "termKo": "증거",
+          "meaningKo": "관찰 가능한 산출·수치",
+          "goodExample": "지표와 산출물로 증명했습니다.",
+          "badExample": "느낌으로 잘했다고 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "ncs_information-tradeoff",
+          "kind": "word",
+          "termKo": "트레이드오프",
+          "meaningKo": "자원·품질 간 선택",
+          "goodExample": "무엇을 포기하고 무엇을 지켰는지 밝혔습니다.",
+          "badExample": "둘 다 하겠다고만 했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "ncs_information-govern",
+          "kind": "phrase",
+          "termKo": "기준 공유",
+          "meaningKo": "판단 기준을 팀에 공개",
+          "goodExample": "기준표를 공유해 같은 규칙으로 골랐습니다.",
+          "badExample": "혼자 임의로 결정했습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "프로세스·지표",
+          "재현 가능한 분석",
+          "리스크 문서"
+        ],
+        "PUBLIC": [
+          "근거·출처",
+          "공정한 기준",
+          "기록"
+        ],
+        "STARTUP": [
+          "빠른 검증",
+          "임팩트 수치",
+          "실용 도구"
+        ]
+      }
+    },
+    "NCS_TECHNOLOGY": {
+      "nameKo": "기술능력",
+      "nameEn": "Technology Application",
+      "clusterCode": "LEX_NCS_FOUNDATION",
+      "ncsAnchor": "NCS 기술능력 — 이해·선택·적용",
+      "definition": "과제에 맞는 도구·기술을 선택·적용해 성과를 내는 능력",
+      "rubricByLevel": {
+        "1": [
+          "디지털 도구·기술을 사용했는가 (NCS 기술능력)",
+          "새 기능 학습·적용 시도가 있는가"
+        ],
+        "2": [
+          "과제에 맞는 도구 선택 근거가 있는가",
+          "반복 업무 자동화·효율화가 드러나는가"
+        ],
+        "3": [
+          "기술 도입으로 품질·속도가 개선됐는가",
+          "장애·오류 대응 과정이 구체적인가"
+        ],
+        "4": [
+          "기술 옵션 비교·조직 선택에 기여했는가",
+          "전환·도입을 지원했는가"
+        ],
+        "5": [
+          "기술 로드맵·디지털 전환에 기여했는가",
+          "기술 윤리·지속가능성을 고려했는가"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "BASIC",
+          "nameKo": "기초 적용",
+          "ncs": "기술능력"
+        },
+        {
+          "code": "ANALYZE",
+          "nameKo": "분석·판단",
+          "ncs": "기술능력"
+        },
+        {
+          "code": "IMPROVE",
+          "nameKo": "개선·확산",
+          "ncs": "기술능력"
+        }
+      ],
+      "terms": [
+        {
+          "id": "ncs_technology-signal",
+          "kind": "phrase",
+          "termKo": "기술능력 신호",
+          "meaningKo": "과제에 맞는 도구·기술을 선택·적용해 성과를 내는 능력",
+          "goodExample": "기술능력을(를) 수치·사례로 연결해 설명했습니다.",
+          "badExample": "관련 경험은 없지만 잘할 수 있습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "ncs_technology-evidence",
+          "kind": "word",
+          "termKo": "증거",
+          "meaningKo": "관찰 가능한 산출·수치",
+          "goodExample": "지표와 산출물로 증명했습니다.",
+          "badExample": "느낌으로 잘했다고 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "ncs_technology-tradeoff",
+          "kind": "word",
+          "termKo": "트레이드오프",
+          "meaningKo": "자원·품질 간 선택",
+          "goodExample": "무엇을 포기하고 무엇을 지켰는지 밝혔습니다.",
+          "badExample": "둘 다 하겠다고만 했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "ncs_technology-govern",
+          "kind": "phrase",
+          "termKo": "기준 공유",
+          "meaningKo": "판단 기준을 팀에 공개",
+          "goodExample": "기준표를 공유해 같은 규칙으로 골랐습니다.",
+          "badExample": "혼자 임의로 결정했습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "프로세스·지표",
+          "재현 가능한 분석",
+          "리스크 문서"
+        ],
+        "PUBLIC": [
+          "근거·출처",
+          "공정한 기준",
+          "기록"
+        ],
+        "STARTUP": [
+          "빠른 검증",
+          "임팩트 수치",
+          "실용 도구"
+        ]
+      }
+    },
+    "NCS_RESOURCE": {
+      "nameKo": "자원관리",
+      "nameEn": "Resource Management",
+      "clusterCode": "LEX_NCS_FOUNDATION",
+      "ncsAnchor": "NCS 자원관리 — 시간·예산·인력",
+      "definition": "제한된 자원을 우선순위에 맞게 배분·추적하는 능력",
+      "rubricByLevel": {
+        "1": [
+          "우선순위·시간 관리를 시도했는가 (NCS 자원관리)",
+          "예산·물품 절약 노력이 있는가"
+        ],
+        "2": [
+          "일정 계획·실행 경험이 있는가",
+          "자원 부족 시 대안을 찾았는가"
+        ],
+        "3": [
+          "예산·인력·일정을 계획·추적했는가",
+          "트레이드오프를 설명하며 결정했는가"
+        ],
+        "4": [
+          "다중 프로젝트 자원 배분·재배치가 구체적인가",
+          "위기 시 자원 재편이 드러나는가"
+        ],
+        "5": [
+          "조직 자원 배분 원칙·프레임워크에 기여했는가",
+          "지속 가능한 자원 운용이 보이는가"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "BASIC",
+          "nameKo": "기초 적용",
+          "ncs": "자원관리"
+        },
+        {
+          "code": "ANALYZE",
+          "nameKo": "분석·판단",
+          "ncs": "자원관리"
+        },
+        {
+          "code": "IMPROVE",
+          "nameKo": "개선·확산",
+          "ncs": "자원관리"
+        }
+      ],
+      "terms": [
+        {
+          "id": "ncs_resource-signal",
+          "kind": "phrase",
+          "termKo": "자원관리 신호",
+          "meaningKo": "제한된 자원을 우선순위에 맞게 배분·추적하는 능력",
+          "goodExample": "자원관리을(를) 수치·사례로 연결해 설명했습니다.",
+          "badExample": "관련 경험은 없지만 잘할 수 있습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "ncs_resource-evidence",
+          "kind": "word",
+          "termKo": "증거",
+          "meaningKo": "관찰 가능한 산출·수치",
+          "goodExample": "지표와 산출물로 증명했습니다.",
+          "badExample": "느낌으로 잘했다고 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "ncs_resource-tradeoff",
+          "kind": "word",
+          "termKo": "트레이드오프",
+          "meaningKo": "자원·품질 간 선택",
+          "goodExample": "무엇을 포기하고 무엇을 지켰는지 밝혔습니다.",
+          "badExample": "둘 다 하겠다고만 했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "ncs_resource-govern",
+          "kind": "phrase",
+          "termKo": "기준 공유",
+          "meaningKo": "판단 기준을 팀에 공개",
+          "goodExample": "기준표를 공유해 같은 규칙으로 골랐습니다.",
+          "badExample": "혼자 임의로 결정했습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "프로세스·지표",
+          "재현 가능한 분석",
+          "리스크 문서"
+        ],
+        "PUBLIC": [
+          "근거·출처",
+          "공정한 기준",
+          "기록"
+        ],
+        "STARTUP": [
+          "빠른 검증",
+          "임팩트 수치",
+          "실용 도구"
+        ]
+      }
+    },
+    "INTERPERSONAL": {
+      "nameKo": "대인관계",
+      "nameEn": "Interpersonal Relations",
+      "clusterCode": "LEX_NCS_FOUNDATION",
+      "ncsAnchor": "NCS 대인관계능력 — 팀워크·갈등·협상",
+      "definition": "타인의 입장과 감정을 고려하며 협력·갈등 조율·신뢰를 쌓는 능력",
+      "rubricByLevel": {
+        "1": [
+          "협력 상황을 인식했는가",
+          "기본 예의를 지켰는가"
+        ],
+        "2": [
+          "팀 목표를 위해 역할을 수행했는가",
+          "상대 입장을 들으려 했는가"
+        ],
+        "3": [
+          "갈등·이견을 원만히 조율한 사례가 있는가",
+          "신뢰를 쌓는 행동이 구체적인가"
+        ],
+        "4": [
+          "이해관계자를 설득·조정해 성과를 냈는가",
+          "관계 리스크를 선제 관리했는가"
+        ],
+        "5": [
+          "조직 차원의 협력 문화·규범에 기여했는가",
+          "지속 가능한 신뢰 구조를 남겼는가"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "AWARE",
+          "nameKo": "인식",
+          "ncs": "대인관계"
+        },
+        {
+          "code": "ACT",
+          "nameKo": "실행",
+          "ncs": "대인관계"
+        },
+        {
+          "code": "SYSTEM",
+          "nameKo": "체계화",
+          "ncs": "대인관계"
+        }
+      ],
+      "terms": [
+        {
+          "id": "interpersonal-t1",
+          "kind": "phrase",
+          "termKo": "경청",
+          "meaningKo": "경청 신호",
+          "goodExample": "경청을(를) 장면으로 증명했습니다.",
+          "badExample": "추상적으로만 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "interpersonal-t2",
+          "kind": "phrase",
+          "termKo": "신뢰 계약",
+          "meaningKo": "신뢰 계약 신호",
+          "goodExample": "신뢰 계약로 결과를 남겼습니다.",
+          "badExample": "말만 하고 기록이 없습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "interpersonal-t3",
+          "kind": "word",
+          "termKo": "갈등 조율",
+          "meaningKo": "갈등 조율",
+          "goodExample": "갈등 조율 행동을 구체화했습니다.",
+          "badExample": "일반론만 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "interpersonal-t4",
+          "kind": "word",
+          "termKo": "이해관계 맵",
+          "meaningKo": "이해관계 맵",
+          "goodExample": "이해관계 맵까지 연결했습니다.",
+          "badExample": "중간에 멈췄습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "경청",
+          "신뢰 계약",
+          "갈등 조율"
+        ],
+        "PUBLIC": [
+          "경청",
+          "근거·절차",
+          "갈등 조율"
+        ],
+        "STARTUP": [
+          "신뢰 계약",
+          "이해관계 맵",
+          "속도"
+        ]
+      }
+    },
+    "WORK_ETHICS": {
+      "nameKo": "직업윤리",
+      "nameEn": "Work Ethics",
+      "clusterCode": "LEX_NCS_FOUNDATION",
+      "ncsAnchor": "NCS 직업윤리 — 근로·공동체윤리",
+      "definition": "정직·공정·책임의 기준으로 행동하고 이해충돌을 다루는 능력",
+      "rubricByLevel": {
+        "1": [
+          "기본 규칙·정직성을 인식했는가",
+          "책임을 회피하지 않았는가"
+        ],
+        "2": [
+          "절차·약속을 지키려 했는가",
+          "불공정 상황을 인식했는가"
+        ],
+        "3": [
+          "이해충돌·윤리적 딜레마를 기준에 따라 처리했는가",
+          "투명하게 공유했는가"
+        ],
+        "4": [
+          "조직 규범 개선·윤리 관행을 제안·실행했는가",
+          "이해관계 조율 시 공정성을 지켰는가"
+        ],
+        "5": [
+          "윤리 기준을 팀·조직에 제도화했는가",
+          "장기적 신뢰·공익을 우선했는가"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "AWARE",
+          "nameKo": "인식",
+          "ncs": "직업윤리"
+        },
+        {
+          "code": "ACT",
+          "nameKo": "실행",
+          "ncs": "직업윤리"
+        },
+        {
+          "code": "SYSTEM",
+          "nameKo": "체계화",
+          "ncs": "직업윤리"
+        }
+      ],
+      "terms": [
+        {
+          "id": "work_ethics-t1",
+          "kind": "phrase",
+          "termKo": "공정성",
+          "meaningKo": "공정성 신호",
+          "goodExample": "공정성을(를) 장면으로 증명했습니다.",
+          "badExample": "추상적으로만 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "work_ethics-t2",
+          "kind": "phrase",
+          "termKo": "이해충돌",
+          "meaningKo": "이해충돌 신호",
+          "goodExample": "이해충돌로 결과를 남겼습니다.",
+          "badExample": "말만 하고 기록이 없습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "work_ethics-t3",
+          "kind": "word",
+          "termKo": "투명 공유",
+          "meaningKo": "투명 공유",
+          "goodExample": "투명 공유 행동을 구체화했습니다.",
+          "badExample": "일반론만 말했습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "work_ethics-t4",
+          "kind": "word",
+          "termKo": "책임",
+          "meaningKo": "책임",
+          "goodExample": "책임까지 연결했습니다.",
+          "badExample": "중간에 멈췄습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "공정성",
+          "이해충돌",
+          "투명 공유"
+        ],
+        "PUBLIC": [
+          "공정성",
+          "근거·절차",
+          "투명 공유"
+        ],
+        "STARTUP": [
+          "이해충돌",
+          "책임",
+          "속도"
+        ]
+      }
+    },
+    "SELF_MGMT": {
+      "nameKo": "자기관리",
+      "nameEn": "Self Management",
+      "clusterCode": "LEX_NCS_FOUNDATION",
+      "ncsAnchor": "NCS 자기개발 — 자기관리",
+      "definition": "목표·시간·에너지를 스스로 설계하고 실행을 지속하는 능력",
+      "rubricByLevel": {
+        "1": [
+          "해야 할 일을 인식했는가",
+          "기본 일정 관리 시도가 있는가"
+        ],
+        "2": [
+          "우선순위를 정해 실행했는가",
+          "방해 요인을 줄이려 했는가"
+        ],
+        "3": [
+          "목표·습관·점검 루틴이 구체적인가",
+          "지연·실패를 복구한 사례가 있는가"
+        ],
+        "4": [
+          "자기관리 체계가 성과로 연결됐는가",
+          "변동 상황에서도 루틴을 유지했는가"
+        ],
+        "5": [
+          "자기관리 방법을 팀에 확산했는가",
+          "장기 성과·건강을 균형 있게 관리했는가"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "AWARE",
+          "nameKo": "인식",
+          "ncs": "자기관리"
+        },
+        {
+          "code": "ACT",
+          "nameKo": "실행",
+          "ncs": "자기관리"
+        },
+        {
+          "code": "SYSTEM",
+          "nameKo": "체계화",
+          "ncs": "자기관리"
+        }
+      ],
+      "terms": [
+        {
+          "id": "self_mgmt-t1",
+          "kind": "phrase",
+          "termKo": "우선순위",
+          "meaningKo": "우선순위 신호",
+          "goodExample": "우선순위을(를) 장면으로 증명했습니다.",
+          "badExample": "추상적으로만 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "self_mgmt-t2",
+          "kind": "phrase",
+          "termKo": "루틴",
+          "meaningKo": "루틴 신호",
+          "goodExample": "루틴로 결과를 남겼습니다.",
+          "badExample": "말만 하고 기록이 없습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "self_mgmt-t3",
+          "kind": "word",
+          "termKo": "복구 계획",
+          "meaningKo": "복구 계획",
+          "goodExample": "복구 계획 행동을 구체화했습니다.",
+          "badExample": "일반론만 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "self_mgmt-t4",
+          "kind": "word",
+          "termKo": "집중 블록",
+          "meaningKo": "집중 블록",
+          "goodExample": "집중 블록까지 연결했습니다.",
+          "badExample": "중간에 멈췄습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "우선순위",
+          "루틴",
+          "복구 계획"
+        ],
+        "PUBLIC": [
+          "우선순위",
+          "근거·절차",
+          "복구 계획"
+        ],
+        "STARTUP": [
+          "루틴",
+          "집중 블록",
+          "속도"
+        ]
+      }
+    },
+    "CUSTOMER_ORIENT": {
+      "nameKo": "고객지향",
+      "nameEn": "Customer Orientation",
+      "clusterCode": "LEX_NCS_FOUNDATION",
+      "ncsAnchor": "NCS 고객서비스·대인관계",
+      "definition": "내부·외부 고객의 필요를 파악하고 가치 있는 해결을 제공하는 능력",
+      "rubricByLevel": {
+        "1": [
+          "고객·이용자를 인식했는가",
+          "요청을 받아 처리하려 했는가"
+        ],
+        "2": [
+          "니즈를 질문·관찰로 확인했는가",
+          "약속한 기한을 지키려 했는가"
+        ],
+        "3": [
+          "니즈에 맞는 해결을 제공하고 결과를 확인했는가",
+          "불만을 구조적으로 처리했는가"
+        ],
+        "4": [
+          "고객 경험을 개선하는 프로세스·지표를 만들었는가",
+          "선제적으로 문제를 예방했는가"
+        ],
+        "5": [
+          "고객 가치를 조직 전략·우선순위에 반영했는가",
+          "장기 관계·신뢰를 설계했는가"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "AWARE",
+          "nameKo": "인식",
+          "ncs": "고객지향"
+        },
+        {
+          "code": "ACT",
+          "nameKo": "실행",
+          "ncs": "고객지향"
+        },
+        {
+          "code": "SYSTEM",
+          "nameKo": "체계화",
+          "ncs": "고객지향"
+        }
+      ],
+      "terms": [
+        {
+          "id": "customer_orient-t1",
+          "kind": "phrase",
+          "termKo": "니즈 확인",
+          "meaningKo": "니즈 확인 신호",
+          "goodExample": "니즈 확인을(를) 장면으로 증명했습니다.",
+          "badExample": "추상적으로만 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "customer_orient-t2",
+          "kind": "phrase",
+          "termKo": "약속 이행",
+          "meaningKo": "약속 이행 신호",
+          "goodExample": "약속 이행로 결과를 남겼습니다.",
+          "badExample": "말만 하고 기록이 없습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "customer_orient-t3",
+          "kind": "word",
+          "termKo": "경험 개선",
+          "meaningKo": "경험 개선",
+          "goodExample": "경험 개선 행동을 구체화했습니다.",
+          "badExample": "일반론만 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "customer_orient-t4",
+          "kind": "word",
+          "termKo": "선제 대응",
+          "meaningKo": "선제 대응",
+          "goodExample": "선제 대응까지 연결했습니다.",
+          "badExample": "중간에 멈췄습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "니즈 확인",
+          "약속 이행",
+          "경험 개선"
+        ],
+        "PUBLIC": [
+          "니즈 확인",
+          "근거·절차",
+          "경험 개선"
+        ],
+        "STARTUP": [
+          "약속 이행",
+          "선제 대응",
+          "속도"
+        ]
+      }
+    },
+    "SAFETY_COMPLIANCE": {
+      "nameKo": "규정·안전 준수",
+      "nameEn": "Compliance & Safety",
+      "clusterCode": "LEX_NCS_FOUNDATION",
+      "ncsAnchor": "공공·산업 규정 준수 관행",
+      "definition": "법·규정·안전 기준을 업무에 내재화하고 위반 리스크를 관리하는 능력",
+      "rubricByLevel": {
+        "1": [
+          "관련 규정을 인지했는가",
+          "기본 안전 수칙을 지켰는가"
+        ],
+        "2": [
+          "업무에 체크리스트를 적용했는가",
+          "이상 징후를 보고했는가"
+        ],
+        "3": [
+          "규정과 일정 충돌 시 안전한 대안을 선택했는가",
+          "위반 가능성을 예방했는가"
+        ],
+        "4": [
+          "준수 프로세스를 개선·교육했는가",
+          "감사·점검에 대응한 증거가 있는가"
+        ],
+        "5": [
+          "조직 준수 체계·문화에 기여했는가",
+          "리스크를 전략 수준에서 관리했는가"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "AWARE",
+          "nameKo": "인식",
+          "ncs": "규정·안전 준수"
+        },
+        {
+          "code": "ACT",
+          "nameKo": "실행",
+          "ncs": "규정·안전 준수"
+        },
+        {
+          "code": "SYSTEM",
+          "nameKo": "체계화",
+          "ncs": "규정·안전 준수"
+        }
+      ],
+      "terms": [
+        {
+          "id": "safety_compliance-t1",
+          "kind": "phrase",
+          "termKo": "체크리스트",
+          "meaningKo": "체크리스트 신호",
+          "goodExample": "체크리스트을(를) 장면으로 증명했습니다.",
+          "badExample": "추상적으로만 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "safety_compliance-t2",
+          "kind": "phrase",
+          "termKo": "이상 보고",
+          "meaningKo": "이상 보고 신호",
+          "goodExample": "이상 보고로 결과를 남겼습니다.",
+          "badExample": "말만 하고 기록이 없습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "safety_compliance-t3",
+          "kind": "word",
+          "termKo": "예방",
+          "meaningKo": "예방",
+          "goodExample": "예방 행동을 구체화했습니다.",
+          "badExample": "일반론만 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "safety_compliance-t4",
+          "kind": "word",
+          "termKo": "감사 증거",
+          "meaningKo": "감사 증거",
+          "goodExample": "감사 증거까지 연결했습니다.",
+          "badExample": "중간에 멈췄습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "체크리스트",
+          "이상 보고",
+          "예방"
+        ],
+        "PUBLIC": [
+          "체크리스트",
+          "근거·절차",
+          "예방"
+        ],
+        "STARTUP": [
+          "이상 보고",
+          "감사 증거",
+          "속도"
+        ]
+      }
+    },
+    "ACHIEVEMENT_DRIVE": {
+      "nameKo": "성취지향",
+      "nameEn": "Achievement Drive",
+      "clusterCode": "LEX_BEHAVIORAL",
+      "ncsAnchor": "행동역량사전 · BARS 관행",
+      "definition": "성과 기준을 스스로 높이고 목표를 달성하는 내적 추진력",
+      "rubricByLevel": {
+        "1": [
+          "주어진 목표만 수행",
+          "기준이 불명확"
+        ],
+        "2": [
+          "기준 충족"
+        ],
+        "3": [
+          "스스로 개선 시도",
+          "결과 책임"
+        ],
+        "4": [
+          "상향 목표 달성",
+          "방법 남김"
+        ],
+        "5": [
+          "조직 성과·시스템 기여"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "SIGNAL",
+          "nameKo": "신호 인식",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "EVIDENCE",
+          "nameKo": "증거",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "확산",
+          "ncs": "행동지표"
+        }
+      ],
+      "terms": [
+        {
+          "id": "achievement_drive-good",
+          "kind": "phrase",
+          "termKo": "성취지향 강한 신호",
+          "meaningKo": "성과 기준을 스스로 높이고 목표를 달성하는 내적 추진력",
+          "goodExample": "성취지향을(를) 구체 장면·결과로 말했습니다.",
+          "badExample": "성격·기질로만 설명했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "achievement_drive-metric",
+          "kind": "word",
+          "termKo": "관찰지표",
+          "meaningKo": "제3자가 볼 수 있는 행동·수치",
+          "goodExample": "관찰 가능한 지표로 증명했습니다.",
+          "badExample": "추상 형용사만 썼습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "achievement_drive-habit",
+          "kind": "word",
+          "termKo": "반복 행동",
+          "meaningKo": "한 번이 아닌 습관·루틴",
+          "goodExample": "반복된 루틴으로 안착시켰습니다.",
+          "badExample": "일회성 에피소드만 말했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "achievement_drive-org",
+          "kind": "phrase",
+          "termKo": "조직 전이",
+          "meaningKo": "개인→팀→조직으로 확장",
+          "goodExample": "팀에 방법을 남겨 확산을 만들었습니다.",
+          "badExample": "나만의 성과로 끝냈습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "재현 가능한 행동",
+          "프로세스화",
+          "이해관계자 영향"
+        ],
+        "PUBLIC": [
+          "공정·책임",
+          "근거 기록",
+          "규범 정합"
+        ],
+        "STARTUP": [
+          "속도",
+          "오너십",
+          "임팩트"
+        ]
+      }
+    },
+    "INITIATIVE": {
+      "nameKo": "주도성",
+      "nameEn": "Initiative",
+      "clusterCode": "LEX_BEHAVIORAL",
+      "ncsAnchor": "행동역량사전 · BARS 관행",
+      "definition": "요청 전에 문제를 발견하고 먼저 움직이는 행동 성향",
+      "rubricByLevel": {
+        "1": [
+          "지시 대기"
+        ],
+        "2": [
+          "작은 선제 행동"
+        ],
+        "3": [
+          "문제 선제 해결"
+        ],
+        "4": [
+          "조직에 제안·실행"
+        ],
+        "5": [
+          "새로운 기회·시스템을 만듦"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "SIGNAL",
+          "nameKo": "신호 인식",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "EVIDENCE",
+          "nameKo": "증거",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "확산",
+          "ncs": "행동지표"
+        }
+      ],
+      "terms": [
+        {
+          "id": "initiative-good",
+          "kind": "phrase",
+          "termKo": "주도성 강한 신호",
+          "meaningKo": "요청 전에 문제를 발견하고 먼저 움직이는 행동 성향",
+          "goodExample": "주도성을(를) 구체 장면·결과로 말했습니다.",
+          "badExample": "성격·기질로만 설명했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "initiative-metric",
+          "kind": "word",
+          "termKo": "관찰지표",
+          "meaningKo": "제3자가 볼 수 있는 행동·수치",
+          "goodExample": "관찰 가능한 지표로 증명했습니다.",
+          "badExample": "추상 형용사만 썼습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "initiative-habit",
+          "kind": "word",
+          "termKo": "반복 행동",
+          "meaningKo": "한 번이 아닌 습관·루틴",
+          "goodExample": "반복된 루틴으로 안착시켰습니다.",
+          "badExample": "일회성 에피소드만 말했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "initiative-org",
+          "kind": "phrase",
+          "termKo": "조직 전이",
+          "meaningKo": "개인→팀→조직으로 확장",
+          "goodExample": "팀에 방법을 남겨 확산을 만들었습니다.",
+          "badExample": "나만의 성과로 끝냈습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "재현 가능한 행동",
+          "프로세스화",
+          "이해관계자 영향"
+        ],
+        "PUBLIC": [
+          "공정·책임",
+          "근거 기록",
+          "규범 정합"
+        ],
+        "STARTUP": [
+          "속도",
+          "오너십",
+          "임팩트"
+        ]
+      }
+    },
+    "ANALYTICAL_THINKING": {
+      "nameKo": "분석적 사고",
+      "nameEn": "Analytical Thinking",
+      "clusterCode": "LEX_BEHAVIORAL",
+      "ncsAnchor": "행동역량사전 · BARS 관행",
+      "definition": "복잡한 정보를 분해·비교해 인과와 우선순위를 찾는 사고",
+      "rubricByLevel": {
+        "1": [
+          "현상만 나열"
+        ],
+        "2": [
+          "원인 후보 제시"
+        ],
+        "3": [
+          "가설·근거 비교"
+        ],
+        "4": [
+          "모델·프레임으로 설명"
+        ],
+        "5": [
+          "조직 의사결정 체계에 반영"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "SIGNAL",
+          "nameKo": "신호 인식",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "EVIDENCE",
+          "nameKo": "증거",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "확산",
+          "ncs": "행동지표"
+        }
+      ],
+      "terms": [
+        {
+          "id": "analytical_thinking-good",
+          "kind": "phrase",
+          "termKo": "분석적 사고 강한 신호",
+          "meaningKo": "복잡한 정보를 분해·비교해 인과와 우선순위를 찾는 사고",
+          "goodExample": "분석적 사고을(를) 구체 장면·결과로 말했습니다.",
+          "badExample": "성격·기질로만 설명했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "analytical_thinking-metric",
+          "kind": "word",
+          "termKo": "관찰지표",
+          "meaningKo": "제3자가 볼 수 있는 행동·수치",
+          "goodExample": "관찰 가능한 지표로 증명했습니다.",
+          "badExample": "추상 형용사만 썼습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "analytical_thinking-habit",
+          "kind": "word",
+          "termKo": "반복 행동",
+          "meaningKo": "한 번이 아닌 습관·루틴",
+          "goodExample": "반복된 루틴으로 안착시켰습니다.",
+          "badExample": "일회성 에피소드만 말했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "analytical_thinking-org",
+          "kind": "phrase",
+          "termKo": "조직 전이",
+          "meaningKo": "개인→팀→조직으로 확장",
+          "goodExample": "팀에 방법을 남겨 확산을 만들었습니다.",
+          "badExample": "나만의 성과로 끝냈습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "재현 가능한 행동",
+          "프로세스화",
+          "이해관계자 영향"
+        ],
+        "PUBLIC": [
+          "공정·책임",
+          "근거 기록",
+          "규범 정합"
+        ],
+        "STARTUP": [
+          "속도",
+          "오너십",
+          "임팩트"
+        ]
+      }
+    },
+    "INFLUENCE": {
+      "nameKo": "영향력",
+      "nameEn": "Influence",
+      "clusterCode": "LEX_BEHAVIORAL",
+      "ncsAnchor": "행동역량사전 · BARS 관행",
+      "definition": "권한 없이도 타인·팀을 설득하고 행동을 바꾸는 능력",
+      "rubricByLevel": {
+        "1": [
+          "자기주장만"
+        ],
+        "2": [
+          "근거로 설득 시도"
+        ],
+        "3": [
+          "합의·행동 변화"
+        ],
+        "4": [
+          "다수 이해관계자 정렬"
+        ],
+        "5": [
+          "조직 여론·방향 형성"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "SIGNAL",
+          "nameKo": "신호 인식",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "EVIDENCE",
+          "nameKo": "증거",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "확산",
+          "ncs": "행동지표"
+        }
+      ],
+      "terms": [
+        {
+          "id": "influence-good",
+          "kind": "phrase",
+          "termKo": "영향력 강한 신호",
+          "meaningKo": "권한 없이도 타인·팀을 설득하고 행동을 바꾸는 능력",
+          "goodExample": "영향력을(를) 구체 장면·결과로 말했습니다.",
+          "badExample": "성격·기질로만 설명했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "influence-metric",
+          "kind": "word",
+          "termKo": "관찰지표",
+          "meaningKo": "제3자가 볼 수 있는 행동·수치",
+          "goodExample": "관찰 가능한 지표로 증명했습니다.",
+          "badExample": "추상 형용사만 썼습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "influence-habit",
+          "kind": "word",
+          "termKo": "반복 행동",
+          "meaningKo": "한 번이 아닌 습관·루틴",
+          "goodExample": "반복된 루틴으로 안착시켰습니다.",
+          "badExample": "일회성 에피소드만 말했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "influence-org",
+          "kind": "phrase",
+          "termKo": "조직 전이",
+          "meaningKo": "개인→팀→조직으로 확장",
+          "goodExample": "팀에 방법을 남겨 확산을 만들었습니다.",
+          "badExample": "나만의 성과로 끝냈습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "재현 가능한 행동",
+          "프로세스화",
+          "이해관계자 영향"
+        ],
+        "PUBLIC": [
+          "공정·책임",
+          "근거 기록",
+          "규범 정합"
+        ],
+        "STARTUP": [
+          "속도",
+          "오너십",
+          "임팩트"
+        ]
+      }
+    },
+    "TEAMWORK": {
+      "nameKo": "팀워크",
+      "nameEn": "Teamwork",
+      "clusterCode": "LEX_BEHAVIORAL",
+      "ncsAnchor": "행동역량사전 · BARS 관행",
+      "definition": "공동 목표를 위해 역할을 나누고 서로를 보완하는 협력",
+      "rubricByLevel": {
+        "1": [
+          "개인 과제만"
+        ],
+        "2": [
+          "역할 수행"
+        ],
+        "3": [
+          "상호 보완·지원"
+        ],
+        "4": [
+          "팀 성과 설계"
+        ],
+        "5": [
+          "협력 문화 정착"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "SIGNAL",
+          "nameKo": "신호 인식",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "EVIDENCE",
+          "nameKo": "증거",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "확산",
+          "ncs": "행동지표"
+        }
+      ],
+      "terms": [
+        {
+          "id": "teamwork-good",
+          "kind": "phrase",
+          "termKo": "팀워크 강한 신호",
+          "meaningKo": "공동 목표를 위해 역할을 나누고 서로를 보완하는 협력",
+          "goodExample": "팀워크을(를) 구체 장면·결과로 말했습니다.",
+          "badExample": "성격·기질로만 설명했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "teamwork-metric",
+          "kind": "word",
+          "termKo": "관찰지표",
+          "meaningKo": "제3자가 볼 수 있는 행동·수치",
+          "goodExample": "관찰 가능한 지표로 증명했습니다.",
+          "badExample": "추상 형용사만 썼습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "teamwork-habit",
+          "kind": "word",
+          "termKo": "반복 행동",
+          "meaningKo": "한 번이 아닌 습관·루틴",
+          "goodExample": "반복된 루틴으로 안착시켰습니다.",
+          "badExample": "일회성 에피소드만 말했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "teamwork-org",
+          "kind": "phrase",
+          "termKo": "조직 전이",
+          "meaningKo": "개인→팀→조직으로 확장",
+          "goodExample": "팀에 방법을 남겨 확산을 만들었습니다.",
+          "badExample": "나만의 성과로 끝냈습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "재현 가능한 행동",
+          "프로세스화",
+          "이해관계자 영향"
+        ],
+        "PUBLIC": [
+          "공정·책임",
+          "근거 기록",
+          "규범 정합"
+        ],
+        "STARTUP": [
+          "속도",
+          "오너십",
+          "임팩트"
+        ]
+      }
+    },
+    "CONFLICT_RESOLUTION": {
+      "nameKo": "갈등관리",
+      "nameEn": "Conflict Resolution",
+      "clusterCode": "LEX_BEHAVIORAL",
+      "ncsAnchor": "행동역량사전 · BARS 관행",
+      "definition": "이견을 표면화하고 기준·대안으로 합의를 이끄는 능력",
+      "rubricByLevel": {
+        "1": [
+          "회피"
+        ],
+        "2": [
+          "중재 시도"
+        ],
+        "3": [
+          "기준 기반 합의"
+        ],
+        "4": [
+          "재발 방지 장치"
+        ],
+        "5": [
+          "조직 갈등 해결 체계"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "SIGNAL",
+          "nameKo": "신호 인식",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "EVIDENCE",
+          "nameKo": "증거",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "확산",
+          "ncs": "행동지표"
+        }
+      ],
+      "terms": [
+        {
+          "id": "conflict_resolution-good",
+          "kind": "phrase",
+          "termKo": "갈등관리 강한 신호",
+          "meaningKo": "이견을 표면화하고 기준·대안으로 합의를 이끄는 능력",
+          "goodExample": "갈등관리을(를) 구체 장면·결과로 말했습니다.",
+          "badExample": "성격·기질로만 설명했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "conflict_resolution-metric",
+          "kind": "word",
+          "termKo": "관찰지표",
+          "meaningKo": "제3자가 볼 수 있는 행동·수치",
+          "goodExample": "관찰 가능한 지표로 증명했습니다.",
+          "badExample": "추상 형용사만 썼습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "conflict_resolution-habit",
+          "kind": "word",
+          "termKo": "반복 행동",
+          "meaningKo": "한 번이 아닌 습관·루틴",
+          "goodExample": "반복된 루틴으로 안착시켰습니다.",
+          "badExample": "일회성 에피소드만 말했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "conflict_resolution-org",
+          "kind": "phrase",
+          "termKo": "조직 전이",
+          "meaningKo": "개인→팀→조직으로 확장",
+          "goodExample": "팀에 방법을 남겨 확산을 만들었습니다.",
+          "badExample": "나만의 성과로 끝냈습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "재현 가능한 행동",
+          "프로세스화",
+          "이해관계자 영향"
+        ],
+        "PUBLIC": [
+          "공정·책임",
+          "근거 기록",
+          "규범 정합"
+        ],
+        "STARTUP": [
+          "속도",
+          "오너십",
+          "임팩트"
+        ]
+      }
+    },
+    "DECISION_QUALITY": {
+      "nameKo": "의사결정 품질",
+      "nameEn": "Decision Quality",
+      "clusterCode": "LEX_BEHAVIORAL",
+      "ncsAnchor": "행동역량사전 · BARS 관행",
+      "definition": "불확실성 속에서 기준·데이터·리스크로 선택하는 능력",
+      "rubricByLevel": {
+        "1": [
+          "즉흥 선택"
+        ],
+        "2": [
+          "일부 근거"
+        ],
+        "3": [
+          "대안 비교·선택"
+        ],
+        "4": [
+          "사후 검증·학습"
+        ],
+        "5": [
+          "의사결정 프레임 공유"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "SIGNAL",
+          "nameKo": "신호 인식",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "EVIDENCE",
+          "nameKo": "증거",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "확산",
+          "ncs": "행동지표"
+        }
+      ],
+      "terms": [
+        {
+          "id": "decision_quality-good",
+          "kind": "phrase",
+          "termKo": "의사결정 품질 강한 신호",
+          "meaningKo": "불확실성 속에서 기준·데이터·리스크로 선택하는 능력",
+          "goodExample": "의사결정 품질을(를) 구체 장면·결과로 말했습니다.",
+          "badExample": "성격·기질로만 설명했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "decision_quality-metric",
+          "kind": "word",
+          "termKo": "관찰지표",
+          "meaningKo": "제3자가 볼 수 있는 행동·수치",
+          "goodExample": "관찰 가능한 지표로 증명했습니다.",
+          "badExample": "추상 형용사만 썼습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "decision_quality-habit",
+          "kind": "word",
+          "termKo": "반복 행동",
+          "meaningKo": "한 번이 아닌 습관·루틴",
+          "goodExample": "반복된 루틴으로 안착시켰습니다.",
+          "badExample": "일회성 에피소드만 말했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "decision_quality-org",
+          "kind": "phrase",
+          "termKo": "조직 전이",
+          "meaningKo": "개인→팀→조직으로 확장",
+          "goodExample": "팀에 방법을 남겨 확산을 만들었습니다.",
+          "badExample": "나만의 성과로 끝냈습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "재현 가능한 행동",
+          "프로세스화",
+          "이해관계자 영향"
+        ],
+        "PUBLIC": [
+          "공정·책임",
+          "근거 기록",
+          "규범 정합"
+        ],
+        "STARTUP": [
+          "속도",
+          "오너십",
+          "임팩트"
+        ]
+      }
+    },
+    "ADAPTABILITY": {
+      "nameKo": "적응력",
+      "nameEn": "Adaptability",
+      "clusterCode": "LEX_BEHAVIORAL",
+      "ncsAnchor": "행동역량사전 · BARS 관행",
+      "definition": "변화된 조건에 목표·방법을 재조정하는 유연성",
+      "rubricByLevel": {
+        "1": [
+          "변화 저항"
+        ],
+        "2": [
+          "지시된 변경 수용"
+        ],
+        "3": [
+          "스스로 재계획"
+        ],
+        "4": [
+          "팀을 새 방식에 안착"
+        ],
+        "5": [
+          "변화 관리 체계화"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "SIGNAL",
+          "nameKo": "신호 인식",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "EVIDENCE",
+          "nameKo": "증거",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "확산",
+          "ncs": "행동지표"
+        }
+      ],
+      "terms": [
+        {
+          "id": "adaptability-good",
+          "kind": "phrase",
+          "termKo": "적응력 강한 신호",
+          "meaningKo": "변화된 조건에 목표·방법을 재조정하는 유연성",
+          "goodExample": "적응력을(를) 구체 장면·결과로 말했습니다.",
+          "badExample": "성격·기질로만 설명했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "adaptability-metric",
+          "kind": "word",
+          "termKo": "관찰지표",
+          "meaningKo": "제3자가 볼 수 있는 행동·수치",
+          "goodExample": "관찰 가능한 지표로 증명했습니다.",
+          "badExample": "추상 형용사만 썼습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "adaptability-habit",
+          "kind": "word",
+          "termKo": "반복 행동",
+          "meaningKo": "한 번이 아닌 습관·루틴",
+          "goodExample": "반복된 루틴으로 안착시켰습니다.",
+          "badExample": "일회성 에피소드만 말했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "adaptability-org",
+          "kind": "phrase",
+          "termKo": "조직 전이",
+          "meaningKo": "개인→팀→조직으로 확장",
+          "goodExample": "팀에 방법을 남겨 확산을 만들었습니다.",
+          "badExample": "나만의 성과로 끝냈습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "재현 가능한 행동",
+          "프로세스화",
+          "이해관계자 영향"
+        ],
+        "PUBLIC": [
+          "공정·책임",
+          "근거 기록",
+          "규범 정합"
+        ],
+        "STARTUP": [
+          "속도",
+          "오너십",
+          "임팩트"
+        ]
+      }
+    },
+    "INTEGRITY": {
+      "nameKo": "진실성",
+      "nameEn": "Integrity",
+      "clusterCode": "LEX_BEHAVIORAL",
+      "ncsAnchor": "행동역량사전 · BARS 관행",
+      "definition": "말과 행동을 일치시키고 불편한 진실을 다루는 신뢰성",
+      "rubricByLevel": {
+        "1": [
+          "일관성 부족"
+        ],
+        "2": [
+          "기본 약속 이행"
+        ],
+        "3": [
+          "실수 인정·보정"
+        ],
+        "4": [
+          "원칙을 지키며 설득"
+        ],
+        "5": [
+          "조직 신뢰 기준이 됨"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "SIGNAL",
+          "nameKo": "신호 인식",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "EVIDENCE",
+          "nameKo": "증거",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "확산",
+          "ncs": "행동지표"
+        }
+      ],
+      "terms": [
+        {
+          "id": "integrity-good",
+          "kind": "phrase",
+          "termKo": "진실성 강한 신호",
+          "meaningKo": "말과 행동을 일치시키고 불편한 진실을 다루는 신뢰성",
+          "goodExample": "진실성을(를) 구체 장면·결과로 말했습니다.",
+          "badExample": "성격·기질로만 설명했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "integrity-metric",
+          "kind": "word",
+          "termKo": "관찰지표",
+          "meaningKo": "제3자가 볼 수 있는 행동·수치",
+          "goodExample": "관찰 가능한 지표로 증명했습니다.",
+          "badExample": "추상 형용사만 썼습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "integrity-habit",
+          "kind": "word",
+          "termKo": "반복 행동",
+          "meaningKo": "한 번이 아닌 습관·루틴",
+          "goodExample": "반복된 루틴으로 안착시켰습니다.",
+          "badExample": "일회성 에피소드만 말했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "integrity-org",
+          "kind": "phrase",
+          "termKo": "조직 전이",
+          "meaningKo": "개인→팀→조직으로 확장",
+          "goodExample": "팀에 방법을 남겨 확산을 만들었습니다.",
+          "badExample": "나만의 성과로 끝냈습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "재현 가능한 행동",
+          "프로세스화",
+          "이해관계자 영향"
+        ],
+        "PUBLIC": [
+          "공정·책임",
+          "근거 기록",
+          "규범 정합"
+        ],
+        "STARTUP": [
+          "속도",
+          "오너십",
+          "임팩트"
+        ]
+      }
+    },
+    "RESULT_OWNERSHIP": {
+      "nameKo": "결과 오너십",
+      "nameEn": "Result Ownership",
+      "clusterCode": "LEX_BEHAVIORAL",
+      "ncsAnchor": "행동역량사전 · BARS 관행",
+      "definition": "끝까지 결과를 책임지고 장애물을 제거하는 태도",
+      "rubricByLevel": {
+        "1": [
+          "부분 책임"
+        ],
+        "2": [
+          "맡은 일 완료"
+        ],
+        "3": [
+          "장애 제거·에스컬레이션"
+        ],
+        "4": [
+          "교차 영역까지 책임"
+        ],
+        "5": [
+          "조직 결과에 시스템으로 기여"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "SIGNAL",
+          "nameKo": "신호 인식",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "EVIDENCE",
+          "nameKo": "증거",
+          "ncs": "행동지표"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "확산",
+          "ncs": "행동지표"
+        }
+      ],
+      "terms": [
+        {
+          "id": "result_ownership-good",
+          "kind": "phrase",
+          "termKo": "결과 오너십 강한 신호",
+          "meaningKo": "끝까지 결과를 책임지고 장애물을 제거하는 태도",
+          "goodExample": "결과 오너십을(를) 구체 장면·결과로 말했습니다.",
+          "badExample": "성격·기질로만 설명했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "result_ownership-metric",
+          "kind": "word",
+          "termKo": "관찰지표",
+          "meaningKo": "제3자가 볼 수 있는 행동·수치",
+          "goodExample": "관찰 가능한 지표로 증명했습니다.",
+          "badExample": "추상 형용사만 썼습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "result_ownership-habit",
+          "kind": "word",
+          "termKo": "반복 행동",
+          "meaningKo": "한 번이 아닌 습관·루틴",
+          "goodExample": "반복된 루틴으로 안착시켰습니다.",
+          "badExample": "일회성 에피소드만 말했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "result_ownership-org",
+          "kind": "phrase",
+          "termKo": "조직 전이",
+          "meaningKo": "개인→팀→조직으로 확장",
+          "goodExample": "팀에 방법을 남겨 확산을 만들었습니다.",
+          "badExample": "나만의 성과로 끝냈습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "재현 가능한 행동",
+          "프로세스화",
+          "이해관계자 영향"
+        ],
+        "PUBLIC": [
+          "공정·책임",
+          "근거 기록",
+          "규범 정합"
+        ],
+        "STARTUP": [
+          "속도",
+          "오너십",
+          "임팩트"
+        ]
+      }
+    },
+    "ENTERPRISE_PROCESS": {
+      "nameKo": "대기업 프로세스 정합",
+      "nameEn": "Enterprise Process Fit",
+      "clusterCode": "LEX_ORG_LENS",
+      "ncsAnchor": "조직 렌즈 · LARGE",
+      "definition": "역할 경계·승인·리스크 문서 등 대기업식 일처리에 맞추는 능력",
+      "rubricByLevel": {
+        "1": [
+          "절차 인식 약함"
+        ],
+        "2": [
+          "기본 절차 준수"
+        ],
+        "3": [
+          "리스크·합의 기록"
+        ],
+        "4": [
+          "크로스팀 프로세스 설계"
+        ],
+        "5": [
+          "거버넌스 개선"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "READ",
+          "nameKo": "조직 독해",
+          "ncs": "조직이해"
+        },
+        {
+          "code": "ACT",
+          "nameKo": "맞춤 행동",
+          "ncs": "조직이해"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "제도화",
+          "ncs": "조직이해"
+        }
+      ],
+      "terms": [
+        {
+          "id": "enterprise_process-fit",
+          "kind": "phrase",
+          "termKo": "대기업 프로세스 정합",
+          "meaningKo": "역할 경계·승인·리스크 문서 등 대기업식 일처리에 맞추는 능력",
+          "goodExample": "대기업 프로세스 정합에 맞는 행동을 장면으로 말했습니다.",
+          "badExample": "조직 특성을 무시하고 일반론만 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "enterprise_process-signal",
+          "kind": "word",
+          "termKo": "담당자 신호",
+          "meaningKo": "해당 조직이 높이 평가하는 단서",
+          "goodExample": "담당자가 듣는 신호를 맞춰 답했습니다.",
+          "badExample": "모든 조직에 같은 답을 했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "enterprise_process-proof",
+          "kind": "word",
+          "termKo": "재현 증거",
+          "meaningKo": "다시 할 수 있는 방법·기록",
+          "goodExample": "방법과 기록을 남겼습니다.",
+          "badExample": "느낌만 남겼습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "enterprise_process-risk",
+          "kind": "word",
+          "termKo": "리스크 명시",
+          "meaningKo": "실패 가능성과 대응",
+          "goodExample": "리스크와 대응을 같이 말했습니다.",
+          "badExample": "장점만 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "구조화",
+          "역할 경계",
+          "리스크"
+        ],
+        "PUBLIC": [
+          "공정",
+          "근거",
+          "절차"
+        ],
+        "STARTUP": [
+          "오너십",
+          "속도",
+          "임팩트"
+        ]
+      }
+    },
+    "PUBLIC_ACCOUNTABILITY": {
+      "nameKo": "공공 책무성",
+      "nameEn": "Public Accountability",
+      "clusterCode": "LEX_ORG_LENS",
+      "ncsAnchor": "조직 렌즈 · PUBLIC",
+      "definition": "공정·투명·공익을 기준으로 설명 가능한 결정을 하는 능력",
+      "rubricByLevel": {
+        "1": [
+          "기준 불명확"
+        ],
+        "2": [
+          "규정 준수"
+        ],
+        "3": [
+          "근거 문서화"
+        ],
+        "4": [
+          "감사 가능 프로세스"
+        ],
+        "5": [
+          "공익·제도 개선"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "READ",
+          "nameKo": "조직 독해",
+          "ncs": "조직이해"
+        },
+        {
+          "code": "ACT",
+          "nameKo": "맞춤 행동",
+          "ncs": "조직이해"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "제도화",
+          "ncs": "조직이해"
+        }
+      ],
+      "terms": [
+        {
+          "id": "public_accountability-fit",
+          "kind": "phrase",
+          "termKo": "공공 책무성",
+          "meaningKo": "공정·투명·공익을 기준으로 설명 가능한 결정을 하는 능력",
+          "goodExample": "공공 책무성에 맞는 행동을 장면으로 말했습니다.",
+          "badExample": "조직 특성을 무시하고 일반론만 말했습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "public_accountability-signal",
+          "kind": "word",
+          "termKo": "담당자 신호",
+          "meaningKo": "해당 조직이 높이 평가하는 단서",
+          "goodExample": "담당자가 듣는 신호를 맞춰 답했습니다.",
+          "badExample": "모든 조직에 같은 답을 했습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "public_accountability-proof",
+          "kind": "word",
+          "termKo": "재현 증거",
+          "meaningKo": "다시 할 수 있는 방법·기록",
+          "goodExample": "방법과 기록을 남겼습니다.",
+          "badExample": "느낌만 남겼습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "public_accountability-risk",
+          "kind": "word",
+          "termKo": "리스크 명시",
+          "meaningKo": "실패 가능성과 대응",
+          "goodExample": "리스크와 대응을 같이 말했습니다.",
+          "badExample": "장점만 말했습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE",
+            "STARTUP"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "구조화",
+          "역할 경계",
+          "리스크"
+        ],
+        "PUBLIC": [
+          "공정",
+          "근거",
+          "절차"
+        ],
+        "STARTUP": [
+          "오너십",
+          "속도",
+          "임팩트"
+        ]
+      }
+    },
+    "STARTUP_OWNERSHIP": {
+      "nameKo": "스타트업 오너십",
+      "nameEn": "Startup Ownership",
+      "clusterCode": "LEX_ORG_LENS",
+      "ncsAnchor": "조직 렌즈 · STARTUP",
+      "definition": "모호함 속에서 직접 실행하고 임팩트를 빠르게 만드는 능력",
+      "rubricByLevel": {
+        "1": [
+          "지시 대기"
+        ],
+        "2": [
+          "작은 실험"
+        ],
+        "3": [
+          "가설 검증·피벗"
+        ],
+        "4": [
+          "교차 기능 실행"
+        ],
+        "5": [
+          "제품·지표 시스템을 만듦"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "READ",
+          "nameKo": "조직 독해",
+          "ncs": "조직이해"
+        },
+        {
+          "code": "ACT",
+          "nameKo": "맞춤 행동",
+          "ncs": "조직이해"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "제도화",
+          "ncs": "조직이해"
+        }
+      ],
+      "terms": [
+        {
+          "id": "startup_ownership-fit",
+          "kind": "phrase",
+          "termKo": "스타트업 오너십",
+          "meaningKo": "모호함 속에서 직접 실행하고 임팩트를 빠르게 만드는 능력",
+          "goodExample": "스타트업 오너십에 맞는 행동을 장면으로 말했습니다.",
+          "badExample": "조직 특성을 무시하고 일반론만 말했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "startup_ownership-signal",
+          "kind": "word",
+          "termKo": "담당자 신호",
+          "meaningKo": "해당 조직이 높이 평가하는 단서",
+          "goodExample": "담당자가 듣는 신호를 맞춰 답했습니다.",
+          "badExample": "모든 조직에 같은 답을 했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "startup_ownership-proof",
+          "kind": "word",
+          "termKo": "재현 증거",
+          "meaningKo": "다시 할 수 있는 방법·기록",
+          "goodExample": "방법과 기록을 남겼습니다.",
+          "badExample": "느낌만 남겼습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "startup_ownership-risk",
+          "kind": "word",
+          "termKo": "리스크 명시",
+          "meaningKo": "실패 가능성과 대응",
+          "goodExample": "리스크와 대응을 같이 말했습니다.",
+          "badExample": "장점만 말했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE",
+            "PUBLIC"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "구조화",
+          "역할 경계",
+          "리스크"
+        ],
+        "PUBLIC": [
+          "공정",
+          "근거",
+          "절차"
+        ],
+        "STARTUP": [
+          "오너십",
+          "속도",
+          "임팩트"
+        ]
+      }
+    },
+    "STAKEHOLDER_ALIGN": {
+      "nameKo": "이해관계자 정렬",
+      "nameEn": "Stakeholder Alignment",
+      "clusterCode": "LEX_ORG_LENS",
+      "ncsAnchor": "조직 렌즈 · LARGE",
+      "definition": "서로 다른 목표를 가진 사람들을 같은 결정으로 모으는 능력",
+      "rubricByLevel": {
+        "1": [
+          "한쪽만 고려"
+        ],
+        "2": [
+          "니즈 청취"
+        ],
+        "3": [
+          "합의안 도출"
+        ],
+        "4": [
+          "다자 정렬 유지"
+        ],
+        "5": [
+          "거버넌스·SLA 정착"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "READ",
+          "nameKo": "조직 독해",
+          "ncs": "조직이해"
+        },
+        {
+          "code": "ACT",
+          "nameKo": "맞춤 행동",
+          "ncs": "조직이해"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "제도화",
+          "ncs": "조직이해"
+        }
+      ],
+      "terms": [
+        {
+          "id": "stakeholder_align-fit",
+          "kind": "phrase",
+          "termKo": "이해관계자 정렬",
+          "meaningKo": "서로 다른 목표를 가진 사람들을 같은 결정으로 모으는 능력",
+          "goodExample": "이해관계자 정렬에 맞는 행동을 장면으로 말했습니다.",
+          "badExample": "조직 특성을 무시하고 일반론만 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "stakeholder_align-signal",
+          "kind": "word",
+          "termKo": "담당자 신호",
+          "meaningKo": "해당 조직이 높이 평가하는 단서",
+          "goodExample": "담당자가 듣는 신호를 맞춰 답했습니다.",
+          "badExample": "모든 조직에 같은 답을 했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "stakeholder_align-proof",
+          "kind": "word",
+          "termKo": "재현 증거",
+          "meaningKo": "다시 할 수 있는 방법·기록",
+          "goodExample": "방법과 기록을 남겼습니다.",
+          "badExample": "느낌만 남겼습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "stakeholder_align-risk",
+          "kind": "word",
+          "termKo": "리스크 명시",
+          "meaningKo": "실패 가능성과 대응",
+          "goodExample": "리스크와 대응을 같이 말했습니다.",
+          "badExample": "장점만 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "구조화",
+          "역할 경계",
+          "리스크"
+        ],
+        "PUBLIC": [
+          "공정",
+          "근거",
+          "절차"
+        ],
+        "STARTUP": [
+          "오너십",
+          "속도",
+          "임팩트"
+        ]
+      }
+    },
+    "AMBIGUITY_NAV": {
+      "nameKo": "모호함 항해",
+      "nameEn": "Navigating Ambiguity",
+      "clusterCode": "LEX_ORG_LENS",
+      "ncsAnchor": "조직 렌즈 · STARTUP",
+      "definition": "정보가 부족할 때 가정·실험을 명시하고 전진하는 능력",
+      "rubricByLevel": {
+        "1": [
+          "멈춤"
+        ],
+        "2": [
+          "가정 명시"
+        ],
+        "3": [
+          "실험으로 학습"
+        ],
+        "4": [
+          "리스크 한도 내 결정"
+        ],
+        "5": [
+          "모호함 관리 프레임 공유"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "READ",
+          "nameKo": "조직 독해",
+          "ncs": "조직이해"
+        },
+        {
+          "code": "ACT",
+          "nameKo": "맞춤 행동",
+          "ncs": "조직이해"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "제도화",
+          "ncs": "조직이해"
+        }
+      ],
+      "terms": [
+        {
+          "id": "ambiguity_nav-fit",
+          "kind": "phrase",
+          "termKo": "모호함 항해",
+          "meaningKo": "정보가 부족할 때 가정·실험을 명시하고 전진하는 능력",
+          "goodExample": "모호함 항해에 맞는 행동을 장면으로 말했습니다.",
+          "badExample": "조직 특성을 무시하고 일반론만 말했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "ambiguity_nav-signal",
+          "kind": "word",
+          "termKo": "담당자 신호",
+          "meaningKo": "해당 조직이 높이 평가하는 단서",
+          "goodExample": "담당자가 듣는 신호를 맞춰 답했습니다.",
+          "badExample": "모든 조직에 같은 답을 했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "ambiguity_nav-proof",
+          "kind": "word",
+          "termKo": "재현 증거",
+          "meaningKo": "다시 할 수 있는 방법·기록",
+          "goodExample": "방법과 기록을 남겼습니다.",
+          "badExample": "느낌만 남겼습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "ambiguity_nav-risk",
+          "kind": "word",
+          "termKo": "리스크 명시",
+          "meaningKo": "실패 가능성과 대응",
+          "goodExample": "리스크와 대응을 같이 말했습니다.",
+          "badExample": "장점만 말했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE",
+            "PUBLIC"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "구조화",
+          "역할 경계",
+          "리스크"
+        ],
+        "PUBLIC": [
+          "공정",
+          "근거",
+          "절차"
+        ],
+        "STARTUP": [
+          "오너십",
+          "속도",
+          "임팩트"
+        ]
+      }
+    },
+    "DOCUMENT_DECISION": {
+      "nameKo": "결정 문서화",
+      "nameEn": "Decision Documentation",
+      "clusterCode": "LEX_ORG_LENS",
+      "ncsAnchor": "조직 렌즈 · PUBLIC",
+      "definition": "결정·근거·롤백을 남겨 비동기 협업을 가능하게 하는 능력",
+      "rubricByLevel": {
+        "1": [
+          "구두만"
+        ],
+        "2": [
+          "간단한 기록"
+        ],
+        "3": [
+          "결정 로그 유지"
+        ],
+        "4": [
+          "검색 가능한 지식화"
+        ],
+        "5": [
+          "조직 지식 체계 기여"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "READ",
+          "nameKo": "조직 독해",
+          "ncs": "조직이해"
+        },
+        {
+          "code": "ACT",
+          "nameKo": "맞춤 행동",
+          "ncs": "조직이해"
+        },
+        {
+          "code": "SCALE",
+          "nameKo": "제도화",
+          "ncs": "조직이해"
+        }
+      ],
+      "terms": [
+        {
+          "id": "document_decision-fit",
+          "kind": "phrase",
+          "termKo": "결정 문서화",
+          "meaningKo": "결정·근거·롤백을 남겨 비동기 협업을 가능하게 하는 능력",
+          "goodExample": "결정 문서화에 맞는 행동을 장면으로 말했습니다.",
+          "badExample": "조직 특성을 무시하고 일반론만 말했습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "document_decision-signal",
+          "kind": "word",
+          "termKo": "담당자 신호",
+          "meaningKo": "해당 조직이 높이 평가하는 단서",
+          "goodExample": "담당자가 듣는 신호를 맞춰 답했습니다.",
+          "badExample": "모든 조직에 같은 답을 했습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "document_decision-proof",
+          "kind": "word",
+          "termKo": "재현 증거",
+          "meaningKo": "다시 할 수 있는 방법·기록",
+          "goodExample": "방법과 기록을 남겼습니다.",
+          "badExample": "느낌만 남겼습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "document_decision-risk",
+          "kind": "word",
+          "termKo": "리스크 명시",
+          "meaningKo": "실패 가능성과 대응",
+          "goodExample": "리스크와 대응을 같이 말했습니다.",
+          "badExample": "장점만 말했습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "LARGE",
+            "STARTUP"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "구조화",
+          "역할 경계",
+          "리스크"
+        ],
+        "PUBLIC": [
+          "공정",
+          "근거",
+          "절차"
+        ],
+        "STARTUP": [
+          "오너십",
+          "속도",
+          "임팩트"
+        ]
+      }
+    },
+    "STAR_EVIDENCE": {
+      "nameKo": "STAR 증거력",
+      "nameEn": "STAR Evidence",
+      "clusterCode": "LEX_INTERVIEW_CRAFT",
+      "ncsAnchor": "면접 답변 기법 · 역량게임 독해 모듈",
+      "definition": "Situation-Task-Action-Result를 빠진 칸 없이 채워 설득하는 능력",
+      "rubricByLevel": {
+        "1": [
+          "상황만 말함"
+        ],
+        "2": [
+          "행동 일부"
+        ],
+        "3": [
+          "STAR 완결"
+        ],
+        "4": [
+          "수치 결과·학습 포함"
+        ],
+        "5": [
+          "조직 임팩트까지 연결"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "DETECT",
+          "nameKo": "탐지",
+          "ncs": "의사소통"
+        },
+        {
+          "code": "STRUCTURE",
+          "nameKo": "구조화",
+          "ncs": "의사소통"
+        },
+        {
+          "code": "PROVE",
+          "nameKo": "증명",
+          "ncs": "문제해결"
+        }
+      ],
+      "terms": [
+        {
+          "id": "star_evidence-core",
+          "kind": "phrase",
+          "termKo": "STAR 증거력",
+          "meaningKo": "Situation-Task-Action-Result를 빠진 칸 없이 채워 설득하는 능력",
+          "goodExample": "STAR 증거력 패턴으로 답했습니다.",
+          "badExample": "기법을 모른 채 흘려 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "star_evidence-cue",
+          "kind": "word",
+          "termKo": "평가 단서",
+          "meaningKo": "면접관이 체크하는 포인트",
+          "goodExample": "평가 단서에 맞춰 증거를 배치했습니다.",
+          "badExample": "하고 싶은 말만 했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "star_evidence-drill",
+          "kind": "word",
+          "termKo": "드릴",
+          "meaningKo": "짧은 반복 연습",
+          "goodExample": "독해·선택 드릴로 정확도를 올렸습니다.",
+          "badExample": "연습 없이 감으로만 했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "star_evidence-transfer",
+          "kind": "phrase",
+          "termKo": "장면 전이",
+          "meaningKo": "게임·연습 → 실제 면접",
+          "goodExample": "연습한 구조를 실제 장면에 옮겼습니다.",
+          "badExample": "연습과 실전이 분리됐습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "STARTUP",
+            "LARGE"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "구조화",
+          "근거",
+          "재현"
+        ],
+        "PUBLIC": [
+          "의도 정확",
+          "공정한 기준",
+          "기록"
+        ],
+        "STARTUP": [
+          "간결",
+          "임팩트",
+          "속도"
+        ]
+      }
+    },
+    "QUANTIFY_IMPACT": {
+      "nameKo": "임팩트 수치화",
+      "nameEn": "Quantify Impact",
+      "clusterCode": "LEX_INTERVIEW_CRAFT",
+      "ncsAnchor": "면접 답변 기법 · 역량게임 독해 모듈",
+      "definition": "성과를 before/after·비율·절대값으로 표현하는 능력",
+      "rubricByLevel": {
+        "1": [
+          "형용사만"
+        ],
+        "2": [
+          "대략 수치"
+        ],
+        "3": [
+          "정확한 before/after"
+        ],
+        "4": [
+          "인과·기여도 설명"
+        ],
+        "5": [
+          "지표 체계로 관리"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "DETECT",
+          "nameKo": "탐지",
+          "ncs": "의사소통"
+        },
+        {
+          "code": "STRUCTURE",
+          "nameKo": "구조화",
+          "ncs": "의사소통"
+        },
+        {
+          "code": "PROVE",
+          "nameKo": "증명",
+          "ncs": "문제해결"
+        }
+      ],
+      "terms": [
+        {
+          "id": "quantify_impact-core",
+          "kind": "phrase",
+          "termKo": "임팩트 수치화",
+          "meaningKo": "성과를 before/after·비율·절대값으로 표현하는 능력",
+          "goodExample": "임팩트 수치화 패턴으로 답했습니다.",
+          "badExample": "기법을 모른 채 흘려 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "quantify_impact-cue",
+          "kind": "word",
+          "termKo": "평가 단서",
+          "meaningKo": "면접관이 체크하는 포인트",
+          "goodExample": "평가 단서에 맞춰 증거를 배치했습니다.",
+          "badExample": "하고 싶은 말만 했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "quantify_impact-drill",
+          "kind": "word",
+          "termKo": "드릴",
+          "meaningKo": "짧은 반복 연습",
+          "goodExample": "독해·선택 드릴로 정확도를 올렸습니다.",
+          "badExample": "연습 없이 감으로만 했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "quantify_impact-transfer",
+          "kind": "phrase",
+          "termKo": "장면 전이",
+          "meaningKo": "게임·연습 → 실제 면접",
+          "goodExample": "연습한 구조를 실제 장면에 옮겼습니다.",
+          "badExample": "연습과 실전이 분리됐습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "STARTUP",
+            "LARGE"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "구조화",
+          "근거",
+          "재현"
+        ],
+        "PUBLIC": [
+          "의도 정확",
+          "공정한 기준",
+          "기록"
+        ],
+        "STARTUP": [
+          "간결",
+          "임팩트",
+          "속도"
+        ]
+      }
+    },
+    "QUESTION_INTENT": {
+      "nameKo": "질문 의도 독해",
+      "nameEn": "Question Intent Reading",
+      "clusterCode": "LEX_INTERVIEW_CRAFT",
+      "ncsAnchor": "면접 답변 기법 · 역량게임 독해 모듈",
+      "definition": "면접·업무 질문의 진짜 평가 포인트를 읽어 답의 초점을 맞추는 능력",
+      "rubricByLevel": {
+        "1": [
+          "동문서답"
+        ],
+        "2": [
+          "표면 답변"
+        ],
+        "3": [
+          "의도 맞춘 답"
+        ],
+        "4": [
+          "의도+증거 구조"
+        ],
+        "5": [
+          "의도 재확인·합의"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "DETECT",
+          "nameKo": "탐지",
+          "ncs": "의사소통"
+        },
+        {
+          "code": "STRUCTURE",
+          "nameKo": "구조화",
+          "ncs": "의사소통"
+        },
+        {
+          "code": "PROVE",
+          "nameKo": "증명",
+          "ncs": "문제해결"
+        }
+      ],
+      "terms": [
+        {
+          "id": "question_intent-core",
+          "kind": "phrase",
+          "termKo": "질문 의도 독해",
+          "meaningKo": "면접·업무 질문의 진짜 평가 포인트를 읽어 답의 초점을 맞추는 능력",
+          "goodExample": "질문 의도 독해 패턴으로 답했습니다.",
+          "badExample": "기법을 모른 채 흘려 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "question_intent-cue",
+          "kind": "word",
+          "termKo": "평가 단서",
+          "meaningKo": "면접관이 체크하는 포인트",
+          "goodExample": "평가 단서에 맞춰 증거를 배치했습니다.",
+          "badExample": "하고 싶은 말만 했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "question_intent-drill",
+          "kind": "word",
+          "termKo": "드릴",
+          "meaningKo": "짧은 반복 연습",
+          "goodExample": "독해·선택 드릴로 정확도를 올렸습니다.",
+          "badExample": "연습 없이 감으로만 했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "question_intent-transfer",
+          "kind": "phrase",
+          "termKo": "장면 전이",
+          "meaningKo": "게임·연습 → 실제 면접",
+          "goodExample": "연습한 구조를 실제 장면에 옮겼습니다.",
+          "badExample": "연습과 실전이 분리됐습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "STARTUP",
+            "LARGE"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "구조화",
+          "근거",
+          "재현"
+        ],
+        "PUBLIC": [
+          "의도 정확",
+          "공정한 기준",
+          "기록"
+        ],
+        "STARTUP": [
+          "간결",
+          "임팩트",
+          "속도"
+        ]
+      }
+    },
+    "BEST_WORST_JUDGE": {
+      "nameKo": "베스트·워스트 판단",
+      "nameEn": "Best-Worst Judgment",
+      "clusterCode": "LEX_INTERVIEW_CRAFT",
+      "ncsAnchor": "면접 답변 기법 · 역량게임 독해 모듈",
+      "definition": "선택지 중 최선·최악을 기준에 따라 가르는 판단력",
+      "rubricByLevel": {
+        "1": [
+          "무작위 선택"
+        ],
+        "2": [
+          "직감 선택"
+        ],
+        "3": [
+          "기준 기반 선택"
+        ],
+        "4": [
+          "트레이드오프 설명"
+        ],
+        "5": [
+          "판단 기준을 팀에 공유"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "DETECT",
+          "nameKo": "탐지",
+          "ncs": "의사소통"
+        },
+        {
+          "code": "STRUCTURE",
+          "nameKo": "구조화",
+          "ncs": "의사소통"
+        },
+        {
+          "code": "PROVE",
+          "nameKo": "증명",
+          "ncs": "문제해결"
+        }
+      ],
+      "terms": [
+        {
+          "id": "best_worst_judge-core",
+          "kind": "phrase",
+          "termKo": "베스트·워스트 판단",
+          "meaningKo": "선택지 중 최선·최악을 기준에 따라 가르는 판단력",
+          "goodExample": "베스트·워스트 판단 패턴으로 답했습니다.",
+          "badExample": "기법을 모른 채 흘려 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "best_worst_judge-cue",
+          "kind": "word",
+          "termKo": "평가 단서",
+          "meaningKo": "면접관이 체크하는 포인트",
+          "goodExample": "평가 단서에 맞춰 증거를 배치했습니다.",
+          "badExample": "하고 싶은 말만 했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "best_worst_judge-drill",
+          "kind": "word",
+          "termKo": "드릴",
+          "meaningKo": "짧은 반복 연습",
+          "goodExample": "독해·선택 드릴로 정확도를 올렸습니다.",
+          "badExample": "연습 없이 감으로만 했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "best_worst_judge-transfer",
+          "kind": "phrase",
+          "termKo": "장면 전이",
+          "meaningKo": "게임·연습 → 실제 면접",
+          "goodExample": "연습한 구조를 실제 장면에 옮겼습니다.",
+          "badExample": "연습과 실전이 분리됐습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "STARTUP",
+            "LARGE"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "구조화",
+          "근거",
+          "재현"
+        ],
+        "PUBLIC": [
+          "의도 정확",
+          "공정한 기준",
+          "기록"
+        ],
+        "STARTUP": [
+          "간결",
+          "임팩트",
+          "속도"
+        ]
+      }
+    },
+    "CONCLUSION_FIRST": {
+      "nameKo": "결론 우선 전달",
+      "nameEn": "Conclusion First",
+      "clusterCode": "LEX_INTERVIEW_CRAFT",
+      "ncsAnchor": "면접 답변 기법 · 역량게임 독해 모듈",
+      "definition": "첫 문장에 핵심을 두고 근거로 확장하는 전달력",
+      "rubricByLevel": {
+        "1": [
+          "배경부터 장황"
+        ],
+        "2": [
+          "중간에 결론"
+        ],
+        "3": [
+          "결론→근거"
+        ],
+        "4": [
+          "청자별 결론 조정"
+        ],
+        "5": [
+          "조직 커뮤니케이션 표준화"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "DETECT",
+          "nameKo": "탐지",
+          "ncs": "의사소통"
+        },
+        {
+          "code": "STRUCTURE",
+          "nameKo": "구조화",
+          "ncs": "의사소통"
+        },
+        {
+          "code": "PROVE",
+          "nameKo": "증명",
+          "ncs": "문제해결"
+        }
+      ],
+      "terms": [
+        {
+          "id": "conclusion_first-core",
+          "kind": "phrase",
+          "termKo": "결론 우선 전달",
+          "meaningKo": "첫 문장에 핵심을 두고 근거로 확장하는 전달력",
+          "goodExample": "결론 우선 전달 패턴으로 답했습니다.",
+          "badExample": "기법을 모른 채 흘려 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "conclusion_first-cue",
+          "kind": "word",
+          "termKo": "평가 단서",
+          "meaningKo": "면접관이 체크하는 포인트",
+          "goodExample": "평가 단서에 맞춰 증거를 배치했습니다.",
+          "badExample": "하고 싶은 말만 했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "conclusion_first-drill",
+          "kind": "word",
+          "termKo": "드릴",
+          "meaningKo": "짧은 반복 연습",
+          "goodExample": "독해·선택 드릴로 정확도를 올렸습니다.",
+          "badExample": "연습 없이 감으로만 했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "conclusion_first-transfer",
+          "kind": "phrase",
+          "termKo": "장면 전이",
+          "meaningKo": "게임·연습 → 실제 면접",
+          "goodExample": "연습한 구조를 실제 장면에 옮겼습니다.",
+          "badExample": "연습과 실전이 분리됐습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "STARTUP",
+            "LARGE"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "구조화",
+          "근거",
+          "재현"
+        ],
+        "PUBLIC": [
+          "의도 정확",
+          "공정한 기준",
+          "기록"
+        ],
+        "STARTUP": [
+          "간결",
+          "임팩트",
+          "속도"
+        ]
+      }
+    },
+    "FOLLOWUP_DEPTH": {
+      "nameKo": "후속질문 대응",
+      "nameEn": "Follow-up Depth",
+      "clusterCode": "LEX_INTERVIEW_CRAFT",
+      "ncsAnchor": "면접 답변 기법 · 역량게임 독해 모듈",
+      "definition": "파고드는 질문에 층을 나눠 깊이를 더하는 능력",
+      "rubricByLevel": {
+        "1": [
+          "같은 말 반복"
+        ],
+        "2": [
+          "한 겹 추가"
+        ],
+        "3": [
+          "원인·대안·결과로 확장"
+        ],
+        "4": [
+          "가정·한계까지 설명"
+        ],
+        "5": [
+          "학습·재발을 시스템에 연결"
+        ]
+      },
+      "subskills": [
+        {
+          "code": "DETECT",
+          "nameKo": "탐지",
+          "ncs": "의사소통"
+        },
+        {
+          "code": "STRUCTURE",
+          "nameKo": "구조화",
+          "ncs": "의사소통"
+        },
+        {
+          "code": "PROVE",
+          "nameKo": "증명",
+          "ncs": "문제해결"
+        }
+      ],
+      "terms": [
+        {
+          "id": "followup_depth-core",
+          "kind": "phrase",
+          "termKo": "후속질문 대응",
+          "meaningKo": "파고드는 질문에 층을 나눠 깊이를 더하는 능력",
+          "goodExample": "후속질문 대응 패턴으로 답했습니다.",
+          "badExample": "기법을 모른 채 흘려 말했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC",
+            "STARTUP"
+          ]
+        },
+        {
+          "id": "followup_depth-cue",
+          "kind": "word",
+          "termKo": "평가 단서",
+          "meaningKo": "면접관이 체크하는 포인트",
+          "goodExample": "평가 단서에 맞춰 증거를 배치했습니다.",
+          "badExample": "하고 싶은 말만 했습니다.",
+          "preferredBy": [
+            "LARGE",
+            "PUBLIC"
+          ]
+        },
+        {
+          "id": "followup_depth-drill",
+          "kind": "word",
+          "termKo": "드릴",
+          "meaningKo": "짧은 반복 연습",
+          "goodExample": "독해·선택 드릴로 정확도를 올렸습니다.",
+          "badExample": "연습 없이 감으로만 했습니다.",
+          "preferredBy": [
+            "STARTUP",
+            "LARGE"
+          ]
+        },
+        {
+          "id": "followup_depth-transfer",
+          "kind": "phrase",
+          "termKo": "장면 전이",
+          "meaningKo": "게임·연습 → 실제 면접",
+          "goodExample": "연습한 구조를 실제 장면에 옮겼습니다.",
+          "badExample": "연습과 실전이 분리됐습니다.",
+          "preferredBy": [
+            "PUBLIC",
+            "STARTUP",
+            "LARGE"
+          ]
+        }
+      ],
+      "lensSignals": {
+        "LARGE": [
+          "구조화",
+          "근거",
+          "재현"
+        ],
+        "PUBLIC": [
+          "의도 정확",
+          "공정한 기준",
+          "기록"
+        ],
+        "STARTUP": [
+          "간결",
+          "임팩트",
+          "속도"
+        ]
       }
     }
   }

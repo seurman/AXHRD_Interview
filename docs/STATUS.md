@@ -2,6 +2,15 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — 역량사전 → Framework Studio (완료)
+
+| 항목 | 내용 |
+|------|------|
+| 사전 | `competency-lexicon.json` v2 — **37역량 · 5클러스터** · 정의 + L1–L5 루브릭 + 신호어 |
+| 클러스터 | IRT코어 · NCS기초확장 · 행동신호 · 조직렌즈 · 면접기법 |
+| 동기화 | `POST /api/admin/competency-lexicon/sync-to-bank` → Competency·RubricSet·문항 |
+| UI | `/admin/content` 「역량사전」탭 · Framework Studio 「역량사전 반영」버튼 |
+
 ## 최근 작업 — 의도 독해 · 베스트/워스트 (완료)
 
 | 항목 | 내용 |
