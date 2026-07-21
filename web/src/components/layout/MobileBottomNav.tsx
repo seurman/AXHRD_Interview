@@ -45,7 +45,7 @@ export function MobileBottomNav({
       match: (p) => p === "/discover" || p.startsWith("/discover/") || p.startsWith("/resume-review"),
     },
     {
-      href: "/practice/swipe",
+      href: "/practice/path",
       label: m.practice,
       icon: Layers,
       match: (p) =>

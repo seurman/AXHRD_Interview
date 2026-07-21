@@ -28,6 +28,15 @@ export function buildCareerQuests(params: {
       icon: "🎤",
     },
     {
+      id: "path",
+      title: "역량 학습 1단계",
+      description: "개념·원리 레슨으로 오늘 드릴 이어가기",
+      href: "/practice/path",
+      xp: 60,
+      done: false,
+      icon: "🧭",
+    },
+    {
       id: "swipe",
       title: "질문 카드 10장",
       description: "실전 질문 카드로 습관 만들기",

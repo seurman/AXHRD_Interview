@@ -20,7 +20,14 @@ export type NavLabelKey =
   | "permissions"
   | "diagnostic";
 
-export type PrepareLabelKey = "interview" | "discover" | "cards" | "resumeReview" | "trialInterview" | "assessment";
+export type PrepareLabelKey =
+  | "interview"
+  | "discover"
+  | "cards"
+  | "path"
+  | "resumeReview"
+  | "trialInterview"
+  | "assessment";
 
 export type GuestProductLabelKey =
   | "allProducts"
@@ -138,6 +145,7 @@ const GROWTH_HREFS: { href: string; labelKey: PrepareLabelKey; capability: Capab
 
 const PRACTICE_HREFS: { href: string; labelKey: PrepareLabelKey; capability: CapabilityId }[] = [
   { href: "/demo", labelKey: "trialInterview", capability: "product.demo_trial" },
+  { href: "/practice/path", labelKey: "path", capability: "product.practice" },
   { href: "/practice/swipe", labelKey: "cards", capability: "product.practice" },
 ];
 
