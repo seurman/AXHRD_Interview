@@ -12,6 +12,7 @@ type Props = {
 export function LearningPathCard({ weakness, pathSummary }: Props) {
   const active = pathSummary.filter((c) => c.unlockedStage > 0 || c.streakDays > 0);
   const bestStreak = Math.max(0, ...pathSummary.map((c) => c.streakDays));
+  const questions = weakness.practiceQuestions?.slice(0, 2) ?? [];
 
   return (
     <section className="card-luxe overflow-hidden">
@@ -34,13 +35,25 @@ export function LearningPathCard({ weakness, pathSummary }: Props) {
             {weakness.dimensionLabelKo ? ` · ${weakness.dimensionLabelKo}` : ""}
           </p>
           <p className="mt-1 text-xs text-muted">{weakness.tip}</p>
+          {questions.length > 0 ? (
+            <ul className="mt-2 space-y-1.5">
+              {questions.map((q, i) => (
+                <li key={q.id ?? i} className="text-xs leading-relaxed text-foreground">
+                  {i + 1}. {q.text}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href="/practice/path" className="btn-primary px-4 py-2 text-sm">
             학습 패스 열기
           </Link>
-          <Link href={weakness.href} className="btn-secondary px-4 py-2 text-sm">
-            약점 레슨
+          <Link
+            href={weakness.swipeHref ?? weakness.href}
+            className="btn-secondary px-4 py-2 text-sm"
+          >
+            약점 말하기
           </Link>
         </div>
       </div>

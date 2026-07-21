@@ -42,6 +42,9 @@ type CompetencyLatest = {
   percentile: number;
   levelEst: number;
   assessed: boolean;
+  unlockedStage?: number;
+  masteryScore?: number;
+  pathCertified?: boolean;
 };
 
 interface DashboardProps {
@@ -364,22 +367,33 @@ function CompetencySkillBar({
   percentile,
   theta,
   assessed,
+  unlockedStage = 0,
+  masteryScore = 0,
+  pathCertified = false,
 }: {
   code: string;
   levelEst: number;
   percentile: number;
   theta: number;
   assessed: boolean;
+  unlockedStage?: number;
+  masteryScore?: number;
+  pathCertified?: boolean;
 }) {
   const color = assessed
     ? (LEVEL_COLORS[Math.min(levelEst, 5)] ?? LEVEL_COLORS[0])
     : LEVEL_COLORS[0];
 
   return (
-    <div className={`rounded-xl bg-background p-4 ring-1 ring-inset ring-card-border/50 ${!assessed ? "opacity-80" : ""}`}>
+    <Link
+      href={`/practice/path/${code.toLowerCase()}`}
+      className={`block rounded-xl bg-background p-4 ring-1 ring-inset ring-card-border/50 transition hover:ring-accent/40 ${!assessed ? "opacity-80" : ""}`}
+    >
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium text-foreground">{competencyLabel(code)}</span>
-        <span className={`font-bold ${color}`}>{assessed ? `L${levelEst}` : "미시작"}</span>
+        <span className={`font-bold ${color}`}>
+          {pathCertified ? "인증" : assessed ? `L${levelEst}` : "미시작"}
+        </span>
       </div>
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-primary/10">
         <div
@@ -390,9 +404,15 @@ function CompetencySkillBar({
         />
       </div>
       <p className="mt-1 text-xs text-muted">
-        {assessed ? `${Math.round(percentile)}% · θ ${theta.toFixed(2)}` : "0% · 아직 측정하지 않음"}
+        {assessed
+          ? `${Math.round(percentile)}% · θ ${theta.toFixed(2)}`
+          : "0% · 아직 측정하지 않음"}
       </p>
-    </div>
+      <p className="mt-0.5 text-[11px] text-muted">
+        패스 stage {unlockedStage}/5 · 숙련 {Math.round(masteryScore * 100)}%
+        {pathCertified ? " · 인증 완료" : ""}
+      </p>
+    </Link>
   );
 }
 

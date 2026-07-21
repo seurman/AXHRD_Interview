@@ -97,7 +97,7 @@ export const dictionary: Dictionary = {
       discover: "나를 발견하기",
       resume: "자소서 리뷰",
       interview: "구조화 AI 면접",
-      practice: "질문 카드 덱",
+      practice: "역량 학습 패스",
       growth: "역량 트래킹",
       orgDiagnosis: "조직 진단",
       forOrganizations: "기관 플랫폼",
@@ -225,9 +225,9 @@ export const dictionary: Dictionary = {
         },
         {
           kicker: "Practice",
-          title: "질문 덱",
-          desc: "스와이프 연습",
-          mock: ["직무별", "저장"],
+          title: "역량 학습 패스",
+          desc: "개념 · 말하기 · 인증",
+          mock: ["패스", "드릴"],
         },
         {
           kicker: "Growth",
@@ -347,8 +347,8 @@ export const dictionary: Dictionary = {
         {
           num: "2",
           title: "준비",
-          desc: "자기발견·자소서 리뷰·질문 덱으로 면접 전 스토리와 문장을 다듬습니다.",
-          points: ["강점·가치관 카드 정리", "JD 맞춤 자소서 피드백", "직무별 질문 스와이프 연습"],
+          desc: "자기발견·자소서 리뷰·역량 학습 패스로 면접 전 스토리와 말하기를 쌓습니다.",
+          points: ["강점·가치관 카드 정리", "JD 맞춤 자소서 피드백", "역량별 학습 패스·말하기 드릴"],
         },
         {
           num: "3",
@@ -397,8 +397,8 @@ export const dictionary: Dictionary = {
             },
             {
               step: "STEP 4",
-              title: "질문 덱 · 역량 트래킹",
-              desc: "스와이프 연습과 θ·스킬 트리로 성장을 숫자로 남깁니다.",
+              title: "학습 패스 · 역량 트래킹",
+              desc: "개념·말하기 드릴과 θ·스킬 트리로 성장을 숫자로 남깁니다.",
             },
           ],
         },
@@ -594,8 +594,8 @@ export const dictionary: Dictionary = {
         },
         {
           badge: "NEW",
-          title: "산업별 실전 질문 덱",
-          desc: "직무 · 산업에 맞춘 질문을 스와이프로 연습합니다",
+          title: "역량 학습 패스",
+          desc: "기초→심화→말하기→인증까지 단계별로 한 역량을 마스터합니다",
         },
         {
           badge: "UPDATE",
@@ -711,10 +711,10 @@ export const dictionary: Dictionary = {
         highlights: [
           { title: "스킬 트리", desc: "NCS 기반 역량을 한눈에 봅니다." },
           { title: "성장 곡선", desc: "세션마다 쌓이는 변화를 추적합니다." },
-          { title: "인증서", desc: "공유 가능한 역량 인증서를 만듭니다." },
+          { title: "인증서", desc: "CERTIFY 뱃지와 θ를 공유 가능한 인증서로 남깁니다." },
         ],
         capabilitiesTitle: "핵심 기능",
-        capabilities: ["θ·백분위 추적", "역량별 성장 그래프", "공개 인증서 링크"],
+        capabilities: ["θ·백분위 추적", "패스 인증 뱃지", "공개 인증서 링크"],
         ctaPrimary: "내 역량 보기",
         closingTitle: "숫자로 남는 성장",
       },

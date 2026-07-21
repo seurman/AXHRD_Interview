@@ -170,10 +170,32 @@ export function LearningPathOverview({
         <p className="rounded-lg bg-primary/5 px-3 py-2 text-sm text-foreground">
           {weakness.prompt}
         </p>
-        <p className="text-xs text-muted">샘플: {weakness.sampleQuestion}</p>
-        <Link href={weakness.href} className="btn-secondary inline-flex text-sm">
-          약점 레슨 열기 →
-        </Link>
+        {(weakness.practiceQuestions?.length ?? 0) > 0 ? (
+          <ol className="space-y-2">
+            {weakness.practiceQuestions.map((q, i) => (
+              <li
+                key={q.id ?? i}
+                className="rounded-lg border border-card-border px-3 py-2 text-sm text-foreground"
+              >
+                <span className="text-xs text-muted">{i + 1}. </span>
+                {q.text}
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="text-xs text-muted">샘플: {weakness.sampleQuestion}</p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <Link href={weakness.href} className="btn-secondary inline-flex text-sm">
+            약점 레슨 열기 →
+          </Link>
+          <Link
+            href={weakness.swipeHref ?? `/practice/swipe?competency=${weakness.competency}`}
+            className="btn-primary inline-flex text-sm"
+          >
+            이 질문으로 말하기 →
+          </Link>
+        </div>
       </section>
 
       <section className="space-y-3">

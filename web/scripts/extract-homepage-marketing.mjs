@@ -355,8 +355,12 @@ function applyPersuasiveCopy(html) {
         <p class="prod-desc" style="color: rgba(245,237,228,0.6)">자소서 기반의 질문으로 현장감을 살립니다. 음성으로 답하고, 꼬리질문으로 깊이까지 봅니다.</p>`],
     [`<div class="prod-name">질문 덱</div>
         <p class="prod-desc">스와이프로 연습, 직무별로 저장. 짧게 자주, 답변의 근육을 만듭니다.</p>`,
-      `<div class="prod-name">질문 덱</div>
-        <p class="prod-desc">짧게 자주 연습합니다. 직무별로 저장해, 답하는 감각을 키웁니다.</p>`],
+      `<div class="prod-name">역량 학습 패스</div>
+        <p class="prod-desc">개념·원리부터 말하기 드릴·인증까지. 가볍게 쌓고, 필요할 때 모의로 측정합니다.</p>`],
+    [`<div class="prod-name">질문 덱</div>
+        <p class="prod-desc">짧게 자주 연습합니다. 직무별로 저장해, 답하는 감각을 키웁니다.</p>`,
+      `<div class="prod-name">역량 학습 패스</div>
+        <p class="prod-desc">개념·원리부터 말하기 드릴·인증까지. 가볍게 쌓고, 필요할 때 모의로 측정합니다.</p>`],
     [`<div class="prod-name">역량 트래킹</div>
         <p class="prod-desc">역량 점수(θ)와 스킬 트리로 성장을 숫자로 남기고, 인증서로 증명합니다.</p>`,
       `<div class="prod-name">역량 트래킹</div>
@@ -437,8 +441,12 @@ function applyPersuasiveCopy(html) {
         <p>자소서 기반의 질문으로 현장감을 살립니다. 음성으로 답하고, 꼬리질문으로 깊이를 봅니다.</p>`],
     [`<h4>질문 덱 · 역량 트래킹</h4>
         <p>스와이프 연습과 역량 점수 · 스킬 트리로 성장을 숫자로 남깁니다.</p>`,
-      `<h4>연습 · 역량 기록</h4>
-        <p>짧게 자주 연습하고, 성장은 점수와 기록으로 남깁니다.</p>`],
+      `<h4>학습 패스 · 역량 기록</h4>
+        <p>개념·원리·말하기 드릴을 쌓고, 모의면접으로 점수를 남깁니다.</p>`],
+    [`<h4>연습 · 역량 기록</h4>
+        <p>짧게 자주 연습하고, 성장은 점수와 기록으로 남깁니다.</p>`,
+      `<h4>학습 패스 · 역량 기록</h4>
+        <p>개념·원리·말하기 드릴을 쌓고, 모의면접으로 점수를 남깁니다.</p>`],
     // Why
     [
       `<div class="sec-eyebrow">Why AXHRD · 4 principles</div>
