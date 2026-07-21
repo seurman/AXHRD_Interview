@@ -13,6 +13,7 @@ import {
 } from "./irt-game";
 import { COMPETENCY_CODES } from "@/types";
 import { GAME_TYPES } from "./types";
+import { isLongestCorrect } from "./catalog/content-shuffle";
 
 describe("competency-game catalog", () => {
   it("ships all six competencies with level-locked game progression", () => {
@@ -102,5 +103,50 @@ describe("competency-game engine + IRT", () => {
     const graded = gradeLevel(level, answers);
     expect(graded.allCorrect).toBe(true);
     expect(graded.xpTotal).toBeGreaterThanOrEqual(level.xpReward);
+  });
+});
+
+describe("competency-game content quality", () => {
+  it("does not make the uniquely longest choice the correct answer", () => {
+    let total = 0;
+    let uniquelyLong = 0;
+    for (const course of listGameCourses()) {
+      for (const unit of course.units) {
+        for (const level of unit.levels) {
+          for (const item of level.items) {
+            if (item.gameType !== "choice") continue;
+            total++;
+            if (isLongestCorrect(item.choices, item.answerIndex)) uniquelyLong++;
+          }
+        }
+      }
+    }
+    expect(total).toBeGreaterThan(20);
+    expect(uniquelyLong / total).toBeLessThanOrEqual(0.15);
+  });
+  it("keeps true_false/match/spot/chip banks from reusing swipe_judge copy", () => {
+    const texts = new Map<string, Set<string>>();
+    const add = (text: string, tag: string) => {
+      const n = text.replace(/\s+/g, " ").trim();
+      if (n.length < 14) return;
+      if (!texts.has(n)) texts.set(n, new Set());
+      texts.get(n)!.add(tag);
+    };
+    for (const course of listGameCourses()) {
+      for (const unit of course.units) {
+        for (const level of unit.levels) {
+          for (const item of level.items) {
+            const tag = item.gameType;
+            if (item.gameType === "swipe_judge") add(item.answerText, tag);
+            if (item.gameType === "spot_weak") item.sentences.forEach((s) => add(s, tag));
+            if (item.gameType === "true_false") add(item.statement, tag);
+            if (item.gameType === "speak_along") add(item.script, tag);
+            if (item.gameType === "order") item.cards.forEach((c) => add(c, tag));
+          }
+        }
+      }
+    }
+    const cross = [...texts.entries()].filter(([, tags]) => tags.size > 1);
+    expect(cross).toEqual([]);
   });
 });

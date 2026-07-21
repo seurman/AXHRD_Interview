@@ -22,6 +22,7 @@ type Body = {
   levelId?: string;
   answers?: GameAnswerPayload[];
   playedItemIds?: string[];
+  comboBonus?: number;
 };
 
 export async function POST(req: Request) {
@@ -94,6 +95,12 @@ export async function POST(req: Request) {
     ? (progress.clearedLevelIds as string[]).includes(levelId)
     : false;
 
+  const comboRaw = Math.max(0, Math.floor(Number(body.comboBonus ?? 0)));
+  // 3콤보 이상이면 콤보×2 XP (최대 +40) — 듀오링고식 연속 정답 보너스
+  const comboXp =
+    !alreadyCleared && comboRaw >= 3 ? Math.min(40, comboRaw * 2) : 0;
+  const xpGained = alreadyCleared ? 0 : graded.xpTotal + comboXp;
+
   if (!graded.allCorrect) {
     const updated = await loseHeart(user.id, competency);
     const firstWrong = graded.results.find((r) => !r.correct);
@@ -114,7 +121,7 @@ export async function POST(req: Request) {
     userId: user.id,
     competency,
     levelId,
-    xpGained: alreadyCleared ? 0 : graded.xpTotal,
+    xpGained,
     heartsLost: 0,
     alreadyCleared,
   });
@@ -123,7 +130,8 @@ export async function POST(req: Request) {
     ok: true,
     allCorrect: true,
     wrongCount: 0,
-    xpGained: alreadyCleared ? 0 : graded.xpTotal,
+    xpGained,
+    comboXp,
     hearts: updated.hearts,
     xp: updated.xp,
     theta: irt.theta,
@@ -131,6 +139,8 @@ export async function POST(req: Request) {
     results: graded.results,
     message: alreadyCleared
       ? "이미 클리어한 레벨이에요. 복습 완료!"
-      : "레벨 클리어!",
+      : comboXp > 0
+        ? `레벨 클리어! 콤보 보너스 +${comboXp} XP`
+        : "레벨 클리어!",
   });
 }
