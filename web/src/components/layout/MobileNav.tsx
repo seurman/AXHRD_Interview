@@ -14,6 +14,7 @@ import { NavTransitionLink } from "@/components/layout/NavTransitionLink";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { useWorkspaceMode } from "@/lib/nav/workspace";
 import type { NavLinkItem } from "@/lib/platform/nav-registry";
+import { GUEST_PRODUCT_HREFS } from "@/lib/platform/nav-registry";
 
 type SaasLinksConfig = {
   titleKey: "saas";
@@ -240,25 +241,16 @@ export function MobileNav({
               <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted">
                 {c.nav.products}
               </p>
-              <MobileNavLink href="/demo" onNavigate={closeDrawer} className={linkClass("/demo")}>
-                {c.guestProducts.trialInterview}
-              </MobileNavLink>
-              <MobileNavLink href="/discover" onNavigate={closeDrawer} className={linkClass("/discover")}>
-                {c.guestProducts.discover}
-              </MobileNavLink>
-              <MobileNavLink
-                href="/auth/register?next=/interview/setup"
-                onNavigate={closeDrawer}
-                className={linkClass("/auth/register")}
-              >
-                {c.guestProducts.interview}
-              </MobileNavLink>
-              <MobileNavLink href="/diagnosis" onNavigate={closeDrawer} className={linkClass("/diagnosis")}>
-                {c.guestProducts.orgDiagnosis}
-              </MobileNavLink>
-              <MobileNavLink href="/org/setup" onNavigate={closeDrawer} className={linkClass("/org/setup")}>
-                {c.guestProducts.forOrganizations}
-              </MobileNavLink>
+              {GUEST_PRODUCT_HREFS.map((item) => (
+                <MobileNavLink
+                  key={item.href}
+                  href={item.href}
+                  onNavigate={closeDrawer}
+                  className={linkClass(item.href.split("?")[0])}
+                >
+                  {c.guestProducts[item.labelKey]}
+                </MobileNavLink>
+              ))}
               <MobileNavLink href="/pricing" onNavigate={closeDrawer} className={linkClass("/pricing")}>
                 {c.nav.pricing}
               </MobileNavLink>
@@ -353,6 +345,24 @@ export function MobileNav({
                   className={linkClass(profileHref)}
                 >
                   {getMobileNavLabel("profile", dict)}
+                </MobileNavLink>
+              )}
+              {loggedIn && (
+                <MobileNavLink
+                  href="/profile/certificate"
+                  onNavigate={closeDrawer}
+                  className={linkClass("/profile/certificate")}
+                >
+                  {c.avatar.certificate}
+                </MobileNavLink>
+              )}
+              {loggedIn && (
+                <MobileNavLink
+                  href="/pricing"
+                  onNavigate={closeDrawer}
+                  className={linkClass("/pricing")}
+                >
+                  {c.avatar.billing}
                 </MobileNavLink>
               )}
             </>

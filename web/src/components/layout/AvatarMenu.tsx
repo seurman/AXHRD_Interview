@@ -74,6 +74,15 @@ export function AvatarMenu({
           )}
 
           <Link
+            href="/profile/certificate"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className={`avatar-menu-item ${pathname === "/profile/certificate" || pathname.startsWith("/profile/certificate/") ? "avatar-menu-item--active" : ""}`}
+          >
+            {a.certificate}
+          </Link>
+
+          <Link
             href="/pricing"
             role="menuitem"
             onClick={() => setOpen(false)}

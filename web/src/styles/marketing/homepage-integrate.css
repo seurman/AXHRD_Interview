@@ -539,4 +539,35 @@ body.ax-home-page .ax-home .org-strip-desc {
     width: 100%;
     justify-content: center;
   }
+
+  body.ax-home-page .ax-home .prod-grid,
+  body.ax-home-page .ax-home .prod-grid--wedge,
+  body.ax-home-page .ax-home .why-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body.ax-home-page .ax-home .prod-card {
+    min-height: 0;
+    padding: 20px 18px;
+  }
+
+  body.ax-home-page .ax-home .prod-name {
+    font-size: 20px;
+  }
+
+  body.ax-home-page .ax-home .cta-btns {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  body.ax-home-page .ax-home .cta-btns .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  body.ax-home-page .ax-home .foot-col a {
+    min-height: 2.75rem;
+    display: flex;
+    align-items: center;
+  }
 }

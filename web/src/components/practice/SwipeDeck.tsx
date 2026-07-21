@@ -122,7 +122,7 @@ export function SwipeDeck({
 
   if (editingTarget) {
     return (
-      <div className="card-luxe space-y-5 p-8">
+      <div className="card-luxe space-y-5 p-5 sm:p-8">
         <div className="text-center">
           <p className="section-eyebrow text-primary">{s.setupEyebrow}</p>
           <h2 className="mt-1 text-xl font-bold text-foreground">{s.setupTitle}</h2>
@@ -168,14 +168,14 @@ export function SwipeDeck({
           <button
             type="button"
             onClick={() => setEditingTarget(true)}
-            className="rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/15"
+            className="min-h-11 min-w-0 max-w-[70%] truncate rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/15 touch-manipulation"
           >
             {industryLabel(industry!)} · {jobRoleLabel(jobRole!)}
           </button>
           <button
             type="button"
             onClick={openSaved}
-            className="flex items-center gap-1.5 text-sm text-muted hover:text-primary"
+            className="flex min-h-11 shrink-0 items-center gap-1.5 px-1 text-sm text-muted hover:text-primary touch-manipulation"
           >
             <Bookmark className="h-4 w-4" />
             {s.saved}

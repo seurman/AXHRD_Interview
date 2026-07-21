@@ -53,24 +53,30 @@ export function ShareLinkButton({ initialSlug }: { initialSlug: string | null })
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
       <input
         readOnly
         value={url}
-        className="input-luxe min-w-0 flex-1 text-sm text-muted"
+        className="input-luxe min-w-0 w-full flex-1 text-sm text-muted"
         onFocus={(e) => e.target.select()}
       />
-      <button type="button" onClick={copy} className="btn-secondary shrink-0">
-        {copied ? "복사됨!" : "링크 복사"}
-      </button>
-      <button
-        type="button"
-        onClick={() => setRevokeOpen(true)}
-        disabled={loading}
-        className="shrink-0 text-xs text-danger hover:underline"
-      >
-        공유 중단
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={copy}
+          className="btn-secondary min-h-11 flex-1 shrink-0 sm:flex-none"
+        >
+          {copied ? "복사됨!" : "링크 복사"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setRevokeOpen(true)}
+          disabled={loading}
+          className="inline-flex min-h-11 shrink-0 items-center px-3 text-sm text-danger hover:underline touch-manipulation"
+        >
+          공유 중단
+        </button>
+      </div>
       <ConfirmDialog
         open={revokeOpen}
         onOpenChange={setRevokeOpen}

@@ -71,8 +71,8 @@ export function LearningPathOverview({
         </p>
       </header>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-full border border-card-border bg-card p-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="inline-flex w-full rounded-full border border-card-border bg-card p-1 sm:w-auto">
           {(
             [
               { id: "NEW_GRAD", label: "신입" },
@@ -84,7 +84,7 @@ export function LearningPathOverview({
               type="button"
               disabled={pending}
               onClick={() => switchTrack(opt.id)}
-              className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+              className={`min-h-11 flex-1 rounded-full px-4 text-sm font-semibold transition touch-manipulation sm:flex-none ${
                 track === opt.id
                   ? "bg-primary text-primary-foreground"
                   : "text-muted hover:text-foreground"
@@ -94,13 +94,15 @@ export function LearningPathOverview({
             </button>
           ))}
         </div>
-        <p className="text-xs text-muted">
+        <p className="text-left text-xs text-muted sm:text-right">
           {drillLabel}
-          {" · "}
-          모의{" "}
-          {mockInterviews.limit == null
-            ? `${mockInterviews.used} (무제한)`
-            : `${mockInterviews.used} / ${mockInterviews.limit}`}
+          <span className="hidden sm:inline"> · </span>
+          <span className="mt-0.5 block sm:mt-0 sm:inline">
+            모의{" "}
+            {mockInterviews.limit == null
+              ? `${mockInterviews.used} (무제한)`
+              : `${mockInterviews.used} / ${mockInterviews.limit}`}
+          </span>
         </p>
       </div>
 
@@ -139,14 +141,14 @@ export function LearningPathOverview({
               {recommendation.nextLesson.titleKo}
             </p>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+          <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <p className="text-xs text-muted">
               스트릭 {recommendation.streakDays}일 · 숙련{" "}
               {Math.round(recommendation.masteryScore * 100)}%
             </p>
             <Link
               href={`/practice/path/${recommendation.competency.toLowerCase()}`}
-              className="btn-primary px-4 py-2 text-sm"
+              className="btn-primary inline-flex min-h-11 w-full items-center justify-center px-4 text-sm sm:w-auto"
             >
               이어서 학습
             </Link>
@@ -185,13 +187,16 @@ export function LearningPathOverview({
         ) : (
           <p className="text-xs text-muted">샘플: {weakness.sampleQuestion}</p>
         )}
-        <div className="flex flex-wrap gap-2">
-          <Link href={weakness.href} className="btn-secondary inline-flex text-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <Link
+            href={weakness.href}
+            className="btn-secondary inline-flex min-h-11 w-full items-center justify-center text-sm sm:w-auto"
+          >
             약점 레슨 열기 →
           </Link>
           <Link
             href={weakness.swipeHref ?? `/practice/swipe?competency=${weakness.competency}`}
-            className="btn-primary inline-flex text-sm"
+            className="btn-primary inline-flex min-h-11 w-full items-center justify-center text-sm sm:w-auto"
           >
             이 질문으로 말하기 →
           </Link>
@@ -199,9 +204,12 @@ export function LearningPathOverview({
       </section>
 
       <section className="space-y-3">
-        <div className="flex items-end justify-between gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <h2 className="text-sm font-semibold text-foreground">6개 역량 트랙</h2>
-          <Link href="/practice/swipe" className="text-xs text-accent hover:underline">
+          <Link
+            href="/practice/swipe"
+            className="inline-flex min-h-11 items-center text-sm text-accent hover:underline touch-manipulation"
+          >
             질문 카드만 연습 →
           </Link>
         </div>
@@ -210,7 +218,7 @@ export function LearningPathOverview({
             <li key={c.competency}>
               <Link
                 href={`/practice/path/${c.competency.toLowerCase()}`}
-                className="card-luxe block h-full p-4 transition hover:border-accent/30"
+                className="card-luxe block h-full min-h-11 p-4 transition hover:border-accent/30 touch-manipulation"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>

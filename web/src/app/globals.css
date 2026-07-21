@@ -5013,7 +5013,8 @@ html.dark .lp-faq-question {
 .product-stage {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   border-radius: 1.5rem;
   padding: 1.25rem 1rem 2rem;
   background:

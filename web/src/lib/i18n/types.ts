@@ -109,6 +109,7 @@ export type Dictionary = {
     avatar: {
       menu: string;
       profile: string;
+      certificate: string;
       billing: string;
     };
     mobileNav: {

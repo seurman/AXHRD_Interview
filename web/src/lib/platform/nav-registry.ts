@@ -144,16 +144,19 @@ const GROWTH_HREFS: { href: string; labelKey: PrepareLabelKey; capability: Capab
 ];
 
 const PRACTICE_HREFS: { href: string; labelKey: PrepareLabelKey; capability: CapabilityId }[] = [
-  { href: "/demo", labelKey: "trialInterview", capability: "product.demo_trial" },
   { href: "/practice/path", labelKey: "path", capability: "product.practice" },
   { href: "/practice/swipe", labelKey: "cards", capability: "product.practice" },
+  { href: "/demo", labelKey: "trialInterview", capability: "product.demo_trial" },
 ];
 
-/** 게스트 제품 메뉴 — 실제 앱 진입점만 (소개 /products 페이지는 숨김) */
+/** 게스트 제품 메뉴 — 홈 웨지(면접·자소서·학습 패스)와 맞춘 진입점 */
 export const GUEST_PRODUCT_HREFS: { href: string; labelKey: GuestProductLabelKey }[] = [
   { href: "/demo", labelKey: "trialInterview" },
-  { href: "/discover", labelKey: "discover" },
   { href: "/auth/register?next=/interview/setup", labelKey: "interview" },
+  { href: "/auth/register?next=/resume-review", labelKey: "resume" },
+  { href: "/auth/register?next=/practice/path", labelKey: "practice" },
+  { href: "/auth/register?next=/dashboard", labelKey: "growth" },
+  { href: "/discover", labelKey: "discover" },
   { href: "/diagnosis", labelKey: "orgDiagnosis" },
   { href: "/org/setup", labelKey: "forOrganizations" },
 ];

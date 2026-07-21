@@ -105,6 +105,7 @@ export const dictionary: Dictionary = {
     avatar: {
       menu: "Account menu",
       profile: "Profile",
+      certificate: "Competency certificate",
       billing: "Billing",
     },
     mobileNav: {
