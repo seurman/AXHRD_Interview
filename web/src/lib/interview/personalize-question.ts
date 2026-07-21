@@ -16,14 +16,18 @@ import type { ResumeSummary, ResumeChunk } from "@/lib/interview/resume-summary"
 import type { JdRequirements } from "@/lib/company/jd-mapper";
 
 const PERSONALIZE_SYSTEM = `당신은 한국 기업 면접관입니다.
-기본 질문을 지원자 자소서에 **실제로 적힌 사실만** 인용해 한 문장으로 다시 쓰고, 채점 루브릭도 만듭니다.
+기본 질문의 평가 의도(역량)를 유지하되, 지원자 자소서에 **실제로 적힌 구체 에피소드**를 「」로 인용·요약한 뒤 그 장면을 캐묻는 한 문장 질문을 만듭니다.
+
+형식(필수):
+자소서에 쓰신 「구체 구절/요약」 — 그 상황에서 본인의 행동·설득·결과·지표를 묻는 질문
 
 절대 규칙 (위반 시 무효):
 - 자소서 핵심 문장에 **없는** 프로젝트명·회사명·수치·역할을 지어내지 마세요.
-- 질문 한 문장 안에 제공된 「자소서 핵심 문장」에서 가져온 **고유 명사 또는 구절을 최소 1개** 큰따옴표 또는 「」로 그대로 넣으세요.
-- 기본 질문의 평가 의도(역량)는 유지하되, 막연한 "자소서에 적으신 경험" 같은 표현만으로는 부족합니다.
-- 존댓말, 90자 이내 권장.
-- 루브릭 3~4개: 자소서에서 인용한 그 경험을 검증하는 기준을 포함.
+- 질문 한 문장 안에 제공된 「자소서 핵심 문장」에서 가져온 **고유 명사·수치·상황 구절을 최소 1개** 「」 또는 ""로 그대로 넣으세요.
+- 금지: "자소서에 적어 주신 경험을 바탕으로 여쭤봅니다" + 기본 질문 붙이기.
+- 금지: "말씀하신 협업 갈등 상황"처럼 추상화만 하고 구체 에피소드를 빼는 표현.
+- 존댓말, 140자 이내 권장.
+- 루브릭 3~4개: 인용한 그 경험을 검증하는 기준을 포함.
 - JSON만: {"question":"...","rubric":["기준1","기준2","기준3"],"citedPhrase":"질문에 넣은 자소서 구절"}`;
 
 export interface PersonalizeResult {
@@ -173,13 +177,13 @@ export async function personalizeQuestion(params: {
 
   const heuristicText = useJdOnly
     ? heuristicJdPersonalize(params.template, jdTerms, params.companyName, params.jobRole)
-    : heuristicPersonalize(
-        params.template,
+    : heuristicPersonalize({
         highlights,
-        params.companyName,
-        params.jobRole,
-        anchorRelevantToCompetency,
-      );
+        competency: params.competency,
+        companyName: params.companyName,
+        jobRole: params.jobRole,
+        anchorRelevant: anchorRelevantToCompetency,
+      });
   return {
     text: heuristicText,
     rubric: heuristicRubric(params.competency, groundingTerms, useJdOnly),
@@ -244,7 +248,7 @@ function pickDisplayedAnchors(
   return out;
 }
 
-function excerptForCitation(markdown: string, max = 85): string {
+function excerptForCitation(markdown: string, max = 110): string {
   const flat = markdown.replace(/\s+/g, " ").trim();
   return flat.length <= max ? flat : `${flat.slice(0, max - 1)}…`;
 }
@@ -399,48 +403,67 @@ function extractResumeHighlights(resume: string, competency: string): string[] {
 }
 
 function heuristicJdPersonalize(
-  template: string,
+  _template: string,
   jdTerms: string[],
   companyName?: string,
   jobRole?: string
 ): string {
-  const anchor = jdTerms[0];
+  const anchor = shortenAnchor(jdTerms[0] ?? "", 40);
   const companyBit = companyName ? `${companyName} ` : "";
-  const roleBit = jobRole ? `${jobRoleLabel(jobRole)} 직무 관점에서 ` : "";
-  const intro = `${companyBit}${roleBit}채용공고의 「${anchor}」 요구사항과 연결해 여쭤봅니다.`;
-  return `${intro} ${template}`;
+  const roleBit = jobRole ? `${jobRoleLabel(jobRole)} 직무에서 ` : "";
+  return `${companyBit}${roleBit}채용공고의 「${anchor}」 요구와 연결해, 본인이 실제로 한 일과 결과를 구체적으로 말씀해 주시겠어요?`;
 }
 
-function heuristicPersonalize(
-  template: string,
-  highlights: string[],
-  companyName?: string,
-  jobRole?: string,
-  anchorRelevant = true,
-): string {
-  const anchor = highlights[0];
-  const metric = highlights.find((h) => METRIC_PATTERN.test(h) && h !== anchor);
-  const companyBit = companyName ? `${companyName} ` : "";
-  const roleBit = jobRole ? `${jobRoleLabel(jobRole)} 직무 관점에서 ` : "";
-
-  // 인용한 자소서 경험이 이번 질문의 역량 주제와 안 겹치면(=이 역량에 맞는 경험이 소진돼
-  // 어쩔 수 없이 무관한 경험을 앵커로 쓴 경우), 원래 질문 템플릿을 억지로 이어붙이지 않는다.
-  // "60% 병목을 확인했다"고 인용해놓고 "피드백 받고 행동 바꾼 경험은?" 같은 안 어울리는
-  // 질문이 뒤따르는 걸 막고, 대신 방금 인용한 그 경험 자체를 더 캐묻는 질문으로 자연스럽게 잇는다.
-  if (!anchorRelevant) {
-    return metric
-      ? `${companyBit}${roleBit}자소서에 적어 주신 「${anchor}」 경험과 「${metric}」 성과를 바탕으로 여쭤봅니다. 그 결과를 어떤 방법과 과정으로 확인하고 만들어내셨는지 구체적으로 말씀해 주세요.`
-      : `${companyBit}${roleBit}자소서에 적어 주신 「${anchor}」 경험을 바탕으로 여쭤봅니다. 그 과정에서 본인이 구체적으로 어떤 역할을 맡아 어떻게 진행하셨는지 말씀해 주세요.`;
+/** 역량별 캐물음 줄기 — 은행 템플릿을 뒤에 붙이지 않고 에피소드 자체로 묻는다 */
+function competencyProbe(competency: string, hasMetric: boolean): string {
+  switch (competency) {
+    case "COMMUNICATION":
+      return "그때 상대에게 무엇을 어떻게 전달·설득했고, 반응은 어땠나요?";
+    case "ORG_FIT":
+      return "그때 팀원 반발이나 이견을 어떻게 조율했고, 결과는 어땠나요?";
+    case "LEADERSHIP":
+      return "그때 본인이 먼저 한 결정과 팀을 이끈 방식, 그리고 결과는 무엇이었나요?";
+    case "PROBLEM_SOLVING":
+      return hasMetric
+        ? "그때 병목·원인을 어떻게 찾았고, 어떤 지표로 개선을 검증하셨나요?"
+        : "그때 문제의 원인을 어떻게 좁혔고, 어떤 기준으로 해결을 확인하셨나요?";
+    case "JOB_FIT":
+      return hasMetric
+        ? "그때 본인 역할과 성과 수치를 어떤 방법으로 만들어 내셨나요?"
+        : "그때 본인이 맡은 역할과 실제로 한 일을 구체적으로 말씀해 주시겠어요?";
+    case "GROWTH":
+      return "그 경험 이후 무엇을 바꿨고, 다음에 같은 상황이 오면 어떻게 하시겠어요?";
+    default:
+      return hasMetric
+        ? "그때 본인이 직접 한 행동과 결과를 수치와 함께 구체적으로 말씀해 주시겠어요?"
+        : "그때 본인이 직접 한 행동과 결과는 무엇이었나요?";
   }
+}
 
-  // 원본 질문 템플릿은 문장 수·문장부호가 제각각이라 뒤에 문구를 이어붙이면
-  // "~말씀해 주세요.에 대해" 같은 비문이 생긴다. 대신 맥락 문장을 앞에 붙이고
-  // 템플릿은 손대지 않고 그대로 뒤에 둔다.
-  const intro = metric
-    ? `${companyBit}${roleBit}자소서에 적어 주신 「${anchor}」 경험과 「${metric}」 성과를 바탕으로 여쭤봅니다.`
-    : `${companyBit}${roleBit}자소서에 적어 주신 「${anchor}」 경험을 바탕으로 여쭤봅니다.`;
+function shortenAnchor(text: string, max = 56): string {
+  const flat = text.replace(/\s+/g, " ").trim();
+  return flat.length <= max ? flat : `${flat.slice(0, max - 1)}…`;
+}
 
-  return `${intro} ${template}`;
+/** @internal exported for unit tests */
+export function heuristicPersonalize(params: {
+  highlights: string[];
+  competency: string;
+  companyName?: string;
+  jobRole?: string;
+  anchorRelevant?: boolean;
+}): string {
+  const anchor = shortenAnchor(params.highlights[0] ?? "");
+  const metric = params.highlights.find((h) => METRIC_PATTERN.test(h) && h !== params.highlights[0]);
+  const companyBit = params.companyName ? `${params.companyName} ` : "";
+  const roleBit = params.jobRole ? `${jobRoleLabel(params.jobRole)} 직무 관점에서 ` : "";
+  const probe = competencyProbe(params.competency, Boolean(metric));
+
+  // 역량과 안 겹치는 앵커여도 은행 템플릿을 붙이지 않고, 인용 에피소드 자체를 캐묻는다.
+  if (metric && params.anchorRelevant !== false) {
+    return `${companyBit}${roleBit}자소서에 쓰신 「${anchor}」과 「${shortenAnchor(metric, 36)}」 — ${probe}`;
+  }
+  return `${companyBit}${roleBit}자소서에 쓰신 「${anchor}」 — ${probe}`;
 }
 
 function heuristicRubric(competency: string, terms: string[], fromJd = false): string[] {

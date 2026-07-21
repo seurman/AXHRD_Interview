@@ -258,13 +258,14 @@ body.ax-home-page .ax-home .hero.hero--stage .btn-ghost:hover {
   color: var(--hero-foam);
 }
 
-/* Entrance motion */
+/* Entrance motion — visible by default so first paint is not blank;
+   luxe-ready only refines transition when JS runs */
 body.ax-home-page .ax-home .hero.hero--stage .hero-brand,
 body.ax-home-page .ax-home .hero.hero--stage h1,
 body.ax-home-page .ax-home .hero.hero--stage .sub,
 body.ax-home-page .ax-home .hero.hero--stage .hero-ctas {
-  opacity: 0;
-  transform: translateY(14px);
+  opacity: 1;
+  transform: none;
 }
 
 body.ax-home-page.luxe-ready .ax-home .hero.hero--stage .hero-brand,
@@ -294,10 +295,10 @@ body.ax-home-page.luxe-ready .ax-home .hero.hero--stage .hero-ctas {
   transition-delay: 0.36s;
 }
 
-/* Scene reveal follows body.luxe-ready — class on innerHTML nodes gets wiped on re-render */
+/* Scene visible on first paint; luxe-ready keeps the same end state */
 body.ax-home-page .ax-home .hero.hero--stage .hero-stage-scene {
-  opacity: 0;
-  transform: translateY(-36%) translateX(18px);
+  opacity: 1;
+  transform: translateY(-42%);
 }
 
 body.ax-home-page.luxe-ready .ax-home .hero.hero--stage .hero-stage-scene {

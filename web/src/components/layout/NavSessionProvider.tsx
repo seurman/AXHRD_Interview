@@ -40,11 +40,19 @@ function commitNav(data: NavPayload) {
   return data;
 }
 
+/**
+ * First paint: show guest nav immediately (SSR + hydrate match).
+ * Background /api/nav upgrades to the real session without blocking the header.
+ */
 export function NavSessionProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const skipNavFetch = pathname.startsWith("/admin");
-  const [nav, setNav] = useState<NavPayload | null>(() => navCache);
-  const [loading, setLoading] = useState(() => navCache === null && !skipNavFetch);
+  const [nav, setNav] = useState<NavPayload | null>(() => navCache ?? GUEST_NAV);
+  const [loading, setLoading] = useState(() => {
+    if (skipNavFetch) return false;
+    // Cached session or guest seed → header can render now
+    return false;
+  });
 
   const refreshNav = useCallback(async () => {
     const data = commitNav(await fetchNavPayload());

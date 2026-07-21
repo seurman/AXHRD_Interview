@@ -15,6 +15,9 @@ import { Toaster } from "@/components/ui/sonner";
 
 const themeInitScript = `(function(){try{var m=document.cookie.match(/(?:^|;\\s*)hr_in_theme=(\\w+)/);var t=m?m[1]:'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
 
+/** Paint homepage chrome before React hydrates — avoids late header/hero flash */
+const homeBodyInitScript = `(function(){try{var p=location.pathname;if(p==='/'||p===''){document.body.classList.add('ax-home-page','ax-home-product-luxe','luxe-ready');}}catch(e){}})();`;
+
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const dict = getDictionary(locale);
@@ -50,6 +53,7 @@ export default async function RootLayout({
         <meta name="theme-color" content="#0066FF" />
       </head>
       <body className={`${fontVariables} antialiased`}>
+        <script dangerouslySetInnerHTML={{ __html: homeBodyInitScript }} />
         <I18nProvider locale={locale}>
           <RouteTransitionProvider>
             <NavSessionProvider>
