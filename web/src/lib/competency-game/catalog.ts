@@ -1,6 +1,9 @@
 /**
- * 역량게임 카탈로그 — Phase A: 의사소통 유닛1 (미니게임 5종)
- * 다른 역량은 코스 셸만 두고 유닛은 이후 단계에서 채움
+ * 역량게임 카탈로그 — Phase A: 의사소통 유닛1
+ *
+ * 플레이 중에는 기법명(STAR·결론 먼저 등)을 드러내지 않는다.
+ * 학습 포인트는 채점 후 explain / tip에서만 공개.
+ * 기법(레벨)당 문항 3개.
  */
 
 import type { CompetencyCode } from "@/types";
@@ -12,37 +15,38 @@ const COMM_UNIT_1: GameUnit = {
   id: "communication-u1",
   competency: "COMMUNICATION",
   index: 0,
-  titleKo: "결론이 먼저",
-  subtitleKo: "면접관의 질문에 한 문장으로 답을 여는 법",
+  titleKo: "면접관의 30초",
+  subtitleKo: "짧은 상황에서 답을 고르고, 순서를 맞추고, 한 호흡으로 말해 보세요",
   levels: [
     {
       id: "communication-u1-l1",
       unitId: "communication-u1",
       index: 0,
-      titleKo: "결론 고르기",
+      titleKo: "의견이 갈렸을 때",
       skillRule: "conclusion_first",
       gameType: "choice",
-      xpReward: 20,
+      xpReward: 30,
       items: [
         {
           id: "comm-u1-l1-i1",
           gameType: "choice",
           skillRule: "conclusion_first",
-          prompt: "‘팀과 의견이 달랐을 때’ 질문에 가장 좋은 첫 문장은?",
+          prompt: "‘팀과 의견이 달랐을 때’ 질문에, 가장 설득력 있는 시작은?",
           choices: [
-            "결론부터 말하면, 일정 리스크를 줄이기 위해 데이터를 보여 설득했습니다.",
+            "일정 리스크를 줄이기 위해 데이터를 보여 설득했습니다.",
             "사실 그때 분위기가 좀 복잡했는데요…",
             "저는 원래 말을 잘해서요.",
             "팀이 잘못한 부분이 있었습니다.",
           ],
           answerIndex: 0,
-          explain: "첫 문장에 결론(무엇을 했는지)을 두면 면접관이 나머지를 듣습니다.",
+          explain:
+            "기법: 결론이 먼저. 첫 문장에 ‘무엇을 했는지’를 두면 면접관이 나머지를 듣습니다.",
         },
         {
           id: "comm-u1-l1-i2",
           gameType: "choice",
           skillRule: "conclusion_first",
-          prompt: "다음 중 ‘질문 의도’를 받아친 시작은?",
+          prompt: "‘갈등 상황에서 본인 역할’을 물었을 때, 질문 의도에 맞는 시작은?",
           choices: [
             "갈등 상황에서 제가 한 일은 역할 재분배를 제안한 것입니다.",
             "회사 비전이 좋아서 지원했습니다.",
@@ -50,7 +54,23 @@ const COMM_UNIT_1: GameUnit = {
             "잘 모르겠습니다만…",
           ],
           answerIndex: 0,
-          explain: "질문의 핵심 단어(갈등·역할)를 첫 문장에 반복하면 의도가 맞습니다.",
+          explain:
+            "기법: 결론이 먼저 + 질문 의도. 질문의 핵심 단어(갈등·역할)를 첫 문장에 받아칩니다.",
+        },
+        {
+          id: "comm-u1-l1-i3",
+          gameType: "choice",
+          skillRule: "conclusion_first",
+          prompt: "‘프로젝트가 늦어질 뻔했을 때’ 질문에 가장 강한 첫 문장은?",
+          choices: [
+            "마감 이틀 전 병목을 찾아 일정을 하루 앞당겼습니다.",
+            "그때는 정말 힘들었습니다.",
+            "팀원들이 열심히 했습니다.",
+            "저는 항상 최선을 다합니다.",
+          ],
+          answerIndex: 0,
+          explain:
+            "기법: 결론이 먼저. 감정·수식어보다 ‘내가 한 일 + 결과 힌트’로 엽니다.",
         },
       ],
     },
@@ -58,16 +78,16 @@ const COMM_UNIT_1: GameUnit = {
       id: "communication-u1-l2",
       unitId: "communication-u1",
       index: 1,
-      titleKo: "STAR 순서",
+      titleKo: "데모가 밀리던 날",
       skillRule: "star_order",
       gameType: "order",
-      xpReward: 25,
+      xpReward: 35,
       items: [
         {
           id: "comm-u1-l2-i1",
           gameType: "order",
           skillRule: "star_order",
-          prompt: "설득 경험을 STAR 순서로 배열하세요.",
+          prompt: "면접에서 이 경험을 이야기한다면, 어떤 순서가 가장 자연스러울까요?",
           cards: [
             "데모가 이틀 밀릴 위기에 팀 일정이 충돌했다",
             "역할 재분배와 일일 체크인을 제안했다",
@@ -75,7 +95,38 @@ const COMM_UNIT_1: GameUnit = {
             "데모를 하루 앞당겨 릴리스했다",
           ],
           answerOrder: [0, 1, 2, 3],
-          explain: "상황 → 과제/행동 → 설득 행동 → 결과 순이 기본입니다.",
+          explain:
+            "기법: STAR. 상황 → 내가 한 제안(행동) → 설득 행동 → 결과 순이 기본입니다.",
+        },
+        {
+          id: "comm-u1-l2-i2",
+          gameType: "order",
+          skillRule: "star_order",
+          prompt: "고객 클레임 대응 경험을 말할 때, 이야기 순서를 맞춰 보세요.",
+          cards: [
+            "출시 직후 동일 오류 문의가 하루 20건 들어왔다",
+            "임시 우회 가이드를 만들고 원인 로그를 추적했다",
+            "담당 개발과 우선순위를 다시 합의했다",
+            "48시간 안에 패치를 배포하고 재문의가 줄었다",
+          ],
+          answerOrder: [0, 1, 2, 3],
+          explain:
+            "기법: STAR. 상황(문제) → 행동 → 협업 행동 → 결과·수치 순으로 쌓습니다.",
+        },
+        {
+          id: "comm-u1-l2-i3",
+          gameType: "order",
+          skillRule: "star_order",
+          prompt: "신규 입사자가 헤매던 온보딩 경험을 말할 때 맞는 순서는?",
+          cards: [
+            "입사 2주 차에 문서가 흩어져 질문이 폭주했다",
+            "체크리스트와 주간 페어 온보딩을 제안했다",
+            "시니어 리소스 부담을 수치로 공유해 합의를 얻었다",
+            "평균 온보딩 질문 건수가 절반으로 줄었다",
+          ],
+          answerOrder: [0, 1, 2, 3],
+          explain:
+            "기법: STAR. ‘무슨 일이 있었고 → 무엇을 했고 → 어떻게 설득했고 → 결과가 어땠는지’.",
         },
       ],
     },
@@ -83,16 +134,16 @@ const COMM_UNIT_1: GameUnit = {
       id: "communication-u1-l3",
       unitId: "communication-u1",
       index: 2,
-      titleKo: "그래서 · 결과",
+      titleKo: "한 문장으로 잇기",
       skillRule: "cause_result",
       gameType: "fill_blank",
-      xpReward: 25,
+      xpReward: 35,
       items: [
         {
           id: "comm-u1-l3-i1",
           gameType: "fill_blank",
           skillRule: "cause_result",
-          prompt: "인과가 보이게 빈칸을 채우세요.",
+          prompt: "빈칸을 채워 답이 ‘왜 → 무엇을 → 그래서’로 이어지게 하세요.",
           template: "일정이 충돌했기 때문에 ___했고, 결과는 ___였습니다.",
           blanks: [
             {
@@ -104,7 +155,66 @@ const COMM_UNIT_1: GameUnit = {
               answerIndex: 0,
             },
           ],
-          explain: "‘때문에 → 행동 → 결과’가 한 호흡이면 논리가 살아납니다.",
+          explain:
+            "기법: 인과(때문에→행동→결과). 한 호흡에 연결되면 논리가 살아납니다.",
+        },
+        {
+          id: "comm-u1-l3-i2",
+          gameType: "fill_blank",
+          skillRule: "cause_result",
+          prompt: "빈칸을 채워 면접 답이 끊기지 않게 만드세요.",
+          template: "로그가 부족했기 때문에 ___했고, 그 결과 ___했습니다.",
+          blanks: [
+            {
+              options: [
+                "재현 시나리오를 추가 수집",
+                "추측만 공유",
+                "이슈를 닫음",
+                "다른 팀 탓을 함",
+              ],
+              answerIndex: 0,
+            },
+            {
+              options: [
+                "원인을 하루 만에 특정",
+                "회의만 늘림",
+                "고객에게 사과만 함",
+                "일정을 무기한 연장",
+              ],
+              answerIndex: 0,
+            },
+          ],
+          explain:
+            "기법: 인과. ‘부족했다 → 내가 보완했다 → 결과가 났다’가 한 줄에 보여야 합니다.",
+        },
+        {
+          id: "comm-u1-l3-i3",
+          gameType: "fill_blank",
+          skillRule: "cause_result",
+          prompt: "빈칸을 골라 행동과 결과가 맞게 이어지게 하세요.",
+          template: "우선순위가 흔들렸기 때문에 ___했고, 결국 ___했습니다.",
+          blanks: [
+            {
+              options: [
+                "주간 목표를 3개로 제한",
+                "모든 요청을 수락",
+                "야근만 늘림",
+                "의사결정을 미룸",
+              ],
+              answerIndex: 0,
+            },
+            {
+              options: [
+                "핵심 기능 출시를 지킴",
+                "범위가 더 커짐",
+                "품질이 떨어짐",
+                "팀 이탈이 생김",
+              ],
+              answerIndex: 0,
+            },
+          ],
+          explain:
+            "기법: 인과. 원인에 맞는 행동과, 그 행동으로 설명 가능한 결과를 고릅니다.",
         },
       ],
     },
@@ -112,29 +222,43 @@ const COMM_UNIT_1: GameUnit = {
       id: "communication-u1-l4",
       unitId: "communication-u1",
       index: 3,
-      titleKo: "좋은 답 판정",
+      titleKo: "이 답이 설득될까",
       skillRule: "good_vs_bad",
       gameType: "swipe_judge",
-      xpReward: 20,
+      xpReward: 30,
       items: [
         {
           id: "comm-u1-l4-i1",
           gameType: "swipe_judge",
           skillRule: "good_vs_bad",
-          prompt: "이 답은 설득 질문에 좋은가요?",
+          prompt: "‘갈등을 어떻게 설득했나요?’에 대한 답입니다. 괜찮은가요?",
           answerText:
             "일정 충돌이 있어 데모 리스크를 수치로 보여 주고, 역할 재분배를 제안해 하루를 앞당겼습니다.",
           isGood: true,
-          explain: "결론·행동·결과가 한 문장에 있습니다.",
+          explain:
+            "기법: 좋은 답 판정. 결론·행동·결과가 한 문장에 있습니다.",
         },
         {
           id: "comm-u1-l4-i2",
           gameType: "swipe_judge",
           skillRule: "good_vs_bad",
-          prompt: "이 답은 설득 질문에 좋은가요?",
-          answerText: "팀이 워낙 바빠서요. 다들 힘들었고 분위기가 안 좋았습니다.",
+          prompt: "같은 질문에 대한 답입니다. 괜찮은가요?",
+          answerText:
+            "팀이 워낙 바빠서요. 다들 힘들었고 분위기가 안 좋았습니다.",
           isGood: false,
-          explain: "상황만 있고 내가 한 행동·결과가 없습니다.",
+          explain:
+            "기법: 좋은 답 판정. 상황·감정만 있고 내가 한 행동·결과가 없습니다.",
+        },
+        {
+          id: "comm-u1-l4-i3",
+          gameType: "swipe_judge",
+          skillRule: "good_vs_bad",
+          prompt: "‘본인 기여가 뭐였나요?’에 대한 답입니다. 괜찮은가요?",
+          answerText:
+            "체크리스트를 만들어 온보딩 질문을 절반으로 줄였고, 시니어 시간을 주 4시간 아꼈습니다.",
+          isGood: true,
+          explain:
+            "기법: 좋은 답 판정. 내가 한 일과 수치 결과가 분명합니다.",
         },
       ],
     },
@@ -142,19 +266,37 @@ const COMM_UNIT_1: GameUnit = {
       id: "communication-u1-l5",
       unitId: "communication-u1",
       index: 4,
-      titleKo: "20초 따라 말하기",
+      titleKo: "소리 내어 한 번",
       skillRule: "speak_compress",
       gameType: "speak_along",
-      xpReward: 30,
+      xpReward: 40,
       items: [
         {
           id: "comm-u1-l5-i1",
           gameType: "speak_along",
           skillRule: "speak_compress",
-          prompt: "아래 답을 소리 내어 따라 말해 보세요. (채점 없음)",
+          prompt: "아래 문장을 소리 내어 따라 말해 보세요. (채점 없음)",
           script:
-            "결론부터 말하면, 일정 충돌로 데모가 밀릴 위기에서 역할 재분배를 제안해 하루를 앞당겼습니다. 반발에는 리스크 수치를 공유해 설득했습니다.",
-          tip: "첫 호흡에 ‘결론부터 말하면’을 넣고, 숫자(하루)를 또렷이.",
+            "일정 충돌로 데모가 밀릴 위기에서 역할 재분배를 제안해 하루를 앞당겼습니다. 반발에는 리스크 수치를 공유해 설득했습니다.",
+          tip: "숫자(하루)와 ‘내가 한 일’을 또렷이. 끝나면 첫 문장만 다시 한 번.",
+        },
+        {
+          id: "comm-u1-l5-i2",
+          gameType: "speak_along",
+          skillRule: "speak_compress",
+          prompt: "이 문장도 같은 호흡으로 따라 말해 보세요.",
+          script:
+            "출시 직후 문의가 하루 20건이라 우회 가이드를 만들고 로그를 추적해, 48시간 안에 패치를 배포했습니다.",
+          tip: "호흡을 둘로: 문제+행동 / 결과. ‘20건·48시간’을 놓치지 마세요.",
+        },
+        {
+          id: "comm-u1-l5-i3",
+          gameType: "speak_along",
+          skillRule: "speak_compress",
+          prompt: "마지막 문장입니다. 또박또박 따라 말해 보세요.",
+          script:
+            "문서가 흩어져 질문이 폭주해 체크리스트와 페어 온보딩을 제안했고, 온보딩 질문이 절반으로 줄었습니다.",
+          tip: "기법 힌트(클리어 후): 압축 말하기. 상황→행동→결과를 한 호흡에 담습니다.",
         },
       ],
     },
@@ -165,7 +307,7 @@ function emptyCourse(competency: CompetencyCode): GameCourse {
   return {
     competency,
     titleKo: competencyLabel(competency),
-    blurbKo: `${competencyLabel(competency)} 규칙을 짧은 게임으로 쌓습니다.`,
+    blurbKo: `${competencyLabel(competency)}을(를) 짧은 상황에서 연습합니다. 규칙은 맞힌 뒤에 공개됩니다.`,
     units:
       competency === "COMMUNICATION"
         ? [COMM_UNIT_1]
@@ -182,9 +324,10 @@ function emptyCourse(competency: CompetencyCode): GameCourse {
   };
 }
 
-export const COMPETENCY_GAME_COURSES: Record<CompetencyCode, GameCourse> = Object.fromEntries(
-  COMPETENCY_CODES.map((c) => [c, emptyCourse(c)]),
-) as Record<CompetencyCode, GameCourse>;
+export const COMPETENCY_GAME_COURSES: Record<CompetencyCode, GameCourse> =
+  Object.fromEntries(
+    COMPETENCY_CODES.map((c) => [c, emptyCourse(c)]),
+  ) as Record<CompetencyCode, GameCourse>;
 
 export function listGameCourses(): GameCourse[] {
   return COMPETENCY_CODES.map((c) => COMPETENCY_GAME_COURSES[c]);

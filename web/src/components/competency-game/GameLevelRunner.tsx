@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import type { GameAnswerPayload, GameLevel } from "@/lib/competency-game/types";
-import { GAME_TYPE_LABEL_KO } from "@/lib/competency-game/types";
 import { ChoiceGame } from "./games/ChoiceGame";
 import { OrderGame } from "./games/OrderGame";
 import { FillBlankGame } from "./games/FillBlankGame";
@@ -190,7 +189,7 @@ export function GameLevelRunner({ level, competency, hearts: initialHearts }: Pr
       <div className="flex items-center justify-between gap-3 text-sm">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gold">
-            {GAME_TYPE_LABEL_KO[level.gameType]}
+            레벨 {level.index + 1}
           </p>
           <h1 className="text-xl font-bold text-foreground">{level.titleKo}</h1>
         </div>

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import type { CourseProgressView } from "@/lib/competency-game/progress";
-import { GAME_TYPE_LABEL_KO, type GameType } from "@/lib/competency-game/types";
 
 export function GamePathMap({ view }: { view: CourseProgressView }) {
   return (
@@ -76,9 +75,7 @@ export function GamePathMap({ view }: { view: CourseProgressView }) {
                               {level.titleKo}
                             </p>
                             <p className="mt-0.5 text-xs text-muted">
-                              {GAME_TYPE_LABEL_KO[level.gameType as GameType] ??
-                                level.gameType}{" "}
-                              · +{level.xpReward} XP
+                              문항 3 · +{level.xpReward} XP
                             </p>
                           </div>
                           {level.cleared ? (
