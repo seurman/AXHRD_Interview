@@ -68,7 +68,7 @@ export function AvatarMenu({
               onClick={() => setOpen(false)}
               className={`avatar-menu-item ${pathname === profileHref || pathname.startsWith(`${profileHref}/`) ? "avatar-menu-item--active" : ""}`}
             >
-              <User className="h-4 w-4 shrink-0 opacity-70" />
+              <User className="h-4 w-4 shrink-0 opacity-80" />
               {a.profile}
             </Link>
           )}

@@ -61,7 +61,7 @@ export function ThemeSwitcher({ compact }: { compact?: boolean }) {
       type="button"
       onClick={toggle}
       disabled={pending}
-      className={`flex items-center justify-center rounded-full border border-gold/25 bg-white/5 text-gold/80 transition hover:bg-white/10 hover:text-gold ${
+      className={`flex items-center justify-center rounded-full border border-card-border bg-white text-foreground transition hover:bg-slate-50 dark:border-slate-500 dark:bg-slate-700/70 dark:text-slate-100 dark:hover:bg-slate-600/80 ${
         compact ? "h-8 w-8" : "h-8 w-8"
       }`}
       aria-label={dict.common.theme.label}
