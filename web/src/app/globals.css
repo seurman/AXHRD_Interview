@@ -6054,12 +6054,12 @@ html.dark .avatar-menu-item--active {
 }
 
 .avatar-menu-panel .lang-switch button[data-active="true"] {
-  background: rgb(47 95 238 / 0.14);
-  color: #1d4ed8;
+  background: rgb(47 95 238 / 0.14) !important;
+  color: #1d4ed8 !important;
 }
 
 .avatar-menu-panel .lang-switch button[data-active="false"] {
-  color: #475569;
+  color: #475569 !important;
 }
 
 html.dark .avatar-menu-panel .lang-switch {
@@ -6068,16 +6068,34 @@ html.dark .avatar-menu-panel .lang-switch {
 }
 
 html.dark .avatar-menu-panel .lang-switch button[data-active="true"] {
-  background: rgb(59 130 246 / 0.3);
-  color: #eff6ff;
+  background: rgb(59 130 246 / 0.3) !important;
+  color: #eff6ff !important;
 }
 
 html.dark .avatar-menu-panel .lang-switch button[data-active="false"] {
-  color: #cbd5e1;
+  color: #cbd5e1 !important;
+}
+
+.avatar-menu-panel .avatar-menu-item,
+.avatar-menu-panel .avatar-menu-panel__name {
+  color: #1a2332 !important;
+}
+
+html.dark .avatar-menu-panel .avatar-menu-item,
+html.dark .avatar-menu-panel .avatar-menu-panel__name {
+  color: #f1f5f9 !important;
+}
+
+.avatar-menu-panel .avatar-menu-item--active {
+  color: #1d4ed8 !important;
+}
+
+html.dark .avatar-menu-panel .avatar-menu-item--active {
+  color: #93c5fd !important;
 }
 
 .avatar-menu-panel .btn-primary {
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .mobile-bottom-nav {
