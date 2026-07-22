@@ -37,6 +37,15 @@ export function AvatarMenu({
     return () => document.removeEventListener("mousedown", onOutside);
   }, [open]);
 
+  const itemClass = (active: boolean) =>
+    [
+      "avatar-menu-item flex items-center gap-2 px-3.5 py-2.5 text-sm font-semibold no-underline",
+      "!text-slate-100 hover:!bg-slate-700/70 hover:!text-white",
+      active ? "!text-sky-300" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
   return (
     <div ref={ref} className="relative">
       <button
@@ -54,9 +63,12 @@ export function AvatarMenu({
       </button>
 
       {open && (
-        <div role="menu" className="avatar-menu-panel">
+        <div
+          role="menu"
+          className="avatar-menu-panel absolute right-0 top-[calc(100%+0.5rem)] z-[60] min-w-[13rem] overflow-hidden rounded-xl border border-slate-600/50 !bg-[#0b1220] !text-slate-50 py-2 shadow-[0_18px_44px_rgb(0_0_0_/_0.45)]"
+        >
           {userName && (
-            <p className="avatar-menu-panel__name">
+            <p className="avatar-menu-panel__name px-3.5 pb-2 pt-1 text-sm font-semibold !text-slate-50">
               {locale === "ko" ? `${userName}${c.userSuffix}` : userName}
             </p>
           )}
@@ -66,9 +78,11 @@ export function AvatarMenu({
               href={profileHref}
               role="menuitem"
               onClick={() => setOpen(false)}
-              className={`avatar-menu-item ${pathname === profileHref || pathname.startsWith(`${profileHref}/`) ? "avatar-menu-item--active" : ""}`}
+              className={itemClass(
+                pathname === profileHref || pathname.startsWith(`${profileHref}/`),
+              )}
             >
-              <User className="h-4 w-4 shrink-0 opacity-80" />
+              <User className="h-4 w-4 shrink-0 !text-slate-300" />
               {a.profile}
             </Link>
           )}
@@ -77,14 +91,17 @@ export function AvatarMenu({
             href="/pricing"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className={`avatar-menu-item ${pathname === "/pricing" ? "avatar-menu-item--active" : ""}`}
+            className={itemClass(pathname === "/pricing")}
           >
             {a.billing}
           </Link>
 
-          <div className="avatar-menu-panel__prefs">
+          <div className="avatar-menu-panel__prefs flex items-center gap-1.5 px-3 py-2">
             <LanguageSwitcher compact />
-            <ThemeSwitcher compact className="!border-slate-500/60 !bg-slate-800 !text-slate-100 hover:!bg-slate-700" />
+            <ThemeSwitcher
+              compact
+              className="!border-slate-500/60 !bg-slate-800 !text-slate-100 hover:!bg-slate-700"
+            />
           </div>
 
           {adminModeEnabled && (
@@ -93,7 +110,7 @@ export function AvatarMenu({
             </div>
           )}
 
-          <div className="border-t border-card-border px-2 pt-2">
+          <div className="border-t border-slate-600/50 px-2 pt-2">
             <LogoutButton variant="drawer" label={c.auth.logout} />
           </div>
         </div>

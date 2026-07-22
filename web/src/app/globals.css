@@ -5973,6 +5973,7 @@ html.dark .dx-textarea {
   font-weight: 800;
 }
 
+/* Always-dark account menu — must beat homepage header ink overrides */
 .avatar-menu-panel {
   position: absolute;
   right: 0;
@@ -5981,9 +5982,9 @@ html.dark .dx-textarea {
   min-width: 12.5rem;
   overflow: hidden;
   border-radius: 0.9rem;
-  border: 1px solid rgb(148 163 184 / 0.28);
-  background: #0b1220;
-  color: #f8fafc;
+  border: 1px solid rgb(148 163 184 / 0.28) !important;
+  background: #0b1220 !important;
+  color: #f8fafc !important;
   padding: 0.5rem 0;
   box-shadow: 0 18px 44px rgb(0 0 0 / 0.45);
 }
@@ -6008,7 +6009,7 @@ html.dark .dx-textarea {
 }
 
 .avatar-menu-item:hover {
-  background: rgb(148 163 184 / 0.16);
+  background: rgb(51 65 85 / 0.85) !important;
   color: #ffffff !important;
 }
 
@@ -6039,6 +6040,7 @@ html.dark .dx-textarea {
 }
 
 .avatar-menu-panel .btn-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%) !important;
   color: #ffffff !important;
 }
 
@@ -6047,6 +6049,32 @@ html.dark .dx-textarea {
 }
 
 .avatar-menu-panel .text-danger {
+  color: #fca5a5 !important;
+}
+
+/* Homepage ink header forces light a/button colors — keep the dropdown dark */
+body.ax-home-page .header-premium .avatar-menu-panel,
+body.ax-home-page .header-premium .avatar-menu-panel a,
+body.ax-home-page .header-premium .avatar-menu-panel button:not(.btn-primary),
+body.ax-home-page .header-premium .avatar-menu-panel p {
+  color: #e2e8f0 !important;
+}
+
+body.ax-home-page .header-premium .avatar-menu-panel {
+  background: #0b1220 !important;
+}
+
+body.ax-home-page .header-premium .avatar-menu-panel .avatar-menu-item:hover {
+  background: rgb(51 65 85 / 0.85) !important;
+  color: #ffffff !important;
+}
+
+body.ax-home-page .header-premium .avatar-menu-panel .btn-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%) !important;
+  color: #ffffff !important;
+}
+
+body.ax-home-page .header-premium .avatar-menu-panel .text-danger {
   color: #fca5a5 !important;
 }
 

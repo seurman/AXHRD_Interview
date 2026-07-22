@@ -55,9 +55,34 @@ body.ax-home-page .header-premium .axhrd-logo {
   color: #eef3f6 !important;
 }
 
-body.ax-home-page .header-premium a,
-body.ax-home-page .header-premium button {
+body.ax-home-page .header-premium a:not(.avatar-menu-item):not(.btn-primary),
+body.ax-home-page .header-premium > * button,
+body.ax-home-page .header-premium .avatar-menu-trigger,
+body.ax-home-page .header-premium .nav-pill,
+body.ax-home-page .header-premium .lang-switch button {
   color: #eef3f6;
+}
+
+/* Account dropdown stays dark — do not inherit homepage ink chrome */
+body.ax-home-page .header-premium .avatar-menu-panel {
+  background: #0b1220 !important;
+  color: #f8fafc !important;
+  border-color: rgb(148 163 184 / 0.35) !important;
+}
+
+body.ax-home-page .header-premium .avatar-menu-panel a,
+body.ax-home-page .header-premium .avatar-menu-panel button:not(.btn-primary),
+body.ax-home-page .header-premium .avatar-menu-panel p {
+  color: #e2e8f0 !important;
+}
+
+body.ax-home-page .header-premium .avatar-menu-panel .avatar-menu-item:hover {
+  background: rgb(51 65 85 / 0.85) !important;
+  color: #fff !important;
+}
+
+body.ax-home-page .header-premium .avatar-menu-panel .btn-primary {
+  color: #fff !important;
 }
 
 body.ax-home-page .header-premium .nav-pill,
