@@ -285,72 +285,125 @@ body {
 
 /* 프리미엄 헤더 — 모바일: 다크 골드 / 데스크탑: 기존 파란 톤 */
 .header-premium {
-  background: linear-gradient(180deg, rgb(10 15 28 / 0.97) 0%, rgb(12 18 34 / 0.95) 100%);
-  border-bottom: 1px solid rgb(199 154 90 / 0.15);
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0.98) 0%,
+    rgb(247 248 252 / 0.96) 100%
+  );
+  border-bottom: 1px solid var(--color-card-border);
+  box-shadow: 0 1px 0 rgb(47 95 238 / 0.06);
   backdrop-filter: blur(12px);
 }
 
+.header-premium .axhrd-logo {
+  color: var(--color-foreground);
+}
+
+.header-premium .nav-pill {
+  border-color: rgb(47 95 238 / 0.28);
+  color: var(--color-foreground);
+  background: rgb(255 255 255 / 0.85);
+}
+
+.header-premium .nav-pill:hover {
+  border-color: rgb(47 95 238 / 0.45);
+  background: rgb(47 95 238 / 0.08);
+  color: var(--color-primary);
+}
+
+.header-premium .nav-pill-active {
+  border-color: var(--color-primary);
+  background: rgb(47 95 238 / 0.12);
+  color: var(--color-primary);
+}
+
+.header-premium .nav-pill-gold {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  color: white;
+  box-shadow: 0 4px 14px -4px rgb(47 95 238 / 0.4);
+}
+
+.header-premium .nav-pill-gold:hover {
+  background: linear-gradient(135deg, var(--color-primary-light) 0%, #6a8fff 100%);
+  color: white;
+}
+
+.header-premium .lang-switch {
+  border-color: rgb(47 95 238 / 0.2);
+  background: rgb(47 95 238 / 0.04);
+}
+
+.header-premium .lang-switch button[data-active="true"] {
+  background: rgb(47 95 238 / 0.12);
+  color: var(--color-primary);
+}
+
+.header-premium .lang-switch button[data-active="false"] {
+  color: var(--color-muted);
+}
+
+.header-premium .user-greeting {
+  color: var(--color-muted);
+}
+
+/* 사이트 다크 모드에서도 헤더·내비는 밝은 대비 유지 (메뉴 가독성) */
+html.dark .header-premium {
+  background: linear-gradient(
+    180deg,
+    rgb(28 32 44 / 0.98) 0%,
+    rgb(22 26 36 / 0.96) 100%
+  );
+  border-bottom-color: rgb(148 163 184 / 0.28);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+html.dark .header-premium .axhrd-logo {
+  color: #f8fafc;
+}
+
+html.dark .header-premium .nav-pill {
+  border-color: rgb(148 163 184 / 0.45);
+  background: rgb(51 65 85 / 0.55);
+  color: #f1f5f9;
+}
+
+html.dark .header-premium .nav-pill:hover {
+  border-color: rgb(96 165 250 / 0.65);
+  background: rgb(59 130 246 / 0.22);
+  color: #eff6ff;
+}
+
+html.dark .header-premium .nav-pill-active {
+  border-color: #60a5fa;
+  background: rgb(59 130 246 / 0.3);
+  color: #eff6ff;
+}
+
+html.dark .header-premium .nav-pill-gold {
+  color: #fff;
+}
+
+html.dark .header-premium .lang-switch {
+  border-color: rgb(148 163 184 / 0.35);
+  background: rgb(51 65 85 / 0.5);
+}
+
+html.dark .header-premium .lang-switch button[data-active="true"] {
+  background: rgb(59 130 246 / 0.28);
+  color: #eff6ff;
+}
+
+html.dark .header-premium .lang-switch button[data-active="false"] {
+  color: #cbd5e1;
+}
+
+html.dark .header-premium .user-greeting {
+  color: #cbd5e1;
+}
+
 @media (min-width: 640px) {
-  .header-premium {
-    background: linear-gradient(
-      180deg,
-      rgb(255 255 255 / 0.96) 0%,
-      rgb(247 248 252 / 0.94) 100%
-    );
-    border-bottom: 1px solid var(--color-card-border);
-    box-shadow: 0 1px 0 rgb(47 95 238 / 0.06);
-  }
-
-  .header-premium .axhrd-logo {
-    color: var(--color-foreground);
-  }
-
-  .header-premium .nav-pill {
-    border-color: rgb(47 95 238 / 0.25);
-    color: var(--color-muted);
-  }
-
-  .header-premium .nav-pill:hover {
-    border-color: rgb(47 95 238 / 0.45);
-    background: rgb(47 95 238 / 0.06);
-    color: var(--color-primary);
-  }
-
-  .header-premium .nav-pill-active {
-    border-color: var(--color-primary);
-    background: rgb(47 95 238 / 0.1);
-    color: var(--color-primary);
-  }
-
-  .header-premium .nav-pill-gold {
-    border-color: transparent;
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
-    color: white;
-    box-shadow: 0 4px 14px -4px rgb(47 95 238 / 0.4);
-  }
-
-  .header-premium .nav-pill-gold:hover {
-    background: linear-gradient(135deg, var(--color-primary-light) 0%, #6a8fff 100%);
-    color: white;
-  }
-
-  .header-premium .lang-switch {
-    border-color: rgb(47 95 238 / 0.2);
-    background: rgb(47 95 238 / 0.04);
-  }
-
-  .header-premium .lang-switch button[data-active="true"] {
-    background: rgb(47 95 238 / 0.12);
-    color: var(--color-primary);
-  }
-
-  .header-premium .lang-switch button[data-active="false"] {
-    color: var(--color-muted);
-  }
-
-  .header-premium .user-greeting {
-    color: var(--color-muted);
-  }
+  /* desktop keeps the same readable header tokens above */
 }
 
 .nav-pill {
@@ -1401,7 +1454,7 @@ body:has(.platform-app) {
 }
 
 html.dark body:has(.platform-app) {
-  background: #080808;
+  background: #e8ecf2;
 }
 
 .platform-app {
@@ -1423,20 +1476,23 @@ html.dark body:has(.platform-app) {
   font-size: 0.875rem;
   font-weight: 600;
   -webkit-font-smoothing: antialiased;
+  color-scheme: light;
 }
 
+/* 관리자 콘솔은 사이트 다크 모드와 무관하게 밝은 셸 유지 (메뉴 가독성) */
 html.dark .platform-app {
-  --platform-sidebar-bg: #111111;
-  --platform-canvas: #080808;
-  --platform-canvas-highlight: #141414;
-  --platform-surface: #161616;
-  --platform-surface-raised: #1c1c1c;
-  --platform-border: #2e2e2e;
-  --platform-text: #f5f5f5;
-  --platform-text-muted: #a3a3a3;
-  --platform-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
-  --platform-shadow: 0 2px 8px rgb(0 0 0 / 0.4);
-  --platform-shadow-raised: 0 4px 20px rgb(0 0 0 / 0.45);
+  --platform-sidebar-bg: #ffffff;
+  --platform-canvas: #e8ecf2;
+  --platform-canvas-highlight: #f4f6fa;
+  --platform-surface: #ffffff;
+  --platform-surface-raised: #ffffff;
+  --platform-border: #d4dae3;
+  --platform-text: #0f1419;
+  --platform-text-muted: #4b5563;
+  --platform-shadow-sm: 0 1px 2px rgb(15 20 25 / 0.06), 0 1px 3px rgb(15 20 25 / 0.04);
+  --platform-shadow: 0 1px 2px rgb(15 20 25 / 0.05), 0 4px 14px rgb(15 20 25 / 0.07);
+  --platform-shadow-raised: 0 2px 4px rgb(15 20 25 / 0.06), 0 8px 24px rgb(15 20 25 / 0.09);
+  color-scheme: light;
 }
 
 .platform-sidebar {
@@ -1465,7 +1521,7 @@ html.dark .platform-app {
   padding: 0.5rem 0.5625rem;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--platform-text-muted);
+  color: var(--platform-text);
   transition: background 0.08s, color 0.08s, box-shadow 0.08s;
 }
 
@@ -1575,15 +1631,15 @@ html.dark .platform-app {
 
 html.dark .platform-content {
   background:
-    radial-gradient(ellipse 100% 60% at 50% -10%, rgb(255 255 255 / 0.06), transparent 50%),
-    radial-gradient(ellipse 60% 40% at 100% 0%, rgb(0 112 243 / 0.06), transparent 40%),
-    linear-gradient(180deg, #0c0c0c 0%, var(--platform-canvas) 100%);
+    radial-gradient(ellipse 140% 90% at 50% -25%, rgb(255 255 255 / 0.95), transparent 50%),
+    radial-gradient(ellipse 80% 50% at 100% 0%, rgb(0 112 243 / 0.04), transparent 45%),
+    linear-gradient(180deg, var(--platform-canvas-highlight) 0%, var(--platform-canvas) 55%, color-mix(in srgb, var(--platform-canvas) 85%, #c8d0dc) 100%);
 }
 
 html.dark .platform-sidebar {
   box-shadow:
-    2px 0 24px rgb(0 0 0 / 0.5),
-    inset -1px 0 0 rgb(255 255 255 / 0.04);
+    2px 0 20px rgb(15 20 25 / 0.08),
+    inset -1px 0 0 rgb(255 255 255 / 0.6);
 }
 
 html.dark .platform-panel {

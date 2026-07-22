@@ -48,7 +48,7 @@ export function AppHeader() {
             aria-label={`${dict.common.brand} ${dict.common.productLine} home`}
           >
             <Logo size={28} />
-            <span className="hidden text-[11px] font-semibold uppercase tracking-[0.12em] text-primary/90 sm:inline">
+            <span className="hidden text-[11px] font-semibold uppercase tracking-[0.12em] text-primary sm:inline dark:text-sky-300">
               {dict.common.productLine}
             </span>
           </Link>
