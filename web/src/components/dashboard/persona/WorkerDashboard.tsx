@@ -1,0 +1,119 @@
+import Link from "next/link";
+import { Suspense } from "react";
+import { WelcomeBanner } from "@/components/auth/WelcomeBanner";
+import { MemberFeedbackInbox } from "@/components/org/MemberFeedbackInbox";
+import {
+  PersonaActionLink,
+  PersonaDashboardHeader,
+} from "@/components/dashboard/persona/PersonaDashboardHeader";
+import type { WorkerDashboardData } from "@/lib/dashboard/get-worker-dashboard-data";
+import type { Dictionary } from "@/lib/i18n/types";
+
+function statusLabel(status: string, labels: Dictionary["dashboard"]["personas"]["worker"]["status"]) {
+  if (status === "SCORED") return labels.scored;
+  if (status === "SUBMITTED") return labels.submitted;
+  if (status === "IN_PROGRESS") return labels.inProgress;
+  return labels.draft;
+}
+
+export function WorkerDashboard({
+  userName,
+  data,
+  dict,
+}: {
+  userName: string;
+  data: WorkerDashboardData;
+  dict: Dictionary["dashboard"];
+}) {
+  const p = dict.personas.worker;
+
+  return (
+    <div className="product-stage product-stage--wide space-y-8">
+      <div className="product-stage__inner !max-w-5xl space-y-8">
+        <Suspense fallback={null}>
+          <WelcomeBanner />
+        </Suspense>
+
+        <PersonaDashboardHeader
+          persona="worker"
+          userName={userName}
+          actions={
+            <PersonaActionLink href="/assessment" primary>
+              {p.ctaAssessment}
+            </PersonaActionLink>
+          }
+        />
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-border/70 bg-card/40 px-4 py-3">
+            <p className="text-xs text-muted">{p.statPublished}</p>
+            <p className="mt-1 text-2xl font-semibold text-foreground">{data.publishedScenarioCount}</p>
+          </div>
+          <div className="rounded-xl border border-border/70 bg-card/40 px-4 py-3">
+            <p className="text-xs text-muted">{p.statCompleted}</p>
+            <p className="mt-1 text-2xl font-semibold text-foreground">{data.completedCount}</p>
+          </div>
+          <div className="rounded-xl border border-border/70 bg-card/40 px-4 py-3">
+            <p className="text-xs text-muted">{p.statLatestScore}</p>
+            <p className="mt-1 text-2xl font-semibold text-foreground">
+              {data.latestScore != null ? data.latestScore.toFixed(1) : "—"}
+            </p>
+          </div>
+        </div>
+
+        <section className="space-y-3">
+          <div className="flex items-end justify-between gap-3">
+            <h2 className="text-lg font-semibold text-foreground">{p.attemptsTitle}</h2>
+            <Link href="/assessment" className="text-sm text-accent hover:underline">
+              {p.viewCatalog}
+            </Link>
+          </div>
+          {data.attempts.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border/80 px-5 py-8 text-center">
+              <p className="text-sm font-medium text-foreground">{p.emptyTitle}</p>
+              <p className="mt-1 text-sm text-muted">{p.emptyBody}</p>
+              <Link href="/assessment" className="btn-primary mt-4 inline-flex text-sm">
+                {p.ctaAssessment}
+              </Link>
+            </div>
+          ) : (
+            <ul className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70">
+              {data.attempts.map((attempt) => (
+                <li key={attempt.id}>
+                  <Link
+                    href={
+                      attempt.status === "SCORED"
+                        ? `/assessment/attempt/${attempt.id}/report`
+                        : `/assessment/attempt/${attempt.id}`
+                    }
+                    className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 transition hover:bg-card/60"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {attempt.scenarioTitle}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted">
+                        {attempt.scenarioKind} · {statusLabel(attempt.status, p.status)}
+                      </p>
+                    </div>
+                    <span className="text-sm font-medium text-foreground">
+                      {attempt.overallScore != null ? attempt.overallScore.toFixed(1) : p.continue}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {data.inProgressCount > 0 ? (
+          <p className="text-sm text-muted">
+            {p.inProgressHint.replace("{count}", String(data.inProgressCount))}
+          </p>
+        ) : null}
+
+        <MemberFeedbackInbox />
+      </div>
+    </div>
+  );
+}

@@ -61,7 +61,7 @@ export type CompetencyDashboardPayload = {
   };
 };
 
-/** 개인 홈 대시보드·기관 코칭 뷰가 공유하는 역량 데이터 조회 */
+/** 구직자/모의면접 페르소나 대시보드·기관 코칭 뷰가 공유하는 역량 데이터 조회 */
 export async function getCompetencyDashboardData(
   userId: string,
 ): Promise<CompetencyDashboardPayload | null> {

@@ -426,6 +426,67 @@ export type Dictionary = {
     pageTitle: string;
     pageSubtitle: string;
     competencySection: string;
+    personas: {
+      switcherLabel: string;
+      jobseeker: {
+        short: string;
+        kicker: string;
+        title: string;
+        subtitle: string;
+        ctaInterview: string;
+        ctaCertificate: string;
+        quickInterview: string;
+        quickInterviewHint: string;
+        quickResume: string;
+        quickResumeHint: string;
+        quickDiscover: string;
+        quickDiscoverHint: string;
+      };
+      worker: {
+        short: string;
+        kicker: string;
+        title: string;
+        subtitle: string;
+        ctaAssessment: string;
+        statPublished: string;
+        statCompleted: string;
+        statLatestScore: string;
+        attemptsTitle: string;
+        viewCatalog: string;
+        emptyTitle: string;
+        emptyBody: string;
+        continue: string;
+        inProgressHint: string;
+        status: {
+          scored: string;
+          submitted: string;
+          inProgress: string;
+          draft: string;
+        };
+      };
+      mock: {
+        short: string;
+        kicker: string;
+        title: string;
+        subtitle: string;
+        ctaGame: string;
+        ctaTrial: string;
+        quickGame: string;
+        quickGameHint: string;
+        quickPath: string;
+        quickPathHint: string;
+        quickSwipe: string;
+        quickSwipeHint: string;
+        continueEyebrow: string;
+        continueLevel: string;
+        continueCourse: string;
+        continueCta: string;
+        coursesTitle: string;
+        emptyTitle: string;
+        emptyBody: string;
+        completed: string;
+      };
+    };
     differentiation: {
       title: string;
       items: string[];

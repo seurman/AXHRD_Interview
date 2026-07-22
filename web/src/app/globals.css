@@ -5889,6 +5889,11 @@ html.dark .dx-textarea {
   color: var(--color-gold-light);
 }
 
+.persona-switcher .workspace-switcher__btn {
+  padding: 0.35rem 0.55rem;
+  letter-spacing: 0.02em;
+}
+
 .avatar-menu-trigger {
   display: inline-flex;
   align-items: center;
@@ -6030,6 +6035,11 @@ body.has-mobile-bottom-nav main {
 .workspace-switcher__btn--active {
   background: linear-gradient(135deg, rgb(199 154 90 / 0.28) 0%, rgb(199 154 90 / 0.14) 100%);
   color: var(--color-gold-light);
+}
+
+.persona-switcher .workspace-switcher__btn {
+  padding: 0.35rem 0.55rem;
+  letter-spacing: 0.02em;
 }
 
 .avatar-menu-trigger {
