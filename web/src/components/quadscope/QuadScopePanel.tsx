@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { QUADSCOPE_PRODUCT } from "@/lib/quadscope/scopes";
 import type { ScopeRollup } from "@/lib/quadscope/rollup";
-import type { ScopeRollup as ScopeRollupFromRollup } from "@/lib/quadscope/rollup";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 export function QuadScopePanel({
