@@ -11,11 +11,15 @@ export type Dictionary = {
   };
   common: {
     brand: string;
+    /** Product line under AXHRD */
+    productLine: string;
     nav: {
       dashboard: string;
       home: string;
       prepare: string;
+      /** Hire job — interview / resume / discover / AC */
       growth: string;
+      /** Grow job — path / game / drills */
       practice: string;
       activity: string;
       products: string;

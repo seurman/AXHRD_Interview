@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { BookOpen, ChevronDown, Loader2, RefreshCw } from "lucide-react";
+import { QuadScopeBadge } from "@/components/quadscope/QuadScopeBadge";
+import { QUADSCOPE_SCOPES, type QuadScopeId } from "@/lib/quadscope/scopes";
 
 type RubricByLevel = Record<string, string[]>;
 type Term = {
@@ -17,6 +19,7 @@ type LexEntry = {
   nameKo: string;
   nameEn?: string;
   clusterCode: string;
+  scorecardScope?: QuadScopeId;
   ncsAnchor: string;
   definition: string;
   rubricByLevel: RubricByLevel;
@@ -43,13 +46,16 @@ type Props = {
   onSynced?: () => void;
 };
 
+type GroupMode = "quadscope" | "cluster";
+
 export function LexiconDictionaryPanel({ embedded = false, onSynced }: Props) {
   const [doc, setDoc] = useState<LexDoc | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [openCluster, setOpenCluster] = useState<string | null>(null);
+  const [groupMode, setGroupMode] = useState<GroupMode>("quadscope");
+  const [openCluster, setOpenCluster] = useState<string | null>("judgment");
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
 
   async function load() {
@@ -60,8 +66,6 @@ export function LexiconDictionaryPanel({ embedded = false, onSynced }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "불러오기 실패");
       setDoc(data);
-      const first = data.clusters?.[0]?.code ?? null;
-      setOpenCluster((prev) => prev ?? first);
     } catch (e) {
       setError(e instanceof Error ? e.message : "불러오기 실패");
     } finally {
@@ -73,18 +77,28 @@ export function LexiconDictionaryPanel({ embedded = false, onSynced }: Props) {
     void load();
   }, []);
 
-  const byCluster = useMemo(() => {
+  const groups = useMemo(() => {
     if (!doc) return [];
+    if (groupMode === "quadscope") {
+      return QUADSCOPE_SCOPES.map((s) => ({
+        code: s.id,
+        nameKo: `${s.nameEn} · ${s.nameKo}`,
+        items: Object.entries(doc.competencies)
+          .filter(([, e]) => e.scorecardScope === s.id)
+          .map(([code, e]) => ({ code, ...e })),
+      }));
+    }
     const clusters = [...(doc.clusters ?? [])].sort(
       (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
     );
     return clusters.map((cl) => ({
-      ...cl,
+      code: cl.code,
+      nameKo: cl.nameKo,
       items: Object.entries(doc.competencies)
         .filter(([, e]) => e.clusterCode === cl.code)
         .map(([code, e]) => ({ code, ...e })),
     }));
-  }, [doc]);
+  }, [doc, groupMode]);
 
   const selected = useMemo(() => {
     if (!doc || !selectedCode) return null;
@@ -148,7 +162,7 @@ export function LexiconDictionaryPanel({ embedded = false, onSynced }: Props) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">
-            Competency Lexicon
+            QuadScope Lexicon
           </p>
           <h3 className="mt-1 flex items-center gap-2 text-base font-bold text-foreground">
             <BookOpen className="h-4 w-4 text-gold" />
@@ -156,10 +170,32 @@ export function LexiconDictionaryPanel({ embedded = false, onSynced }: Props) {
           </h3>
           <p className="mt-1 max-w-2xl text-sm text-muted">{doc.description}</p>
           <p className="mt-1 text-xs text-muted">
-            클러스터 {doc.clusters.length} · 역량 {total} · 정의·루브릭·신호어 포함
+            QuadScope 4 · 출처 클러스터 {doc.clusters.length} · 역량 {total}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <div className="flex rounded-lg border border-card-border p-0.5 text-xs">
+            <button
+              type="button"
+              className={`rounded-md px-2.5 py-1.5 font-semibold ${groupMode === "quadscope" ? "bg-accent text-white" : "text-muted"}`}
+              onClick={() => {
+                setGroupMode("quadscope");
+                setOpenCluster("judgment");
+              }}
+            >
+              QuadScope
+            </button>
+            <button
+              type="button"
+              className={`rounded-md px-2.5 py-1.5 font-semibold ${groupMode === "cluster" ? "bg-accent text-white" : "text-muted"}`}
+              onClick={() => {
+                setGroupMode("cluster");
+                setOpenCluster(doc.clusters[0]?.code ?? null);
+              }}
+            >
+              출처 클러스터
+            </button>
+          </div>
           <button
             type="button"
             className="btn-secondary inline-flex min-h-11 items-center gap-1.5 text-sm"
@@ -190,7 +226,7 @@ export function LexiconDictionaryPanel({ embedded = false, onSynced }: Props) {
 
       <div className="grid gap-4 lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)]">
         <div className="space-y-2">
-          {byCluster.map((cl) => {
+          {groups.map((cl) => {
             const open = openCluster === cl.code;
             return (
               <div key={cl.code} className="rounded-xl border border-card-border">
@@ -213,15 +249,18 @@ export function LexiconDictionaryPanel({ embedded = false, onSynced }: Props) {
                       <li key={item.code}>
                         <button
                           type="button"
-                          className={`w-full rounded-lg px-2.5 py-2 text-left text-xs ${
+                          className={`flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-xs ${
                             selectedCode === item.code
                               ? "bg-accent/15 font-semibold text-foreground"
                               : "text-muted hover:bg-muted/10 hover:text-foreground"
                           }`}
                           onClick={() => setSelectedCode(item.code)}
                         >
-                          {item.nameKo}
-                          <span className="ml-1 text-[10px] opacity-70">({item.code})</span>
+                          <span>
+                            {item.nameKo}
+                            <span className="ml-1 text-[10px] opacity-70">({item.code})</span>
+                          </span>
+                          <QuadScopeBadge competencyCode={item.code} />
                         </button>
                       </li>
                     ))}
@@ -238,8 +277,12 @@ export function LexiconDictionaryPanel({ embedded = false, onSynced }: Props) {
           ) : (
             <div className="space-y-4">
               <div>
-                <p className="text-[11px] font-bold text-gold">{selected.code}</p>
-                <h4 className="text-lg font-bold text-foreground">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-[11px] font-bold text-gold">{selected.code}</p>
+                  <QuadScopeBadge competencyCode={selected.code} showKo size="md" />
+                  <span className="text-[10px] text-muted">{selected.clusterCode}</span>
+                </div>
+                <h4 className="mt-1 text-lg font-bold text-foreground">
                   {selected.nameKo}
                   {selected.nameEn ? (
                     <span className="ml-2 text-sm font-normal text-muted">{selected.nameEn}</span>

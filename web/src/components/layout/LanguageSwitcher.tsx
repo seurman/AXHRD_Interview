@@ -44,8 +44,8 @@ export function LanguageSwitcher({ compact }: { compact?: boolean }) {
           onClick={() => switchLocale(code)}
           className={`rounded-full px-2.5 py-1 text-[0.65rem] font-semibold transition ${
             locale === code
-              ? "bg-gold/20 text-gold-light"
-              : "text-white/45 hover:text-white/75"
+              ? "bg-primary/12 text-primary"
+              : "text-muted hover:text-foreground"
           }`}
           data-active={locale === code ? "true" : "false"}
         >

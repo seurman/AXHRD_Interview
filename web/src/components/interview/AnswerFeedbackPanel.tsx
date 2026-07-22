@@ -6,6 +6,7 @@ import type { AnswerFeedback, ChipType } from "@/types";
 import { competencyLabel, dimensionLabel } from "@/lib/labels";
 import { cn } from "@/lib/cn";
 import { AnswerInsightRadar } from "./AnswerInsightRadar";
+import { QuadScopeBadge } from "@/components/quadscope/QuadScopeBadge";
 import type { AnswerDimensions } from "@/lib/interview/answer-dimensions";
 
 const CHIP_LABEL: Record<ChipType, string> = {
@@ -76,7 +77,10 @@ export function AnswerFeedbackPanel({
           </span>
         )}
         {feedback.competency && (
-          <span className="text-xs text-muted">{competencyLabel(feedback.competency)}</span>
+          <>
+            <span className="text-xs text-muted">{competencyLabel(feedback.competency)}</span>
+            <QuadScopeBadge competencyCode={feedback.competency} />
+          </>
         )}
       </div>
 

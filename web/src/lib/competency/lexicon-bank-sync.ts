@@ -37,7 +37,11 @@ function buildDescription(entry: LexiconCompetency): string {
   const lenses = (["LARGE", "PUBLIC", "STARTUP"] as const)
     .map((l) => `${l}: ${(entry.lensSignals[l] ?? []).slice(0, 3).join(", ")}`)
     .join(" / ");
+  const scope = entry.scorecardScope
+    ? `QuadScope: ${entry.scorecardScope}`
+    : null;
   return [
+    scope,
     entry.definition,
     "",
     `NCS·앵커: ${entry.ncsAnchor}`,

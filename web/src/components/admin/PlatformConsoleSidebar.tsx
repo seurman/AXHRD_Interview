@@ -226,10 +226,10 @@ export function PlatformConsoleSidebar({
             {locale === "ko" ? `${userName}${c.userSuffix}` : userName}
           </p>
         )}
-        <PlatformNavLink href="/" onNavigate={onNavigate} className="platform-sidebar-footer-btn">
+        <a href="/" className="platform-sidebar-footer-btn">
           <ArrowLeft className="h-4 w-4 shrink-0 opacity-70" />
           {c.admin.backToService}
-        </PlatformNavLink>
+        </a>
         <PlatformLogout label={c.auth.logout} />
       </div>
     </aside>

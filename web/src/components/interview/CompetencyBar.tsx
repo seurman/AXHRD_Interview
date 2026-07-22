@@ -1,6 +1,7 @@
 "use client";
 
 import { competencyLabel, thetaToLevel } from "@/lib/labels";
+import { QuadScopeBadge } from "@/components/quadscope/QuadScopeBadge";
 import type { CompetencyState } from "@/types";
 
 interface CompetencyBarProps {
@@ -14,7 +15,7 @@ export function CompetencyBar({ states, activeCompetency }: CompetencyBarProps) 
   return (
     <div className="space-y-3">
       <p className="text-xs font-medium uppercase tracking-wider text-muted">
-        역량 추정 (실시간)
+        QuadScope · 역량 추정 (실시간)
       </p>
       {entries.map((state) => {
         const pct = Math.max(0, Math.min(100, ((state.theta + 3) / 6) * 100));
@@ -23,11 +24,12 @@ export function CompetencyBar({ states, activeCompetency }: CompetencyBarProps) 
 
         return (
           <div key={state.competency} className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className={isActive ? "font-semibold text-accent" : "text-muted"}>
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className={`flex items-center gap-1.5 ${isActive ? "font-semibold text-accent" : "text-muted"}`}>
                 {competencyLabel(state.competency)}
+                <QuadScopeBadge competencyCode={state.competency} />
               </span>
-              <span className="text-muted">
+              <span className="shrink-0 text-muted">
                 L{level} · θ {state.theta.toFixed(2)}
               </span>
             </div>

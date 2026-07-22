@@ -6,6 +6,8 @@ import { CompetencyDashboard } from "@/components/dashboard/CompetencyDashboard"
 import { CoachInsightsPanel } from "@/components/dashboard/CoachInsightsPanel";
 import { WelcomeBanner } from "@/components/auth/WelcomeBanner";
 import { NarrativeLead } from "@/components/dashboard/NarrativeLead";
+import { QuadScopePanel } from "@/components/quadscope/QuadScopePanel";
+import { rollupQuadScope, QUADSCOPE_PRODUCT } from "@/lib/quadscope";
 import { getCompetencyDashboardData } from "@/lib/dashboard/get-competency-dashboard-data";
 import { buildDashboardNarrative } from "@/lib/dashboard/career-narrative";
 import { getResumeableInterviewSessions } from "@/lib/interview/get-resumeable-sessions";
@@ -30,6 +32,7 @@ export default async function DashboardPage() {
   const locale = await getLocale();
   const d = getDictionary(locale).dashboard;
   const userSuffix = getDictionary(locale).common.userSuffix;
+  const quadScopes = rollupQuadScope(dashboard.latestByCompetency);
 
   const assessedCount = COMPETENCY_CODES.filter(
     (c) => dashboard.latestByCompetency[c]?.assessed,
@@ -63,7 +66,9 @@ export default async function DashboardPage() {
       </Suspense>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="product-stage__kicker">AX-HRD Career OS</p>
+          <p className="product-stage__kicker">
+            {QUADSCOPE_PRODUCT.name} · Judgment · Delivery · Relations · Anchor
+          </p>
           <h1 className="product-stage__title !text-2xl sm:!text-3xl">{d.pageTitle}</h1>
           <p className="product-stage__lead !mt-1">
             {locale === "ko"
@@ -78,7 +83,7 @@ export default async function DashboardPage() {
             </Link>
           )}
           <Link href="/interview/setup" className="btn-primary text-sm">
-            + 새 면접
+            + Hire
           </Link>
         </div>
       </div>
@@ -95,6 +100,8 @@ export default async function DashboardPage() {
           }))}
         />
       ) : null}
+
+      <QuadScopePanel scopes={quadScopes} />
 
       <NarrativeLead text={dashboardNarrative} />
 

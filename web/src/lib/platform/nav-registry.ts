@@ -136,7 +136,7 @@ async function loadOrgAdminFlags(organizationId: string): Promise<{
   }
 }
 
-/** 여정 순서: 탐색 → 준비 → 실전 */
+/** 여정 순서: Hire(탐색·실전) → Grow(연습) — QuadScope Jobs */
 const GROWTH_HREFS: { href: string; labelKey: PrepareLabelKey; capability: CapabilityId }[] = [
   { href: "/discover", labelKey: "discover", capability: "product.discover" },
   { href: "/resume-review", labelKey: "resumeReview", capability: "product.resume_review" },

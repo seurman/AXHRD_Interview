@@ -25,6 +25,8 @@ export type LexiconCompetency = {
   nameKo: string;
   nameEn?: string;
   clusterCode: string;
+  /** QuadScope product lens */
+  scorecardScope?: "judgment" | "delivery" | "relations" | "anchor";
   ncsAnchor: string;
   definition: string;
   rubricByLevel: LexiconRubricByLevel;
@@ -41,12 +43,19 @@ export type LexiconClusterMeta = {
   sortOrder?: number;
 };
 
+export type LexiconQuadScopeMeta = {
+  id: "judgment" | "delivery" | "relations" | "anchor";
+  nameEn: string;
+  nameKo: string;
+};
+
 export type CompetencyLexiconDoc = {
   version: number;
   description: string;
   sources: string[];
   orgLenses: Record<OrgLens, { labelKo: string; looksFor: string[] }>;
   clusters: LexiconClusterMeta[];
+  quadScopes?: LexiconQuadScopeMeta[];
   competencies: Record<string, LexiconCompetency>;
 };
 
@@ -61,6 +70,17 @@ export function getLexiconDoc(): CompetencyLexiconDoc {
 export function listLexiconClusters(): LexiconClusterMeta[] {
   return [...(DOC.clusters ?? [])].sort(
     (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+  );
+}
+
+export function listLexiconQuadScopes(): LexiconQuadScopeMeta[] {
+  return (
+    DOC.quadScopes ?? [
+      { id: "judgment", nameEn: "Judgment", nameKo: "판단" },
+      { id: "delivery", nameEn: "Delivery", nameKo: "성과" },
+      { id: "relations", nameEn: "Relations", nameKo: "관계" },
+      { id: "anchor", nameEn: "Anchor", nameKo: "중심" },
+    ]
   );
 }
 

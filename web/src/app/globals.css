@@ -285,72 +285,125 @@ body {
 
 /* 프리미엄 헤더 — 모바일: 다크 골드 / 데스크탑: 기존 파란 톤 */
 .header-premium {
-  background: linear-gradient(180deg, rgb(10 15 28 / 0.97) 0%, rgb(12 18 34 / 0.95) 100%);
-  border-bottom: 1px solid rgb(199 154 90 / 0.15);
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0.98) 0%,
+    rgb(247 248 252 / 0.96) 100%
+  );
+  border-bottom: 1px solid var(--color-card-border);
+  box-shadow: 0 1px 0 rgb(47 95 238 / 0.06);
   backdrop-filter: blur(12px);
 }
 
+.header-premium .axhrd-logo {
+  color: var(--color-foreground);
+}
+
+.header-premium .nav-pill {
+  border-color: rgb(47 95 238 / 0.28);
+  color: var(--color-foreground);
+  background: rgb(255 255 255 / 0.85);
+}
+
+.header-premium .nav-pill:hover {
+  border-color: rgb(47 95 238 / 0.45);
+  background: rgb(47 95 238 / 0.08);
+  color: var(--color-primary);
+}
+
+.header-premium .nav-pill-active {
+  border-color: var(--color-primary);
+  background: rgb(47 95 238 / 0.12);
+  color: var(--color-primary);
+}
+
+.header-premium .nav-pill-gold {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  color: white;
+  box-shadow: 0 4px 14px -4px rgb(47 95 238 / 0.4);
+}
+
+.header-premium .nav-pill-gold:hover {
+  background: linear-gradient(135deg, var(--color-primary-light) 0%, #6a8fff 100%);
+  color: white;
+}
+
+.header-premium .lang-switch {
+  border-color: rgb(47 95 238 / 0.2);
+  background: rgb(47 95 238 / 0.04);
+}
+
+.header-premium .lang-switch button[data-active="true"] {
+  background: rgb(47 95 238 / 0.12);
+  color: var(--color-primary);
+}
+
+.header-premium .lang-switch button[data-active="false"] {
+  color: var(--color-muted);
+}
+
+.header-premium .user-greeting {
+  color: var(--color-muted);
+}
+
+/* 사이트 다크 모드에서도 헤더·내비는 밝은 대비 유지 (메뉴 가독성) */
+html.dark .header-premium {
+  background: linear-gradient(
+    180deg,
+    rgb(28 32 44 / 0.98) 0%,
+    rgb(22 26 36 / 0.96) 100%
+  );
+  border-bottom-color: rgb(148 163 184 / 0.28);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+html.dark .header-premium .axhrd-logo {
+  color: #f8fafc;
+}
+
+html.dark .header-premium .nav-pill {
+  border-color: rgb(148 163 184 / 0.45);
+  background: rgb(51 65 85 / 0.55);
+  color: #f1f5f9;
+}
+
+html.dark .header-premium .nav-pill:hover {
+  border-color: rgb(96 165 250 / 0.65);
+  background: rgb(59 130 246 / 0.22);
+  color: #eff6ff;
+}
+
+html.dark .header-premium .nav-pill-active {
+  border-color: #60a5fa;
+  background: rgb(59 130 246 / 0.3);
+  color: #eff6ff;
+}
+
+html.dark .header-premium .nav-pill-gold {
+  color: #fff;
+}
+
+html.dark .header-premium .lang-switch {
+  border-color: rgb(148 163 184 / 0.35);
+  background: rgb(51 65 85 / 0.5);
+}
+
+html.dark .header-premium .lang-switch button[data-active="true"] {
+  background: rgb(59 130 246 / 0.28);
+  color: #eff6ff;
+}
+
+html.dark .header-premium .lang-switch button[data-active="false"] {
+  color: #cbd5e1;
+}
+
+html.dark .header-premium .user-greeting {
+  color: #cbd5e1;
+}
+
 @media (min-width: 640px) {
-  .header-premium {
-    background: linear-gradient(
-      180deg,
-      rgb(255 255 255 / 0.96) 0%,
-      rgb(247 248 252 / 0.94) 100%
-    );
-    border-bottom: 1px solid var(--color-card-border);
-    box-shadow: 0 1px 0 rgb(47 95 238 / 0.06);
-  }
-
-  .header-premium .axhrd-logo {
-    color: var(--color-foreground);
-  }
-
-  .header-premium .nav-pill {
-    border-color: rgb(47 95 238 / 0.25);
-    color: var(--color-muted);
-  }
-
-  .header-premium .nav-pill:hover {
-    border-color: rgb(47 95 238 / 0.45);
-    background: rgb(47 95 238 / 0.06);
-    color: var(--color-primary);
-  }
-
-  .header-premium .nav-pill-active {
-    border-color: var(--color-primary);
-    background: rgb(47 95 238 / 0.1);
-    color: var(--color-primary);
-  }
-
-  .header-premium .nav-pill-gold {
-    border-color: transparent;
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
-    color: white;
-    box-shadow: 0 4px 14px -4px rgb(47 95 238 / 0.4);
-  }
-
-  .header-premium .nav-pill-gold:hover {
-    background: linear-gradient(135deg, var(--color-primary-light) 0%, #6a8fff 100%);
-    color: white;
-  }
-
-  .header-premium .lang-switch {
-    border-color: rgb(47 95 238 / 0.2);
-    background: rgb(47 95 238 / 0.04);
-  }
-
-  .header-premium .lang-switch button[data-active="true"] {
-    background: rgb(47 95 238 / 0.12);
-    color: var(--color-primary);
-  }
-
-  .header-premium .lang-switch button[data-active="false"] {
-    color: var(--color-muted);
-  }
-
-  .header-premium .user-greeting {
-    color: var(--color-muted);
-  }
+  /* desktop keeps the same readable header tokens above */
 }
 
 .nav-pill {
@@ -1401,7 +1454,7 @@ body:has(.platform-app) {
 }
 
 html.dark body:has(.platform-app) {
-  background: #080808;
+  background: #e8ecf2;
 }
 
 .platform-app {
@@ -1423,20 +1476,23 @@ html.dark body:has(.platform-app) {
   font-size: 0.875rem;
   font-weight: 600;
   -webkit-font-smoothing: antialiased;
+  color-scheme: light;
 }
 
+/* 관리자 콘솔은 사이트 다크 모드와 무관하게 밝은 셸 유지 (메뉴 가독성) */
 html.dark .platform-app {
-  --platform-sidebar-bg: #111111;
-  --platform-canvas: #080808;
-  --platform-canvas-highlight: #141414;
-  --platform-surface: #161616;
-  --platform-surface-raised: #1c1c1c;
-  --platform-border: #2e2e2e;
-  --platform-text: #f5f5f5;
-  --platform-text-muted: #a3a3a3;
-  --platform-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
-  --platform-shadow: 0 2px 8px rgb(0 0 0 / 0.4);
-  --platform-shadow-raised: 0 4px 20px rgb(0 0 0 / 0.45);
+  --platform-sidebar-bg: #ffffff;
+  --platform-canvas: #e8ecf2;
+  --platform-canvas-highlight: #f4f6fa;
+  --platform-surface: #ffffff;
+  --platform-surface-raised: #ffffff;
+  --platform-border: #d4dae3;
+  --platform-text: #0f1419;
+  --platform-text-muted: #4b5563;
+  --platform-shadow-sm: 0 1px 2px rgb(15 20 25 / 0.06), 0 1px 3px rgb(15 20 25 / 0.04);
+  --platform-shadow: 0 1px 2px rgb(15 20 25 / 0.05), 0 4px 14px rgb(15 20 25 / 0.07);
+  --platform-shadow-raised: 0 2px 4px rgb(15 20 25 / 0.06), 0 8px 24px rgb(15 20 25 / 0.09);
+  color-scheme: light;
 }
 
 .platform-sidebar {
@@ -1465,7 +1521,7 @@ html.dark .platform-app {
   padding: 0.5rem 0.5625rem;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--platform-text-muted);
+  color: var(--platform-text);
   transition: background 0.08s, color 0.08s, box-shadow 0.08s;
 }
 
@@ -1575,15 +1631,15 @@ html.dark .platform-app {
 
 html.dark .platform-content {
   background:
-    radial-gradient(ellipse 100% 60% at 50% -10%, rgb(255 255 255 / 0.06), transparent 50%),
-    radial-gradient(ellipse 60% 40% at 100% 0%, rgb(0 112 243 / 0.06), transparent 40%),
-    linear-gradient(180deg, #0c0c0c 0%, var(--platform-canvas) 100%);
+    radial-gradient(ellipse 140% 90% at 50% -25%, rgb(255 255 255 / 0.95), transparent 50%),
+    radial-gradient(ellipse 80% 50% at 100% 0%, rgb(0 112 243 / 0.04), transparent 45%),
+    linear-gradient(180deg, var(--platform-canvas-highlight) 0%, var(--platform-canvas) 55%, color-mix(in srgb, var(--platform-canvas) 85%, #c8d0dc) 100%);
 }
 
 html.dark .platform-sidebar {
   box-shadow:
-    2px 0 24px rgb(0 0 0 / 0.5),
-    inset -1px 0 0 rgb(255 255 255 / 0.04);
+    2px 0 20px rgb(15 20 25 / 0.08),
+    inset -1px 0 0 rgb(255 255 255 / 0.6);
 }
 
 html.dark .platform-panel {
@@ -5917,6 +5973,7 @@ html.dark .dx-textarea {
   font-weight: 800;
 }
 
+/* Always-dark account menu — must beat homepage header ink overrides */
 .avatar-menu-panel {
   position: absolute;
   right: 0;
@@ -5925,17 +5982,18 @@ html.dark .dx-textarea {
   min-width: 12.5rem;
   overflow: hidden;
   border-radius: 0.9rem;
-  border: 1px solid var(--color-card-border);
-  background: var(--color-card);
+  border: 1px solid rgb(148 163 184 / 0.28) !important;
+  background: #0b1220 !important;
+  color: #f8fafc !important;
   padding: 0.5rem 0;
-  box-shadow: 0 16px 40px rgb(0 0 0 / 0.18);
+  box-shadow: 0 18px 44px rgb(0 0 0 / 0.45);
 }
 
 .avatar-menu-panel__name {
   padding: 0.35rem 0.9rem 0.55rem;
   font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-foreground);
+  font-weight: 650;
+  color: #f8fafc !important;
 }
 
 .avatar-menu-item {
@@ -5944,160 +6002,20 @@ html.dark .dx-textarea {
   gap: 0.5rem;
   padding: 0.55rem 0.9rem;
   font-size: 0.85rem;
-  color: var(--color-foreground);
-  transition: background 0.12s;
+  font-weight: 600;
+  color: #e2e8f0 !important;
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s;
 }
 
 .avatar-menu-item:hover {
-  background: rgb(199 154 90 / 0.08);
+  background: rgb(51 65 85 / 0.85) !important;
+  color: #ffffff !important;
 }
 
 .avatar-menu-item--active {
-  color: var(--color-gold);
-  font-weight: 600;
-}
-
-.avatar-menu-panel__prefs {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.75rem 0.5rem;
-}
-
-.mobile-bottom-nav {
-  position: fixed;
-  inset-inline: 0;
-  bottom: 0;
-  z-index: 45;
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  border-top: 1px solid var(--color-card-border);
-  background: color-mix(in srgb, var(--color-card) 92%, transparent);
-  backdrop-filter: blur(10px);
-  padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
-}
-
-@media (min-width: 640px) {
-  .mobile-bottom-nav {
-    display: none;
-  }
-}
-
-.mobile-bottom-nav__item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.15rem;
-  min-height: 3rem;
-  border-radius: 0.65rem;
-  font-size: 0.62rem;
-  font-weight: 600;
-  color: var(--color-muted);
-  transition: color 0.12s, background 0.12s;
-}
-
-.mobile-bottom-nav__item--active {
-  color: var(--color-gold);
-}
-
-body.has-mobile-bottom-nav main {
-  padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
-}
-
-/* ── 2026 nav: workspace switcher, avatar menu, mobile bottom tabs ── */
-.workspace-switcher {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.15rem;
-  padding: 0.2rem;
-  border-radius: 9999px;
-  border: 1px solid rgb(199 154 90 / 0.28);
-  background: rgb(199 154 90 / 0.06);
-}
-
-.workspace-switcher__btn {
-  border-radius: 9999px;
-  padding: 0.35rem 0.75rem;
-  font-size: 0.7rem;
+  color: #93c5fd !important;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  color: rgb(199 154 90 / 0.75);
-  transition: background 0.15s, color 0.15s;
-}
-
-.workspace-switcher__btn--active {
-  background: linear-gradient(135deg, rgb(199 154 90 / 0.28) 0%, rgb(199 154 90 / 0.14) 100%);
-  color: var(--color-gold-light);
-}
-
-.avatar-menu-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  border-radius: 9999px;
-  border: 1px solid rgb(199 154 90 / 0.35);
-  padding: 0.2rem 0.45rem 0.2rem 0.2rem;
-  color: var(--color-gold);
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.avatar-menu-trigger:hover {
-  border-color: rgb(199 154 90 / 0.55);
-  background: rgb(199 154 90 / 0.08);
-}
-
-.avatar-menu-trigger__badge {
-  display: flex;
-  height: 1.75rem;
-  width: 1.75rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  background: linear-gradient(135deg, rgb(199 154 90 / 0.35) 0%, rgb(199 154 90 / 0.15) 100%);
-  font-size: 0.7rem;
-  font-weight: 800;
-}
-
-.avatar-menu-panel {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 0.5rem);
-  z-index: 60;
-  min-width: 12.5rem;
-  overflow: hidden;
-  border-radius: 0.9rem;
-  border: 1px solid var(--color-card-border);
-  background: var(--color-card);
-  padding: 0.5rem 0;
-  box-shadow: 0 16px 40px rgb(0 0 0 / 0.18);
-}
-
-.avatar-menu-panel__name {
-  padding: 0.35rem 0.9rem 0.55rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-foreground);
-}
-
-.avatar-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 0.9rem;
-  font-size: 0.85rem;
-  color: var(--color-foreground);
-  transition: background 0.12s;
-}
-
-.avatar-menu-item:hover {
-  background: rgb(199 154 90 / 0.08);
-}
-
-.avatar-menu-item--active {
-  color: var(--color-gold);
-  font-weight: 600;
 }
 
 .avatar-menu-panel__prefs {
@@ -6105,6 +6023,59 @@ body.has-mobile-bottom-nav main {
   align-items: center;
   gap: 0.35rem;
   padding: 0.35rem 0.75rem 0.5rem;
+}
+
+.avatar-menu-panel .lang-switch {
+  border-color: rgb(148 163 184 / 0.35) !important;
+  background: rgb(30 41 59 / 0.9) !important;
+}
+
+.avatar-menu-panel .lang-switch button[data-active="true"] {
+  background: rgb(59 130 246 / 0.35) !important;
+  color: #eff6ff !important;
+}
+
+.avatar-menu-panel .lang-switch button[data-active="false"] {
+  color: #94a3b8 !important;
+}
+
+.avatar-menu-panel .btn-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%) !important;
+  color: #ffffff !important;
+}
+
+.avatar-menu-panel .border-card-border {
+  border-color: rgb(148 163 184 / 0.35) !important;
+}
+
+.avatar-menu-panel .text-danger {
+  color: #fca5a5 !important;
+}
+
+/* Homepage ink header forces light a/button colors — keep the dropdown dark */
+body.ax-home-page .header-premium .avatar-menu-panel,
+body.ax-home-page .header-premium .avatar-menu-panel a,
+body.ax-home-page .header-premium .avatar-menu-panel button:not(.btn-primary),
+body.ax-home-page .header-premium .avatar-menu-panel p {
+  color: #e2e8f0 !important;
+}
+
+body.ax-home-page .header-premium .avatar-menu-panel {
+  background: #0b1220 !important;
+}
+
+body.ax-home-page .header-premium .avatar-menu-panel .avatar-menu-item:hover {
+  background: rgb(51 65 85 / 0.85) !important;
+  color: #ffffff !important;
+}
+
+body.ax-home-page .header-premium .avatar-menu-panel .btn-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%) !important;
+  color: #ffffff !important;
+}
+
+body.ax-home-page .header-premium .avatar-menu-panel .text-danger {
+  color: #fca5a5 !important;
 }
 
 .mobile-bottom-nav {

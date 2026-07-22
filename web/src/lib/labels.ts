@@ -1,5 +1,7 @@
 /** 클라이언트 컴포넌트용 — 외부 패키지 의존 없음 */
 
+import { COMPETENCY_TO_QUADSCOPE, scopeDef, type QuadScopeId } from "@/lib/quadscope/scopes";
+
 export function competencyLabel(code: string): string {
   const map: Record<string, string> = {
     COMMUNICATION: "의사소통",
@@ -72,6 +74,18 @@ export function dimensionLabel(key: string): string {
     clarity: "명확성",
   };
   return map[key] ?? key;
+}
+
+export function quadScopeLabel(scopeOrCode: string): string {
+  const fromScope: Record<string, string> = {
+    judgment: "Judgment",
+    delivery: "Delivery",
+    relations: "Relations",
+    anchor: "Anchor",
+  };
+  if (fromScope[scopeOrCode]) return fromScope[scopeOrCode];
+  const s = COMPETENCY_TO_QUADSCOPE[scopeOrCode] as QuadScopeId | undefined;
+  return s ? scopeDef(s).nameEn : scopeOrCode;
 }
 
 export function thetaToLevel(theta: number): number {

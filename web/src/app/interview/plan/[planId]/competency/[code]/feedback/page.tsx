@@ -5,6 +5,7 @@ import { requirePageUser, assertResourceOwner } from "@/lib/auth/guards";
 import { competencyLabel, dimensionLabel, formatPercentile } from "@/lib/labels";
 import { COMPETENCY_CODES } from "@/types";
 import { ScoreGauge } from "@/components/report/ScoreGauge";
+import { QuadScopeBadge } from "@/components/quadscope/QuadScopeBadge";
 import { BonusQuestionSection } from "@/components/report/BonusQuestionSection";
 import { ClaimVerificationSection } from "@/components/report/ClaimVerificationSection";
 import { computeDeliveryStats } from "@/lib/interview/feedback-helpers";
@@ -144,8 +145,9 @@ export default async function CompetencyFeedbackPage({
               ? `이번 차수 ${roundDoneCount}/${roundCodes.length} 역량`
               : `${doneCount}/${COMPETENCY_CODES.length} 역량 완료`}
           </p>
-          <h1 className="mt-2 text-2xl font-bold text-foreground">
+          <h1 className="mt-2 flex flex-wrap items-center gap-2 text-2xl font-bold text-foreground">
             {competencyLabel(code)} 피드백
+            <QuadScopeBadge competencyCode={code} showKo size="md" />
           </h1>
         </div>
         <FeedbackShareControls />

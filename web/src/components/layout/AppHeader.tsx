@@ -7,7 +7,6 @@ import { MainNav } from "./MainNav";
 import { MobileNav } from "./MobileNav";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { useWorkspaceMode } from "@/lib/nav/workspace";
-import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
 import { BillingPastDueBanner } from "@/components/billing/BillingPastDueBanner";
 import { useI18n } from "@/lib/i18n/I18nProvider";
@@ -42,13 +41,16 @@ export function AppHeader() {
       <BillingPastDueBanner />
       <header className="header-premium sticky top-0 z-40">
         <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-3 px-5 py-3 sm:px-8 sm:py-3.5">
-          <Link
-            href="/"
-            className="axhrd-logo axhrd-logo--md group min-w-0 shrink"
-            aria-label={`${dict.common.brand} home`}
+          <a
+            href={loggedIn && nav?.dashboardHref ? nav.dashboardHref : "/"}
+            className="axhrd-logo axhrd-logo--md group flex min-w-0 shrink items-center gap-2"
+            aria-label={`${dict.common.brand} ${dict.common.productLine} home`}
           >
             <Logo size={28} />
-          </Link>
+            <span className="hidden text-[11px] font-semibold uppercase tracking-[0.12em] text-primary sm:inline dark:text-sky-300">
+              {dict.common.productLine}
+            </span>
+          </a>
 
           <MainNav
             dashboardHref={nav?.dashboardHref ?? null}

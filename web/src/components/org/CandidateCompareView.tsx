@@ -4,6 +4,7 @@ import {
   type AnswerDimensionKey,
 } from "@/lib/interview/answer-dimensions";
 import { competencyLabel, dimensionLabel } from "@/lib/labels";
+import { QuadScopeBadge } from "@/components/quadscope/QuadScopeBadge";
 import type { CandidateComparisonPayload } from "@/lib/org/candidate-comparison";
 
 function dimPct(value: number | undefined): number {
@@ -17,7 +18,7 @@ function dimBarClass(value: number | undefined): string {
   return "bg-warning/60";
 }
 
-/** 캠페인 내 지원자 역량·6축 비교표 */
+/** 캠페인 내 지원자 역량·QuadScope·6축 비교표 */
 export function CandidateCompareView({ data }: { data: CandidateComparisonPayload }) {
   if (data.rows.length < 2) {
     return (
@@ -36,6 +37,7 @@ export function CandidateCompareView({ data }: { data: CandidateComparisonPayloa
               <th className="sticky left-0 bg-card py-2 pr-4 font-medium">지원자</th>
               <th className="py-2 pr-4 font-medium">종합</th>
               <th className="py-2 pr-4 font-medium">역량</th>
+              <th className="py-2 pr-4 font-medium">QuadScope</th>
               {ANSWER_DIMENSION_KEYS.map((k) => (
                 <th key={k} className="py-2 pr-3 font-medium whitespace-nowrap">
                   {dimensionLabel(k).replace(/\(.*\)/, "").trim()}
@@ -63,6 +65,13 @@ export function CandidateCompareView({ data }: { data: CandidateComparisonPayloa
                 </td>
                 <td className="py-3 pr-4 text-muted">
                   {row.focusCompetency ? competencyLabel(row.focusCompetency) : "—"}
+                </td>
+                <td className="py-3 pr-4">
+                  {row.focusCompetency ? (
+                    <QuadScopeBadge competencyCode={row.focusCompetency} showKo />
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 {ANSWER_DIMENSION_KEYS.map((k) => (
                   <td key={k} className="py-3 pr-3">

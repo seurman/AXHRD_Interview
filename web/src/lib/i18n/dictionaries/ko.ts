@@ -2,17 +2,19 @@ import type { Dictionary } from "../types";
 
 export const dictionary: Dictionary = {
   meta: {
-    title: "AXHRD — 연습할수록 답이 단단해지고, 역량 점수가 쌓입니다",
-    description: "자소서 기반 AI 면접 연습. 음성 답변, 루브릭 채점, 역량 점수 누적. 월 3회 무료.",
+    title: "AXHRD QuadScope — Judgment · Delivery · Relations · Anchor",
+    description:
+      "QuadScope로 사람을 네 범위로 보는 면접·육성·진단 플랫폼. 자소서 근거 면접, 루브릭·IRT, 기관 킷.",
   },
   common: {
     brand: "AXHRD",
+    productLine: "QuadScope",
     nav: {
       dashboard: "대시보드",
       home: "홈",
       prepare: "면접 준비",
-      growth: "성장",
-      practice: "연습",
+      growth: "Hire",
+      practice: "Grow",
       activity: "내 활동",
       products: "제품",
       pricing: "요금",
@@ -80,12 +82,12 @@ export const dictionary: Dictionary = {
     saas: {
       title: "기관",
       settings: "설정",
-      cohortDashboard: "기관 대시보드",
+      cohortDashboard: "Hire · 참여 현황",
       peopleDashboard: "구성원 현황",
-      diagnosticDashboard: "조직진단",
-      candidateResults: "지원자 결과",
+      diagnosticDashboard: "Sense · 조직진단",
+      candidateResults: "Hire · 지원자 결과",
       members: "멤버·승인",
-      settingsHub: "면접·역량 설정",
+      settingsHub: "킷 · QuadScope",
       interviewKit: "인터뷰 킷 스튜디오",
     },
     workspace: {
@@ -99,9 +101,9 @@ export const dictionary: Dictionary = {
       discover: "나를 발견하기",
       resume: "자소서 리뷰",
       interview: "구조화 AI 면접",
-      practice: "역량 학습 패스",
-      growth: "역량 트래킹",
-      orgDiagnosis: "조직 진단",
+      practice: "Grow · 학습 패스",
+      growth: "QuadScope 트래킹",
+      orgDiagnosis: "Sense · 조직 진단",
       forOrganizations: "기관 플랫폼",
     },
     avatar: {
@@ -111,12 +113,12 @@ export const dictionary: Dictionary = {
     },
     mobileNav: {
       home: "홈",
-      growth: "성장",
-      practice: "연습",
+      growth: "Hire",
+      practice: "Grow",
       org: "기관",
       more: "더보기",
       cohort: "기관",
-      diagnostic: "진단",
+      diagnostic: "Sense",
       settings: "면접·역량",
     },
     language: {
@@ -137,11 +139,12 @@ export const dictionary: Dictionary = {
   },
   home: {
     hero: {
-      eyebrow: "역량 성장 플랫폼",
+      eyebrow: "QuadScope · Hire · Grow · Sense · Assess",
       brand: "AXHRD",
-      titleLine1: "연습할수록 답이 단단해지고,",
-      titleHighlight: "역량 점수가 쌓입니다",
-      subtitle: "공고와 자소서에서 질문을 만들고, 실전처럼 말로 연습합니다.",
+      titleLine1: "사람을 네 가지 범위로 보고,",
+      titleHighlight: "같은 언어로 키웁니다",
+      subtitle:
+        "Judgment · Delivery · Relations · Anchor — 면접·육성·진단이 하나의 QuadScope로 연결됩니다.",
       ctaStart: "시작하기",
       ctaStartLoggedIn: "홈으로",
       ctaPersonal: "시작하기",
@@ -786,14 +789,14 @@ export const dictionary: Dictionary = {
   },
   dashboard: {
     pageTitle: "홈",
-    pageSubtitle: "역량·코칭 인사이트·다음 할 일을 한곳에서 확인하세요",
+    pageSubtitle: "QuadScope로 네 범위를 보고, 다음 Hire·Grow를 고르세요",
     competencySection: "역량 트래킹",
     differentiation: {
-      title: "AXHRD만의 방식",
+      title: "QuadScope 방식",
       items: [
-        "자소서에 실제 적힌 구절만 인용해 질문을 만들고, 화면에 근거를 보여줍니다",
-        "꼬리질문은 세션당 1회·본인 발화만 근거로 이어집니다",
-        "점수는 답변 인용과 함께 제시하고, IRT로 난이도를 조절합니다",
+        "Judgment · Delivery · Relations · Anchor — 사람과 조직을 같은 언어로 봅니다",
+        "자소서 구절만 인용해 질문하고, 점수 옆에 근거를 붙입니다",
+        "약한 Scope를 Grow 패스·게임으로 바로 이어 줍니다",
       ],
       link: "강점 카드 더 모으기 →",
     },

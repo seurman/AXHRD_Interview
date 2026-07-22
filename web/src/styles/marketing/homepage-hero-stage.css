@@ -14,6 +14,17 @@ body.ax-home-page .header-premium button {
   color: #eef3f6;
 }
 
+body.ax-home-page .header-premium .avatar-menu-panel {
+  background: #0b1220 !important;
+  color: #f8fafc !important;
+}
+
+body.ax-home-page .header-premium .avatar-menu-panel a,
+body.ax-home-page .header-premium .avatar-menu-panel button:not(.btn-primary),
+body.ax-home-page .header-premium .avatar-menu-panel p {
+  color: #e2e8f0 !important;
+}
+
 body.ax-home-page .header-premium .nav-pill:hover,
 body.ax-home-page .header-premium .nav-pill-active {
   border-color: rgb(238 243 246 / 0.45);

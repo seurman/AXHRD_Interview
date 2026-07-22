@@ -11,6 +11,7 @@ import { PrintButton } from "@/components/ui/PrintButton";
 import { SessionIntegrityNotice } from "@/components/interview/SessionIntegrityNotice";
 import { NarrativeLead } from "@/components/dashboard/NarrativeLead";
 import { SessionReportTabs } from "@/components/report/SessionReportTabs";
+import { QuadScopeBadge } from "@/components/quadscope/QuadScopeBadge";
 import { buildSessionReportNarrative } from "@/lib/dashboard/career-narrative";
 import { computeDeliveryStats } from "@/lib/interview/feedback-helpers";
 import { parseEvidenceAssessmentReport } from "@/lib/assessment/evidence-report";
@@ -90,8 +91,14 @@ export function SessionReportView({
       <section className="card-luxe flex flex-col items-center gap-6 border-double border-gold/40 p-6 sm:flex-row">
         <div className="flex w-full flex-col items-center gap-4 sm:w-auto">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold">
-            AXHRD Interview Report
+            AXHRD QuadScope Report
           </p>
+          {session.focusCompetency ? (
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <span className="text-sm text-muted">{competencyLabel(session.focusCompetency)}</span>
+              <QuadScopeBadge competencyCode={session.focusCompetency} showKo />
+            </div>
+          ) : null}
           <ScoreGauge value={avgScore} label="종합 점수" variant="gold" />
         </div>
         <p className="flex-1 text-center leading-relaxed text-foreground report-prose sm:text-left">
