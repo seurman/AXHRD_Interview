@@ -1,4 +1,4 @@
-const CACHE = "axhrd-shell-v4";
+const CACHE = "axhrd-shell-v6";
 const OFFLINE_SHELL = [
   "/manifest.json",
   "/brand/logo/axhrd-favicon.svg",
@@ -24,9 +24,11 @@ self.addEventListener("activate", (event) => {
         ),
       )
       .then(async () => {
-        const cache = await caches.open(CACHE);
-        const home = await cache.match("/");
-        if (home) await cache.delete("/");
+        for (const name of await caches.keys()) {
+          const cache = await caches.open(name);
+          const home = await cache.match("/");
+          if (home) await cache.delete("/");
+        }
       })
       .then(() => self.clients.claim()),
   );
@@ -45,9 +47,15 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // 홈 HTML은 절대 캐시하지 않음 — 구버전 PWA 셸이 히어로 UI를 가리는 문제 방지
-  if (url.pathname === "/") {
-    event.respondWith(fetch(request));
+  // Never intercept App Router / RSC / home document navigations.
+  // respondWith(fetch("/")) broke soft-nav and showed error.tsx.
+  if (
+    request.headers.has("RSC") ||
+    request.headers.has("Next-Router-State-Tree") ||
+    request.headers.has("Next-Router-Prefetch") ||
+    request.headers.has("Next-Url") ||
+    url.pathname === "/"
+  ) {
     return;
   }
 

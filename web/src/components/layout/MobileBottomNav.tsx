@@ -11,6 +11,8 @@ type Tab = {
   label: string;
   icon: typeof Home;
   match: (path: string) => boolean;
+  /** Full document load — avoids soft-nav failures to home */
+  hard?: boolean;
 };
 
 export function MobileBottomNav({
@@ -36,6 +38,7 @@ export function MobileBottomNav({
       href: "/dashboard",
       label: m.home,
       icon: Home,
+      hard: true,
       match: (p) => p === "/dashboard" || p.startsWith("/dashboard/"),
     },
     {
@@ -62,6 +65,7 @@ export function MobileBottomNav({
       href: "/org/dashboard",
       label: m.cohort,
       icon: Home,
+      hard: true,
       match: (p) =>
         p === "/org/dashboard" ||
         p.startsWith("/org/dashboard/") ||
@@ -89,12 +93,17 @@ export function MobileBottomNav({
       {tabs.map((tab) => {
         const active = tab.match(pathname);
         const Icon = tab.icon;
+        const className = `mobile-bottom-nav__item ${active ? "mobile-bottom-nav__item--active" : ""}`;
+        if (tab.hard) {
+          return (
+            <a key={tab.href} href={tab.href} className={className}>
+              <Icon className="h-5 w-5" strokeWidth={active ? 2.25 : 1.75} />
+              <span>{tab.label}</span>
+            </a>
+          );
+        }
         return (
-          <NavTransitionLink
-            key={tab.href}
-            href={tab.href}
-            className={`mobile-bottom-nav__item ${active ? "mobile-bottom-nav__item--active" : ""}`}
-          >
+          <NavTransitionLink key={tab.href} href={tab.href} className={className}>
             <Icon className="h-5 w-5" strokeWidth={active ? 2.25 : 1.75} />
             <span>{tab.label}</span>
           </NavTransitionLink>
