@@ -53,13 +53,13 @@ export default async function DemoPage() {
     <div className="space-y-16">
       <ScrollToTrialHash />
 
-      <Link
+      <a
         href="/"
         className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         홈으로
-      </Link>
+      </a>
 
       <header className="max-w-2xl">
         <p className="text-sm font-medium uppercase tracking-widest text-primary">3분 체험</p>

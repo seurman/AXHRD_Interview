@@ -15,6 +15,9 @@ import { Toaster } from "@/components/ui/sonner";
 
 const themeInitScript = `(function(){try{var m=document.cookie.match(/(?:^|;\\s*)hr_in_theme=(\\w+)/);var t=m?m[1]:'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
 
+/** Kill legacy SW before React — old workers intercepted `/` and broke soft-nav */
+const swKillScript = `(function(){try{if(!('serviceWorker' in navigator))return;navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});});if('caches' in window){caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});});}}catch(e){}})();`;
+
 /** Paint homepage chrome before React hydrates — avoids late header/hero flash */
 const homeBodyInitScript = `(function(){try{var p=location.pathname;if(p==='/'||p===''){document.body.classList.add('ax-home-page','ax-home-product-luxe','luxe-ready');}}catch(e){}})();`;
 
@@ -49,6 +52,7 @@ export default async function RootLayout({
     <html lang={locale} className={htmlClass} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: swKillScript }} />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0066FF" />
       </head>

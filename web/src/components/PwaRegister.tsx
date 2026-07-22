@@ -3,9 +3,10 @@
 import { useEffect } from "react";
 
 /**
- * Unregister legacy service workers that intercepted `/` and broke
- * App Router navigation (error.tsx: "페이지를 불러오지 못했습니다").
- * Re-enable a safe SW later only after home/RSC are excluded.
+ * Tear down legacy PWA service workers.
+ * Old sw.js intercepted `/` and broke App Router soft-nav
+ * (error.tsx: "페이지를 불러오지 못했습니다").
+ * Do not re-register a worker until home/RSC are proven safe.
  */
 export function PwaRegister() {
   useEffect(() => {

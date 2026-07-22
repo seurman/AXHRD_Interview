@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCertificateData } from "@/lib/candidate/certificate";
 import { CertificateView } from "@/components/profile/CertificateView";
@@ -34,9 +33,9 @@ export default async function PublicCertificatePage({ params }: PageProps) {
         <CertificateView data={data} />
       </div>
       <p className="print-hide text-center text-xs text-muted">
-        <Link href="/" className="text-accent hover:underline">
+        <a href="/" className="text-accent hover:underline">
           HR_IN Solution
-        </Link>
+        </a>
         {" "}에서 만든 IRT 기반 모의 면접 역량 인증서입니다.
       </p>
     </div>
