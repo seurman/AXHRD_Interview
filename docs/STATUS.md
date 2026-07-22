@@ -1,6 +1,14 @@
-# 현재 상태 (2026-07-21 기준)
+# 현재 상태 (2026-07-22 기준)
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
+
+## 최근 작업 — 솔루션 모듈 인벤토리 (완료)
+
+| 항목 | 내용 |
+|------|------|
+| 문서 | `docs/SOLUTION-MODULES.md` — 모듈별 기능 · 하이어라키 · 권한 SSoT |
+| 범위 | Product / Tenant / Platform · Capability 매트릭스 · Org SKU · 빌링 · Flags |
+| 앵커 | `capabilities.ts` · `access.ts` · `entitlements.ts` · `roles.ts` |
 
 ## 최근 작업 — Org 폴더·운영 콘솔 최적화 (완료)
 
