@@ -9,6 +9,7 @@
 | 문서 | `docs/SOLUTION-MODULES.md` — 모듈별 기능 · 하이어라키 · 권한 SSoT |
 | 범위 | Product / Tenant / Platform · Capability 매트릭스 · Org SKU · 빌링 · Flags |
 | 앵커 | `capabilities.ts` · `access.ts` · `entitlements.ts` · `roles.ts` |
+| 로컬 동기화 | GitHub에는 있는데 `D:\HR_IN_Solution\docs`에 없으면 `sync-docs.cmd` 실행 (git checkout 실패 시 raw 다운로드) |
 
 ## 최근 작업 — Org 폴더·운영 콘솔 최적화 (완료)
 
