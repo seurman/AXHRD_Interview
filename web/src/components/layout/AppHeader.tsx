@@ -43,7 +43,7 @@ export function AppHeader() {
       <header className="header-premium sticky top-0 z-40">
         <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-3 px-5 py-3 sm:px-8 sm:py-3.5">
           <Link
-            href="/"
+            href={loggedIn && nav?.dashboardHref ? nav.dashboardHref : "/"}
             className="axhrd-logo axhrd-logo--md group flex min-w-0 shrink items-center gap-2"
             aria-label={`${dict.common.brand} ${dict.common.productLine} home`}
           >
