@@ -84,7 +84,7 @@ export function AvatarMenu({
 
           <div className="avatar-menu-panel__prefs">
             <LanguageSwitcher compact />
-            <ThemeSwitcher compact />
+            <ThemeSwitcher compact className="!border-slate-500/60 !bg-slate-800 !text-slate-100 hover:!bg-slate-700" />
           </div>
 
           {adminModeEnabled && (
