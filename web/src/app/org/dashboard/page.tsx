@@ -5,18 +5,27 @@ import { requireOrgStaff } from "@/lib/auth/guards";
 import { getCohortData } from "@/lib/org/cohort";
 import { getOrgActivityLog } from "@/lib/org/activity-log";
 import { getOrgPeopleDashboard } from "@/lib/org/people-dashboard";
-import {
-  countActiveEntitlements,
-  readOrgEntitlements,
-} from "@/lib/org/entitlements";
+import { readOrgEntitlements } from "@/lib/org/entitlements";
 import { countPendingMembershipRequests } from "@/lib/org/membership";
-import { OrgOpsConsole } from "@/components/org/OrgOpsConsole";
+import { OrgOpsConsole, type OrgOpsTab } from "@/components/org/OrgOpsConsole";
 
 export const dynamic = "force-dynamic";
 
-/** 기관 통합 운영 콘솔 — 개요 · 구성원 · 승인·좌석 */
-export default async function OrgDashboardPage() {
+function parseTab(raw: string | null | undefined): OrgOpsTab {
+  if (raw === "people" || raw === "members" || raw === "overview") return raw;
+  if (raw === "participation" || raw === "cohort") return "overview";
+  return "overview";
+}
+
+type Props = {
+  searchParams: Promise<{ tab?: string }>;
+};
+
+/** 기관 통합 운영 콘솔 — 개요 · 구성원 · 승인·좌석 (탭별 데이터 지연 로드) */
+export default async function OrgDashboardPage({ searchParams }: Props) {
   const user = await requireOrgStaff("/org/dashboard");
+  const params = await searchParams;
+  const tab = parseTab(params.tab);
 
   const org = await prisma.organization.findUnique({
     where: { id: user.organizationId },
@@ -35,7 +44,10 @@ export default async function OrgDashboardPage() {
   }
 
   const entitlements = readOrgEntitlements(org);
-  const cohortMeta = await getCohortData(user.organizationId);
+  // 개요/상태는 멤버 명단 없이 집계만
+  const cohortMeta = await getCohortData(user.organizationId, {
+    includeMembers: false,
+  });
 
   if (!cohortMeta || org.status !== "APPROVED") {
     const pending = org.status === "PENDING";
@@ -71,16 +83,16 @@ export default async function OrgDashboardPage() {
     redirect("/org/diagnosis");
   }
 
-  const activeCount = countActiveEntitlements(entitlements);
-  void activeCount;
+  // members 탭은 패널이 /api/org/members를 직접 부르므로 people SSR 생략
+  const needsPeople = tab === "overview" || tab === "people";
 
   const [people, activityPreview, pendingCount] = await Promise.all([
-    getOrgPeopleDashboard(user.organizationId),
+    needsPeople ? getOrgPeopleDashboard(user.organizationId) : Promise.resolve(null),
     getOrgActivityLog(user.organizationId, 8),
     countPendingMembershipRequests(user.organizationId),
   ]);
 
-  if (!people) {
+  if (needsPeople && !people) {
     return <p className="text-muted">기관 정보를 찾을 수 없습니다.</p>;
   }
 
@@ -94,6 +106,7 @@ export default async function OrgDashboardPage() {
         people={people}
         activityPreview={activityPreview}
         pendingCount={pendingCount}
+        initialTab={tab}
       />
     </Suspense>
   );

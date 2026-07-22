@@ -2,6 +2,16 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — Org 폴더·운영 콘솔 최적화 (진행 중)
+
+| 항목 | 내용 |
+|------|------|
+| 폴더 | `components/org/{ops,people,access,activity,kit,shared}` + 루트 re-export |
+| 삭제 | 미사용 `OrgOverview` · `OrgCompetencyHome` · overview/competency-home data |
+| 로딩 | `/org/dashboard` 탭별 people SSR 생략(`members`) · cohort `includeMembers:false` |
+| 동의 | `redactPeopleDetailForConsent`로 page/API 중복 제거 |
+| 문서 | `web/CURSOR_TASK_*.md` → `docs/archive/cursor-tasks/` |
+
 ## 최근 작업 — 역량게임 운영 스위치 (완료)
 
 | 항목 | 내용 |
