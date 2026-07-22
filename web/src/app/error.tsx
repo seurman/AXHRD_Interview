@@ -25,7 +25,7 @@ export default function Error({
           <button type="button" onClick={reset} className="btn-primary text-sm">
             다시 시도
           </button>
-          <Link href="/" className="btn-secondary text-sm">
+          <Link href="/" className="btn-secondary text-sm" prefetch={false}>
             홈으로
           </Link>
         </div>
