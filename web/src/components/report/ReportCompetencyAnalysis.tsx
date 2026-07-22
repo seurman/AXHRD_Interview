@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import {
@@ -14,6 +14,10 @@ import {
 import { competencyLabel } from "@/lib/utils";
 import type { ReportSection } from "@/types";
 import { chartTooltipStyle } from "@/components/charts/CohortCompetencyBarChart";
+import { QuadScopeBadge } from "@/components/quadscope/QuadScopeBadge";
+import { QuadScopePanel } from "@/components/quadscope/QuadScopePanel";
+import { COMPETENCY_TO_QUADSCOPE } from "@/lib/quadscope/scopes";
+import { rollupQuadScope } from "@/lib/quadscope/rollup";
 
 export function ReportCompetencyAnalysis({ sections }: { sections: ReportSection[] }) {
   const radarData = sections.map((s) => ({
@@ -23,9 +27,23 @@ export function ReportCompetencyAnalysis({ sections }: { sections: ReportSection
     code: s.title,
   }));
 
+  const scopeRollup = useMemo(() => {
+    const latest: Record<string, { percentile: number; assessed: boolean }> = {};
+    for (const s of sections) {
+      if (!COMPETENCY_TO_QUADSCOPE[s.title]) continue;
+      if (s.score == null) continue;
+      latest[s.title] = { percentile: s.score, assessed: true };
+    }
+    return rollupQuadScope(latest);
+  }, [sections]);
+
   return (
     <section className="space-y-4">
-      <h2 className="font-semibold text-foreground">역량별 분석</h2>
+      <h2 className="font-semibold text-foreground">역량별 분석 · QuadScope</h2>
+
+      {scopeRollup.some((s) => s.percentile != null) && (
+        <QuadScopePanel scopes={scopeRollup} growHref="/practice/path" />
+      )}
 
       {radarData.length > 0 && (
         <div className="card-luxe p-4">
@@ -77,8 +95,11 @@ function CompetencyAccordionCard({ section }: { section: ReportSection }) {
         aria-expanded={open}
       >
         <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="font-medium text-foreground">{title}</h3>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="flex flex-wrap items-center gap-2 font-medium text-foreground">
+              {title}
+              <QuadScopeBadge competencyCode={section.title} />
+            </h3>
             {section.score != null && (
               <span className="shrink-0 text-sm font-medium text-gold">{section.score}%</span>
             )}

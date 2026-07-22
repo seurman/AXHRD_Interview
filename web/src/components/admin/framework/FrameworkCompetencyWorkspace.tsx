@@ -5,6 +5,7 @@ import type { RepositoryCompetencyRow } from "@/lib/repository/types";
 import { ContentMetadataStudio } from "@/components/admin/ContentMetadataStudio";
 import { CompetencyWorkspace } from "@/components/admin/repository/CompetencyWorkspace";
 import { FrameworkMetaPanel } from "@/components/admin/framework/FrameworkMetaPanel";
+import { QuadScopeBadge } from "@/components/quadscope/QuadScopeBadge";
 
 export type FrameworkWorkspaceTab = "meta" | "levels" | "questions" | "rubrics" | "quality";
 
@@ -56,13 +57,11 @@ export function FrameworkCompetencyWorkspace({
       <header className="rounded-2xl border border-card-border bg-gradient-to-br from-card to-muted/15 p-5">
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">Framework Studio</p>
         <h2 className="mt-1 text-2xl font-bold text-foreground">{competency.nameKo}</h2>
-        <p className="mt-1 text-sm text-muted">
+        <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
           <span className="font-mono text-xs">{competency.code}</span>
+          <QuadScopeBadge competencyCode={competency.code} showKo />
           {competency.clusterNameKo && (
-            <>
-              <span className="mx-2">·</span>
-              {competency.clusterNameKo}
-            </>
+            <span className="text-xs">· {competency.clusterNameKo}</span>
           )}
         </p>
       </header>

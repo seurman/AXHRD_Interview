@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { MotionReorderList } from "@/components/org/MotionReorderList";
 import { competencyLabel } from "@/lib/labels";
+import { QuadScopeBadge } from "@/components/quadscope/QuadScopeBadge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   KIT_RUBRIC_LEVELS,
@@ -170,8 +171,11 @@ function PaletteCompetencyCard({
       <div className={`w-1 shrink-0 ${style.bar}`} />
       <button type="button" onClick={onSelect} className="min-w-0 flex-1 px-3 py-2 text-left">
         <p className="text-sm font-semibold text-white">{comp.nameKo}</p>
-        <p className="text-[11px] text-white/50">
-          {competencyLabel(comp.code)} · {questionCount}문항
+        <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-white/50">
+          <span>
+            {competencyLabel(comp.code)} · {questionCount}문항
+          </span>
+          <QuadScopeBadge competencyCode={comp.code} className="border-white/20 bg-white/10 text-white" />
         </p>
         {gapHint ? (
           <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-amber-200/90" title={gapHint.rationale}>
@@ -303,6 +307,9 @@ function CompetencyKitPanel({
         <div className={`h-9 w-1 shrink-0 rounded-full ${style.bar}`} />
         <button type="button" onClick={onSelect} className="min-w-0 flex-1 text-left">
           <p className="font-semibold text-foreground">{comp.nameKo}</p>
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+            <QuadScopeBadge competencyCode={comp.code} />
+          </div>
           <p className="text-xs text-muted">
             {draft.selectedIds.length}문항
             {draft.selectedIds.length >= limits.min ? " · IRT 준비됨" : ` · ${limits.min}개 이상 권장`}

@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "description": "NCS·행동역량·조직렌즈·면접기법까지 확장한 역량사전. 정의·L1–L5 루브릭·신호어/숙어를 Framework Studio와 게임·학습·면접이 공유.",
   "sources": [
     "NCS 직업기초능력(의사소통·문제해결·조직이해·자기개발 등) — ncs.go.kr",
@@ -210,7 +210,8 @@
           "다양한 채널·매체를 상황에 맞게 활용했는가",
           "의사소통 결과가 업무 성과로 연결됐는가"
         ]
-      }
+      },
+      "scorecardScope": "relations"
     },
     "PROBLEM_SOLVING": {
       "nameKo": "문제해결",
@@ -340,7 +341,8 @@
           "문제 해결이 팀·조직 차원의 개선으로 확장됐는가",
           "의사결정 근거와 트레이드오프를 명확히 설명했는가"
         ]
-      }
+      },
+      "scorecardScope": "judgment"
     },
     "JOB_FIT": {
       "nameKo": "직무적합",
@@ -470,7 +472,8 @@
           "기술·정보 활용으로 프로세스·성과를 개선한 사례가 있는가",
           "자원 제약 하에서 최적 의사결정을 했는가"
         ]
-      }
+      },
+      "scorecardScope": "delivery"
     },
     "ORG_FIT": {
       "nameKo": "조직적합",
@@ -599,7 +602,8 @@
           "조직 차원의 윤리·책임 의식이 행동으로 연결됐는가",
           "장기적 조직 기여 관점이 답변에 반영됐는가"
         ]
-      }
+      },
+      "scorecardScope": "relations"
     },
     "LEADERSHIP": {
       "nameKo": "리더십",
@@ -728,7 +732,8 @@
           "갈등·협상을 전략적으로 해결한 경험이 드러나는가",
           "리더십이 지속 가능한 팀 문화로 이어졌는가"
         ]
-      }
+      },
+      "scorecardScope": "relations"
     },
     "GROWTH": {
       "nameKo": "성장",
@@ -858,7 +863,8 @@
           "자기개발 리더십(타인 멘토링·지식 공유)이 드러나는가",
           "장기 경력 목표와 현재 역량 개선이 정렬됐는가"
         ]
-      }
+      },
+      "scorecardScope": "anchor"
     },
     "NCS_NUMERACY": {
       "nameKo": "수리능력",
@@ -973,7 +979,8 @@
           "임팩트 수치",
           "실용 도구"
         ]
-      }
+      },
+      "scorecardScope": "judgment"
     },
     "NCS_INFORMATION": {
       "nameKo": "정보능력",
@@ -1088,7 +1095,8 @@
           "임팩트 수치",
           "실용 도구"
         ]
-      }
+      },
+      "scorecardScope": "judgment"
     },
     "NCS_TECHNOLOGY": {
       "nameKo": "기술능력",
@@ -1203,7 +1211,8 @@
           "임팩트 수치",
           "실용 도구"
         ]
-      }
+      },
+      "scorecardScope": "delivery"
     },
     "NCS_RESOURCE": {
       "nameKo": "자원관리",
@@ -1318,7 +1327,8 @@
           "임팩트 수치",
           "실용 도구"
         ]
-      }
+      },
+      "scorecardScope": "delivery"
     },
     "INTERPERSONAL": {
       "nameKo": "대인관계",
@@ -1435,7 +1445,8 @@
           "이해관계 맵",
           "속도"
         ]
-      }
+      },
+      "scorecardScope": "relations"
     },
     "WORK_ETHICS": {
       "nameKo": "직업윤리",
@@ -1551,7 +1562,8 @@
           "책임",
           "속도"
         ]
-      }
+      },
+      "scorecardScope": "anchor"
     },
     "SELF_MGMT": {
       "nameKo": "자기관리",
@@ -1668,7 +1680,8 @@
           "집중 블록",
           "속도"
         ]
-      }
+      },
+      "scorecardScope": "anchor"
     },
     "CUSTOMER_ORIENT": {
       "nameKo": "고객지향",
@@ -1785,7 +1798,8 @@
           "선제 대응",
           "속도"
         ]
-      }
+      },
+      "scorecardScope": "relations"
     },
     "SAFETY_COMPLIANCE": {
       "nameKo": "규정·안전 준수",
@@ -1902,7 +1916,8 @@
           "감사 증거",
           "속도"
         ]
-      }
+      },
+      "scorecardScope": "anchor"
     },
     "ACHIEVEMENT_DRIVE": {
       "nameKo": "성취지향",
@@ -2014,7 +2029,8 @@
           "오너십",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "delivery"
     },
     "INITIATIVE": {
       "nameKo": "주도성",
@@ -2123,7 +2139,8 @@
           "오너십",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "delivery"
     },
     "ANALYTICAL_THINKING": {
       "nameKo": "분석적 사고",
@@ -2232,7 +2249,8 @@
           "오너십",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "judgment"
     },
     "INFLUENCE": {
       "nameKo": "영향력",
@@ -2341,7 +2359,8 @@
           "오너십",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "relations"
     },
     "TEAMWORK": {
       "nameKo": "팀워크",
@@ -2450,7 +2469,8 @@
           "오너십",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "relations"
     },
     "CONFLICT_RESOLUTION": {
       "nameKo": "갈등관리",
@@ -2559,7 +2579,8 @@
           "오너십",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "relations"
     },
     "DECISION_QUALITY": {
       "nameKo": "의사결정 품질",
@@ -2668,7 +2689,8 @@
           "오너십",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "judgment"
     },
     "ADAPTABILITY": {
       "nameKo": "적응력",
@@ -2777,7 +2799,8 @@
           "오너십",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "anchor"
     },
     "INTEGRITY": {
       "nameKo": "진실성",
@@ -2886,7 +2909,8 @@
           "오너십",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "anchor"
     },
     "RESULT_OWNERSHIP": {
       "nameKo": "결과 오너십",
@@ -2995,7 +3019,8 @@
           "오너십",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "delivery"
     },
     "ENTERPRISE_PROCESS": {
       "nameKo": "대기업 프로세스 정합",
@@ -3107,7 +3132,8 @@
           "속도",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "delivery"
     },
     "PUBLIC_ACCOUNTABILITY": {
       "nameKo": "공공 책무성",
@@ -3219,7 +3245,8 @@
           "속도",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "anchor"
     },
     "STARTUP_OWNERSHIP": {
       "nameKo": "스타트업 오너십",
@@ -3331,7 +3358,8 @@
           "속도",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "delivery"
     },
     "STAKEHOLDER_ALIGN": {
       "nameKo": "이해관계자 정렬",
@@ -3443,7 +3471,8 @@
           "속도",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "relations"
     },
     "AMBIGUITY_NAV": {
       "nameKo": "모호함 항해",
@@ -3555,7 +3584,8 @@
           "속도",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "judgment"
     },
     "DOCUMENT_DECISION": {
       "nameKo": "결정 문서화",
@@ -3667,7 +3697,8 @@
           "속도",
           "임팩트"
         ]
-      }
+      },
+      "scorecardScope": "judgment"
     },
     "STAR_EVIDENCE": {
       "nameKo": "STAR 증거력",
@@ -3777,7 +3808,8 @@
           "임팩트",
           "속도"
         ]
-      }
+      },
+      "scorecardScope": "delivery"
     },
     "QUANTIFY_IMPACT": {
       "nameKo": "임팩트 수치화",
@@ -3887,7 +3919,8 @@
           "임팩트",
           "속도"
         ]
-      }
+      },
+      "scorecardScope": "delivery"
     },
     "QUESTION_INTENT": {
       "nameKo": "질문 의도 독해",
@@ -3997,7 +4030,8 @@
           "임팩트",
           "속도"
         ]
-      }
+      },
+      "scorecardScope": "judgment"
     },
     "BEST_WORST_JUDGE": {
       "nameKo": "베스트·워스트 판단",
@@ -4107,7 +4141,8 @@
           "임팩트",
           "속도"
         ]
-      }
+      },
+      "scorecardScope": "judgment"
     },
     "CONCLUSION_FIRST": {
       "nameKo": "결론 우선 전달",
@@ -4217,7 +4252,8 @@
           "임팩트",
           "속도"
         ]
-      }
+      },
+      "scorecardScope": "relations"
     },
     "FOLLOWUP_DEPTH": {
       "nameKo": "후속질문 대응",
@@ -4327,7 +4363,30 @@
           "임팩트",
           "속도"
         ]
-      }
+      },
+      "scorecardScope": "judgment"
     }
-  }
+  },
+  "quadScopes": [
+    {
+      "id": "judgment",
+      "nameEn": "Judgment",
+      "nameKo": "판단"
+    },
+    {
+      "id": "delivery",
+      "nameEn": "Delivery",
+      "nameKo": "성과"
+    },
+    {
+      "id": "relations",
+      "nameEn": "Relations",
+      "nameKo": "관계"
+    },
+    {
+      "id": "anchor",
+      "nameEn": "Anchor",
+      "nameKo": "중심"
+    }
+  ]
 }

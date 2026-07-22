@@ -8,8 +8,10 @@
 |------|------|
 | 제품명 | **QuadScope** — Judgment · Delivery · Relations · Anchor |
 | Jobs 메뉴 | Hire (구 성장) · Grow (구 연습) · Sense (진단) |
-| SSoT | `web/src/lib/quadscope/` · `docs/QUADSCOPE.md` |
-| UI | 대시보드 QuadScope 패널 · i18n 내비/히어로/기관 메뉴 |
+| SSoT | `web/src/lib/quadscope/` · lexicon `scorecardScope` · `docs/QUADSCOPE.md` |
+| 사전·Studio | Lexicon QuadScope 그룹 · Framework badge · sync description |
+| 면접 | 리포트·채점바·피드백·AnswerFeedback에 Scope |
+| 기관 | 킷 팔레트 badge · 지원자 비교 QuadScope 열 |
 
 ## 최근 작업 — 솔루션 모듈 인벤토리 (완료)
 

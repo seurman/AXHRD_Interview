@@ -127,6 +127,17 @@ export const COMPETENCY_TO_QUADSCOPE: Record<string, QuadScopeId> = {
   SELF_MGMT: "anchor",
   ADAPTABILITY: "anchor",
   SAFETY_COMPLIANCE: "anchor",
+  ENTERPRISE_PROCESS: "delivery",
+  PUBLIC_ACCOUNTABILITY: "anchor",
+  STARTUP_OWNERSHIP: "delivery",
+  AMBIGUITY_NAV: "judgment",
+  DOCUMENT_DECISION: "judgment",
+  STAR_EVIDENCE: "delivery",
+  QUANTIFY_IMPACT: "delivery",
+  QUESTION_INTENT: "judgment",
+  BEST_WORST_JUDGE: "judgment",
+  CONCLUSION_FIRST: "relations",
+  FOLLOWUP_DEPTH: "judgment",
 };
 
 export function scopeDef(id: QuadScopeId): QuadScopeDef {

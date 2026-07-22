@@ -12,3 +12,4 @@ export {
   type QuadScopeJobDef,
 } from "./scopes";
 export { rollupQuadScope, type ScopeRollup } from "./rollup";
+export { resolveQuadScope, resolveQuadScopeClient } from "./resolve";
