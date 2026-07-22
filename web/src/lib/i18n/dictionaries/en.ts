@@ -2,17 +2,19 @@ import type { Dictionary } from "../types";
 
 export const dictionary: Dictionary = {
   meta: {
-    title: "AXHRD — growth you can measure",
-    description: "Discover, resume, interview, org diagnostics — design and measure growth on one platform.",
+    title: "AXHRD QuadScope — Judgment · Delivery · Relations · Anchor",
+    description:
+      "See people in four scopes. Structured interviews, rubrics, IRT, and org kits on one platform.",
   },
   common: {
     brand: "AXHRD",
+    productLine: "QuadScope",
     nav: {
       dashboard: "Dashboard",
       home: "Home",
       prepare: "Interview prep",
-      growth: "Growth",
-      practice: "Practice",
+      growth: "Hire",
+      practice: "Grow",
       activity: "My activity",
       products: "Products",
       pricing: "Pricing",
@@ -80,12 +82,12 @@ export const dictionary: Dictionary = {
     saas: {
       title: "Organization",
       settings: "Settings",
-      cohortDashboard: "Org dashboard",
+      cohortDashboard: "Hire · cohort",
       peopleDashboard: "People",
-      diagnosticDashboard: "Diagnostic",
-      candidateResults: "Candidate results",
+      diagnosticDashboard: "Sense · diagnostic",
+      candidateResults: "Hire · candidates",
       members: "Members",
-      settingsHub: "Interview & competency",
+      settingsHub: "Kits & scopes",
       interviewKit: "Interview kit",
     },
     workspace: {
@@ -99,9 +101,9 @@ export const dictionary: Dictionary = {
       discover: "Self-discovery",
       resume: "Resume review",
       interview: "Structured AI interview",
-      practice: "Learning path",
-      growth: "Competency tracking",
-      orgDiagnosis: "Org diagnostic",
+      practice: "Grow · learning path",
+      growth: "QuadScope tracking",
+      orgDiagnosis: "Sense · org diagnostic",
       forOrganizations: "Org platform",
     },
     avatar: {
@@ -111,12 +113,12 @@ export const dictionary: Dictionary = {
     },
     mobileNav: {
       home: "Home",
-      growth: "Growth",
-      practice: "Practice",
+      growth: "Hire",
+      practice: "Grow",
       org: "Org",
       more: "More",
       cohort: "Org",
-      diagnostic: "Diagnostic",
+      diagnostic: "Sense",
       settings: "Settings",
     },
     language: {
@@ -137,11 +139,12 @@ export const dictionary: Dictionary = {
   },
   home: {
     hero: {
-      eyebrow: "Competency growth",
+      eyebrow: "QuadScope · Hire · Grow · Sense · Assess",
       brand: "AXHRD",
-      titleLine1: "Practice sharpens your answers —",
-      titleHighlight: "competency scores compound",
-      subtitle: "Questions from your résumé and job post. Rehearse out loud like the real interview.",
+      titleLine1: "Four scopes to see a person —",
+      titleHighlight: "one language to grow them",
+      subtitle:
+        "Judgment · Delivery · Relations · Anchor — interviews, practice, and diagnostics share QuadScope.",
       ctaStart: "Get started",
       ctaStartLoggedIn: "Home",
       ctaPersonal: "Get started",
@@ -756,14 +759,14 @@ export const dictionary: Dictionary = {
   },
   dashboard: {
     pageTitle: "Home",
-    pageSubtitle: "Competencies, coaching insights, and what to do next — in one place",
+    pageSubtitle: "See four QuadScope lenses — then pick Hire or Grow",
     competencySection: "Competency tracking",
     differentiation: {
-      title: "The AXHRD approach",
+      title: "The QuadScope way",
       items: [
-        "Questions cite only phrases actually in your resume — and we show that evidence on screen",
-        "Follow-ups are capped at one per session and must quote your own words",
-        "Scores come with answer citations; IRT adapts difficulty from data",
+        "Judgment · Delivery · Relations · Anchor — one language for people and orgs",
+        "Questions cite resume phrases and scores ship with evidence",
+        "Weak scopes route straight into Grow paths and games",
       ],
       link: "Collect more strength cards →",
     },

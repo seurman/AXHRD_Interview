@@ -44,10 +44,13 @@ export function AppHeader() {
         <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-3 px-5 py-3 sm:px-8 sm:py-3.5">
           <Link
             href="/"
-            className="axhrd-logo axhrd-logo--md group min-w-0 shrink"
-            aria-label={`${dict.common.brand} home`}
+            className="axhrd-logo axhrd-logo--md group flex min-w-0 shrink items-center gap-2"
+            aria-label={`${dict.common.brand} ${dict.common.productLine} home`}
           >
             <Logo size={28} />
+            <span className="hidden text-[11px] font-semibold uppercase tracking-[0.12em] text-primary/90 sm:inline">
+              {dict.common.productLine}
+            </span>
           </Link>
 
           <MainNav

@@ -2,6 +2,15 @@
 
 새 대화/작업창에서 이어가실 때 이 문서를 먼저 읽어달라고 하시면 됩니다.
 
+## 최근 작업 — QuadScope UI (진행)
+
+| 항목 | 내용 |
+|------|------|
+| 제품명 | **QuadScope** — Judgment · Delivery · Relations · Anchor |
+| Jobs 메뉴 | Hire (구 성장) · Grow (구 연습) · Sense (진단) |
+| SSoT | `web/src/lib/quadscope/` · `docs/QUADSCOPE.md` |
+| UI | 대시보드 QuadScope 패널 · i18n 내비/히어로/기관 메뉴 |
+
 ## 최근 작업 — 솔루션 모듈 인벤토리 (완료)
 
 | 항목 | 내용 |
