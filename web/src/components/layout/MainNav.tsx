@@ -128,12 +128,12 @@ export function MainNav({
       {orgWorkspaceAvailable && <WorkspaceSwitcher mode={mode} onChange={setMode} />}
 
       {dashboardHref && (
-        <NavTransitionLink
+        <a
           href={dashboardHref}
           className={`nav-pill ${linkActive(dashboardHref) ? "nav-pill-active" : ""}`}
         >
           {c.nav.home}
-        </NavTransitionLink>
+        </a>
       )}
 
       {growthLinks.length > 0 && (

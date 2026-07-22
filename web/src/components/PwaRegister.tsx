@@ -2,22 +2,24 @@
 
 import { useEffect } from "react";
 
-const SW_URL = "/sw.js?v=5";
-
-/** 최소 PWA — manifest 연결 + 정적 셸 서비스워커 등록 */
+/**
+ * Temporarily disable the PWA service worker.
+ * Older workers intercepted `/` and broke App Router soft navigation
+ * (error.tsx: "페이지를 불러오지 못했습니다").
+ */
 export function PwaRegister() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
-
     void (async () => {
       try {
-        const reg = await navigator.serviceWorker.register(SW_URL);
-        await reg.update();
-        if (reg.waiting) {
-          reg.waiting.postMessage({ type: "SKIP_WAITING" });
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
         }
       } catch {
-        /* 오프라인 미지원 환경 — 무시 */
+        /* ignore */
       }
     })();
   }, []);

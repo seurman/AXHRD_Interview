@@ -289,13 +289,9 @@ export function MobileNav({
           ) : (
             <>
               {dashboardHref && (
-                <MobileNavLink
-                  href={dashboardHref}
-                  onNavigate={closeDrawer}
-                  className={linkClass(dashboardHref)}
-                >
+                <a href={dashboardHref} onClick={closeDrawer} className={linkClass(dashboardHref)}>
                   {getMobileNavLabel("home", dict)}
-                </MobileNavLink>
+                </a>
               )}
 
               {activityHref && (

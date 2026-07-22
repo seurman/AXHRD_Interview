@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
 
 export default function Error({
   error,
@@ -25,9 +24,9 @@ export default function Error({
           <button type="button" onClick={reset} className="btn-primary text-sm">
             다시 시도
           </button>
-          <Link href="/" className="btn-secondary text-sm" prefetch={false}>
+          <a href="/" className="btn-secondary text-sm">
             홈으로
-          </Link>
+          </a>
         </div>
       </div>
     </div>
