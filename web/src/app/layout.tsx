@@ -53,7 +53,6 @@ export default async function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script dangerouslySetInnerHTML={{ __html: swKillScript }} />
-        <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0066FF" />
       </head>
       <body className={`${fontVariables} antialiased`}>
