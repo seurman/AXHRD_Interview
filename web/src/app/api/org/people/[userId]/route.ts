@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isOrgAdminUser, isOrgStaffUser, type RoleUser } from "@/lib/auth/roles";
 import { getOrgMemberPeopleDetail } from "@/lib/org/people-dashboard";
+import { redactPeopleDetailForConsent } from "@/lib/org/people-consent";
 
 function canCoach(user: RoleUser) {
   return !!user.organizationId && (isOrgAdminUser(user) || isOrgStaffUser(user));
@@ -21,16 +22,7 @@ export async function GET(_req: Request, ctx: Ctx) {
   if (!detail) {
     return NextResponse.json({ error: "구성원을 찾을 수 없습니다." }, { status: 404 });
   }
-  if (!detail.member.coachingConsent) {
-    return NextResponse.json({
-      ...detail,
-      competencySeries: [],
-      dimensionTimeline: [],
-      scores: { ...detail.scores, latestByCompetency: [] },
-      consentRequired: true,
-    });
-  }
-  return NextResponse.json({ ...detail, consentRequired: false });
+  return NextResponse.json(redactPeopleDetailForConsent(detail));
 }
 
 /** 코칭 피드백 작성 */
