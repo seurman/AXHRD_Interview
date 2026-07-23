@@ -20,9 +20,21 @@ export async function getUserStrengthDeck(userId: string): Promise<UserStrengthD
   const session = await prisma.selfDiscoverySession.findFirst({
     where: { userId, status: "COMPLETED", profile: { isNot: null } },
     orderBy: { completedAt: "desc" },
-    include: {
-      profile: true,
-      user: { include: { profile: true } },
+    select: {
+      id: true,
+      completedAt: true,
+      profile: {
+        select: {
+          strengths: true,
+          interviewAdvice: true,
+          narrativeSummary: true,
+        },
+      },
+      user: {
+        select: {
+          profile: { select: { desiredJobRole: true } },
+        },
+      },
     },
   });
 

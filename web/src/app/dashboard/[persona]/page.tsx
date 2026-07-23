@@ -13,7 +13,6 @@ import {
   EMPTY_WORKER_DASHBOARD,
   getWorkerDashboardData,
 } from "@/lib/dashboard/get-worker-dashboard-data";
-import { getResumeableInterviewSessions } from "@/lib/interview/get-resumeable-sessions";
 import { listCourseSummaries } from "@/lib/competency-game/progress";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getDictionary } from "@/lib/i18n";
@@ -83,19 +82,17 @@ export default async function PersonaDashboardPage({
   try {
     let dashboard: CompetencyDashboardPayload =
       emptyCompetencyDashboard(user.name);
-    let resumeable: Awaited<ReturnType<typeof getResumeableInterviewSessions>> = [];
     let courses: Awaited<ReturnType<typeof listCourseSummaries>> = [];
 
     try {
-      const [loaded, resumeRows, courseRows] = await Promise.all([
-        getCompetencyDashboardData(user.id),
-        persona === "jobseeker"
-          ? getResumeableInterviewSessions(user.id)
-          : Promise.resolve([]),
+      const [loaded, courseRows] = await Promise.all([
+        getCompetencyDashboardData(user.id, {
+          persona: persona === "mock" ? "mock" : "jobseeker",
+          includeResumeable: persona === "jobseeker",
+        }),
         persona === "mock" ? listCourseSummaries(user.id) : Promise.resolve([]),
       ]);
       if (loaded) dashboard = loaded;
-      resumeable = resumeRows;
       courses = courseRows;
     } catch (e) {
       console.error(`[dashboard/${persona}] load`, e);
@@ -111,17 +108,19 @@ export default async function PersonaDashboardPage({
       );
     }
 
+    const resumeable = (dashboard.resumeable ?? []).map((s) => ({
+      id: s.id,
+      focusCompetency: s.focusCompetency,
+      sessionNumber: s.sessionNumber,
+      startedAt: s.startedAt?.toISOString() ?? null,
+      timeBudgetMinutes: s.timeBudgetMinutes,
+    }));
+
     return (
       <JobseekerDashboard
         dashboard={dashboard}
         narrative={safeNarrative(dashboard)}
-        resumeable={resumeable.map((s) => ({
-          id: s.id,
-          focusCompetency: s.focusCompetency,
-          sessionNumber: s.sessionNumber,
-          startedAt: s.startedAt?.toISOString() ?? null,
-          timeBudgetMinutes: s.timeBudgetMinutes,
-        }))}
+        resumeable={resumeable}
         dict={dict}
       />
     );
