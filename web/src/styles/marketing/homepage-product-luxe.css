@@ -402,8 +402,12 @@ body.ax-home-page .ax-home .pricing-strip {
 }
 
 /* ─── Gap-to-Hire band — reuses .pricing-strip layout with a dark, ARC-report-matching treatment.
-   Placed after the rule above so it wins the cascade (equal specificity, later wins). ─── */
-body.ax-home-page .ax-home .g2h-strip {
+   Selector combines both classes (specificity 4) so it beats any later-loaded
+   plain .pricing-strip background rule regardless of stylesheet import order —
+   a same-specificity, source-order-only override here previously lost to
+   homepage-page-align.css's .pricing-strip rule, leaving this band's white/gold
+   text (designed for a dark background) sitting on a near-white background. ─── */
+body.ax-home-page .ax-home .pricing-strip.g2h-strip {
   background: linear-gradient(160deg, var(--ink-900) 0%, var(--ink-700) 100%);
   border-top: none;
   border-bottom: none;
