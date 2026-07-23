@@ -49,7 +49,7 @@ export async function GET() {
     console.error("[api/nav] buildNavigationForUser", e);
     const superAdmin = user ? hasSuperadminAccess(user) : false;
     return {
-      dashboardHref: "/dashboard" as string | null,
+      dashboardHref: "/dashboard/jobseeker" as string | null,
       prepareLinks: [] as import("@/lib/platform/nav-registry").NavLinkItem[],
       growthLinks: [] as import("@/lib/platform/nav-registry").NavLinkItem[],
       practiceLinks: [] as import("@/lib/platform/nav-registry").NavLinkItem[],

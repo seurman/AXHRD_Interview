@@ -551,7 +551,7 @@ export const dictionary: Dictionary = {
           icon: "student",
           title: "Job seekers",
           desc: "Competency skill tree and growth curve",
-          href: "/dashboard",
+          href: "/dashboard/jobseeker",
         },
       ],
     },

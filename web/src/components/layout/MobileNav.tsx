@@ -12,8 +12,6 @@ import { ClipDynamic } from "@/components/ui/ClipDynamic";
 import { NavTransitionLink } from "@/components/layout/NavTransitionLink";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { useWorkspaceMode } from "@/lib/nav/workspace";
-import { useProductPersona } from "@/lib/nav/use-product-persona";
-import { resolvePersonaHomeHref } from "@/lib/nav/persona-nav";
 import type { NavLinkItem } from "@/lib/platform/nav-registry";
 
 type SaasLinksConfig = {
@@ -122,14 +120,12 @@ export function MobileNav({
   const { dict, locale } = useI18n();
   const c = dict.common;
   const { mode, setMode } = useWorkspaceMode(orgWorkspaceAvailable);
-  const persona = useProductPersona();
-  const personaHome = resolvePersonaHomeHref(persona);
 
   const closeDrawer = () => setOpen(false);
 
   const prefetchHrefs = useMemo(() => {
     const hrefs = new Set<string>();
-    if (dashboardHref) hrefs.add(personaHome);
+    if (dashboardHref) hrefs.add(dashboardHref);
     if (profileHref) hrefs.add(profileHref);
     if (activityHref) hrefs.add(activityHref);
     growthLinks.forEach((l) => hrefs.add(l.href));
@@ -151,7 +147,6 @@ export function MobileNav({
     dashboardHref,
     growthLinks,
     loggedIn,
-    personaHome,
     practiceLinks,
     profileHref,
     saasLinks,
@@ -172,7 +167,7 @@ export function MobileNav({
 
   useEffect(() => {
     if (!open) return;
-    const priority = [personaHome, profileHref, ...growthLinks.map((l) => l.href)].filter(
+    const priority = [dashboardHref, profileHref, ...growthLinks.map((l) => l.href)].filter(
       (h): h is string => !!h,
     );
     for (const href of priority.slice(0, 4)) {
@@ -183,7 +178,7 @@ export function MobileNav({
       for (const href of rest) router.prefetch(href);
     }, 120);
     return () => window.clearTimeout(timer);
-  }, [growthLinks, open, personaHome, prefetchHrefs, profileHref, router]);
+  }, [dashboardHref, growthLinks, open, prefetchHrefs, profileHref, router]);
 
   const linkClass = (href: string, indent = false) =>
     `keep-one-line rounded-lg py-2.5 hover:bg-gold/10 ${indent ? "pl-5 pr-3" : "px-3"} ${
@@ -286,7 +281,7 @@ export function MobileNav({
           ) : (
             <>
               {dashboardHref && (
-                <a href={personaHome} onClick={closeDrawer} className={linkClass(personaHome)}>
+                <a href={dashboardHref} onClick={closeDrawer} className={linkClass(dashboardHref)}>
                   {c.nav.dashboard}
                 </a>
               )}

@@ -57,7 +57,7 @@ export const CAPABILITY_REGISTRY: Record<CapabilityId, CapabilityDef> = {
     labelKo: "역량 트래킹",
     labelEn: "Dashboard",
     descriptionKo: "개인 역량·면접 기록 대시보드",
-    href: "/dashboard",
+    href: "/dashboard/jobseeker",
     designNote: "IRT θ·백분위 스킬트리 — 미측정은 0%로 정직 노출",
   },
   "product.discover": {

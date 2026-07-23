@@ -16,5 +16,6 @@ export function resolvePostLoginRedirect(
   if (next) return next;
   // 소속 없으면 기관 선택·승인 요청으로 안내 (인별 좌석 과금 전제)
   if (!user.organizationId) return "/org/setup";
-  return "/dashboard";
+  // Growth home is the jobseeker persona dashboard (avoid sticky cookie → worker).
+  return "/dashboard/jobseeker";
 }

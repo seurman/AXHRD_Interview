@@ -178,7 +178,7 @@ export function DiscoverReportView({ profile, completedAt, jobRoleLabel }: Disco
           다시 시작하기
         </a>
         <a
-          href="/dashboard"
+          href="/dashboard/jobseeker"
           className="rounded-xl bg-primary px-6 py-3 text-center text-sm font-medium text-white hover:opacity-90"
         >
           역량 트래킹으로

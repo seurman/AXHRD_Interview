@@ -25,7 +25,7 @@ export default async function DashboardIndexPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getCurrentUser();
-  if (!user) redirect("/auth/login?next=/dashboard");
+  if (!user) redirect("/auth/login?next=/dashboard/jobseeker");
 
   const jar = await cookies();
   const persona = parsePersona(jar.get(PERSONA_COOKIE)?.value) ?? DEFAULT_PERSONA;

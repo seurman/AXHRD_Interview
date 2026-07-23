@@ -233,7 +233,7 @@ export function SessionReportView({
 
       {variant === "applicant" && (
         <div className="print-hide flex gap-4">
-          <Link href="/dashboard" className="btn-primary">
+          <Link href="/dashboard/jobseeker" className="btn-primary">
             역량 트래킹
           </Link>
           <Link href="/interview/setup" className="btn-secondary">

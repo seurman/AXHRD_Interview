@@ -581,7 +581,7 @@ export const dictionary: Dictionary = {
           icon: "student",
           title: "취업준비생",
           desc: "역량 스킬 트리 · 성장 곡선",
-          href: "/dashboard",
+          href: "/dashboard/jobseeker",
         },
       ],
     },

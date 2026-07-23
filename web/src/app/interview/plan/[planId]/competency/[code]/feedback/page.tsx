@@ -334,7 +334,7 @@ export default async function CompetencyFeedbackPage({
             세션 상세
           </Link>
         )}
-        <Link href="/dashboard" className="btn-secondary">
+        <Link href="/dashboard/jobseeker" className="btn-secondary">
           대시보드
         </Link>
       </div>

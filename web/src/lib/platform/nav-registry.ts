@@ -233,7 +233,7 @@ export async function buildNavigationForUser(
 
   // Keep /dashboard as capability gate entry; client nav resolves to
   // /dashboard/{persona} so soft-nav never hits the redirect-only page.
-  const dashboardHref = caps.has("product.dashboard") ? "/dashboard" : null;
+  const dashboardHref = caps.has("product.dashboard") ? "/dashboard/jobseeker" : null;
   const growthLinks = filterNavLinks(GROWTH_HREFS, caps);
   const practiceLinks = filterNavLinks(PRACTICE_HREFS, caps);
   const prepareLinks = [...growthLinks, ...practiceLinks];

@@ -20,7 +20,7 @@ export default async function DashboardActivityPage() {
     <div className="space-y-6">
       <div>
         <Link
-          href="/dashboard"
+          href="/dashboard/jobseeker"
           className="flex items-center gap-1 text-sm text-muted hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />

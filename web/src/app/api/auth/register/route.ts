@@ -107,7 +107,7 @@ export async function POST(req: Request) {
         });
         if (result.mode === "joined") {
           membershipNote = `${result.organization.name}에 소속되었습니다.`;
-          redirectOverride = "/dashboard";
+          redirectOverride = "/dashboard/jobseeker";
         } else {
           membershipNote = `${result.organization.name} 승인 대기 중입니다.`;
           redirectOverride = "/org/setup";

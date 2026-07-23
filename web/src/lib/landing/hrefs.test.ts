@@ -13,6 +13,6 @@ describe("landing hrefs — 체험 루프", () => {
 
   it("로그인 후 trialOnly면 체험 페이지", () => {
     expect(landingStartHref(true, true)).toBe("/demo#trial");
-    expect(landingStartHref(true, false)).toBe("/dashboard");
+    expect(landingStartHref(true, false)).toBe("/dashboard/jobseeker");
   });
 });

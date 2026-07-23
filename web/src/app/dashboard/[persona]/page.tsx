@@ -3,9 +3,16 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { JobseekerDashboard } from "@/components/dashboard/persona/JobseekerDashboard";
 import { WorkerDashboard } from "@/components/dashboard/persona/WorkerDashboard";
 import { MockInterviewerDashboard } from "@/components/dashboard/persona/MockInterviewerDashboard";
-import { getCompetencyDashboardData } from "@/lib/dashboard/get-competency-dashboard-data";
+import {
+  emptyCompetencyDashboard,
+  getCompetencyDashboardData,
+  type CompetencyDashboardPayload,
+} from "@/lib/dashboard/get-competency-dashboard-data";
 import { buildDashboardNarrative } from "@/lib/dashboard/career-narrative";
-import { getWorkerDashboardData } from "@/lib/dashboard/get-worker-dashboard-data";
+import {
+  EMPTY_WORKER_DASHBOARD,
+  getWorkerDashboardData,
+} from "@/lib/dashboard/get-worker-dashboard-data";
 import { getResumeableInterviewSessions } from "@/lib/interview/get-resumeable-sessions";
 import { listCourseSummaries } from "@/lib/competency-game/progress";
 import { getLocale } from "@/lib/i18n/get-locale";
@@ -36,23 +43,41 @@ export default async function PersonaDashboardPage({
       data = await getWorkerDashboardData(user.id, user.organizationId ?? null);
     } catch (e) {
       console.error("[dashboard/worker]", e);
-      const { EMPTY_WORKER_DASHBOARD } = await import(
-        "@/lib/dashboard/get-worker-dashboard-data"
-      );
       data = EMPTY_WORKER_DASHBOARD;
     }
     return <WorkerDashboard userName={user.name} data={data} dict={dict} />;
   }
 
-  const [dashboard, resumeable, courses] = await Promise.all([
-    getCompetencyDashboardData(user.id),
-    persona === "jobseeker" ? getResumeableInterviewSessions(user.id) : Promise.resolve([]),
-    persona === "mock" ? listCourseSummaries(user.id) : Promise.resolve([]),
-  ]);
-  if (!dashboard) redirect("/auth/login");
+  let dashboard: CompetencyDashboardPayload | null = null;
+  let resumeable: Awaited<ReturnType<typeof getResumeableInterviewSessions>> = [];
+  let courses: Awaited<ReturnType<typeof listCourseSummaries>> = [];
+
+  try {
+    [dashboard, resumeable, courses] = await Promise.all([
+      getCompetencyDashboardData(user.id),
+      persona === "jobseeker"
+        ? getResumeableInterviewSessions(user.id)
+        : Promise.resolve([]),
+      persona === "mock" ? listCourseSummaries(user.id) : Promise.resolve([]),
+    ]);
+  } catch (e) {
+    console.error(`[dashboard/${persona}]`, e);
+    dashboard = emptyCompetencyDashboard(user.name);
+  }
+
+  if (!dashboard) {
+    // User row missing (rare race) — fall back to empty shell instead of login loop.
+    dashboard = emptyCompetencyDashboard(user.name);
+  }
 
   if (persona === "mock") {
-    return <MockInterviewerDashboard dashboard={dashboard} courses={courses} dict={dict} />;
+    return (
+      <MockInterviewerDashboard
+        dashboard={dashboard}
+        courses={courses}
+        dict={dict}
+      />
+    );
   }
 
   const assessedCount = COMPETENCY_CODES.filter(

@@ -15,8 +15,8 @@ describe("buildMarketingHomeHtml", () => {
   });
 
   it("updates when logged-in start href changes", () => {
-    const html = buildMarketingHomeHtml("/dashboard", "/demo#trial");
-    expect(html).toContain('href="/dashboard"');
+    const html = buildMarketingHomeHtml("/dashboard/jobseeker", "/demo#trial");
+    expect(html).toContain('href="/dashboard/jobseeker"');
     expect(html).toContain('data-cta="start"');
   });
 

@@ -50,7 +50,7 @@ const APP_HREFS: Record<ProductSlug, { personal: string; demo?: string; org?: st
   resume: { personal: "/resume-review", demo: "/demo" },
   interview: { personal: "/interview/setup", demo: "/demo" },
   practice: { personal: "/practice/path", demo: "/demo" },
-  growth: { personal: "/dashboard", demo: "/demo" },
+  growth: { personal: "/dashboard/jobseeker", demo: "/demo" },
   diagnostic: { personal: "/diagnosis", org: "/org/diagnosis" },
   organizations: { personal: "/org/setup", org: "/org/setup" },
 };

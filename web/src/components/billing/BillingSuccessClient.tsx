@@ -66,7 +66,7 @@ export function BillingSuccessClient() {
             <Link href="/org/dashboard?tab=members" className="btn-primary px-6 py-2 text-sm">
               초대 · 좌석 관리
             </Link>
-            <Link href="/dashboard" className="btn-secondary px-6 py-2 text-sm">
+            <Link href="/dashboard/jobseeker" className="btn-secondary px-6 py-2 text-sm">
               대시보드
             </Link>
           </div>

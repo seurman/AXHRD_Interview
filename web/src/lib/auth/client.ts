@@ -45,8 +45,8 @@ export function buildAuthRedirect(
   mode: Mode,
   displayName: string
 ): string {
-  const path = nextPath.startsWith("/") ? nextPath.split("?")[0]! : "/dashboard";
-  if (mode !== "register") return nextPath.startsWith("/") ? nextPath : "/dashboard";
+  const path = nextPath.startsWith("/") ? nextPath.split("?")[0]! : "/dashboard/jobseeker";
+  if (mode !== "register") return nextPath.startsWith("/") ? nextPath : "/dashboard/jobseeker";
 
   const params = new URLSearchParams({ welcome: "1" });
   if (displayName) params.set("name", displayName);

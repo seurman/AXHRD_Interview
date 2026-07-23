@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { competencyLabel } from "@/lib/labels";
+import { competencyLabel, dimensionLabel } from "@/lib/labels";
 import { COMPETENCY_CODES } from "@/types";
 import { getUserStrengthDeck } from "@/lib/discover/user-strengths";
 import { buildCareerQuests } from "@/lib/dashboard/quests";
@@ -15,10 +15,16 @@ import type { QuestItem } from "@/components/dashboard/QuestPanel";
 import type { CoachInsightsPayload } from "@/components/dashboard/CoachInsightsPanel";
 import type { DiscoverInterviewAdvice, DiscoverStrengthItem } from "@/types/discover";
 import type { DimensionSessionPoint } from "@/lib/dashboard/dimension-timeline";
-import type { PathCompetencySummary } from "@/lib/learning/path";
-import type { WeaknessRecommendation } from "@/lib/learning/weakness";
-import { listPathOverview, resolveUserTrack } from "@/lib/learning/path";
-import { recommendWeaknessDrill } from "@/lib/learning/weakness";
+import {
+  listPathOverview,
+  resolveUserTrack,
+  type PathCompetencySummary,
+} from "@/lib/learning/path";
+import {
+  recommendWeaknessDrill,
+  type WeaknessRecommendation,
+} from "@/lib/learning/weakness";
+import { COMPETENCY_LEARNING_META } from "@/lib/learning/catalog";
 
 export type CompetencyLatest = {
   theta: number;
@@ -60,6 +66,75 @@ export type CompetencyDashboardPayload = {
     competencies: PathCompetencySummary[];
   };
 };
+
+function emptyLatestByCompetency(): Record<string, CompetencyLatest> {
+  const latestByCompetency: Record<string, CompetencyLatest> = {};
+  for (const code of COMPETENCY_CODES) {
+    latestByCompetency[code] = {
+      theta: 0,
+      percentile: 0,
+      levelEst: 0,
+      assessed: false,
+      unlockedStage: 0,
+      masteryScore: 0,
+      pathCertified: false,
+    };
+  }
+  return latestByCompetency;
+}
+
+function emptyWeakness(): WeaknessRecommendation {
+  const competency = "COMMUNICATION" as const;
+  const meta = COMPETENCY_LEARNING_META[competency];
+  return {
+    competency,
+    titleKo: meta.title,
+    dimension: "delivery",
+    dimensionLabelKo: dimensionLabel("delivery"),
+    tip: meta.dimensionTips.delivery ?? meta.principle,
+    prompt: meta.weaknessPrompt,
+    sampleQuestion: meta.sampleQuestion,
+    practiceQuestions: [],
+    source: "default",
+    href: `/practice/path/${competency.toLowerCase()}`,
+    swipeHref: `/practice/swipe?competency=${encodeURIComponent(competency)}`,
+  };
+}
+
+/** Safe fallback when learning-path / Prisma joins fail — mirrors EMPTY_WORKER_DASHBOARD. */
+export function emptyCompetencyDashboard(
+  userName = "",
+): CompetencyDashboardPayload {
+  const latestByCompetency = emptyLatestByCompetency();
+  return {
+    userName,
+    snapshots: [],
+    latestByCompetency,
+    sessionCount: 0,
+    dimensionTimeline: [],
+    quests: [],
+    totalXp: 0,
+    level: 1,
+    strengthDeck: null,
+    hasDashboardContent: false,
+    coachInsights: {
+      competencyDeltas: COMPETENCY_CODES.map((code) => ({
+        competency: code,
+        percentile: 0,
+        delta: null,
+        levelEst: 0,
+        assessed: false,
+      })),
+      latestDimensions: null,
+      recentRounds: [],
+      accessLog: [],
+    },
+    learningPath: {
+      weakness: emptyWeakness(),
+      competencies: [],
+    },
+  };
+}
 
 /** 구직자/모의면접 페르소나 대시보드·기관 코칭 뷰가 공유하는 역량 데이터 조회 */
 export async function getCompetencyDashboardData(
@@ -167,39 +242,58 @@ export async function getCompetencyDashboardData(
 
   const startOfUtcDay = new Date();
   startOfUtcDay.setUTCHours(0, 0, 0, 0);
-  const [swipeToday, pathDrillToday, gameToday, track, weakness, certifyCount] =
-    await Promise.all([
-    prisma.swipeAction.count({
-      where: {
-        userId,
-        updatedAt: { gte: startOfUtcDay },
-      },
-    }),
-    prisma.drillAttempt.count({
-      where: {
-        userId,
-        kind: { not: "game" },
-        createdAt: { gte: startOfUtcDay },
-      },
-    }),
-    prisma.drillAttempt.count({
-      where: {
-        userId,
-        kind: "game",
-        createdAt: { gte: startOfUtcDay },
-      },
-    }),
-    resolveUserTrack(userId),
-    recommendWeaknessDrill(userId),
-    prisma.lessonCompletion.count({
-      where: {
-        userId,
-        score: { gte: 0.7 },
-        lesson: { kind: "CERTIFY" },
-      },
-    }),
-  ]);
-  const pathCompetencies = await listPathOverview(userId, track);
+
+  let swipeToday = 0;
+  let pathDrillToday = 0;
+  let gameToday = 0;
+  let weakness: WeaknessRecommendation = emptyWeakness();
+  let certifyCount = 0;
+  let pathCompetencies: PathCompetencySummary[] = [];
+
+  try {
+    const track = await resolveUserTrack(userId);
+    const [swipe, pathDrill, game, weaknessRec, certify, pathRows] =
+      await Promise.all([
+        prisma.swipeAction.count({
+          where: {
+            userId,
+            updatedAt: { gte: startOfUtcDay },
+          },
+        }),
+        prisma.drillAttempt.count({
+          where: {
+            userId,
+            kind: { not: "game" },
+            createdAt: { gte: startOfUtcDay },
+          },
+        }),
+        prisma.drillAttempt.count({
+          where: {
+            userId,
+            kind: "game",
+            createdAt: { gte: startOfUtcDay },
+          },
+        }),
+        recommendWeaknessDrill(userId),
+        prisma.lessonCompletion.count({
+          where: {
+            userId,
+            score: { gte: 0.7 },
+            lesson: { kind: "CERTIFY" },
+          },
+        }),
+        listPathOverview(userId, track),
+      ]);
+    swipeToday = swipe;
+    pathDrillToday = pathDrill;
+    gameToday = game;
+    weakness = weaknessRec;
+    certifyCount = certify;
+    pathCompetencies = pathRows;
+  } catch (e) {
+    console.error("[getCompetencyDashboardData] learning-path", e);
+  }
+
   const pathByCode = new Map(pathCompetencies.map((c) => [c.competency, c]));
   for (const code of COMPETENCY_CODES) {
     const path = pathByCode.get(code);

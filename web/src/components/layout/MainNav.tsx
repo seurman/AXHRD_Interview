@@ -11,8 +11,6 @@ import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { AvatarMenu } from "./AvatarMenu";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { useWorkspaceMode } from "@/lib/nav/workspace";
-import { useProductPersona } from "@/lib/nav/use-product-persona";
-import { resolvePersonaHomeHref } from "@/lib/nav/persona-nav";
 import type { NavLinkItem } from "@/lib/platform/nav-registry";
 
 type SaasLinksConfig = {
@@ -57,8 +55,6 @@ export function MainNav({
   const { dict } = useI18n();
   const c = dict.common;
   const { mode, setMode } = useWorkspaceMode(orgWorkspaceAvailable);
-  const persona = useProductPersona();
-  const personaHome = resolvePersonaHomeHref(persona);
 
   if (loading) {
     return (
@@ -133,7 +129,7 @@ export function MainNav({
 
       {dashboardHref && (
         <a
-          href={personaHome}
+          href={dashboardHref}
           className={`nav-pill ${pathname.startsWith("/dashboard") ? "nav-pill-active" : ""}`}
         >
           {c.nav.dashboard}

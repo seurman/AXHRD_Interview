@@ -4,8 +4,15 @@ import { useEffect } from "react";
 
 function shouldHardNavigate(pathname: string): boolean {
   // Marketing `/` and legacy `/dashboard` redirect both break soft-nav
-  // when a stale SW or RSC redirect is involved.
-  return pathname === "/" || pathname === "/dashboard";
+  // when a stale SW or RSC redirect is involved. Persona homes use hard
+  // nav too so Growth CTAs never soft-land on a broken redirect hub.
+  return (
+    pathname === "/" ||
+    pathname === "/dashboard" ||
+    pathname === "/dashboard/jobseeker" ||
+    pathname === "/dashboard/worker" ||
+    pathname === "/dashboard/mock"
+  );
 }
 
 /**

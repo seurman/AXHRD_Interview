@@ -64,7 +64,7 @@ export function InterviewAdviceSection({ advice, jobRoleLabel }: InterviewAdvice
           이 강점으로 모의 면접 연습 →
         </Link>
         <Link
-          href="/dashboard"
+          href="/dashboard/jobseeker"
           className="rounded-xl border border-card-border px-5 py-2.5 text-sm font-medium hover:border-gold/40"
         >
           역량 트래킹에서 확인

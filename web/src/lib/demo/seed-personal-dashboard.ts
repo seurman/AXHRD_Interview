@@ -283,6 +283,6 @@ export async function seedPersonalDashboardFromPack(client: PrismaClient) {
     responses: totalResponses,
     rounds: rounds.length,
     discoverSessionId: discoverSession.id,
-    dashboardUrl: "/dashboard",
+    dashboardUrl: "/dashboard/jobseeker",
   };
 }

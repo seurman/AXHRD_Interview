@@ -8,7 +8,7 @@ type WelcomeBannerProps = {
   dismissHref?: string;
 };
 
-export function WelcomeBanner({ dismissHref = "/dashboard" }: WelcomeBannerProps) {
+export function WelcomeBanner({ dismissHref = "/dashboard/jobseeker" }: WelcomeBannerProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const welcome = searchParams.get("welcome") === "1";
