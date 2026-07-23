@@ -101,7 +101,7 @@ export function WorkerDashboard({
                         {attempt.scenarioTitle}
                       </p>
                       <p className="mt-0.5 text-xs text-muted">
-                        {attempt.scenarioKind} · {statusLabel(attempt.status, p.status)}
+                        {kindLabel(attempt.scenarioKind)} · {statusLabel(attempt.status, p.status)}
                       </p>
                     </div>
                     <span className="text-sm font-medium text-foreground">

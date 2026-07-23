@@ -2,20 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { LogoutButton } from "./LogoutButton";
 import { AdminModeButton } from "./AdminModeButton";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
-import { PersonaSwitcher } from "./PersonaSwitcher";
 import { getMobileNavLabel } from "./MainNav";
 import { ClipDynamic } from "@/components/ui/ClipDynamic";
 import { NavTransitionLink } from "@/components/layout/NavTransitionLink";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { useWorkspaceMode } from "@/lib/nav/workspace";
 import { useProductPersona } from "@/lib/nav/use-product-persona";
-import { personaPrimaryLinks } from "@/lib/nav/persona-nav";
+import { resolvePersonaHomeHref } from "@/lib/nav/persona-nav";
 import type { NavLinkItem } from "@/lib/platform/nav-registry";
 
 type SaasLinksConfig = {
@@ -27,6 +25,41 @@ type SaasLinksConfig = {
   settingsTitleKey: "settings";
   settingsLinks: { href: string; labelKey: "settingsHub" | "interviewKit" }[];
 };
+
+function AccordionSection({
+  title,
+  defaultOpen,
+  active,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  active?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(!!defaultOpen || !!active);
+
+  useEffect(() => {
+    if (active) setOpen(true);
+  }, [active]);
+
+  return (
+    <div className="mt-3">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-xs font-semibold text-gold"
+        aria-expanded={open}
+      >
+        <span className="keep-one-line">{title}</span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open ? <div className="mt-0.5 flex flex-col gap-0.5">{children}</div> : null}
+    </div>
+  );
+}
 
 function MobileNavLink({
   href,
@@ -90,13 +123,13 @@ export function MobileNav({
   const c = dict.common;
   const { mode, setMode } = useWorkspaceMode(orgWorkspaceAvailable);
   const persona = useProductPersona();
-  const personaLinks = personaPrimaryLinks(persona);
+  const personaHome = resolvePersonaHomeHref(persona);
 
   const closeDrawer = () => setOpen(false);
 
   const prefetchHrefs = useMemo(() => {
     const hrefs = new Set<string>();
-    if (dashboardHref) hrefs.add(dashboardHref);
+    if (dashboardHref) hrefs.add(personaHome);
     if (profileHref) hrefs.add(profileHref);
     if (activityHref) hrefs.add(activityHref);
     growthLinks.forEach((l) => hrefs.add(l.href));
@@ -118,6 +151,7 @@ export function MobileNav({
     dashboardHref,
     growthLinks,
     loggedIn,
+    personaHome,
     practiceLinks,
     profileHref,
     saasLinks,
@@ -138,11 +172,9 @@ export function MobileNav({
 
   useEffect(() => {
     if (!open) return;
-    const priority = [
-      dashboardHref,
-      profileHref,
-      ...growthLinks.map((l) => l.href),
-    ].filter((h): h is string => !!h);
+    const priority = [personaHome, profileHref, ...growthLinks.map((l) => l.href)].filter(
+      (h): h is string => !!h,
+    );
     for (const href of priority.slice(0, 4)) {
       router.prefetch(href);
     }
@@ -151,7 +183,7 @@ export function MobileNav({
       for (const href of rest) router.prefetch(href);
     }, 120);
     return () => window.clearTimeout(timer);
-  }, [dashboardHref, growthLinks, open, prefetchHrefs, profileHref, router]);
+  }, [growthLinks, open, personaHome, prefetchHrefs, profileHref, router]);
 
   const linkClass = (href: string, indent = false) =>
     `keep-one-line rounded-lg py-2.5 hover:bg-gold/10 ${indent ? "pl-5 pr-3" : "px-3"} ${
@@ -160,11 +192,12 @@ export function MobileNav({
         : "text-foreground"
     }`;
 
-  const saasActive =
-    !!saasLinks &&
-    [...saasLinks.links, ...saasLinks.settingsLinks].some(
-      (l) => pathname === l.href || pathname.startsWith(`${l.href}/`),
-    );
+  const growthActive = growthLinks.some(
+    (l) => pathname === l.href || pathname.startsWith(`${l.href}/`),
+  );
+  const practiceActive = practiceLinks.some(
+    (l) => pathname === l.href || pathname.startsWith(`${l.href}/`),
+  );
 
   const drawer = open && (
     <div className="fixed inset-0 z-[100]">
@@ -252,38 +285,11 @@ export function MobileNav({
             </>
           ) : (
             <>
-              <div className="mb-3 px-1">
-                <PersonaSwitcher active={persona} />
-              </div>
-
-              {personaLinks.map((l) => {
-                const label =
-                  l.labelKey === "home"
-                    ? dict.dashboard.personas[persona].title
-                    : getMobileNavLabel(l.labelKey, dict);
-                if (l.hard) {
-                  return (
-                    <a
-                      key={l.href}
-                      href={l.href}
-                      onClick={closeDrawer}
-                      className={linkClass(l.href)}
-                    >
-                      {label}
-                    </a>
-                  );
-                }
-                return (
-                  <MobileNavLink
-                    key={l.href}
-                    href={l.href}
-                    onNavigate={closeDrawer}
-                    className={linkClass(l.href)}
-                  >
-                    {label}
-                  </MobileNavLink>
-                );
-              })}
+              {dashboardHref && (
+                <a href={personaHome} onClick={closeDrawer} className={linkClass(personaHome)}>
+                  {c.nav.dashboard}
+                </a>
+              )}
 
               {activityHref && (
                 <MobileNavLink
@@ -293,6 +299,44 @@ export function MobileNav({
                 >
                   {getMobileNavLabel("activity", dict)}
                 </MobileNavLink>
+              )}
+
+              {growthLinks.length > 0 && (
+                <AccordionSection
+                  title={c.nav.growth}
+                  defaultOpen={growthActive}
+                  active={growthActive}
+                >
+                  {growthLinks.map((l) => (
+                    <MobileNavLink
+                      key={l.href}
+                      href={l.href}
+                      onNavigate={closeDrawer}
+                      className={linkClass(l.href, true)}
+                    >
+                      {dict.common.navLong[l.labelKey]}
+                    </MobileNavLink>
+                  ))}
+                </AccordionSection>
+              )}
+
+              {practiceLinks.length > 0 && (
+                <AccordionSection
+                  title={c.nav.practice}
+                  defaultOpen={practiceActive}
+                  active={practiceActive}
+                >
+                  {practiceLinks.map((l) => (
+                    <MobileNavLink
+                      key={l.href}
+                      href={l.href}
+                      onNavigate={closeDrawer}
+                      className={linkClass(l.href, true)}
+                    >
+                      {dict.common.navLong[l.labelKey]}
+                    </MobileNavLink>
+                  ))}
+                </AccordionSection>
               )}
 
               {profileHref && (
