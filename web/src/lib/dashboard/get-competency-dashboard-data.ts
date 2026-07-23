@@ -181,8 +181,6 @@ async function loadCompetencyDashboardData(
   userId: string,
   opts: CompetencyDashboardLoadOptions,
 ): Promise<CompetencyDashboardPayload | null> {
-  const persona = opts.persona ?? "jobseeker";
-  const isJobseeker = persona === "jobseeker";
   const startOfUtcDay = new Date();
   startOfUtcDay.setUTCHours(0, 0, 0, 0);
 
@@ -275,7 +273,7 @@ async function loadCompetencyDashboardData(
     opts.includeResumeable
       ? getResumeableInterviewSessions(userId)
       : Promise.resolve([] as ResumeableInterviewSession[]),
-    loadActivityCounts(userId, startOfUtcDay, isJobseeker),
+    loadActivityCounts(userId, startOfUtcDay),
   ]);
 
   if (!user) return null;
@@ -332,29 +330,27 @@ async function loadCompetencyDashboardData(
   let weakness: WeaknessRecommendation = emptyWeakness();
   let pathCompetencies: PathCompetencySummary[] = [];
 
-  if (!isJobseeker) {
-    try {
-      const [weaknessRec, pathRows] = await Promise.all([
-        recommendWeaknessDrill(userId),
-        listPathOverview(userId, track),
-      ]);
-      weakness = weaknessRec;
-      pathCompetencies = pathRows;
-    } catch (e) {
-      console.error("[getCompetencyDashboardData] learning-path", e);
-      pathCompetencies = COMPETENCY_CODES.map((competency) => {
-        const progress = pathByCode.get(competency);
-        return {
-          competency,
-          titleKo: COMPETENCY_LEARNING_META[competency]?.title ?? competency,
-          unlockedStage: progress?.unlockedStage ?? 0,
-          masteryScore: progress?.masteryScore ?? 0,
-          streakDays: 0,
-          lastDrillAt: null,
-          nextLesson: null,
-        };
-      });
-    }
+  try {
+    const [weaknessRec, pathRows] = await Promise.all([
+      recommendWeaknessDrill(userId),
+      listPathOverview(userId, track),
+    ]);
+    weakness = weaknessRec;
+    pathCompetencies = pathRows;
+  } catch (e) {
+    console.error("[getCompetencyDashboardData] learning-path", e);
+    pathCompetencies = COMPETENCY_CODES.map((competency) => {
+      const progress = pathByCode.get(competency);
+      return {
+        competency,
+        titleKo: COMPETENCY_LEARNING_META[competency]?.title ?? competency,
+        unlockedStage: progress?.unlockedStage ?? 0,
+        masteryScore: progress?.masteryScore ?? 0,
+        streakDays: 0,
+        lastDrillAt: null,
+        nextLesson: null,
+      };
+    });
   }
 
   const assessedEntries = Object.entries(latestByCompetency).filter(
@@ -480,31 +476,12 @@ async function loadCompetencyDashboardData(
 async function loadActivityCounts(
   userId: string,
   startOfUtcDay: Date,
-  isJobseeker: boolean,
 ): Promise<{
   swipeToday: number;
   pathDrillToday: number;
   gameToday: number;
   certifyCount: number;
 }> {
-  // Jobseeker UI only surfaces discover/interview quests — skip daily practice
-  // counters that used to add 3 round-trips for unused quest rows.
-  if (isJobseeker) {
-    const certifyCount = await prisma.lessonCompletion.count({
-      where: {
-        userId,
-        score: { gte: 0.7 },
-        lesson: { kind: "CERTIFY" },
-      },
-    });
-    return {
-      swipeToday: 0,
-      pathDrillToday: 0,
-      gameToday: 0,
-      certifyCount,
-    };
-  }
-
   const [swipeToday, pathDrillToday, gameToday, certifyCount] =
     await Promise.all([
       prisma.swipeAction.count({

@@ -101,7 +101,7 @@ export function JobseekerDashboard({
             totalXp={dashboard.totalXp}
             level={dashboard.level}
             strengthDeck={dashboard.strengthDeck}
-            learningPath={null}
+            learningPath={dashboard.learningPath}
             showOnboardingBanner={!dashboard.hasDashboardContent}
           />
         </DashboardSectionBoundary>
