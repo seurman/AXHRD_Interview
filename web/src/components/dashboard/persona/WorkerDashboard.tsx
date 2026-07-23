@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { WelcomeBanner } from "@/components/auth/WelcomeBanner";
 import { MemberFeedbackInbox } from "@/components/org/MemberFeedbackInbox";
+import { InteractivePercentileBars } from "@/components/charts/InteractivePercentileBars";
+import { WorkerScoreTrendChart } from "@/components/dashboard/persona/WorkerScoreTrendChart";
 import {
   PersonaActionLink,
   PersonaDashboardHeader,
@@ -68,6 +70,33 @@ export function WorkerDashboard({
             </p>
           </div>
         </div>
+
+        {(data.scoreTrend.length > 0 || data.competencyAverages.length > 0) && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="card-luxe p-5">
+              <h3 className="font-semibold text-foreground">점수 추이</h3>
+              <p className="mt-1 text-xs text-muted">완료한 평가 점수를 시간순으로 봅니다.</p>
+              <div className="mt-4">
+                <WorkerScoreTrendChart points={data.scoreTrend} />
+              </div>
+            </div>
+            <div className="card-luxe p-5">
+              <h3 className="font-semibold text-foreground">역량별 평균</h3>
+              <p className="mt-1 text-xs text-muted">여러 시도의 평가를 역량별로 모아 평균 냈습니다.</p>
+              <div className="mt-4">
+                <InteractivePercentileBars
+                  items={data.competencyAverages.map((c) => ({
+                    id: c.code,
+                    label: c.nameKo,
+                    value: Math.round((c.avgScore / 5) * 100),
+                    deltaLabel: `${c.avgScore.toFixed(1)}/5 · ${c.attemptCount}회`,
+                  }))}
+                  emptyHint="완료한 평가가 쌓이면 역량별 평균이 여기 표시됩니다."
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         <section className="space-y-3">
           <div className="flex items-end justify-between gap-3">

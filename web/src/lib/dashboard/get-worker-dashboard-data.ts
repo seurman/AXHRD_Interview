@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { parseEvidenceAssessmentReport } from "@/lib/assessment/evidence-report";
 
 export type WorkerAssessmentAttempt = {
   id: string;
@@ -11,12 +12,29 @@ export type WorkerAssessmentAttempt = {
   scenarioKind: string;
 };
 
+export type WorkerScoreTrendPoint = {
+  attemptId: string;
+  at: string;
+  score: number;
+};
+
+export type WorkerCompetencyAverage = {
+  code: string;
+  nameKo: string;
+  avgScore: number;
+  attemptCount: number;
+};
+
 export type WorkerDashboardData = {
   attempts: WorkerAssessmentAttempt[];
   publishedScenarioCount: number;
   completedCount: number;
   inProgressCount: number;
   latestScore: number | null;
+  /** 완료 시도 시간순 점수 추이(오름차순) */
+  scoreTrend: WorkerScoreTrendPoint[];
+  /** 시도들의 EvidenceAssessmentReport를 역량코드로 묶어 평균낸 값(약점 우선 정렬) */
+  competencyAverages: WorkerCompetencyAverage[];
 };
 
 export const EMPTY_WORKER_DASHBOARD: WorkerDashboardData = {
@@ -25,6 +43,8 @@ export const EMPTY_WORKER_DASHBOARD: WorkerDashboardData = {
   completedCount: 0,
   inProgressCount: 0,
   latestScore: null,
+  scoreTrend: [],
+  competencyAverages: [],
 };
 
 function toScore(value: unknown): number | null {
@@ -67,7 +87,7 @@ export async function getWorkerDashboardData(
           status: true,
           createdAt: true,
           submittedAt: true,
-          report: { select: { overallScore: true } },
+          report: { select: { overallScore: true, reportJson: true } },
         },
       }),
     ]);
@@ -99,12 +119,39 @@ export async function getWorkerDashboardData(
     const completed = mapped.filter((a) => a.status === "SCORED" || a.status === "SUBMITTED");
     const inProgress = mapped.filter((a) => a.status === "IN_PROGRESS" || a.status === "DRAFT");
 
+    const scoreTrend: WorkerScoreTrendPoint[] = mapped
+      .filter((a) => a.overallScore != null && a.submittedAt != null)
+      .map((a) => ({ attemptId: a.id, at: a.submittedAt as string, score: a.overallScore as number }))
+      .sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+
+    const competencySums = new Map<string, { nameKo: string; sum: number; count: number }>();
+    for (const a of attempts) {
+      const parsed = parseEvidenceAssessmentReport(a.report?.reportJson);
+      if (!parsed) continue;
+      for (const comp of parsed.competencies) {
+        const entry = competencySums.get(comp.code) ?? { nameKo: comp.nameKo, sum: 0, count: 0 };
+        entry.sum += comp.score;
+        entry.count += 1;
+        competencySums.set(comp.code, entry);
+      }
+    }
+    const competencyAverages: WorkerCompetencyAverage[] = [...competencySums.entries()]
+      .map(([code, v]) => ({
+        code,
+        nameKo: v.nameKo,
+        avgScore: Math.round((v.sum / v.count) * 100) / 100,
+        attemptCount: v.count,
+      }))
+      .sort((a, b) => a.avgScore - b.avgScore);
+
     return {
       attempts: mapped,
       publishedScenarioCount: scenarios.length,
       completedCount: completed.length,
       inProgressCount: inProgress.length,
       latestScore: completed.find((a) => a.overallScore != null)?.overallScore ?? null,
+      scoreTrend,
+      competencyAverages,
     };
   } catch (e) {
     console.error("[getWorkerDashboardData]", e);
