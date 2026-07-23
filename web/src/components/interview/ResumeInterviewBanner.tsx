@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { competencyLabel } from "@/lib/labels";
 import { trackFunnel } from "@/lib/analytics/funnel";
