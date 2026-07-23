@@ -8,31 +8,35 @@
 
 :root {
   /* ─── COLOR · CORE PALETTE ───────────────────────────────
-     Ink is warm charcoal (not pure black). Coral is deepened
-     from v1's #E85A38 to #D64A2C for editorial restraint.
-     Cream layered in 3 tones for depth. */
+     Trust & Authority direction — aligned with the ARC Index
+     report. Cool navy ink, cool paper backgrounds, brand blue
+     as the signature accent, gold reserved for achievement. */
 
-  /* Ink — warm neutrals (text + dark surfaces) */
-  --ink-900: #17120F;   /* ink primary   · headers on cream */
-  --ink-800: #1F1A17;   /* ink strong    · v1 legacy */
-  --ink-700: #2A221D;   /* ink surface   · dark card / hero */
-  --ink-500: #6B5D54;   /* ink muted     · secondary text */
-  --ink-400: #8B7D73;   /* ink subtle    · captions */
-  --ink-300: #B3A69B;   /* ink faint     · borders on cream */
-  --ink-200: #D9CFC3;   /* ink hairline  · dividers */
+  /* Ink — cool near-navy neutrals (text + dark surfaces) */
+  --ink-900: #12172A;   /* ink primary   · headers on paper, hero dark bg */
+  --ink-800: #1A2136;   /* ink strong */
+  --ink-700: #17213A;   /* ink surface   · dark card / hero */
+  --ink-500: #4D5875;   /* ink muted     · secondary text */
+  --ink-400: #74809C;   /* ink subtle    · captions */
+  --ink-300: #B6C0D6;   /* ink faint     · borders on paper */
+  --ink-200: #E2E7F2;   /* ink hairline  · dividers */
 
-  /* Cream — warm backgrounds */
-  --cream-50:  #FBF7F1;  /* cream lightest · elevated card */
-  --cream-100: #F5EDE4;  /* cream base    · page background (signature) */
-  --cream-200: #EFE4D5;  /* cream tonal   · inset panels */
-  --cream-300: #E5D6C2;  /* cream deeper  · pressed states */
+  /* Paper — cool backgrounds (kept the --cream-* names for compatibility) */
+  --cream-50:  #FFFFFF;  /* paper lightest · elevated card */
+  --cream-100: #F5F6FA;  /* paper base    · page background (signature) */
+  --cream-200: #EEF1F7;  /* paper tonal   · inset panels */
+  --cream-300: #DDE3EF;  /* paper deeper  · pressed states */
 
-  /* Coral — signature accent (refined) */
-  --coral-600: #B83A1F;  /* coral deep    · text on cream */
-  --coral-500: #D64A2C;  /* coral primary · CTA, mark */
-  --coral-400: #E85A38;  /* coral bright  · legacy / hover */
-  --coral-300: #FF6B47;  /* coral on-dark · accent on ink hero */
-  --coral-100: #FCE4DA;  /* coral wash    · tag / highlight bg */
+  /* Trust blue — signature accent (kept the --coral-* names for compatibility) */
+  --coral-600: #1D4ED8;  /* deep    · text on paper */
+  --coral-500: #2F5FEE;  /* primary · CTA, mark — same blue as the rest of the app */
+  --coral-400: #4C79FF;  /* bright  · hover */
+  --coral-300: #8FABFF;  /* on-dark · accent on ink hero */
+  --coral-100: #E7EDFD;  /* wash    · tag / highlight bg */
+
+  /* Achievement gold — reserved for score / badge / priority moments */
+  --gold-500: #C79A5A;
+  --gold-300: #DDB87D;
 
   /* Editorial secondary accents (muted, data-viz safe) */
   --plum-500:  #6B3F5C;  /* muted plum    · charts, secondary tag */

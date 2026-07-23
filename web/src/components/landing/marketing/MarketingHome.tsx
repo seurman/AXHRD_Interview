@@ -8,8 +8,8 @@ import "@/styles/marketing/homepage.css";
 
 const FOOTER_PRODUCT_HREFS = [
   "/auth/register?next=/interview/setup",
-  "/resume-review",
-  "/dashboard",
+  "/assessment",
+  "/diagnosis",
   "/products",
 ];
 

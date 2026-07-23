@@ -8,7 +8,7 @@
 
 .ax-home button { font-family: inherit; }
 
-.ax-home .site { max-width: 1240px; margin: 0 auto; padding: 0 32px; }
+.ax-home .site { max-width: 1240px; margin: 0 auto; padding: 0 72px; }
 
 .ax-home nav.top { position: sticky; top: 0; z-index: 50;
     backdrop-filter: blur(20px);
@@ -41,7 +41,7 @@
     position: relative; }
 
 .ax-home .hero::before { content: ''; position: absolute; top: 0; right: -100px; width: 800px; height: 800px;
-    background: radial-gradient(circle at center, rgba(255,107,71,0.10), transparent 55%);
+    background: radial-gradient(circle at center, rgba(199,154,90,0.14), transparent 55%);
     pointer-events: none; z-index: 0; }
 
 .ax-home .hero-inner { position: relative; z-index: 2; }
@@ -73,6 +73,8 @@
     letter-spacing: -0.02em; color: var(--ink-900); }
 
 .ax-home .hero h1 .coral { color: var(--coral-500); }
+
+.ax-home .hero h1 .hero-serif { font-family: var(--font-serif); font-style: italic; font-weight: 400; letter-spacing: -0.01em; }
 
 .ax-home .hero h1 .dot { color: var(--coral-500); }
 
@@ -291,7 +293,7 @@
 
 .ax-home section.problem::before { content: ''; position: absolute; top: -100px; left: 10%;
     width: 600px; height: 600px;
-    background: radial-gradient(circle at center, rgba(255,107,71,0.12), transparent 60%);
+    background: radial-gradient(circle at center, rgba(199,154,90,0.12), transparent 60%);
     pointer-events: none; }
 
 .ax-home .problem-inner { max-width: 1240px; margin: 0 auto; padding: 0 32px; position: relative; z-index: 2; }
@@ -530,7 +532,7 @@
 
 .ax-home .testimony::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
     width: 900px; height: 900px;
-    background: radial-gradient(circle at center, rgba(255,107,71,0.06), transparent 55%);
+    background: radial-gradient(circle at center, rgba(47,95,238,0.08), transparent 55%);
     pointer-events: none; }
 
 .ax-home .quote-mark { font-family: var(--font-serif); font-size: 120px; color: var(--coral-500);
@@ -555,7 +557,7 @@
 
 .ax-home .cta::before { content: ''; position: absolute; top: -200px; right: -100px;
     width: 700px; height: 700px;
-    background: radial-gradient(circle at center, rgba(255,107,71,0.18), transparent 60%);
+    background: radial-gradient(circle at center, rgba(199,154,90,0.2), transparent 60%);
     pointer-events: none; }
 
 .ax-home .cta-inner { max-width: 1240px; margin: 0 auto; padding: 0 32px;
@@ -628,3 +630,7 @@
 .ax-home .sec-title, .ax-home .cta-inner h2 { font-size: 42px; }
 
 .ax-home .quote-text { font-size: 30px; }}
+
+@media (max-width: 640px) {
+  .ax-home .site { padding: 0 20px; }
+}
