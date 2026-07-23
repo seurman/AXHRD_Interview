@@ -63,8 +63,7 @@ export function MobileBottomNav({
         p === "/practice" ||
         p.startsWith("/practice/") ||
         p === "/demo" ||
-        p.startsWith("/demo/") ||
-        p.startsWith("/interview/"),
+        p.startsWith("/demo/"),
     },
   ];
 
