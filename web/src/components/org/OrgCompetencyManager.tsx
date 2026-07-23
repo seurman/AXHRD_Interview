@@ -2,7 +2,28 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Lock, Copy, Pencil, ChevronRight } from "lucide-react";
+import { Lock, Copy, Pencil, ChevronRight, Plus, X } from "lucide-react";
+
+const RUBRIC_LEVELS = ["1", "2", "3", "4", "5"] as const;
+
+function emptyRubric(): Record<string, string[]> {
+  const result: Record<string, string[]> = {};
+  for (const level of RUBRIC_LEVELS) result[level] = [];
+  return result;
+}
+
+/** 플랫폼/기관 rubricByLevel(JSON, 임의 형태 가능)을 레벨 1~5 문자열 배열 편집기 상태로 정규화 */
+function normalizeRubric(raw: unknown): Record<string, string[]> {
+  const obj = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  const result = emptyRubric();
+  for (const level of RUBRIC_LEVELS) {
+    const items = obj[level];
+    if (Array.isArray(items)) {
+      result[level] = items.filter((v): v is string => typeof v === "string");
+    }
+  }
+  return result;
+}
 
 type PlatformComp = {
   id: string;
@@ -47,7 +68,7 @@ export function OrgCompetencyManager({ organizationId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<Payload | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ nameKo: "", definition: "", rubricJson: "{}" });
+  const [form, setForm] = useState({ nameKo: "", definition: "", rubric: emptyRubric() });
   const [forkFromId, setForkFromId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -80,7 +101,7 @@ export function OrgCompetencyManager({ organizationId }: Props) {
     setForm({
       nameKo: `${platform.nameKo} (맞춤)`,
       definition: platform.description ?? "",
-      rubricJson: JSON.stringify(platform.rubricByLevel ?? {}, null, 2),
+      rubric: normalizeRubric(platform.rubricByLevel),
     });
   }
 
@@ -91,18 +112,39 @@ export function OrgCompetencyManager({ organizationId }: Props) {
     setForm({
       nameKo: comp.nameKo,
       definition: comp.description ?? "",
-      rubricJson: JSON.stringify(comp.rubricByLevel ?? {}, null, 2),
+      rubric: normalizeRubric(comp.rubricByLevel),
+    });
+  }
+
+  function updateRubricItem(level: string, index: number, value: string) {
+    setForm((f) => {
+      const items = [...(f.rubric[level] ?? [])];
+      items[index] = value;
+      return { ...f, rubric: { ...f.rubric, [level]: items } };
+    });
+  }
+
+  function addRubricItem(level: string) {
+    setForm((f) => ({
+      ...f,
+      rubric: { ...f.rubric, [level]: [...(f.rubric[level] ?? []), ""] },
+    }));
+  }
+
+  function removeRubricItem(level: string, index: number) {
+    setForm((f) => {
+      const items = [...(f.rubric[level] ?? [])];
+      items.splice(index, 1);
+      return { ...f, rubric: { ...f.rubric, [level]: items } };
     });
   }
 
   async function save() {
     if (!data?.canWrite) return;
-    let rubricByLevel: Record<string, string[]> = {};
-    try {
-      rubricByLevel = JSON.parse(form.rubricJson) as Record<string, string[]>;
-    } catch {
-      setMessage("rubricByLevel JSON 형식이 올바르지 않습니다.");
-      return;
+    const rubricByLevel: Record<string, string[]> = {};
+    for (const level of RUBRIC_LEVELS) {
+      const items = (form.rubric[level] ?? []).map((s) => s.trim()).filter(Boolean);
+      if (items.length > 0) rubricByLevel[level] = items;
     }
 
     const body = {
@@ -238,14 +280,44 @@ export function OrgCompetencyManager({ organizationId }: Props) {
               onChange={(e) => setForm((f) => ({ ...f, definition: e.target.value }))}
             />
           </label>
-          <label className="block text-xs">
-            <span className="text-muted">rubricByLevel (JSON)</span>
-            <textarea
-              className="input mt-1 w-full min-h-[120px] font-mono text-[11px]"
-              value={form.rubricJson}
-              onChange={(e) => setForm((f) => ({ ...f, rubricJson: e.target.value }))}
-            />
-          </label>
+          <div className="space-y-2">
+            <span className="text-xs text-muted">레벨별 행동지표</span>
+            <div className="space-y-2">
+              {RUBRIC_LEVELS.map((level) => (
+                <div key={level} className="rounded-lg border border-card-border p-3">
+                  <p className="text-xs font-semibold text-foreground">레벨 {level}</p>
+                  <div className="mt-2 space-y-2">
+                    {form.rubric[level].map((item, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <input
+                          className="input flex-1 text-xs"
+                          value={item}
+                          placeholder="행동지표 문장"
+                          onChange={(e) => updateRubricItem(level, i, e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeRubricItem(level, i)}
+                          className="shrink-0 text-muted hover:text-danger"
+                          aria-label="항목 삭제"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => addRubricItem(level)}
+                      className="flex items-center gap-1 text-xs text-accent hover:underline"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      항목 추가
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
           <div className="flex gap-2">
             <button type="button" className="btn-primary text-sm" onClick={() => void save()}>
               저장
