@@ -1,5 +1,6 @@
 -- Assessment task CMS: source documents, publish status, Competency/RubricSet FKs,
 -- and attempt framework snapshots for reproducible grading.
+-- Idempotent: safe to re-run after a rolled-back failed attempt.
 
 DO $$ BEGIN
   CREATE TYPE "AssessmentScenarioStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'ARCHIVED');
@@ -16,7 +17,7 @@ CREATE TABLE IF NOT EXISTS "AssessmentTaskSource" (
   "extractedText" TEXT NOT NULL,
   "createdByUserId" TEXT,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" TIMESTAMP(3) NOT NULL,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT "AssessmentTaskSource_pkey" PRIMARY KEY ("id")
 );
 
@@ -33,9 +34,12 @@ ALTER TABLE "AssessmentTaskSource"
   ON DELETE SET NULL ON UPDATE CASCADE;
 
 ALTER TABLE "AssessmentScenario"
-  ADD COLUMN IF NOT EXISTS "status" "AssessmentScenarioStatus" NOT NULL DEFAULT 'DRAFT',
-  ADD COLUMN IF NOT EXISTS "version" INTEGER NOT NULL DEFAULT 1,
-  ADD COLUMN IF NOT EXISTS "sourceId" TEXT,
+  ADD COLUMN IF NOT EXISTS "status" "AssessmentScenarioStatus" NOT NULL DEFAULT 'DRAFT';
+ALTER TABLE "AssessmentScenario"
+  ADD COLUMN IF NOT EXISTS "version" INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE "AssessmentScenario"
+  ADD COLUMN IF NOT EXISTS "sourceId" TEXT;
+ALTER TABLE "AssessmentScenario"
   ADD COLUMN IF NOT EXISTS "publishedAt" TIMESTAMP(3);
 
 -- Existing seed/live scenarios remain publicly available.
@@ -58,7 +62,8 @@ ALTER TABLE "AssessmentScenario"
   ON DELETE SET NULL ON UPDATE CASCADE;
 
 ALTER TABLE "AssessmentScenarioCompetency"
-  ADD COLUMN IF NOT EXISTS "competencyId" TEXT,
+  ADD COLUMN IF NOT EXISTS "competencyId" TEXT;
+ALTER TABLE "AssessmentScenarioCompetency"
   ADD COLUMN IF NOT EXISTS "rubricSetId" TEXT;
 
 CREATE INDEX IF NOT EXISTS "AssessmentScenarioCompetency_competencyId_idx"
@@ -81,23 +86,24 @@ ALTER TABLE "AssessmentScenarioCompetency"
   ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- Soft-link existing scenario competencies to platform bank by code.
-UPDATE "AssessmentScenarioCompetency" ASC
-SET "competencyId" = C."id"
-FROM "Competency" C
-WHERE ASC."competencyId" IS NULL
-  AND C."code" = ASC."competencyCode"
-  AND C."organizationId" IS NULL
-  AND C."ownerScope" = 'PLATFORM';
+-- NOTE: do not use alias ASC — it is a reserved keyword in PostgreSQL.
+UPDATE "AssessmentScenarioCompetency" AS sc
+SET "competencyId" = c."id"
+FROM "Competency" AS c
+WHERE sc."competencyId" IS NULL
+  AND c."code" = sc."competencyCode"
+  AND c."organizationId" IS NULL
+  AND c."ownerScope" = 'PLATFORM';
 
 -- Prefer default FIVE_SCALE rubric set when available.
-UPDATE "AssessmentScenarioCompetency" ASC
-SET "rubricSetId" = RS."id"
-FROM "RubricSet" RS
-WHERE ASC."competencyId" IS NOT NULL
-  AND ASC."rubricSetId" IS NULL
-  AND RS."competencyId" = ASC."competencyId"
-  AND RS."organizationId" IS NULL
-  AND RS."isDefault" = true;
+UPDATE "AssessmentScenarioCompetency" AS sc
+SET "rubricSetId" = rs."id"
+FROM "RubricSet" AS rs
+WHERE sc."competencyId" IS NOT NULL
+  AND sc."rubricSetId" IS NULL
+  AND rs."competencyId" = sc."competencyId"
+  AND rs."organizationId" IS NULL
+  AND rs."isDefault" = true;
 
 ALTER TABLE "AssessmentInBasketItem"
   ADD COLUMN IF NOT EXISTS "targetCompetencyId" TEXT;
@@ -112,14 +118,14 @@ ALTER TABLE "AssessmentInBasketItem"
   FOREIGN KEY ("targetCompetencyId") REFERENCES "Competency"("id")
   ON DELETE SET NULL ON UPDATE CASCADE;
 
-UPDATE "AssessmentInBasketItem" I
-SET "targetCompetencyId" = C."id"
-FROM "Competency" C
-WHERE I."targetCompetencyId" IS NULL
-  AND I."targetCompetencyCode" IS NOT NULL
-  AND C."code" = I."targetCompetencyCode"
-  AND C."organizationId" IS NULL
-  AND C."ownerScope" = 'PLATFORM';
+UPDATE "AssessmentInBasketItem" AS item
+SET "targetCompetencyId" = c."id"
+FROM "Competency" AS c
+WHERE item."targetCompetencyId" IS NULL
+  AND item."targetCompetencyCode" IS NOT NULL
+  AND c."code" = item."targetCompetencyCode"
+  AND c."organizationId" IS NULL
+  AND c."ownerScope" = 'PLATFORM';
 
 ALTER TABLE "AssessmentAttempt"
   ADD COLUMN IF NOT EXISTS "frameworkSnapshot" JSONB;
