@@ -31,7 +31,7 @@ export function WorkerDashboard({
     <div className="product-stage product-stage--wide space-y-8">
       <div className="product-stage__inner !max-w-5xl space-y-8">
         <Suspense fallback={null}>
-          <WelcomeBanner />
+          <WelcomeBanner dismissHref="/dashboard/worker" />
         </Suspense>
 
         <PersonaDashboardHeader
@@ -56,7 +56,9 @@ export function WorkerDashboard({
           <div className="rounded-xl border border-border/70 bg-card/40 px-4 py-3">
             <p className="text-xs text-muted">{p.statLatestScore}</p>
             <p className="mt-1 text-2xl font-semibold text-foreground">
-              {data.latestScore != null ? data.latestScore.toFixed(1) : "—"}
+              {typeof data.latestScore === "number" && Number.isFinite(data.latestScore)
+                ? data.latestScore.toFixed(1)
+                : "—"}
             </p>
           </div>
         </div>
@@ -82,7 +84,7 @@ export function WorkerDashboard({
                 <li key={attempt.id}>
                   <Link
                     href={
-                      attempt.status === "SCORED"
+                      attempt.status === "SCORED" || attempt.status === "SUBMITTED"
                         ? `/assessment/attempt/${attempt.id}/report`
                         : `/assessment/attempt/${attempt.id}`
                     }
@@ -97,7 +99,10 @@ export function WorkerDashboard({
                       </p>
                     </div>
                     <span className="text-sm font-medium text-foreground">
-                      {attempt.overallScore != null ? attempt.overallScore.toFixed(1) : p.continue}
+                      {typeof attempt.overallScore === "number" &&
+                      Number.isFinite(attempt.overallScore)
+                        ? attempt.overallScore.toFixed(1)
+                        : p.continue}
                     </span>
                   </Link>
                 </li>
@@ -106,7 +111,7 @@ export function WorkerDashboard({
           )}
         </section>
 
-        {data.inProgressCount > 0 ? (
+        {data.inProgressCount > 0 && typeof p.inProgressHint === "string" ? (
           <p className="text-sm text-muted">
             {p.inProgressHint.replace("{count}", String(data.inProgressCount))}
           </p>

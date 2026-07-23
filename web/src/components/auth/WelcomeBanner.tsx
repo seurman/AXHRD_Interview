@@ -17,6 +17,20 @@ export function WelcomeBanner({ dismissHref = "/dashboard" }: WelcomeBannerProps
   if (!welcome) return null;
 
   const dismiss = () => {
+    // Soft-nav to redirect-only `/dashboard` (or `/`) surfaces error.tsx —
+    // force a full document load for those fragile entry routes.
+    try {
+      const url = new URL(dismissHref, window.location.origin);
+      if (
+        url.origin === window.location.origin &&
+        (url.pathname === "/" || url.pathname === "/dashboard")
+      ) {
+        window.location.assign(url.href);
+        return;
+      }
+    } catch {
+      /* fall through */
+    }
     router.replace(dismissHref);
   };
 

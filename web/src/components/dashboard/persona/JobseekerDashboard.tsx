@@ -37,7 +37,7 @@ export function JobseekerDashboard({
     <div className="product-stage product-stage--wide space-y-8">
       <div className="product-stage__inner !max-w-5xl space-y-8">
         <Suspense fallback={null}>
-          <WelcomeBanner />
+          <WelcomeBanner dismissHref="/dashboard/jobseeker" />
         </Suspense>
 
         <PersonaDashboardHeader
