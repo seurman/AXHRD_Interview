@@ -71,25 +71,29 @@ body.ax-home-page .marketing-home > * {
 
 /* ─── Header: frosted parchment ─── */
 
+/* Nav bar intentionally kept on original pre-retint warm values,
+   excluded from this deploy per request, decoupled from the shared
+   ink and cream tokens below (which now carry the new navy/blue/gold
+   palette) so the header does not shift when the rest of the page does. */
 body.ax-home-page .header-premium {
-  background: rgb(245 246 250 / 0.93);
-  border-bottom-color: var(--ink-200);
+  background: rgb(251 248 243 / 0.93);
+  border-bottom-color: #ddd4c8;
 }
 
 body.ax-home-page .header-premium .nav-pill:hover,
 body.ax-home-page .header-premium .nav-pill-active {
-  border-color: var(--ink-900);
+  border-color: #14110e;
   background: rgb(20 17 14 / 0.05);
-  color: var(--ink-900) !important;
+  color: #14110e !important;
 }
 
 body.ax-home-page .header-premium .nav-pill-gold {
-  background: var(--ink-900);
-  border-color: var(--ink-900);
+  background: #14110e;
+  border-color: #14110e;
 }
 
 body.ax-home-page .header-premium .nav-pill-gold:hover {
-  background: var(--ink-700);
+  background: #2a241f;
 }
 
 /* ─── Flatten SaaS glows → product-line restraint ─── */
@@ -100,7 +104,7 @@ body.ax-home-page .ax-home .testimony::before {
   display: none;
 }
 
-/* Top trim — gold accent line (echoes the ARC report's gold→blue accent) */
+/* Top trim — gold accent line, echoes the ARC report gold-to-blue accent */
 body.ax-home-page .ax-home section.cta::after {
   content: "";
   position: absolute;
@@ -406,8 +410,8 @@ body.ax-home-page .ax-home .g2h-strip {
 }
 
 /* The 3-node flow needs real width to lay out horizontally — stack the
-   strip's title above the copy+flow instead of squeezing them into the
-   narrow 1fr column of .pricing-strip-inner's default 2-col grid. */
+   strip title above the copy and flow instead of squeezing them into the
+   narrow 1fr column of the default 2-col pricing-strip-inner grid. */
 body.ax-home-page .ax-home .g2h-strip .pricing-strip-inner {
   grid-template-columns: 1fr;
   align-items: start;
