@@ -54,8 +54,19 @@ function ChartCard({
 function AssessedRadarDot(props: DotProps & { payload?: RadarPoint }) {
   const { cx, cy, payload } = props;
   if (cx == null || cy == null) return null;
-  if (!payload?.assessed) return null;
-  return <circle cx={cx} cy={cy} r={3} fill="var(--color-primary)" />;
+  const assessed = payload?.assessed !== false;
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={assessed ? 4 : 3}
+      fill={assessed ? "var(--color-primary)" : "var(--color-muted)"}
+      fillOpacity={assessed ? 1 : 0.4}
+      stroke={assessed ? "var(--color-primary)" : "var(--color-muted)"}
+      strokeWidth={assessed ? 2 : 1}
+      strokeDasharray={assessed ? undefined : "2 2"}
+    />
+  );
 }
 
 /** Heavy Recharts islands — loaded via next/dynamic so the shell paints first. */
