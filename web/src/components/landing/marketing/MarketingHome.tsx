@@ -1,10 +1,19 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { buildMarketingHomeHtml } from "./marketing-markup";
+import { MARKETING_HOME_HTML } from "./marketing-markup";
 import { useLoggedIn, useNavSession } from "@/components/layout/NavSessionProvider";
 import { landingDemoHref, landingStartHref } from "@/lib/landing/hrefs";
 import "@/styles/marketing/homepage.css";
+
+const FOOTER_PRODUCT_HREFS = [
+  "/auth/register?next=/interview/setup",
+  "/assessment",
+  "/diagnosis",
+  "/products",
+];
+
+const FOOTER_FOR_HREFS = ["/demo#trial", "/org/setup"];
 
 export function MarketingHome() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -13,7 +22,6 @@ export function MarketingHome() {
   const trialOnly = nav?.trialOnly ?? false;
   const startHref = landingStartHref(loggedIn, trialOnly);
   const demoHref = landingDemoHref(loggedIn);
-  const html = buildMarketingHomeHtml(startHref, demoHref);
 
   useEffect(() => {
     document.body.classList.add("ax-home-page", "ax-home-product-luxe");
@@ -60,6 +68,41 @@ export function MarketingHome() {
       document.body.classList.add("luxe-ready");
     }
 
+    root.querySelectorAll<HTMLAnchorElement>('[data-cta="start"]').forEach((a) => {
+      a.href = startHref;
+    });
+
+    root.querySelectorAll<HTMLAnchorElement>('[data-cta="demo"]').forEach((a) => {
+      a.href = demoHref;
+    });
+
+    root.querySelectorAll<HTMLAnchorElement>('a.btn-primary, a.btn.on-dark.btn-lg').forEach((a) => {
+      if (a.dataset.cta) return;
+      if (a.textContent?.includes("시작") || a.textContent?.includes("무료")) {
+        a.href = startHref;
+      }
+    });
+
+    root.querySelectorAll<HTMLAnchorElement>('a.btn.on-dark-ghost').forEach((a) => {
+      if (!a.dataset.cta) a.href = "/org/setup";
+    });
+
+    const productCol = root.querySelector(".foot-col");
+    if (productCol) {
+      const links = productCol.querySelectorAll<HTMLAnchorElement>("a");
+      links.forEach((a, i) => {
+        if (FOOTER_PRODUCT_HREFS[i]) a.href = FOOTER_PRODUCT_HREFS[i];
+      });
+    }
+
+    const forCol = root.querySelectorAll(".foot-col")[1];
+    if (forCol) {
+      const links = forCol.querySelectorAll<HTMLAnchorElement>("a");
+      links.forEach((a, i) => {
+        if (FOOTER_FOR_HREFS[i]) a.href = FOOTER_FOR_HREFS[i];
+      });
+    }
+
     const onAnchorClick = (event: MouseEvent) => {
       const anchor = (event.target as HTMLElement).closest<HTMLAnchorElement>(
         'a[href^="#"]',
@@ -79,13 +122,13 @@ export function MarketingHome() {
       root.removeEventListener("click", onAnchorClick);
       disconnectReveal();
     };
-  }, [html]);
+  }, [startHref, demoHref]);
 
   return (
     <div
       ref={rootRef}
       className="marketing-home"
-      dangerouslySetInnerHTML={{ __html: html }}
+      dangerouslySetInnerHTML={{ __html: MARKETING_HOME_HTML }}
     />
   );
 }

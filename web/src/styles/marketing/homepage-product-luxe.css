@@ -1,29 +1,33 @@
 /* Product Line Luxe — homepage prototype
-   Hermès orange-box logic (not website layout):
-   warm neutral canvas + surgical signature color + ink typography. */
+   Trust & Authority direction (aligned with ARC Index report):
+   cool paper canvas + navy/blue trust color + achievement gold, sparingly. */
 
 body.ax-home-page {
-  /* Warm parchment — box interior / tissue paper */
-  --cream-50: #fbf8f3;
-  --cream-100: #f6f1e8;
-  --cream-200: #efe8dc;
-  --cream-300: #e4d9c8;
+  /* Cool paper — page canvas / elevated surfaces */
+  --cream-50: #ffffff;
+  --cream-100: #f5f6fa;
+  --cream-200: #eef1f7;
+  --cream-300: #dde3ef;
 
-  /* Ink — confident, near-black (Hermès black on orange) */
-  --ink-900: #14110e;
-  --ink-800: #1c1814;
-  --ink-700: #2a241f;
-  --ink-500: #6b6258;
-  --ink-400: #8c8278;
-  --ink-300: #b5aa9e;
-  --ink-200: #ddd4c8;
+  /* Ink — cool near-navy-black (matches ARC report ink) */
+  --ink-900: #12172a;
+  --ink-800: #1a2136;
+  --ink-700: #17213a;
+  --ink-500: #4d5875;
+  --ink-400: #74809c;
+  --ink-300: #b6c0d6;
+  --ink-200: #e2e7f2;
 
-  /* Signature — AXHRD product-line accent (cousin to Hermès orange, not a copy) */
-  --coral-600: #b83a1f;
-  --coral-500: #d64a2c;
-  --coral-400: #e0643f;
-  --coral-300: #e88a6a;
-  --coral-100: #fce8df;
+  /* Signature — AXHRD trust blue (same primary as the rest of the app) */
+  --coral-600: #1d4ed8;
+  --coral-500: #2f5fee;
+  --coral-400: #4c79ff;
+  --coral-300: #8fabff;
+  --coral-100: #e7edfd;
+
+  /* Achievement gold — reserved for score / badge / priority moments */
+  --gold-500: #c79a5a;
+  --gold-300: #ddb87d;
 
   --moss-500: #4a6244;
 
@@ -67,25 +71,29 @@ body.ax-home-page .marketing-home > * {
 
 /* ─── Header: frosted parchment ─── */
 
+/* Nav bar intentionally kept on original pre-retint warm values,
+   excluded from this deploy per request, decoupled from the shared
+   ink and cream tokens below (which now carry the new navy/blue/gold
+   palette) so the header does not shift when the rest of the page does. */
 body.ax-home-page .header-premium {
   background: rgb(251 248 243 / 0.93);
-  border-bottom-color: var(--ink-200);
+  border-bottom-color: #ddd4c8;
 }
 
 body.ax-home-page .header-premium .nav-pill:hover,
 body.ax-home-page .header-premium .nav-pill-active {
-  border-color: var(--ink-900);
+  border-color: #14110e;
   background: rgb(20 17 14 / 0.05);
-  color: var(--ink-900) !important;
+  color: #14110e !important;
 }
 
 body.ax-home-page .header-premium .nav-pill-gold {
-  background: var(--ink-900);
-  border-color: var(--ink-900);
+  background: #14110e;
+  border-color: #14110e;
 }
 
 body.ax-home-page .header-premium .nav-pill-gold:hover {
-  background: var(--ink-700);
+  background: #2a241f;
 }
 
 /* ─── Flatten SaaS glows → product-line restraint ─── */
@@ -96,16 +104,15 @@ body.ax-home-page .ax-home .testimony::before {
   display: none;
 }
 
-/* Grosgrain ribbon — orange box lid (Hermès packaging cue) */
+/* Top trim — gold accent line, echoes the ARC report gold-to-blue accent */
 body.ax-home-page .ax-home section.cta::after {
   content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 5px;
-  background: #5c4030;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold-500), var(--coral-500));
   z-index: 4;
   pointer-events: none;
 }
@@ -156,10 +163,30 @@ body.ax-home-page .ax-home section.cta.luxe-in .cta-inner {
 body.ax-home-page .ax-home .luxe-reveal:not(.luxe-in) {
   opacity: 0;
   transform: translateY(18px);
+  /* Safety net: if the JS reveal (rAF / IntersectionObserver) never fires
+     for any reason, force the section visible after a short delay instead
+     of leaving it permanently at opacity:0. Once JS adds .luxe-in this
+     selector stops matching, so the animation never runs. */
+  animation: luxe-reveal-fallback-in 0.01s 1.8s forwards;
 }
 
 body.ax-home-page .ax-home .luxe-reveal-hero:not(.luxe-in) {
   transform: translateY(22px) scale(0.985);
+}
+
+@keyframes luxe-reveal-fallback-in {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.ax-home-page .ax-home .luxe-reveal:not(.luxe-in) {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 body.ax-home-page .ax-home .luxe-reveal.luxe-in {
@@ -374,6 +401,99 @@ body.ax-home-page .ax-home .pricing-strip {
   border-color: var(--ink-200);
 }
 
+/* ─── Gap-to-Hire band — reuses .pricing-strip layout with a dark, ARC-report-matching treatment.
+   Placed after the rule above so it wins the cascade (equal specificity, later wins). ─── */
+body.ax-home-page .ax-home .g2h-strip {
+  background: linear-gradient(160deg, var(--ink-900) 0%, var(--ink-700) 100%);
+  border-top: none;
+  border-bottom: none;
+}
+
+/* The 3-node flow needs real width to lay out horizontally — stack the
+   strip title above the copy and flow instead of squeezing them into the
+   narrow 1fr column of the default 2-col pricing-strip-inner grid. */
+body.ax-home-page .ax-home .g2h-strip .pricing-strip-inner {
+  grid-template-columns: 1fr;
+  align-items: start;
+  gap: 20px;
+}
+
+body.ax-home-page .ax-home .g2h-strip .sec-eyebrow {
+  color: var(--gold-300);
+}
+
+body.ax-home-page .ax-home .g2h-strip .sec-eyebrow::before {
+  background: var(--gold-300);
+}
+
+body.ax-home-page .ax-home .g2h-strip .pricing-strip-title {
+  color: var(--cream-100);
+}
+
+body.ax-home-page .ax-home .g2h-strip .pricing-strip-copy {
+  color: rgb(245 246 250 / 0.72);
+}
+
+body.ax-home-page .ax-home .g2h-flow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+body.ax-home-page .ax-home .g2h-node {
+  flex: 1 1 140px;
+  background: rgb(255 255 255 / 0.06);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+body.ax-home-page .ax-home .g2h-node .t {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(245 246 250 / 0.55);
+}
+
+body.ax-home-page .ax-home .g2h-node .v {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+body.ax-home-page .ax-home .g2h-node--focus {
+  border-color: rgb(199 154 90 / 0.5);
+  background: rgb(199 154 90 / 0.12);
+}
+
+body.ax-home-page .ax-home .g2h-node--focus .v {
+  color: var(--gold-300);
+}
+
+body.ax-home-page .ax-home .g2h-arrow {
+  color: rgb(245 246 250 / 0.4);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 720px) {
+  body.ax-home-page .ax-home .g2h-flow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.ax-home-page .ax-home .g2h-arrow {
+    transform: rotate(90deg);
+    align-self: center;
+  }
+}
+
 /* Hero preview: product UI as object on desk */
 body.ax-home-page .ax-home .hero-preview {
   box-shadow: var(--shadow-md);
@@ -408,4 +528,315 @@ body.ax-home-page .ax-home .aud-checks li::before {
 
 body.ax-home-page .ax-home .principle.hero-p .icon {
   background: var(--coral-500);
+}
+
+/* ─── Hero: full-bleed trust navy (matches the ARC Index report treatment) ─── */
+
+body.ax-home-page .ax-home .hero {
+  background: linear-gradient(160deg, var(--ink-900) 0%, var(--ink-700) 55%, #121826 100%);
+  margin: 0 calc(50% - 50vw);
+  padding: 88px calc(50vw - 50%) 40px;
+  color: var(--cream-100);
+  overflow: hidden;
+}
+
+body.ax-home-page .ax-home .hero::before {
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(ellipse 55% 50% at 12% 8%, rgb(199 154 90 / 0.16) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 45% at 92% 22%, rgb(47 95 238 / 0.2) 0%, transparent 50%);
+}
+
+body.ax-home-page .ax-home .hero .pill {
+  background: rgb(255 255 255 / 0.06);
+  border-color: rgb(255 255 255 / 0.18);
+  color: rgb(245 246 250 / 0.85);
+}
+
+body.ax-home-page .ax-home .hero-top .caption {
+  color: rgb(245 246 250 / 0.5);
+}
+
+body.ax-home-page .ax-home .hero h1 {
+  color: #fff;
+}
+
+body.ax-home-page .ax-home .hero h1 .hero-serif {
+  color: var(--gold-300);
+}
+
+body.ax-home-page .ax-home .hero-right .sub {
+  color: rgb(245 246 250 / 0.75);
+}
+
+body.ax-home-page .ax-home .hero-right .sub strong {
+  color: #fff;
+}
+
+body.ax-home-page .ax-home .hero .btn-primary {
+  background: #fff;
+  color: var(--ink-900);
+}
+
+body.ax-home-page .ax-home .hero .btn-primary:hover {
+  background: var(--cream-200);
+}
+
+body.ax-home-page .ax-home .hero .btn-ghost {
+  background: rgb(255 255 255 / 0.06);
+  border-color: rgb(255 255 255 / 0.24);
+  color: #fff;
+}
+
+body.ax-home-page .ax-home .hero .btn-ghost:hover {
+  background: rgb(255 255 255 / 0.12);
+  border-color: rgb(255 255 255 / 0.4);
+}
+
+body.ax-home-page .ax-home .hero-micro {
+  color: rgb(245 246 250 / 0.6);
+}
+
+body.ax-home-page .ax-home .hero-micro .price-link {
+  color: #fff;
+  text-decoration-color: var(--gold-300);
+}
+
+body.ax-home-page .ax-home .hero-secondary-link .arrow-link {
+  color: rgb(245 246 250 / 0.8);
+}
+
+body.ax-home-page .ax-home .hero .proof-trust {
+  border-top-color: rgb(255 255 255 / 0.14);
+}
+
+body.ax-home-page .ax-home .hero .proof-trust .proof-label {
+  color: rgb(245 246 250 / 0.55);
+}
+
+body.ax-home-page .ax-home .hero .proof-trust .proof-pills span {
+  background: rgb(255 255 255 / 0.06) !important;
+  border-color: rgb(255 255 255 / 0.16) !important;
+  color: rgb(245 246 250 / 0.85) !important;
+}
+/* ─── AXC Hero — Concept A: signature framework (ARC Index-led) ───
+   Self-contained: hardcoded values, no dependency on the shared
+   --ink-*/--cream-*/--coral-* remap chain used elsewhere on this page. */
+
+.ax-home .axc-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #c79a5a;
+  margin-bottom: 0.9rem;
+}
+
+.ax-home .axc-h1 {
+  font-size: clamp(2.1rem, 4vw, 3.1rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.14;
+  margin: 0 0 1rem;
+  color: #ffffff;
+}
+
+.ax-home .axc-sub {
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: rgba(244, 245, 248, 0.62);
+  max-width: 27rem;
+  margin: 0 0 1.5rem;
+}
+
+.ax-home .axc-ctas {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.1rem;
+}
+
+.ax-home .axc-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  color: #0b0f1a;
+  font-weight: 750;
+  font-size: 0.9rem;
+  padding: 0.85rem 1.5rem;
+  border-radius: 0.55rem;
+  white-space: nowrap;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.ax-home .axc-btn-primary:hover {
+  transform: translateY(-1px);
+  opacity: 0.94;
+}
+
+.ax-home .axc-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-weight: 650;
+  font-size: 0.9rem;
+  padding: 0.85rem 1.5rem;
+  border-radius: 0.55rem;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ax-home .axc-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.ax-home .axc-trust {
+  font-size: 0.82rem;
+  color: rgba(244, 245, 248, 0.62);
+  font-variant-numeric: tabular-nums;
+}
+
+/* diagram card */
+.ax-home .axc-diagram {
+  background: #12172a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.15rem;
+  padding: 1.2rem 1.25rem 1rem;
+  max-width: 26rem;
+}
+
+.ax-home .axc-diagram-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+
+.ax-home .axc-diagram-title {
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
+.ax-home .axc-diagram-badge {
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #c79a5a;
+  border: 1px solid rgba(199, 154, 90, 0.4);
+  border-radius: 999px;
+  padding: 0.18rem 0.6rem;
+}
+
+.ax-home .axc-quad-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(244, 245, 248, 0.62);
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+}
+
+.ax-home .axc-legend {
+  display: flex;
+  gap: 1.2rem;
+  margin-top: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.ax-home .axc-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  color: rgba(244, 245, 248, 0.62);
+}
+
+.ax-home .axc-legend-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: #4c79ff;
+}
+
+.ax-home .axc-legend-dot.focus {
+  background: #c79a5a;
+}
+
+.ax-home .axc-stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ax-home .axc-stat .n {
+  font-size: 1.4rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.ax-home .axc-stat .l {
+  font-size: 0.7rem;
+  color: rgba(244, 245, 248, 0.62);
+  margin-top: 0.2rem;
+}
+
+/* capability strip */
+.ax-home .axc-caps {
+  max-width: 1240px;
+  margin: 1.75rem auto 0;
+  padding: 0 48px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.9rem;
+  overflow: hidden;
+}
+
+@media (max-width: 760px) {
+  .ax-home .axc-caps.axc-caps { grid-template-columns: 1fr; padding: 0 24px; }
+}
+
+.ax-home .axc-cap {
+  display: block;
+  background: #12172a;
+  padding: 1.3rem 1.4rem;
+  transition: background 0.15s;
+}
+
+.ax-home .axc-cap:hover {
+  background: #17203a;
+}
+
+.ax-home .axc-cap-name {
+  font-size: 0.92rem;
+  font-weight: 750;
+  color: #ffffff;
+  margin-bottom: 0.4rem;
+}
+
+.ax-home .axc-cap-desc {
+  font-size: 0.8rem;
+  color: rgba(244, 245, 248, 0.62);
+  line-height: 1.55;
+}
+
+@media (max-width: 640px) {
+  .ax-home .axc-ctas .axc-btn-primary,
+  .ax-home .axc-ctas .axc-btn-ghost {
+    width: 100%;
+  }
 }
