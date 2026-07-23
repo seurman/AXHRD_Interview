@@ -5,6 +5,7 @@ import { CoachInsightsPanel } from "@/components/dashboard/CoachInsightsPanel";
 import { NarrativeLead } from "@/components/dashboard/NarrativeLead";
 import { WelcomeBanner } from "@/components/auth/WelcomeBanner";
 import { ResumeInterviewBanner } from "@/components/interview/ResumeInterviewBanner";
+import { DashboardSectionBoundary } from "@/components/dashboard/DashboardSectionBoundary";
 import {
   PersonaActionLink,
   PersonaDashboardHeader,
@@ -32,6 +33,9 @@ export function JobseekerDashboard({
   dict: Dictionary["dashboard"];
 }) {
   const p = dict.personas.jobseeker;
+  const quests = Array.isArray(dashboard.quests)
+    ? dashboard.quests.filter((q) => q.id === "discover" || q.id === "interview")
+    : [];
 
   return (
     <div className="product-stage product-stage--wide space-y-8">
@@ -80,21 +84,39 @@ export function JobseekerDashboard({
         <NarrativeLead text={narrative} />
 
         <h2 className="text-lg font-semibold text-foreground">{dict.competencySection}</h2>
-        <CompetencyDashboard
-          snapshots={dashboard.snapshots}
-          latestByCompetency={dashboard.latestByCompetency}
-          sessionCount={dashboard.sessionCount}
-          dimensionTimeline={dashboard.dimensionTimeline}
-          quests={dashboard.quests.filter((q) => q.id === "discover" || q.id === "interview")}
-          totalXp={dashboard.totalXp}
-          level={dashboard.level}
-          strengthDeck={dashboard.strengthDeck}
-          learningPath={null}
-          showOnboardingBanner={!dashboard.hasDashboardContent}
-        />
+        <DashboardSectionBoundary
+          label="competency"
+          fallback={
+            <p className="rounded-xl border border-border/60 bg-card/40 px-4 py-6 text-sm text-muted">
+              역량 패널을 불러오지 못했습니다. 면접을 한 번 더 진행한 뒤 새로고침해 주세요.
+            </p>
+          }
+        >
+          <CompetencyDashboard
+            snapshots={dashboard.snapshots}
+            latestByCompetency={dashboard.latestByCompetency}
+            sessionCount={dashboard.sessionCount}
+            dimensionTimeline={dashboard.dimensionTimeline}
+            quests={quests}
+            totalXp={dashboard.totalXp}
+            level={dashboard.level}
+            strengthDeck={dashboard.strengthDeck}
+            learningPath={null}
+            showOnboardingBanner={!dashboard.hasDashboardContent}
+          />
+        </DashboardSectionBoundary>
 
         <h2 className="text-lg font-semibold text-foreground">{dict.coachInsights.sectionTitle}</h2>
-        <CoachInsightsPanel {...dashboard.coachInsights} />
+        <DashboardSectionBoundary
+          label="coach"
+          fallback={
+            <p className="rounded-xl border border-border/60 bg-card/40 px-4 py-6 text-sm text-muted">
+              코칭 인사이트를 잠시 표시할 수 없습니다.
+            </p>
+          }
+        >
+          <CoachInsightsPanel {...dashboard.coachInsights} />
+        </DashboardSectionBoundary>
       </div>
     </div>
   );

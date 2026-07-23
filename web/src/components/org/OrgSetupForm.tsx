@@ -108,7 +108,7 @@ export function OrgSetupForm({ initialPending }: { initialPending?: Pending | nu
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "요청에 실패했습니다.");
       if (data.mode === "joined") {
-        router.push("/dashboard/jobseeker");
+        window.location.assign("/dashboard/jobseeker");
         router.refresh();
         return;
       }

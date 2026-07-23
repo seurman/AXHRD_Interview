@@ -39,6 +39,9 @@ export function CoachInsightsPanel({
 }: CoachInsightsPayload) {
   const { dict } = useI18n();
   const ci = dict.dashboard.coachInsights;
+  const deltas = Array.isArray(competencyDeltas) ? competencyDeltas : [];
+  const rounds = Array.isArray(recentRounds) ? recentRounds : [];
+  const log = Array.isArray(accessLog) ? accessLog : [];
 
   return (
     <div className="space-y-6">
@@ -49,7 +52,7 @@ export function CoachInsightsPanel({
           <div className="mt-4">
             <InteractivePercentileBars
               fill="var(--color-primary)"
-              items={competencyDeltas.map((row) => ({
+              items={deltas.map((row) => ({
                 id: row.competency,
                 label: competencyLabel(row.competency),
                 value: row.percentile,
@@ -76,10 +79,10 @@ export function CoachInsightsPanel({
         </section>
       </div>
 
-      {recentRounds.length > 0 ? (
+      {rounds.length > 0 ? (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">{ci.roundsTitle}</h3>
-          {recentRounds.slice(0, 2).map((brief, i) => (
+          {rounds.slice(0, 2).map((brief, i) => (
             <RoundBriefPanel key={`${brief.completedAt}-${i}`} brief={brief} />
           ))}
         </div>
@@ -90,12 +93,12 @@ export function CoachInsightsPanel({
         </section>
       )}
 
-      {accessLog.length > 0 && (
+      {log.length > 0 && (
         <section className="card-luxe p-6">
           <h3 className="font-semibold text-foreground">{ci.accessTitle}</h3>
           <p className="mt-1 text-xs text-muted">{ci.accessHint}</p>
           <ul className="mt-4 divide-y divide-card-border">
-            {accessLog.map((row) => (
+            {log.map((row) => (
               <li key={row.id} className="flex items-center justify-between gap-3 py-3">
                 <div>
                   <p className="text-sm font-medium text-foreground">{row.label}</p>

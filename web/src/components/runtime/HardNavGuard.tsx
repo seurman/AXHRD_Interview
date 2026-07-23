@@ -44,10 +44,17 @@ export function HardNavGuard() {
       }
       if (url.origin !== window.location.origin) return;
       if (!shouldHardNavigate(url.pathname)) return;
-      if (window.location.pathname === url.pathname) return;
 
       event.preventDefault();
       event.stopPropagation();
+      // Same-path soft failures leave error.tsx up — force a full reload.
+      if (
+        window.location.pathname === url.pathname &&
+        window.location.search === url.search
+      ) {
+        window.location.reload();
+        return;
+      }
       window.location.assign(url.href);
     };
 

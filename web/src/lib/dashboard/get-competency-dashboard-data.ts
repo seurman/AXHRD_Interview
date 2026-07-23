@@ -140,6 +140,26 @@ export function emptyCompetencyDashboard(
 export async function getCompetencyDashboardData(
   userId: string,
 ): Promise<CompetencyDashboardPayload | null> {
+  try {
+    return await loadCompetencyDashboardData(userId);
+  } catch (e) {
+    console.error("[getCompetencyDashboardData]", e);
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true },
+      });
+      if (!user) return null;
+      return emptyCompetencyDashboard(user.name);
+    } catch {
+      return emptyCompetencyDashboard();
+    }
+  }
+}
+
+async function loadCompetencyDashboardData(
+  userId: string,
+): Promise<CompetencyDashboardPayload | null> {
   const full = await prisma.user.findUnique({
     where: { id: userId },
     include: {
@@ -347,8 +367,11 @@ export async function getCompetencyDashboardData(
     select: { roundBrief: true, roundCompetencyCodes: true, timeBudgetMinutes: true },
   });
   const recentRounds = recentPlans
-    .map((p) => p.roundBrief as RoundBrief | null)
-    .filter((b): b is RoundBrief => Boolean(b));
+    .map((p) => p.roundBrief)
+    .filter((b): b is RoundBrief => {
+      if (!b || typeof b !== "object" || Array.isArray(b)) return false;
+      return true;
+    });
 
   const inProgressSessions = await prisma.interviewSession.findMany({
     where: { userId, status: { in: ["IN_PROGRESS", "COMPLETED"] } },
@@ -375,14 +398,14 @@ export async function getCompetencyDashboardData(
         ? `${competencyLabel(s.focusCompetency)} 면접 #${s.sessionNumber}`
         : `모의면접 #${s.sessionNumber}`,
       href: interviewSessionHref(s),
-      at: (s.startedAt ?? s.createdAt).toISOString(),
+      at: (s.startedAt ?? s.createdAt ?? new Date()).toISOString(),
     })),
     ...full.selfDiscoverySessions.map((s) => ({
       id: s.id,
       kind: "discover" as const,
       label: "자기발견 인터뷰",
       href: `/discover/${s.id}/report`,
-      at: (s.completedAt ?? s.startedAt).toISOString(),
+      at: (s.completedAt ?? s.startedAt ?? new Date()).toISOString(),
     })),
   ]
     .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())

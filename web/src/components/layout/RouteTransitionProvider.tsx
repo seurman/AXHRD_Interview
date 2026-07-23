@@ -64,12 +64,16 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
         setPendingHref(null);
         return;
       }
-      // Soft-nav to `/` or redirect-only `/dashboard` is unsafe; hard-load.
+      // Soft-nav to `/`, redirect hub, or persona homes is unsafe; hard-load.
       try {
         const url = new URL(href, window.location.origin);
         if (
           url.origin === window.location.origin &&
-          (url.pathname === "/" || url.pathname === "/dashboard")
+          (url.pathname === "/" ||
+            url.pathname === "/dashboard" ||
+            url.pathname === "/dashboard/jobseeker" ||
+            url.pathname === "/dashboard/worker" ||
+            url.pathname === "/dashboard/mock")
         ) {
           window.location.assign(url.href);
           return;

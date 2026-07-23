@@ -28,16 +28,27 @@ export async function getUserStrengthDeck(userId: string): Promise<UserStrengthD
 
   if (!session?.profile) return null;
 
-  const strengths = session.profile.strengths as unknown as DiscoverStrengthItem[];
-  const storedAdvice = session.profile.interviewAdvice as unknown as
-    | DiscoverInterviewAdvice[]
-    | null;
+  const rawStrengths = session.profile.strengths;
+  const strengths = Array.isArray(rawStrengths)
+    ? (rawStrengths as unknown as DiscoverStrengthItem[])
+    : [];
+  const rawAdvice = session.profile.interviewAdvice;
+  const storedAdvice = Array.isArray(rawAdvice)
+    ? (rawAdvice as unknown as DiscoverInterviewAdvice[])
+    : null;
 
   const jobRole = session.user.profile?.desiredJobRole ?? "OTHER";
-  const interviewAdvice =
-    storedAdvice?.length
-      ? storedAdvice
-      : buildInterviewAdvice(strengths, jobRole);
+  let interviewAdvice: DiscoverInterviewAdvice[] = storedAdvice?.length
+    ? storedAdvice
+    : [];
+  if (interviewAdvice.length === 0 && strengths.length > 0) {
+    try {
+      interviewAdvice = buildInterviewAdvice(strengths, jobRole);
+    } catch (e) {
+      console.error("[getUserStrengthDeck] buildInterviewAdvice", e);
+      interviewAdvice = [];
+    }
+  }
 
   return {
     strengths,

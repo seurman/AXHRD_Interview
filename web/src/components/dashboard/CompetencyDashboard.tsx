@@ -291,12 +291,14 @@ export function CompetencyDashboard({
             </div>
           </div>
 
-          {strengthDeck && (
+          {strengthDeck && Array.isArray(strengthDeck.strengths) && (
             <div className="space-y-2">
               <p className="text-sm text-muted">{st.strengthDeckNote}</p>
               <StrengthCardDeck
                 strengths={strengthDeck.strengths.slice(0, 3)}
-                interviewAdvice={strengthDeck.interviewAdvice}
+                interviewAdvice={Array.isArray(strengthDeck.interviewAdvice)
+                  ? strengthDeck.interviewAdvice
+                  : []}
                 totalDiscovered={strengthDeck.totalDiscovered}
                 reportHref={strengthDeck.reportHref}
                 compact

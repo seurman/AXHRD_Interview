@@ -1,12 +1,6 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
-import {
-  DEFAULT_PERSONA,
-  PERSONA_COOKIE,
-  parsePersona,
-  personaHomeHref,
-} from "@/lib/nav/persona";
+import { personaHomeHref } from "@/lib/nav/persona";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +12,11 @@ function pickParam(
   return undefined;
 }
 
-/** Legacy home dashboard entry — route into a persona-specific dashboard. */
+/**
+ * Legacy `/dashboard` entry — always land on jobseeker (Growth home).
+ * Sticky persona cookies must not divert this hub; use PersonaSwitcher
+ * on the destination page to change roles.
+ */
 export default async function DashboardIndexPage({
   searchParams,
 }: {
@@ -27,13 +25,12 @@ export default async function DashboardIndexPage({
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login?next=/dashboard/jobseeker");
 
-  const jar = await cookies();
-  const persona = parsePersona(jar.get(PERSONA_COOKIE)?.value) ?? DEFAULT_PERSONA;
   const sp = await searchParams;
   const qs = new URLSearchParams();
   if (pickParam(sp.welcome) === "1") qs.set("welcome", "1");
   const name = pickParam(sp.name);
   if (name) qs.set("name", name);
   const q = qs.toString();
-  redirect(q ? `${personaHomeHref(persona)}?${q}` : personaHomeHref(persona));
+  const home = personaHomeHref("jobseeker");
+  redirect(q ? `${home}?${q}` : home);
 }

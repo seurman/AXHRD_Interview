@@ -17,14 +17,11 @@ export function WelcomeBanner({ dismissHref = "/dashboard/jobseeker" }: WelcomeB
   if (!welcome) return null;
 
   const dismiss = () => {
-    // Soft-nav to redirect-only `/dashboard` (or `/`) surfaces error.tsx —
-    // force a full document load for those fragile entry routes.
+    // Soft-nav to fragile dashboard entry routes surfaces error.tsx —
+    // always force a full document load for dismiss.
     try {
       const url = new URL(dismissHref, window.location.origin);
-      if (
-        url.origin === window.location.origin &&
-        (url.pathname === "/" || url.pathname === "/dashboard")
-      ) {
+      if (url.origin === window.location.origin) {
         window.location.assign(url.href);
         return;
       }

@@ -17,8 +17,12 @@ export function buildDashboardNarrative(input: {
 
   const parts: string[] = [];
 
-  if (input.recentRound?.improvementsText) {
-    parts.push(input.recentRound.improvementsText.split(/[.!]/)[0]?.trim() ?? "");
+  const improvementsText =
+    typeof input.recentRound?.improvementsText === "string"
+      ? input.recentRound.improvementsText
+      : null;
+  if (improvementsText) {
+    parts.push(improvementsText.split(/[.!]/)[0]?.trim() ?? "");
   } else if (input.weakestCode) {
     parts.push(
       `${competencyLabel(input.weakestCode)} 역량을 한 번 더 연습하면 전체 균형이 좋아집니다`,
