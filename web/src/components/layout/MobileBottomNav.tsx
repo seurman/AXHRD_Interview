@@ -1,19 +1,94 @@
 "use client";
 
-import { Home, Layers, Sparkles, Building2, Menu } from "lucide-react";
+import { Home, Layers, Sparkles, Building2, Menu, Briefcase, Gamepad2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { NavTransitionLink } from "./NavTransitionLink";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import type { WorkspaceMode } from "@/lib/nav/workspace";
+import { useProductPersona } from "@/lib/nav/use-product-persona";
+import { personaHomeHref, type ProductPersona } from "@/lib/nav/persona";
 
 type Tab = {
   href: string;
   label: string;
   icon: typeof Home;
   match: (path: string) => boolean;
-  /** Full document load — avoids soft-nav failures to home */
   hard?: boolean;
 };
+
+function personalTabsFor(
+  persona: ProductPersona,
+  labels: Record<string, string>,
+): Tab[] {
+  if (persona === "worker") {
+    return [
+      {
+        href: personaHomeHref("worker"),
+        label: labels.home,
+        icon: Briefcase,
+        hard: true,
+        match: (p) => p.startsWith("/dashboard/worker"),
+      },
+      {
+        href: "/assessment",
+        label: labels.assessment,
+        icon: Sparkles,
+        match: (p) => p === "/assessment" || p.startsWith("/assessment/"),
+      },
+    ];
+  }
+
+  if (persona === "mock") {
+    return [
+      {
+        href: personaHomeHref("mock"),
+        label: labels.home,
+        icon: Gamepad2,
+        hard: true,
+        match: (p) => p.startsWith("/dashboard/mock"),
+      },
+      {
+        href: "/practice/game",
+        label: labels.game,
+        icon: Sparkles,
+        match: (p) => p.startsWith("/practice/game"),
+      },
+      {
+        href: "/practice/path",
+        label: labels.path,
+        icon: Layers,
+        match: (p) =>
+          p.startsWith("/practice/path") ||
+          p.startsWith("/practice/swipe") ||
+          p === "/demo" ||
+          p.startsWith("/demo/"),
+      },
+    ];
+  }
+
+  return [
+    {
+      href: personaHomeHref("jobseeker"),
+      label: labels.home,
+      icon: Home,
+      hard: true,
+      match: (p) => p.startsWith("/dashboard/jobseeker"),
+    },
+    {
+      href: "/interview/setup",
+      label: labels.interview,
+      icon: Sparkles,
+      match: (p) => p.startsWith("/interview/"),
+    },
+    {
+      href: "/discover",
+      label: labels.discover,
+      icon: Layers,
+      match: (p) =>
+        p === "/discover" || p.startsWith("/discover/") || p.startsWith("/resume-review"),
+    },
+  ];
+}
 
 export function MobileBottomNav({
   loggedIn,
@@ -29,36 +104,20 @@ export function MobileBottomNav({
   const pathname = usePathname();
   const { dict } = useI18n();
   const m = dict.common.mobileNav;
+  const persona = useProductPersona();
+  const p = dict.dashboard.personas;
 
   if (!loggedIn) return null;
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return null;
 
-  const personalTabs: Tab[] = [
-    {
-      href: "/dashboard",
-      label: m.home,
-      icon: Home,
-      hard: true,
-      match: (p) => p === "/dashboard" || p.startsWith("/dashboard/"),
-    },
-    {
-      href: "/discover",
-      label: m.growth,
-      icon: Sparkles,
-      match: (p) => p === "/discover" || p.startsWith("/discover/") || p.startsWith("/resume-review"),
-    },
-    {
-      href: "/practice/path",
-      label: m.practice,
-      icon: Layers,
-      match: (p) =>
-        p === "/practice" ||
-        p.startsWith("/practice/") ||
-        p === "/demo" ||
-        p.startsWith("/demo/") ||
-        p.startsWith("/interview/"),
-    },
-  ];
+  const personalTabs = personalTabsFor(persona, {
+    home: p[persona].short,
+    interview: dict.common.nav.interview,
+    assessment: dict.common.nav.assessment,
+    game: dict.common.nav.game,
+    path: dict.common.nav.path,
+    discover: dict.common.nav.discover,
+  });
 
   const orgTabs: Tab[] = [
     {
@@ -66,23 +125,23 @@ export function MobileBottomNav({
       label: m.cohort,
       icon: Home,
       hard: true,
-      match: (p) =>
-        p === "/org/dashboard" ||
-        p.startsWith("/org/dashboard/") ||
-        p.startsWith("/org/people") ||
-        p === "/org/members",
+      match: (path) =>
+        path === "/org/dashboard" ||
+        path.startsWith("/org/dashboard/") ||
+        path.startsWith("/org/people") ||
+        path === "/org/members",
     },
     {
       href: "/org/diagnosis",
       label: m.diagnostic,
       icon: Sparkles,
-      match: (p) => p === "/org/diagnosis" || p.startsWith("/org/diagnosis/"),
+      match: (path) => path === "/org/diagnosis" || path.startsWith("/org/diagnosis/"),
     },
     {
       href: "/org/settings",
       label: m.settings,
       icon: Building2,
-      match: (p) => p === "/org/settings" || p.startsWith("/org/settings/"),
+      match: (path) => path === "/org/settings" || path.startsWith("/org/settings/"),
     },
   ];
 

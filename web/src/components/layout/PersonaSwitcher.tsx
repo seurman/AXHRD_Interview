@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import {
   DEFAULT_PERSONA,
@@ -17,7 +17,6 @@ export function PersonaSwitcher({
   active?: ProductPersona | null;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { dict } = useI18n();
   const p = dict.dashboard.personas;
   const current = active ?? pathnamePersona(pathname) ?? DEFAULT_PERSONA;
@@ -40,7 +39,8 @@ export function PersonaSwitcher({
           onClick={() => {
             if (persona === current) return;
             persistPersonaPreference(persona);
-            router.push(personaHomeHref(persona));
+            // Hard navigate — avoids soft-nav failures on dashboard entry.
+            window.location.assign(personaHomeHref(persona));
           }}
         >
           {labels[persona]}

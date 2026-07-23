@@ -2,20 +2,16 @@
 
 import { useEffect } from "react";
 
-function isSameOriginHome(href: string): boolean {
-  try {
-    const url = new URL(href, window.location.origin);
-    return url.origin === window.location.origin && url.pathname === "/";
-  } catch {
-    return false;
-  }
+function shouldHardNavigate(pathname: string): boolean {
+  // Marketing `/` and legacy `/dashboard` redirect both break soft-nav
+  // when a stale SW or RSC redirect is involved.
+  return pathname === "/" || pathname === "/dashboard";
 }
 
 /**
- * Force full document loads for `/`.
- * Legacy service workers corrupted App Router soft-nav to home
- * (error.tsx: "페이지를 불러오지 못했습니다"). Hard navigation bypasses
- * that path even if a stale worker is still draining.
+ * Force full document loads for fragile entry routes.
+ * Legacy SW + `/dashboard` redirect soft-nav surfaced error.tsx
+ * ("페이지를 불러오지 못했습니다").
  */
 export function HardNavGuard() {
   useEffect(() => {
@@ -32,14 +28,20 @@ export function HardNavGuard() {
       if (anchor.hasAttribute("download")) return;
 
       const href = anchor.getAttribute("href");
-      if (!href || !isSameOriginHome(href)) return;
-
-      // Already on home — let the browser no-op / refresh naturally.
-      if (window.location.pathname === "/") return;
+      if (!href) return;
+      let url: URL;
+      try {
+        url = new URL(href, window.location.origin);
+      } catch {
+        return;
+      }
+      if (url.origin !== window.location.origin) return;
+      if (!shouldHardNavigate(url.pathname)) return;
+      if (window.location.pathname === url.pathname) return;
 
       event.preventDefault();
       event.stopPropagation();
-      window.location.assign(anchor.href);
+      window.location.assign(url.href);
     };
 
     document.addEventListener("click", onClick, true);

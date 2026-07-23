@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NavDropdownMenu } from "./NavDropdownMenu";
 import { NavTransitionLink } from "./NavTransitionLink";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { GuestProductMenu } from "./GuestProductMenu";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
+import { PersonaSwitcher } from "./PersonaSwitcher";
 import { AvatarMenu } from "./AvatarMenu";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { useWorkspaceMode } from "@/lib/nav/workspace";
+import { useProductPersona } from "@/lib/nav/use-product-persona";
+import { personaPrimaryLinks } from "@/lib/nav/persona-nav";
 import type { NavLinkItem } from "@/lib/platform/nav-registry";
 
 type SaasLinksConfig = {
@@ -27,9 +29,9 @@ type SaasLinksConfig = {
 };
 
 export function MainNav({
-  dashboardHref,
-  growthLinks,
-  practiceLinks,
+  dashboardHref: _dashboardHref,
+  growthLinks: _growthLinks,
+  practiceLinks: _practiceLinks,
   activityHref,
   profileHref,
   saasLinks,
@@ -55,6 +57,8 @@ export function MainNav({
   const { dict } = useI18n();
   const c = dict.common;
   const { mode, setMode } = useWorkspaceMode(orgWorkspaceAvailable);
+  const persona = useProductPersona();
+  const primaryLinks = personaPrimaryLinks(persona);
 
   if (loading) {
     return (
@@ -87,6 +91,11 @@ export function MainNav({
     const base = href.split("#")[0];
     if (href.includes("#")) return pathname === base || pathname.startsWith(`${base}/`);
     return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  const navLabel = (labelKey: (typeof primaryLinks)[number]["labelKey"]) => {
+    if (labelKey === "home") return dict.dashboard.personas[persona].short;
+    return c.nav[labelKey];
   };
 
   if (mode === "org" && orgWorkspaceAvailable && saasLinks) {
@@ -126,34 +135,26 @@ export function MainNav({
   return (
     <nav className="hidden items-center gap-1.5 lg:gap-2 sm:flex">
       {orgWorkspaceAvailable && <WorkspaceSwitcher mode={mode} onChange={setMode} />}
+      <PersonaSwitcher active={persona} />
 
-      {dashboardHref && (
-        <a
-          href={dashboardHref}
-          className={`nav-pill ${linkActive(dashboardHref) ? "nav-pill-active" : ""}`}
-        >
-          {c.nav.home}
-        </a>
-      )}
-
-      {growthLinks.length > 0 && (
-        <NavDropdownMenu
-          title={c.nav.growth}
-          links={growthLinks.map((l) => ({
-            href: l.href,
-            label: c.nav[l.labelKey],
-          }))}
-        />
-      )}
-
-      {practiceLinks.length > 0 && (
-        <NavDropdownMenu
-          title={c.nav.practice}
-          links={practiceLinks.map((l) => ({
-            href: l.href,
-            label: c.nav[l.labelKey],
-          }))}
-        />
+      {primaryLinks.map((l) =>
+        l.hard ? (
+          <a
+            key={l.href}
+            href={l.href}
+            className={`nav-pill ${linkActive(l.href) ? "nav-pill-active" : ""}`}
+          >
+            {navLabel(l.labelKey)}
+          </a>
+        ) : (
+          <NavTransitionLink
+            key={l.href}
+            href={l.href}
+            className={`nav-pill ${linkActive(l.href) ? "nav-pill-active" : ""}`}
+          >
+            {navLabel(l.labelKey)}
+          </NavTransitionLink>
+        ),
       )}
 
       {activityHref && (
@@ -188,11 +189,16 @@ export function getMobileNavLabel(
     | "home"
     | "growth"
     | "practice"
-    | "activity",
+    | "activity"
+    | "game"
+    | "assessment",
   dict: ReturnType<typeof import("@/lib/i18n/I18nProvider").useI18n>["dict"],
 ): string {
   if (key === "home" || key === "growth" || key === "practice" || key === "activity") {
     return dict.common.nav[key];
+  }
+  if (key === "game" || key === "assessment") {
+    return dict.common.navLong[key];
   }
   return dict.common.navLong[key];
 }

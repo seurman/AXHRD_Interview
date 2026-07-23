@@ -7,6 +7,8 @@ import { MainNav } from "./MainNav";
 import { MobileNav } from "./MobileNav";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { useWorkspaceMode } from "@/lib/nav/workspace";
+import { useProductPersona } from "@/lib/nav/use-product-persona";
+import { resolvePersonaHomeHref } from "@/lib/nav/persona-nav";
 import { Logo } from "@/components/brand/Logo";
 import { BillingPastDueBanner } from "@/components/billing/BillingPastDueBanner";
 import { useI18n } from "@/lib/i18n/I18nProvider";
@@ -20,6 +22,8 @@ export function AppHeader() {
   const loggedIn = nav?.loggedIn === true;
   const orgWorkspaceAvailable = nav?.orgWorkspaceAvailable ?? false;
   const { mode } = useWorkspaceMode(orgWorkspaceAvailable);
+  const persona = useProductPersona();
+  const personaHome = resolvePersonaHomeHref(persona);
   const adminModeEnabled = useMemo(
     () => deriveAdminModeEnabled(nav),
     [nav],
@@ -42,7 +46,7 @@ export function AppHeader() {
       <header className="header-premium sticky top-0 z-40">
         <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-3 px-5 py-3 sm:px-8 sm:py-3.5">
           <a
-            href={loggedIn && nav?.dashboardHref ? nav.dashboardHref : "/"}
+            href={loggedIn && nav?.dashboardHref ? personaHome : "/"}
             className="axhrd-logo axhrd-logo--md group min-w-0 shrink"
             aria-label={`${dict.common.brand} home`}
           >

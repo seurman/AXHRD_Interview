@@ -64,10 +64,13 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
         setPendingHref(null);
         return;
       }
-      // Soft-nav to `/` is unsafe while legacy SW drain; always hard-load home.
+      // Soft-nav to `/` or redirect-only `/dashboard` is unsafe; hard-load.
       try {
         const url = new URL(href, window.location.origin);
-        if (url.origin === window.location.origin && url.pathname === "/") {
+        if (
+          url.origin === window.location.origin &&
+          (url.pathname === "/" || url.pathname === "/dashboard")
+        ) {
           window.location.assign(url.href);
           return;
         }

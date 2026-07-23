@@ -13,7 +13,9 @@ export function pathnameWorkspace(pathname: string): WorkspaceMode {
 }
 
 export function defaultWorkspaceHref(mode: WorkspaceMode): string {
-  return mode === "org" ? "/org/dashboard" : "/dashboard";
+  // Personal home is persona-specific; /dashboard only redirects.
+  // Client callers should prefer resolvePersonaHomeHref when available.
+  return mode === "org" ? "/org/dashboard" : "/dashboard/jobseeker";
 }
 
 export function useWorkspaceMode(orgAvailable: boolean) {
