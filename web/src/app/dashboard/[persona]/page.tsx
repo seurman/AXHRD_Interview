@@ -31,7 +31,16 @@ export default async function PersonaDashboardPage({
   const dict = getDictionary(locale).dashboard;
 
   if (persona === "worker") {
-    const data = await getWorkerDashboardData(user.id, user.organizationId ?? null);
+    let data;
+    try {
+      data = await getWorkerDashboardData(user.id, user.organizationId ?? null);
+    } catch (e) {
+      console.error("[dashboard/worker]", e);
+      const { EMPTY_WORKER_DASHBOARD } = await import(
+        "@/lib/dashboard/get-worker-dashboard-data"
+      );
+      data = EMPTY_WORKER_DASHBOARD;
+    }
     return <WorkerDashboard userName={user.name} data={data} dict={dict} />;
   }
 

@@ -16,6 +16,12 @@ function statusLabel(status: string, labels: Dictionary["dashboard"]["personas"]
   return labels.draft;
 }
 
+function kindLabel(kind: string): string {
+  if (kind === "ROLE_PLAY") return "역할연기";
+  if (kind === "IN_BASKET") return "서류함";
+  return kind;
+}
+
 export function WorkerDashboard({
   userName,
   data,
