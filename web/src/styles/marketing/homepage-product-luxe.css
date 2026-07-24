@@ -707,10 +707,12 @@ body.ax-home-page .ax-home .hero .proof-trust .proof-pills span {
   font-variant-numeric: tabular-nums;
 }
 
-/* diagram card */
+/* diagram card — lifted off the hero's #0b0f1a so the card edge (and the
+   IPA matrix gridlines inside it, see marketing-markup.ts) don't disappear
+   into the background at low brightness/small screens. */
 .ax-home .axc-diagram {
-  background: #12172a;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #1a2138;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 1.15rem;
   padding: 1.2rem 1.25rem 1rem;
   max-width: 26rem;
